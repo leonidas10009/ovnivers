@@ -3,14 +3,12 @@
     "version": "1.0.0",
     "description": "All-in-One addon with 61 providers adapted for Nuvio 0.7.5",
     "scripts": {
-        "build": "node build.js",
-        "build:watch": "nodemon --watch src -e js,json --exec 'node build.js'",
-        "build:provider": "node build.js",
         "start": "node server.js"
     },
     "dependencies": {
         "cheerio-without-node-native": "^0.20.2",
         "crypto-js": "^4.2.0",
+        "esbuild": "^0.25.0",
         "express": "^4.21.0"
     },
     "keywords": [
