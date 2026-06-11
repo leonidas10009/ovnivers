@@ -31,10 +31,7 @@ function loadScraper(scraper) {
 const allLanguages = [...new Set(allScrapers.flatMap(s => s.contentLanguage || []))].sort();
 const allTypes = [...new Set(allScrapers.flatMap(s => s.supportedTypes || []))].sort();
 
-// Preload scrapers at startup
-console.log('Loading', allScrapers.length, 'scrapers...');
-allScrapers.forEach(s => loadScraper(s));
-console.log(scrapersCache.size + ' scrapers loaded');
+// Lazy-load scrapers on demand (better for free hosting)
 
 function getConfig(req) {
   const cfg = {};
