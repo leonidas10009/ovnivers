@@ -1,7 +1,5 @@
 # Ovnivers — All-in-One Nuvio Addon
 
-Addon con **61 providers** adaptado para **Nuvio 0.7.5**, combinando los scrapers de [All-in-One-Nuvio](https://github.com/D3adlyRocket/All-in-One-Nuvio) y el formato del sistema de [nuvio-providers](https://github.com/yoruix/nuvio-providers).
-
 ## Instalacion
 
 1. Abri **Nuvio** > **Settings** > **Plugins**
