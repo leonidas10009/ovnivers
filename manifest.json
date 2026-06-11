@@ -1,7 +1,7 @@
 {
   "id": "com.ovnivers.allinone",
   "name": "Ovnivers All-in-One",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "61 streaming providers — movies, TV, anime, dramas, cartoons. Multi-language, up to 4K.",
   "logo": "https://raw.githubusercontent.com/leonidas10009/ovnivers/main/logo.png",
   "scrapers": [
