@@ -29,14 +29,14 @@
   "catalogs": [
     { "type": "movie", "id": "tmdb-popular", "name": "Popular Movies" },
     { "type": "series", "id": "tmdb-popular", "name": "Popular Series" },
-    { "type": "anime", "id": "animeflv:onair", "name": "AnimeFLV On Air" },
-    { "type": "anime", "id": "animeav1:onair", "name": "AnimeAV1 On Air" },
-    { "type": "anime", "id": "tioanime:onair", "name": "TioAnime On Air" },
-    { "type": "anime", "id": "henaojara:onair", "name": "Henaojara On Air" },
-    { "type": "anime", "id": "animeflv:search", "name": "AnimeFLV Search", "extra": [{ "name": "search", "isRequired": true }, { "name": "genre", "optionsLimit": 1, "isRequired": false }, { "name": "skip", "isRequired": false }] },
-    { "type": "anime", "id": "animeav1:search", "name": "AnimeAV1 Search", "extra": [{ "name": "search", "isRequired": true }, { "name": "genre", "optionsLimit": 1, "isRequired": false }, { "name": "skip", "isRequired": false }] },
-    { "type": "anime", "id": "tioanime:search", "name": "TioAnime Search", "extra": [{ "name": "search", "isRequired": true }, { "name": "genre", "optionsLimit": 1, "isRequired": false }, { "name": "skip", "isRequired": false }] },
-    { "type": "anime", "id": "henaojara:search", "name": "Henaojara Search", "extra": [{ "name": "search", "isRequired": true }, { "name": "genre", "optionsLimit": 1, "isRequired": false }, { "name": "skip", "isRequired": false }] }
+    { "type": "anime", "id": "animeflv|onair", "name": "AnimeFLV On Air" },
+    { "type": "anime", "id": "animeav1|onair", "name": "AnimeAV1 On Air" },
+    { "type": "anime", "id": "tioanime|onair", "name": "TioAnime On Air" },
+    { "type": "anime", "id": "henaojara|onair", "name": "Henaojara On Air" },
+    { "type": "anime", "id": "animeflv|search", "name": "AnimeFLV Search", "extra": [{ "name": "search", "isRequired": true }, { "name": "genre", "optionsLimit": 1, "isRequired": false }, { "name": "skip", "isRequired": false }] },
+    { "type": "anime", "id": "animeav1|search", "name": "AnimeAV1 Search", "extra": [{ "name": "search", "isRequired": true }, { "name": "genre", "optionsLimit": 1, "isRequired": false }, { "name": "skip", "isRequired": false }] },
+    { "type": "anime", "id": "tioanime|search", "name": "TioAnime Search", "extra": [{ "name": "search", "isRequired": true }, { "name": "genre", "optionsLimit": 1, "isRequired": false }, { "name": "skip", "isRequired": false }] },
+    { "type": "anime", "id": "henaojara|search", "name": "Henaojara Search", "extra": [{ "name": "search", "isRequired": true }, { "name": "genre", "optionsLimit": 1, "isRequired": false }, { "name": "skip", "isRequired": false }] }
   ],
   "behaviorHints": {
     "adult": false,

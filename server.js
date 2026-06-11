@@ -184,7 +184,16 @@ const BACKEND_SCRAPERS = [
 // ─── Pigamer37 Proxy ────────────────────
 
 function isAnimeId(id) {
-  return ANIME_PREFIXES.some(p => id.startsWith(p));
+  // detect both colon and pipe variants
+  return ANIME_PREFIXES.some(p => id.startsWith(p) || id.startsWith(p.replace(':', '|')));
+}
+
+function fixPigamerId(id) {
+  return id.replace(/:/g, '%7C');
+}
+
+function fixPigamerType(type) {
+  return 'series';
 }
 
 async function proxyPigamer(pathSuffix, timeout = 20000) {
@@ -222,14 +231,14 @@ app.get('/manifest.json', (req, res) => {
   }
   if (config.enableAnime) {
     enabledCatalogs.push(
-      { type: 'anime', id: 'animeflv:onair', name: 'AnimeFLV On Air' },
-      { type: 'anime', id: 'animeav1:onair', name: 'AnimeAV1 On Air' },
-      { type: 'anime', id: 'tioanime:onair', name: 'TioAnime On Air' },
-      { type: 'anime', id: 'henaojara:onair', name: 'Henaojara On Air' },
-      { type: 'anime', id: 'animeflv:search', name: 'AnimeFLV', extra: [{ name: 'search', isRequired: true }, { name: 'genre', optionsLimit: 1, isRequired: false }, { name: 'skip', isRequired: false }] },
-      { type: 'anime', id: 'animeav1:search', name: 'AnimeAV1', extra: [{ name: 'search', isRequired: true }, { name: 'genre', optionsLimit: 1, isRequired: false }, { name: 'skip', isRequired: false }] },
-      { type: 'anime', id: 'tioanime:search', name: 'TioAnime', extra: [{ name: 'search', isRequired: true }, { name: 'genre', optionsLimit: 1, isRequired: false }, { name: 'skip', isRequired: false }] },
-      { type: 'anime', id: 'henaojara:search', name: 'Henaojara', extra: [{ name: 'search', isRequired: true }, { name: 'genre', optionsLimit: 1, isRequired: false }, { name: 'skip', isRequired: false }] }
+      { type: 'series', id: 'animeflv|onair', name: 'AnimeFLV On Air' },
+      { type: 'series', id: 'animeav1|onair', name: 'AnimeAV1 On Air' },
+      { type: 'series', id: 'tioanime|onair', name: 'TioAnime On Air' },
+      { type: 'series', id: 'henaojara|onair', name: 'Henaojara On Air' },
+      { type: 'series', id: 'animeflv|search', name: 'AnimeFLV', extra: [{ name: 'search', isRequired: true }, { name: 'genre', optionsLimit: 1, isRequired: false }, { name: 'skip', isRequired: false }] },
+      { type: 'series', id: 'animeav1|search', name: 'AnimeAV1', extra: [{ name: 'search', isRequired: true }, { name: 'genre', optionsLimit: 1, isRequired: false }, { name: 'skip', isRequired: false }] },
+      { type: 'series', id: 'tioanime|search', name: 'TioAnime', extra: [{ name: 'search', isRequired: true }, { name: 'genre', optionsLimit: 1, isRequired: false }, { name: 'skip', isRequired: false }] },
+      { type: 'series', id: 'henaojara|search', name: 'Henaojara', extra: [{ name: 'search', isRequired: true }, { name: 'genre', optionsLimit: 1, isRequired: false }, { name: 'skip', isRequired: false }] }
     );
   }
 
@@ -238,25 +247,15 @@ app.get('/manifest.json', (req, res) => {
   if (config.enableSeries) enabledTypes.push('series');
   if (config.enableAnime) enabledTypes.push('anime');
 
-  const resources = [];
-  if (config.enableBackend) {
-    resources.push(
-      { name: 'stream', types: enabledTypes, idPrefixes: ['tt', 'tmdb'] },
-      { name: 'catalog', types: enabledTypes.filter(t => t !== 'anime'), idPrefixes: ['tmdb'] },
-      { name: 'meta', types: enabledTypes.filter(t => t !== 'anime'), idPrefixes: ['tt', 'tmdb'] }
-    );
-  }
-  if (config.enableAnime) {
-    resources.push(
-      { name: 'stream', types: ['anime'], idPrefixes: ANIME_PREFIXES },
-      { name: 'catalog', types: ['anime'], idPrefixes: ANIME_PREFIXES },
-      { name: 'meta', types: ['anime'], idPrefixes: ANIME_PREFIXES }
-    );
-  }
+    const allPrefixes = [];
+    if (config.enableBackend) allPrefixes.push('tt', 'tmdb');
+    if (config.enableAnime) allPrefixes.push(...ANIME_PREFIXES);
 
-  const idPrefixes = [];
-  if (config.enableBackend) idPrefixes.push('tt', 'tmdb');
-  if (config.enableAnime) idPrefixes.push(...ANIME_PREFIXES);
+    const resources = [
+      { name: 'stream', types: enabledTypes, idPrefixes: allPrefixes },
+      { name: 'catalog', types: enabledTypes, idPrefixes: allPrefixes },
+      { name: 'meta', types: enabledTypes, idPrefixes: allPrefixes }
+    ];
 
   const manifest = {
     id: ADDON_ID,
@@ -299,8 +298,9 @@ app.get('/stream/:type/:id.json', async (req, res) => {
   // Anime → proxy pigamer37
   if (isAnimeId(id) || type === 'anime') {
     if (!config.enableAnime) return res.json({ streams: [] });
+    const proxyType = (type === 'anime') ? 'series' : type;
     const qs = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
-    const data = await proxyPigamer(`/stream/${type}/${id}.json${qs}`);
+    const data = await proxyPigamer(`/stream/${proxyType}/${encodeURIComponent(id)}.json${qs}`);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cache-Control', `public, max-age=${CACHE_TTL / 1000}`);
     return res.json(data || { streams: [] });
@@ -375,10 +375,11 @@ app.get('/catalog/:type/:id.json', async (req, res) => {
   }
 
   // Anime catalogs → proxy pigamer37
-  if (isAnimeId(id.replace('|onair', '').replace('|search', '')) || type === 'anime') {
+  if (isAnimeId(id.replace('|onair', '').replace('|search', '').replace('%7C', '|')) || type === 'anime') {
     if (!config.enableAnime) return res.json({ metas: [] });
+    const proxyType = 'series';
     const qs = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
-    const data = await proxyPigamer(`/catalog/${type}/${id}.json${qs}`);
+    const data = await proxyPigamer(`/catalog/${proxyType}/${encodeURIComponent(id)}.json${qs}`);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cache-Control', `public, max-age=${META_TTL / 1000}`);
     return res.json(data || { metas: [] });
@@ -452,7 +453,8 @@ app.get('/meta/:type/:id.json', async (req, res) => {
   // Anime meta → proxy pigamer37
   if (isAnimeId(id) || type === 'anime') {
     if (!config.enableAnime) return res.json({ meta: null });
-    const data = await proxyPigamer(`/meta/${type}/${id}.json`);
+    const proxyType = 'series';
+    const data = await proxyPigamer(`/meta/${proxyType}/${encodeURIComponent(id)}.json`);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cache-Control', `public, max-age=${META_TTL / 1000}`);
     return res.json(data || { meta: null });
@@ -518,12 +520,12 @@ h1{color:#e94560;font-size:1.8em;text-align:center;margin-bottom:5px}
 .row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #21262d;font-size:13px}
 .row:last-child{border-bottom:none}
 .row label{flex:1}
-.toggle{position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0}
+.toggle{position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0}
 .toggle input{opacity:0;width:0;height:0}
-.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#30363d;border-radius:24px;transition:.2s}
-.slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:#c9d1d9;border-radius:50%;transition:.2s}
+.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#30363d;border-radius:20px;transition:.2s}
+.slider:before{position:absolute;content:"";height:14px;width:14px;left:3px;bottom:3px;background:#c9d1d9;border-radius:50%;transition:.2s}
 input:checked+.slider{background:#2ea043}
-input:checked+.slider:before{transform:translateX(20px)}
+input:checked+.slider:before{transform:translateX(16px)}
 .lang-grid{display:flex;flex-wrap:wrap;gap:6px}
 .lang-chip{position:relative;cursor:pointer}
 .lang-chip input{position:absolute;opacity:0}
@@ -566,6 +568,13 @@ select{background:#21262d;color:#c9d1d9;border:1px solid #30363d;border-radius:6
   </div>
 
   <div class="section">
+    <h3>Languages (preferred)</h3>
+    <div class="lang-grid">
+      ${Object.entries(ALL_LANGS).map(([code, name]) => `<label class="lang-chip"><input type="checkbox" name="lang_${code}"${currentConfig.langs.includes(code) ? ' checked' : ''}><span>${name}</span></label>`).join('')}
+    </div>
+  </div>
+
+  <div class="section">
     <h3>Backend Scrapers (server-side)</h3>
     <div class="row"><label>Enable backend streaming</label><label class="toggle"><input type="checkbox" name="enableBackend"${currentConfig.enableBackend ? ' checked' : ''}><span class="slider"></span></label></div>
   </div>
@@ -585,11 +594,17 @@ select{background:#21262d;color:#c9d1d9;border:1px solid #30363d;border-radius:6
 <script>
 function getConfig() {
   const f = document.getElementById('cfgForm');
+  const langs = [];
+  ${JSON.stringify(Object.keys(ALL_LANGS))}.forEach(code => {
+    const cb = f['lang_' + code];
+    if (cb && cb.checked) langs.push(code);
+  });
   return {
     enableMovies: f.enableMovies.checked,
     enableSeries: f.enableSeries.checked,
     enableAnime: f.enableAnime.checked,
     quality: f.quality.value,
+    langs: langs,
     enableBackend: f.enableBackend.checked,
     enableLocal: f.enableLocal.checked
   };
