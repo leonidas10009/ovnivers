@@ -1,9 +1,10 @@
 {
   "id": "com.ovnivers.allinone",
+  "version": "1.0.6",
   "name": "Ovnivers All-in-One",
-  "version": "1.0.4",
   "description": "61 streaming providers — movies, TV, anime, dramas, cartoons. Multi-language, up to 4K.",
   "logo": "https://raw.githubusercontent.com/leonidas10009/ovnivers/main/logo.png",
+  "catalogs": [],
   "resources": [
     {
       "name": "stream",
@@ -23,14 +24,7 @@
     "series",
     "anime"
   ],
-  "idPrefixes": [
-    "tt",
-    "tmdb"
-  ],
-  "catalogs": [],
   "behaviorHints": {
-    "adult": false,
-    "p2pNotSupported": true,
     "configurable": true,
     "configurationRequired": false
   },
