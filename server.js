@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.3.0
+ * Ovnivers — Stremio Addon Backend v1.4.0
  * Backend scrapers + Pigamer37 (AnimeFLV/AnimeAV1/Henaojara/TioAnime) proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
@@ -13,7 +13,7 @@ const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
 const TMDB_KEY = 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.3.0';
+const VERSION = '1.4.0';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 const PIGAMER = 'https://pigamer37.alwaysdata.net';
@@ -266,7 +266,7 @@ app.get('/manifest.json', (req, res) => {
     catalogs: enabledCatalogs,
     resources,
     types: enabledTypes,
-    idPrefixes,
+    idPrefixes: allPrefixes,
     behaviorHints: {
       adult: false,
       configurable: true,
@@ -585,11 +585,20 @@ select{background:#21262d;color:#c9d1d9;border:1px solid #30363d;border-radius:6
   </div>
 
   <div class="actions">
-    <button class="btn btn-save" onclick="saveConfig()">Save Configuration</button>
+    <button class="btn btn-save" onclick="generateUrl()">Generate Install URL</button>
     <button class="btn btn-reset" onclick="resetConfig()">Reset Defaults</button>
   </div>
   <div class="status" id="status"></div>
+  <div class="url-box" id="urlBox" style="display:none"></div>
 </form>
+
+<style>
+.url-box{margin-top:12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:10px;word-break:break-all}
+.url-box code{font-size:11px;color:#58a6ff}
+.url-box .url-hint{font-size:11px;color:#8b949e;margin-top:6px}
+.copy-btn{background:#1f6feb;color:#fff;border:none;padding:4px 12px;border-radius:4px;font-size:11px;cursor:pointer;margin-top:8px}
+.copy-btn:hover{background:#388bfd}
+</style>
 
 <script>
 function getConfig() {
@@ -610,21 +619,41 @@ function getConfig() {
   };
 }
 
-function saveConfig() {
+function generateUrl() {
   const cfg = getConfig();
   const json = JSON.stringify(cfg);
   const b64 = btoa(unescape(encodeURIComponent(json)));
+  const url = '${BASE_URL}/manifest.json?configured=' + b64;
+  const stremioUrl = 'stremio://${BASE_URL}/manifest.json?configured=' + b64;
+
   const s = document.getElementById('status');
   s.className = 'success';
-  s.textContent = 'Configuration saved! Refresh in Nuvio to apply.';
+  s.textContent = 'Install URL generated!';
 
-  // Send to Stremio/Nuvio via postMessage
+  const box = document.getElementById('urlBox');
+  box.style.display = 'block';
+  box.innerHTML = '<code>' + url + '</code>' +
+    '<div class="url-hint">Copy this URL into Nuvio Settings > Addons to install with your preferences.</div>' +
+    '<button class="copy-btn" onclick="copyUrl()">Copy URL</button>' +
+    ' <button class="copy-btn" onclick="installStremio()">Install in Stremio</button>';
+
+  window.__installUrl = url;
+  window.__stremioUrl = stremioUrl;
+
   if (window.parent && window.parent !== window) {
     window.parent.postMessage({ type: 'configure', version: '${VERSION}', configured: b64 }, '*');
   }
-  if (window.opener) {
-    window.opener.postMessage({ type: 'configure', version: '${VERSION}', configured: b64 }, '*');
-  }
+}
+
+function copyUrl() {
+  navigator.clipboard.writeText(window.__installUrl).then(() => {
+    const s = document.getElementById('status');
+    s.textContent = 'URL copied to clipboard!';
+  });
+}
+
+function installStremio() {
+  window.open(window.__stremioUrl, '_blank');
 }
 
 function resetConfig() {
@@ -635,7 +664,16 @@ function resetConfig() {
   f.quality.value = 'all';
   f.enableBackend.checked = true;
   f.enableLocal.checked = true;
-  saveConfig();
+  // reset all language checkboxes
+  ${JSON.stringify(Object.keys(ALL_LANGS))}.forEach(code => {
+    const cb = f['lang_' + code];
+    if (cb) cb.checked = true;
+  });
+  const s = document.getElementById('status');
+  s.className = 'success';
+  s.textContent = 'Reset to defaults. Click "Generate Install URL" to apply.';
+  const box = document.getElementById('urlBox');
+  if (box) box.style.display = 'none';
 }
 
 function setDefaults() {
