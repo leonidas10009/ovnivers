@@ -8,21 +8,15 @@
         "build:provider": "node build.js",
         "start": "node server.js"
     },
-    "devDependencies": {
-        "cheerio": "^1.1.2",
+    "dependencies": {
         "cheerio-without-node-native": "^0.20.2",
-        "esbuild": "^0.20.0",
-        "nodemon": "^3.0.0"
+        "crypto-js": "^4.2.0",
+        "express": "^4.21.0"
     },
     "keywords": [
         "nuvio",
         "streaming",
         "providers"
     ],
-    "license": "GPL-3.0",
-    "dependencies": {
-        "cookie-parser": "^1.4.7",
-        "crypto-js": "^4.2.0",
-        "express": "^5.2.1"
-    }
+    "license": "GPL-3.0"
 }
