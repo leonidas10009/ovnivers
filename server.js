@@ -4,13 +4,37 @@ const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 
 const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, 'manifest.json'), 'utf8'));
 const allScrapers = manifest.scrapers || [];
+const providersDir = path.join(__dirname, 'providers');
+
+const scrapersCache = new Map();
+function loadScraper(scraper) {
+  if (scrapersCache.has(scraper.id)) return scrapersCache.get(scraper.id);
+  const filePath = path.join(providersDir, path.basename(scraper.filename));
+  try {
+    const mod = require(filePath);
+    const ok = typeof mod.getStreams === 'function';
+    scrapersCache.set(scraper.id, ok ? mod.getStreams : null);
+    if (ok) console.log('[OK]', scraper.id);
+    else console.log('[MISSING] getStreams in', scraper.id);
+    return ok ? mod.getStreams : null;
+  } catch (e) {
+    console.error('[FAIL]', scraper.id, e.message.substring(0, 80));
+    scrapersCache.set(scraper.id, null);
+    return null;
+  }
+}
 
 const allLanguages = [...new Set(allScrapers.flatMap(s => s.contentLanguage || []))].sort();
 const allTypes = [...new Set(allScrapers.flatMap(s => s.supportedTypes || []))].sort();
+
+// Preload scrapers at startup
+console.log('Loading', allScrapers.length, 'scrapers...');
+allScrapers.forEach(s => loadScraper(s));
+console.log(scrapersCache.size + ' scrapers loaded');
 
 function getConfig(req) {
   const cfg = {};
@@ -33,15 +57,28 @@ function getFilteredScrapers(config) {
     if (config.enabledProviders.length > 0) return config.enabledProviders.includes(s.id);
     if (config.disabledProviders.length > 0 && config.disabledProviders.includes(s.id)) return false;
     if (config.languages.length > 0) {
-      const match = (s.contentLanguage || []).some(l => config.languages.includes(l));
-      if (!match) return false;
+      if (!(s.contentLanguage || []).some(l => config.languages.includes(l))) return false;
     }
     if (config.types.length > 0) {
-      const match = (s.supportedTypes || []).some(t => config.types.includes(t));
-      if (!match) return false;
+      if (!(s.supportedTypes || []).some(t => config.types.includes(t))) return false;
     }
     return true;
   });
+}
+
+// Normalize media type for scrapers
+function mapType(stremioType) {
+  if (stremioType === 'movie') return 'movie';
+  if (stremioType === 'series' || stremioType === 'tv') return 'tv';
+  if (stremioType === 'anime') return 'anime';
+  return stremioType;
+}
+
+function extractId(rawId) {
+  let id = rawId;
+  if (id.startsWith('tmdb:')) id = id.substring(5);
+  if (id.startsWith('tt')) return { imdb: id, tmdb: null };
+  return { imdb: null, tmdb: id };
 }
 
 app.get('/manifest.json', (req, res) => {
@@ -59,13 +96,70 @@ app.get('/manifest.json', (req, res) => {
     resources: manifest.resources,
     types: manifest.types,
     idPrefixes: manifest.idPrefixes,
-    behaviorHints: manifest.behaviorHints,
+    behaviorHints: {
+      ...manifest.behaviorHints,
+      configurable: true,
+      configurationRequired: false
+    },
     catalogs: manifest.catalogs || [],
     scrapers: scrapers
   };
 
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.json(output);
+});
+
+// Stream endpoint - executes scrapers
+app.get('/stream/:type/:id.json', async (req, res) => {
+  const { type, id } = req.params;
+  const mediaType = mapType(type);
+  const config = getConfig(req);
+  const scrapers = getFilteredScrapers(config);
+
+  const streams = [];
+
+  // For series, extract season/episode from query
+  const season = parseInt(req.query.season) || 1;
+  const episode = parseInt(req.query.episode) || 1;
+  const idInfo = extractId(id);
+
+  console.log(`[stream] ${type}/${id} → mediaType=${mediaType} s${season}e${episode} (${scrapers.length} scrapers)`);
+
+  const promises = scrapers.map(async (scraper) => {
+    const fn = loadScraper(scraper);
+    if (!fn) return;
+
+    try {
+      const tmdbId = idInfo.tmdb || idInfo.imdb;
+      const results = await fn(tmdbId, mediaType, mediaType === 'tv' ? season : null, mediaType === 'tv' ? episode : null);
+
+      if (Array.isArray(results) && results.length > 0) {
+        for (const s of results) {
+          const stream = {
+            name: scraper.name || scraper.id,
+            title: s.title || s.name || `${scraper.name}`,
+            url: s.url || '',
+            quality: s.quality || 'HD',
+            headers: s.headers || {}
+          };
+
+          if (s.size) stream.size = s.size;
+          if (s.behaviorHints) stream.behaviorHints = s.behaviorHints;
+
+          streams.push(stream);
+        }
+      }
+    } catch (err) {
+      console.error(`[${scraper.id}] Error:`, err.message.substring(0, 100));
+    }
+  });
+
+  await Promise.allSettled(promises);
+
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Content-Type', 'application/json');
+  res.json({ streams });
+  console.log(`[stream] ${type}/${id} → ${streams.length} results`);
 });
 
 app.get('/configure', (req, res) => {
@@ -141,43 +235,42 @@ app.get('/configure', (req, res) => {
   <button class="btn-outline" onclick="selectAll()">Select All</button>
   <button class="btn-outline" onclick="deselectAll()">Deselect All</button>
 </div>
-<button class="btn-primary" onclick="generate()">Generate & Install</button>
+<button class="btn-primary" onclick="generate()">Generate &amp; Install</button>
 <button class="stremio-btn" id="stremioBtn" onclick="installStremio()">Open in Nuvio</button>
 <div id="result">
-  <p>Copy this URL and add it to Nuvio Settings > Addons:</p>
+  <p>Copy this URL and add it to Nuvio Settings &gt; Addons:</p>
   <input id="url" readonly onclick="this.select();navigator.clipboard.writeText(this.value)">
 </div>
 <script>
 const BASE = '${BASE_URL}';
-function selectAll(){document.querySelectorAll('input[name=provider]').forEach(c=>c.checked=true);updateCount()}
-function deselectAll(){document.querySelectorAll('input[name=provider]').forEach(c=>c.checked=false);updateCount()}
+function selectAll(){document.querySelectorAll('input[name=provider]').forEach(function(c){c.checked=true});updateCount()}
+function deselectAll(){document.querySelectorAll('input[name=provider]').forEach(function(c){c.checked=false});updateCount()}
 function updateCount(){
-  const n = document.querySelectorAll('input[name=provider]:checked').length;
+  var n = document.querySelectorAll('input[name=provider]:checked').length;
   document.getElementById('provCount').textContent = n + ' / ${allScrapers.length}';
-  document.querySelectorAll('input[name=provider]').forEach(c=>c.parentElement.style.opacity=c.checked?'1':'0.4');
+  document.querySelectorAll('input[name=provider]').forEach(function(c){c.parentElement.style.opacity=c.checked?'1':'0.4'});
 }
-document.querySelectorAll('input[name=provider]').forEach(c=>c.addEventListener('change',updateCount));
+document.querySelectorAll('input[name=provider]').forEach(function(c){c.addEventListener('change',updateCount)});
 function generate(){
-  const langs = [...document.querySelectorAll('input[name=lang]:checked')].map(c=>c.value);
-  const types = [...document.querySelectorAll('input[name=type]:checked')].map(c=>c.value);
-  const providers = [...document.querySelectorAll('input[name=provider]:checked')].map(c=>c.value);
-  const allChecked = providers.length === ${allScrapers.length};
-  const configObj = {};
+  var langs = Array.from(document.querySelectorAll('input[name=lang]:checked')).map(function(c){return c.value});
+  var types = Array.from(document.querySelectorAll('input[name=type]:checked')).map(function(c){return c.value});
+  var providers = Array.from(document.querySelectorAll('input[name=provider]:checked')).map(function(c){return c.value});
+  var allChecked = providers.length === ${allScrapers.length};
+  var configObj = {};
   if(langs.length) configObj.languages = langs;
   if(types.length) configObj.types = types;
   if(!allChecked) configObj.enabledProviders = providers;
-  const config = btoa(JSON.stringify(configObj));
-  const url = BASE + '/manifest.json?config=' + config;
+  var config = btoa(JSON.stringify(configObj));
+  var url = BASE + '/manifest.json?config=' + config;
   document.getElementById('url').value = url;
   document.getElementById('result').style.display = 'block';
   document.getElementById('stremioBtn').style.display = 'inline-block';
-  // Try to open directly in Nuvio/Stremio
-  setTimeout(() => {
+  setTimeout(function(){
     window.location.href = 'stremio://addon?url=' + encodeURIComponent(url);
   }, 300);
 }
 function installStremio(){
-  const url = document.getElementById('url').value;
+  var url = document.getElementById('url').value;
   window.location.href = 'stremio://addon?url=' + encodeURIComponent(url);
 }
 </script>`;
@@ -186,22 +279,24 @@ function installStremio(){
   res.send(html);
 });
 
-// Stremio stream endpoint (placeholder for now - streams come from local scrapers)
-app.get('/stream/:type/:id.json', (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.json({ streams: [] });
-});
-
-// Health check
 app.get('/', (req, res) => {
-  res.json({ name: 'Ovnivers Addon', version: manifest.version, scrapers: allScrapers.length });
+  res.json({
+    name: manifest.name,
+    version: manifest.version,
+    scrapers: allScrapers.length,
+    loaded: scrapersCache.size,
+    endpoints: {
+      manifest: `${BASE_URL}/manifest.json`,
+      configure: `${BASE_URL}/configure`,
+      stream: `${BASE_URL}/stream/:type/:id.json`
+    }
+  });
 });
 
-// Serve static files (logo, providers, etc.)
 app.use(express.static(__dirname));
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Ovnivers addon: http://localhost:${PORT}`);
-  console.log(`Configure:      http://localhost:${PORT}/configure`);
-  console.log(`Manifest:       http://localhost:${PORT}/manifest.json`);
+  console.log(`Ovnivers: http://localhost:${PORT}`);
+  console.log(`Configure: ${BASE_URL}/configure`);
+  console.log(`Manifest:  ${BASE_URL}/manifest.json`);
 });
