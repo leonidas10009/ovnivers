@@ -2,7 +2,5 @@ services:
   - type: web
     name: ovnivers
     env: node
-    buildCommand: npm install --no-audit --no-fund
+    buildCommand: npm install
     startCommand: node server.js
-    plan: free
-    runtime: node
