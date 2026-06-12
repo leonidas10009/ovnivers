@@ -1,6 +1,6 @@
-# Ovnivers — All-in-One Nuvio Addon v1.5.0
+# Ovnivers — All-in-One Nuvio Addon v1.7.0
 
-Addon para **Nuvio 0.7.5** con 62 scrapers locales (61 originales + 80+ providers de Alfa Kodi) + 6 backend scrapers + anime via Pigamer37.
+Addon para **Nuvio 0.7.5** con 62 scrapers locales (61 originales + 80+ providers de Alfa Kodi) + 4 backend scrapers + anime via Pigamer37.
 
 ## Instalacion
 
@@ -18,7 +18,7 @@ Addon para **Nuvio 0.7.5** con 62 scrapers locales (61 originales + 80+ provider
 
 | Funcionalidad | Detalle |
 |---|---|
-| **Movies & TV** (backend) | 2embed (Vesy + Vsrc), VidSrc, EZTV, Cuevana2Espanol, PoseidonHD |
+| **Movies & TV** (backend) | 2embed (Vesy + Vsrc), VidSrc, PoseidonHD |
 | **Anime** (proxy) | AnimeFLV, AnimeAV1, TioAnime, Henaojara via Pigamer37 |
 | **Alfa Providers** (local) | 80+ canales de Alfa Kodi: peliculas, series, anime, documentales, torrents |
 | **Original scrapers** (local) | 61 providers de All-in-One-Nuvio (EN, HI, FR, JA, KO, ZH) |
@@ -50,16 +50,16 @@ Scraper unificado del addon **Alfa** de Kodi. Corre localmente en el dispositivo
 
 **Servidores:** streamwish, filemoon, doodstream, streamtape, fembed, okru, mixdrop, upstream, vidhide, voe, mystream, netutv, yourupload, jawcloud, streampe, gvideo, torrent/magnet.
 
-## Backend Scrapers (6)
+## Backend Scrapers (4 activos)
 
-| Scraper | Fuente | Tipo |
-|---|---|---|
-| 2embed (Vesy) | streamsrcs.2embed.cc | API JSON |
-| 2embed (Vsrc) | streamsrcs.2embed.cc | API JSON |
-| VidSrc | vidsrc.rip | API JSON |
-| EZTV | eztvx.to | Torrent/Magnet |
-| Cuevana2 | cuevana2espanol.net | Next.js JSON |
-| PoseidonHD | poseidonhd2.co | Next.js JSON |
+| Scraper | Fuente | Datos | Nota |
+|---|---|---|---|
+| 2embed (Vesy) | streamsrcs.2embed.cc | HTML parsed | Regex m3u8/mp4/iframe |
+| 2embed (Vsrc) | streamsrcs.2embed.cc | HTML parsed | Regex m3u8/mp4/iframe |
+| VidSrc | vidsrc.rip | API/HTML | Fetch con fallbacks |
+| PoseidonHD | poseidonhd2.co | Next.js JSON | |
+
+> **EZTV** y **Cuevana2** removidos en v1.6.1 — bloqueados desde Render (403/fetch failed).
 
 ## Endpoints
 

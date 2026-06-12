@@ -1,6 +1,6 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.4.0
- * Backend scrapers + Pigamer37 (AnimeFLV/AnimeAV1/Henaojara/TioAnime) proxy
+ * Ovnivers — Stremio Addon Backend v1.7.0
+ * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
 const express = require('express');
@@ -13,7 +13,7 @@ const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.6.1';
+const VERSION = '1.7.0';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 const PIGAMER = 'https://pigamer37.alwaysdata.net';
@@ -37,7 +37,9 @@ const DEFAULT_CONFIG = {
   enableSeries: true,
   enableAnime: true,
   enableBackend: true,
-  enableLocal: true
+  enableLocal: true,                     // run bundled providers server-side
+  enableCatalogs: true,                  // expose this addon's TMDb/anime catalogs
+  exposeLocalScrapers: false             // legacy Nuvio local scraper manifest field
 };
 
 let manifestScrapers = [];
@@ -50,6 +52,42 @@ try {
 } catch (e) {
   console.warn('Could not load scrapers from manifest.json:', e.message);
 }
+
+const LOCAL_PROVIDER_TIMEOUT = Number(process.env.LOCAL_PROVIDER_TIMEOUT || 12000);
+const LOCAL_PROVIDER_CONCURRENCY = Number(process.env.LOCAL_PROVIDER_CONCURRENCY || 8);
+const MAX_STREAM_RESULTS = Number(process.env.MAX_STREAM_RESULTS || 80);
+let scrapeAlfaProviders = null;
+const localProviders = [];
+
+try {
+  scrapeAlfaProviders = require('./providers/alfa-providers');
+  console.log('Loaded Alfa provider bridge');
+} catch (e) {
+  console.warn('Could not load Alfa provider bridge:', e.message);
+}
+
+for (const scraper of manifestScrapers) {
+  if (!scraper?.enabled || !scraper.filename) continue;
+  if (scraper.filename.replace(/\\/g, '/').endsWith('/alfa-providers.js')) continue;
+  try {
+    const filename = path.normalize(scraper.filename);
+    const fullPath = path.resolve(__dirname, filename);
+    if (!fullPath.startsWith(path.resolve(__dirname))) continue;
+    const mod = require(fullPath);
+    const getStreams = mod?.getStreams || mod?.default?.getStreams;
+    if (typeof getStreams !== 'function') continue;
+    localProviders.push({
+      id: scraper.id || path.basename(filename, '.js'),
+      name: scraper.name || scraper.id || path.basename(filename, '.js'),
+      supportedTypes: scraper.supportedTypes || ['movie', 'tv'],
+      contentLanguage: scraper.contentLanguage || [],
+      getStreams
+    });
+  } catch (e) {
+    console.warn(`[provider] skipped ${scraper.id || scraper.filename}: ${e.message}`);
+  }
+}
+console.log(`Loaded ${localProviders.length} local provider modules`);
 
 const streamCache = new Map();
 const CACHE_TTL = 10 * 60 * 1000;
@@ -67,8 +105,8 @@ async function loadGenres() {
       fetchAPI(`https://api.themoviedb.org/3/genre/movie/list?api_key=${TMDB_KEY}&language=en`),
       fetchAPI(`https://api.themoviedb.org/3/genre/tv/list?api_key=${TMDB_KEY}&language=en`)
     ]);
-    genreCache.movie = (movieGenres?.genres || []).map(g => g.name);
-    genreCache.tv = (tvGenres?.genres || []).map(g => g.name);
+    genreCache.movie = (movieGenres?.genres || []).map(g => ({ id: String(g.id), name: g.name }));
+    genreCache.tv = (tvGenres?.genres || []).map(g => ({ id: String(g.id), name: g.name }));
     genreCache.loadedAt = now;
     console.log(`Loaded ${genreCache.movie.length} movie genres, ${genreCache.tv.length} TV genres`);
   } catch (e) {
@@ -183,7 +221,8 @@ function matchesQuality(streamName, qualityPref) {
 // ─── TMDB Helpers ─────────────────────────
 
 async function getIMDbId(tmdbId, mediaType) {
-  const url = `https://api.themoviedb.org/3/${mediaType === 'tv' ? 'tv' : 'movie'}/${tmdbId}?api_key=${TMDB_KEY}&language=en`;
+  const path = mediaType === 'tv' ? `tv/${tmdbId}/external_ids` : `movie/${tmdbId}`;
+  const url = `https://api.themoviedb.org/3/${path}?api_key=${TMDB_KEY}&language=en`;
   const data = await fetchAPI(url);
   return data?.imdb_id || null;
 }
@@ -365,7 +404,7 @@ async function proxyPigamer(pathSuffix, timeout = 20000) {
 function mapType(type) {
   if (type === 'series') return 'tv';
   if (type === 'movie') return 'movie';
-  if (type === 'anime') return 'series';
+  if (type === 'anime') return 'tv';
   return type;
 }
 
@@ -377,6 +416,194 @@ function cacheKey(type, id, extra) {
   return `${type}:${id}:${extra || ''}`;
 }
 
+function isSeriesType(type) {
+  return type === 'series' || type === 'tv' || type === 'anime';
+}
+
+function parseStreamId(id, fallbackSeason = 1, fallbackEpisode = 1) {
+  let contentId = id;
+  let season = fallbackSeason;
+  let episode = fallbackEpisode;
+
+  if (id.startsWith('tmdb:')) {
+    const parts = id.split(':');
+    contentId = parts.length > 1 ? parts[1] : id.substring(5);
+    if (parts.length >= 4) {
+      season = parseInt(parts[2]) || season;
+      episode = parseInt(parts[3]) || episode;
+    }
+  } else {
+    const match = id.match(/^(tt\d+):(\d+):(\d+)$/);
+    if (match) {
+      contentId = match[1];
+      season = parseInt(match[2]) || season;
+      episode = parseInt(match[3]) || episode;
+    }
+  }
+
+  return { contentId, season, episode };
+}
+
+function parseGenreId(value) {
+  if (!value) return '';
+  const decoded = decodeURIComponent(String(value));
+  const match = decoded.match(/^(\d+)(?::|%3A|\s+-\s+|\s)/);
+  return match ? match[1] : decoded;
+}
+
+function genreOptions(genres) {
+  return (genres || []).map(g => `${g.id}: ${g.name}`);
+}
+
+function isTypeEnabled(type, config) {
+  if (type === 'movie') return config.enableMovies;
+  if (isSeriesType(type)) return config.enableSeries || config.enableAnime;
+  return true;
+}
+
+function providerSupportsType(provider, mediaType, type) {
+  const supported = (provider.supportedTypes || []).map(t => String(t).toLowerCase());
+  if (!supported.length) return true;
+  if (mediaType === 'movie') return supported.includes('movie');
+  if (mediaType === 'tv') {
+    return supported.includes('tv') || supported.includes('series') || supported.includes('anime');
+  }
+  return supported.includes(type);
+}
+
+function providerMatchesLang(provider, config) {
+  const langs = (provider.contentLanguage || []).map(l => String(l).toLowerCase());
+  if (!langs.length || langs.includes('*')) return true;
+  const enabled = new Set((config.langs || []).map(l => String(l).toLowerCase()));
+  return langs.some(lang => enabled.has(lang));
+}
+
+function withTimeout(promise, timeoutMs) {
+  let timer;
+  return Promise.race([
+    promise,
+    new Promise(resolve => {
+      timer = setTimeout(() => resolve([]), timeoutMs);
+    })
+  ]).finally(() => clearTimeout(timer));
+}
+
+function normalizeStream(stream, providerId, providerName) {
+  if (!stream || typeof stream !== 'object') return null;
+  const url = stream.url || stream.file || stream.src || stream.link;
+  const hasPlayableTarget = url || stream.externalUrl || stream.infoHash;
+  if (!hasPlayableTarget) return null;
+
+  const quality = stream.quality || stream.name || stream.title || 'HD';
+  const name = stream.name || `${providerName} ${quality}`;
+  const title = stream.title || `${quality}\n${providerName}`;
+  return {
+    ...stream,
+    name,
+    title,
+    ...(url ? { url } : {}),
+    behaviorHints: {
+      notWebReady: true,
+      bingeGroup: `provider|${providerId}`,
+      ...(stream.behaviorHints || {})
+    }
+  };
+}
+
+function dedupeStreams(streams) {
+  const seen = new Set();
+  const out = [];
+  for (const stream of streams) {
+    const key = [
+      stream.infoHash || '',
+      stream.url || stream.externalUrl || '',
+      stream.name || '',
+      stream.title || ''
+    ].join('|').toLowerCase();
+    if (!key.trim() || seen.has(key)) continue;
+    seen.add(key);
+    out.push(stream);
+  }
+  return out;
+}
+
+async function runInChunks(items, size, worker, stopWhen) {
+  const results = [];
+  for (let i = 0; i < items.length; i += size) {
+    const chunk = items.slice(i, i + size);
+    const settled = await Promise.allSettled(chunk.map(worker));
+    for (const item of settled) {
+      if (item.status === 'fulfilled' && Array.isArray(item.value)) {
+        results.push(...item.value);
+      }
+    }
+    if (stopWhen?.(results)) break;
+  }
+  return results;
+}
+
+async function resolveTMDbIdForProviders(rawId, mediaType) {
+  if (!rawId) return null;
+  if (!rawId.startsWith('tt')) return rawId;
+  return await getTMDbId(rawId, mediaType);
+}
+
+async function scrapeLocalProviders(rawId, mediaType, type, season, episode, config) {
+  if (!config.enableLocal) return [];
+  const tmdbId = await resolveTMDbIdForProviders(rawId, mediaType);
+  if (!tmdbId) return [];
+
+  const providers = localProviders.filter(provider =>
+    providerSupportsType(provider, mediaType, type) && providerMatchesLang(provider, config)
+  );
+  if (!providers.length) return [];
+
+  const streams = await runInChunks(
+    providers,
+    LOCAL_PROVIDER_CONCURRENCY,
+    async (provider) => {
+      const start = Date.now();
+      try {
+        const data = await withTimeout(
+          Promise.resolve(provider.getStreams(String(tmdbId), mediaType, season, episode)),
+          LOCAL_PROVIDER_TIMEOUT
+        );
+        const normalized = (Array.isArray(data) ? data : [])
+          .map(stream => normalizeStream(stream, provider.id, provider.name))
+          .filter(Boolean);
+        if (normalized.length) {
+          console.log(`  [${provider.name}] ${normalized.length} streams (${Date.now() - start}ms)`);
+        }
+        return normalized;
+      } catch (e) {
+        console.warn(`  [${provider.name}] ${e.message}`);
+        return [];
+      }
+    },
+    results => results.length >= MAX_STREAM_RESULTS
+  );
+
+  return streams;
+}
+
+async function scrapeAlfa(rawId, mediaType, type, season, episode, config) {
+  if (!config.enableLocal || typeof scrapeAlfaProviders !== 'function') return [];
+  const tmdbId = await resolveTMDbIdForProviders(rawId, mediaType);
+  if (!tmdbId) return [];
+  try {
+    const data = await withTimeout(
+      Promise.resolve(scrapeAlfaProviders(isSeriesType(type) ? 'series' : type, String(tmdbId), season, episode)),
+      LOCAL_PROVIDER_TIMEOUT
+    );
+    return (Array.isArray(data) ? data : [])
+      .map(stream => normalizeStream(stream, 'alfa-providers', 'Alfa Providers'))
+      .filter(Boolean);
+  } catch (e) {
+    console.warn(`[alfa] ${e.message}`);
+    return [];
+  }
+}
+
 // ─── Manifest ─────────────────────────────
 
 app.get('/manifest.json', async (req, res) => {
@@ -385,25 +612,25 @@ app.get('/manifest.json', async (req, res) => {
 
   await loadGenres();
 
-  if (config.enableMovies) {
+  if (config.enableCatalogs && config.enableMovies) {
     enabledCatalogs.push(
       { type: 'movie', id: 'tmdb-popular', name: 'Popular Movies' },
       { type: 'movie', id: 'tmdb-trending', name: 'Trending Movies' },
       { type: 'movie', id: 'tmdb-top', name: 'Top Rated Movies' },
-      { type: 'movie', id: 'tmdb-genres', name: 'Movies by Genre', extra: [{ name: 'genre', options: genreCache.movie || [], optionsLimit: 1 }] },
+      { type: 'movie', id: 'tmdb-genres', name: 'Movies by Genre', extra: [{ name: 'genre', options: genreOptions(genreCache.movie), optionsLimit: 1 }] },
       { type: 'movie', id: 'tmdb-year', name: 'Movies by Year', extra: [{ name: 'search', isRequired: true }] }
     );
   }
-  if (config.enableSeries) {
+  if (config.enableCatalogs && config.enableSeries) {
     enabledCatalogs.push(
       { type: 'series', id: 'tmdb-popular', name: 'Popular Series' },
       { type: 'series', id: 'tmdb-trending', name: 'Trending Series' },
       { type: 'series', id: 'tmdb-top', name: 'Top Rated Series' },
-      { type: 'series', id: 'tmdb-genres', name: 'Series by Genre', extra: [{ name: 'genre', options: genreCache.tv || [], optionsLimit: 1 }] },
+      { type: 'series', id: 'tmdb-genres', name: 'Series by Genre', extra: [{ name: 'genre', options: genreOptions(genreCache.tv), optionsLimit: 1 }] },
       { type: 'series', id: 'tmdb-year', name: 'Series by Year', extra: [{ name: 'search', isRequired: true }] }
     );
   }
-  if (config.enableAnime) {
+  if (config.enableCatalogs && config.enableAnime) {
     enabledCatalogs.push(
       { type: 'series', id: 'animeflv|onair', name: 'AnimeFLV On Air' },
       { type: 'series', id: 'animeav1|onair', name: 'AnimeAV1 On Air' },
@@ -418,9 +645,8 @@ app.get('/manifest.json', async (req, res) => {
 
   const enabledTypes = [];
   if (config.enableMovies) enabledTypes.push('movie');
-  if (config.enableSeries) enabledTypes.push('series');
-  if (config.enableAnime) enabledTypes.push('anime');
-  enabledTypes.push('other');
+  if (config.enableSeries || config.enableAnime) enabledTypes.push('series');
+  if (!enabledTypes.includes('other')) enabledTypes.push('other');
 
   const streamPrefixes = [];
   if (config.enableBackend) streamPrefixes.push('tt', 'tmdb');
@@ -446,7 +672,7 @@ app.get('/manifest.json', async (req, res) => {
     id: ADDON_ID,
     version: VERSION,
     name: 'Ovnivers All-in-One',
-    description: `${manifestScrapers.length} scrapers + ${BACKEND_SCRAPERS.length} backend + AnimeFLV/AnimeAV1/TioAnime/Henaojara. Movies, TV & anime.`,
+    description: `${localProviders.length} server-side providers + Alfa + ${BACKEND_SCRAPERS.length} backend + AnimeFLV/AnimeAV1/TioAnime/Henaojara. Works with external catalogs.`,
     logo: `${BASE_URL}/logo.png`,
     catalogs: enabledCatalogs,
     resources,
@@ -459,7 +685,7 @@ app.get('/manifest.json', async (req, res) => {
       newEpisodeNotifications: true
     }
   };
-  if (config.enableLocal) manifest.scrapers = manifestScrapers;
+  if (config.exposeLocalScrapers) manifest.scrapers = manifestScrapers;
 
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'public, max-age=3600');
@@ -482,15 +708,9 @@ app.get('/stream/:type/:id.json', async (req, res) => {
 
 async function handleStream(req, res, type, id) {
   const config = parseConfig(req);
-  const season = parseInt(req.query.season) || 1;
-  const episode = parseInt(req.query.episode) || 1;
-
-  // Check if type is enabled
-  if ((type === 'movie' && !config.enableMovies) ||
-      (type === 'series' && !config.enableSeries) ||
-      (type === 'anime' && !config.enableAnime)) {
-    return res.json({ streams: [] });
-  }
+  const parsed = parseStreamId(id, parseInt(req.query.season) || 1, parseInt(req.query.episode) || 1);
+  const season = parsed.season;
+  const episode = parsed.episode;
 
   // Anime → proxy pigamer37
   if (isAnimeId(id)) {
@@ -511,10 +731,10 @@ async function handleStream(req, res, type, id) {
     }
   }
 
-  if (!config.enableBackend) return res.json({ streams: [] });
+  if (!isTypeEnabled(type, config)) return res.json({ streams: [] });
 
   const mediaType = mapType(type);
-  const rawId = extractId(id);
+  const rawId = extractId(parsed.contentId);
 
   const ck = cacheKey(type, id, `${season}:${episode}`);
   const cached = streamCache.get(ck);
@@ -528,18 +748,35 @@ async function handleStream(req, res, type, id) {
   console.log(`[stream] ${type}/${id} media=${mediaType} rawId=${rawId} s${season}e${episode}`);
 
   const streams = [];
-  await Promise.allSettled(BACKEND_SCRAPERS.map(async (scraper) => {
-    const start = Date.now();
-    try {
-      const results = await scraper.fn(rawId, mediaType, season, episode);
-      if (results.length > 0) {
-        console.log(`  [${scraper.name}] ${results.length} streams (${Date.now() - start}ms)`);
-        streams.push(...results);
-      }
-    } catch {}
-  }));
+  const streamTasks = [];
 
-  if (streams.length === 0) {
+  if (config.enableBackend) {
+    streamTasks.push(...BACKEND_SCRAPERS.map(async (scraper) => {
+      const start = Date.now();
+      try {
+        const results = await scraper.fn(rawId, mediaType, season, episode);
+        if (results.length > 0) {
+          console.log(`  [${scraper.name}] ${results.length} streams (${Date.now() - start}ms)`);
+          return results;
+        }
+      } catch {}
+      return [];
+    }));
+  }
+
+  if (config.enableLocal) {
+    streamTasks.push(
+      scrapeAlfa(rawId, mediaType, type, season, episode, config),
+      scrapeLocalProviders(rawId, mediaType, type, season, episode, config)
+    );
+  }
+
+  const settled = await Promise.allSettled(streamTasks);
+  for (const item of settled) {
+    if (item.status === 'fulfilled' && Array.isArray(item.value)) streams.push(...item.value);
+  }
+
+  if (streams.length === 0 && config.enableBackend) {
     const altId = !rawId.startsWith('tt')
       ? await getIMDbId(rawId, mediaType)
       : await getTMDbId(rawId, mediaType);
@@ -554,10 +791,11 @@ async function handleStream(req, res, type, id) {
     }
   }
 
-  console.log(`[stream] ${type}/${id} → ${streams.length} total`);
-  cacheSet(streamCache, ck, { data: streams, time: Date.now() }, MAX_CACHE);
+  const uniqueStreams = dedupeStreams(streams).slice(0, MAX_STREAM_RESULTS);
+  console.log(`[stream] ${type}/${id} → ${uniqueStreams.length} unique (${streams.length} raw)`);
+  cacheSet(streamCache, ck, { data: uniqueStreams, time: Date.now() }, MAX_CACHE);
 
-  const filtered = filterStreams(streams, config);
+  const filtered = filterStreams(uniqueStreams, config);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', `public, max-age=${CACHE_TTL / 1000}`);
   res.json({ streams: filtered });
@@ -584,11 +822,7 @@ app.get('/catalog/:type/:id.json', async (req, res) => {
 async function handleCatalog(req, res, type, id) {
   const config = parseConfig(req);
 
-  if ((type === 'movie' && !config.enableMovies) ||
-      (type === 'series' && !config.enableSeries) ||
-      (type === 'anime' && !config.enableAnime)) {
-    return res.json({ metas: [] });
-  }
+  if (!isTypeEnabled(type, config)) return res.json({ metas: [] });
 
   // Anime catalogs → proxy pigamer37
   const cleanId = id.replace('|onair', '').replace('|search', '').replace('%7C', '|');
@@ -610,7 +844,7 @@ async function handleCatalog(req, res, type, id) {
 
   if (!config.enableBackend) return res.json({ metas: [] });
 
-  const genre = req.query.genre;
+  const genre = parseGenreId(req.query.genre);
   const skip = parseInt(req.query.skip) || 0;
   const ck = cacheKey(type, id, `${skip}:${genre || ''}`);
 
@@ -696,11 +930,7 @@ app.get('/meta/:type/:id.json', async (req, res) => {
 async function handleMeta(req, res, type, id) {
   const config = parseConfig(req);
 
-  if ((type === 'movie' && !config.enableMovies) ||
-      (type === 'series' && !config.enableSeries) ||
-      (type === 'anime' && !config.enableAnime)) {
-    return res.json({ meta: null });
-  }
+  if (!isTypeEnabled(type, config)) return res.json({ meta: null });
 
   // Anime meta → proxy pigamer37
   if (isAnimeId(id)) {
