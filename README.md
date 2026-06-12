@@ -1,30 +1,26 @@
-# Ovnivers — All-in-One Nuvio Addon v1.4.1
+# Ovnivers — Stream Provider v1.4.4
 
-Addon para **Nuvio 0.7.5** con 62 scrapers locales (61 originales + 80+ providers de Alfa Kodi) + 4 backend scrapers + anime via Pigamer37.
+Addon para **Stremio** con streams de multiples fuentes. Sin catalogos — funciona con addons de catalogo externos (ej. TMDB Community Addon).
 
 ## Instalacion
 
-1. Abri **Nuvio** > **Settings** > **Addons**
-2. Agrega esta URL:
-   ```
-   https://ovnivers.onrender.com/manifest.json
-   ```
-3. Para personalizar, usa el panel:
+1. Abri **Stremio** > **Settings** > **Addons**
+2. Ve al panel de configuracion para personalizar:
    ```
    https://ovnivers.onrender.com/configure
    ```
+3. Genera la URL e instalala en Stremio
+4. Usa un catalogo externo para navegar peliculas/series
 
 ## Features
 
 | Funcionalidad | Detalle |
 |---|---|
-| **Movies & TV** (backend) | 2embed (Vesy + Vsrc), VidSrc, PoseidonHD |
+| **Backend scrapers** | 2embed (Vesy + Vsrc), VidSrc, PoseidonHD |
 | **Anime** (proxy) | AnimeFLV, AnimeAV1, TioAnime, Henaojara via Pigamer37 |
 | **Alfa Providers** (server) | 80+ canales de Alfa Kodi: peliculas, series, anime, documentales, torrents |
-| **Original scrapers** (local) | 61 providers de All-in-One-Nuvio (EN, HI, FR, JA, KO, ZH) |
-| **Catalogs** | 18 catalogs: Popular, Trending, Top Rated, By Genre, By Year + Anime On Air/Search |
-| **Metadata** | TMDb + anime providers |
-| **Config panel** | `/configure` — UI moderna: tipos, calidad, idiomas, scrapers on/off |
+| **Local scrapers** | 62 providers locales |
+| **Config panel** | `/configure` — tipos, calidad, idiomas, scrapers on/off |
 
 ## Catalogs (18)
 
@@ -66,10 +62,9 @@ Scraper unificado del addon **Alfa** de Kodi. Corre server-side en Render (Node.
 | Endpoint | Descripcion |
 |---|---|
 | `/manifest.json` | Stremio manifest (respeta `?configured=`) |
-| `/stream/:type/:id.json` | Streams (backend + anime proxy) |
-| `/catalog/:type/:id.json` | 18 catalogs (TMDb + anime) |
+| `/stream/:type/:id.json` | Streams (backend + anime proxy + alfa + locals) |
 | `/meta/:type/:id.json` | Metadata (TMDb + anime) |
-| `/configure` | Panel de configuracion (UI moderna) |
+| `/configure` | Panel de configuracion |
 | `/` | Health check |
 
 ## Desarrollo local
