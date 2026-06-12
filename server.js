@@ -24,7 +24,7 @@ const ANIME_XREF_PREFIXES = ['anilist:', 'kitsu:', 'mal:', 'anidb:'];
 
 // Available languages for filtering
 const ALL_LANGS = {
-  en: 'English', es: 'Spanish', fr: 'French', ja: 'Japanese',
+  en: 'English', es: 'Spanish', lat: 'Latino', fr: 'French', ja: 'Japanese',
   ko: 'Korean', hi: 'Hindi', ta: 'Tamil', te: 'Telugu',
   it: 'Italian', pt: 'Portuguese', ar: 'Arabic', zh: 'Chinese',
   de: 'German', th: 'Thai'
@@ -862,7 +862,7 @@ async function scrapeAlfa(rawId, mediaType, type, season, episode, config) {
   if (!tmdbId) return [];
   try {
     const data = await withTimeout(
-      Promise.resolve(scrapeAlfaProviders(isSeriesType(type) ? 'series' : type, String(tmdbId), season, episode)),
+      Promise.resolve(scrapeAlfaProviders(type === 'anime' ? 'anime' : (isSeriesType(type) ? 'series' : type), String(tmdbId), season, episode)),
       LOCAL_PROVIDER_TIMEOUT
     );
     return (Array.isArray(data) ? data : [])
@@ -1139,7 +1139,19 @@ async function handleStream(req, res, type, id) {
 }
 
 function filterStreams(streams, config) {
-  return streams.filter(s => matchesQuality(s.name, config.quality));
+  const enabledLangs = new Set((config.langs || []).map(l => l.toLowerCase()));
+  return streams.filter(s => {
+    if (!matchesQuality(s.name, config.quality)) return false;
+    if (enabledLangs.size === 0 || enabledLangs.has('*')) return true;
+    // Extract flags from stream name (e.g. "1080p 🇯🇵🇪🇸") and match against enabled languages
+    const nameFlags = (s.name || '').match(/[\u{1F1E6}-\u{1F1FF}]{2,}/ug) || [];
+    return nameFlags.length === 0 || nameFlags.some(f => {
+      for (const [code, flag] of Object.entries(LANG_TO_FLAG)) {
+        if (flag === f && enabledLangs.has(code.replace(/['"]/g, ''))) return true;
+      }
+      return false;
+    });
+  });
 }
 
 // ─── Catalog ──────────────────────────────
