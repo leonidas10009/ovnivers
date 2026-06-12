@@ -288,7 +288,8 @@ async function extractVideos(provider, pageUrl) {
           if (vUrl) results.push({
             url: vUrl,
             server: server || detectServer(vUrl),
-            quality: v.quality || cfg.defaultQuality || 'HD'
+            quality: v.quality || cfg.defaultQuality || 'HD',
+            lang: v.lang || v.idioma || v.audio || ''
           });
         }
       } catch {}

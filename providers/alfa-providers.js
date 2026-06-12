@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-12T12:57:08.992Z
+ * Generated: 2026-06-12T15:34:37.733Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -1228,7 +1228,8 @@ var require_engine = __commonJS({
                 if (vUrl) results.push({
                   url: vUrl,
                   server: server || detectServer2(vUrl),
-                  quality: v.quality || cfg.defaultQuality || "HD"
+                  quality: v.quality || cfg.defaultQuality || "HD",
+                  lang: v.lang || v.idioma || v.audio || ""
                 });
               }
             } catch (e) {

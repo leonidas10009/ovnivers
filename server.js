@@ -14,7 +14,7 @@ const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.4.1';
+const VERSION = '1.4.2';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 const PIGAMER = 'https://pigamer37.alwaysdata.net';
@@ -520,10 +520,12 @@ function withTimeout(promise, timeoutMs) {
 
 const LANG_TO_FLAG = {
   'cast': '🇪🇸',   'lat': '🇪🇸',    'es': '🇪🇸',
-  'ja': '🇯🇵',     'jp': '🇯🇵',
+  'espanol': '🇪🇸', 'castellano': '🇪🇸',
+  'ja': '🇯🇵',     'jp': '🇯🇵',    'jap': '🇯🇵',
+  'japones': '🇯🇵',
   'en': '🇬🇧',     'us': '🇺🇸',
   'ko': '🇰🇷',     'kr': '🇰🇷',
-  'vose': '🇬🇧🇪🇸', 'vos': '🇬🇧🇪🇸',
+  'sub': '🇯🇵🇪🇸', 'vose': '🇬🇧🇪🇸', 'vos': '🇬🇧🇪🇸',
   'fr': '🇫🇷',     'pt': '🇧🇷',
   'zh': '🇨🇳',     'cn': '🇨🇳',
   'de': '🇩🇪',     'it': '🇮🇹',
@@ -1083,6 +1085,25 @@ async function handleStream(req, res, type, id) {
 
   const streams = [];
   const streamTasks = [];
+
+  // Anime → proxy pigamer37 (primary source for AnimeFLV/TioAnime/etc.)
+  if (isAnime && config.enableAnime) {
+    streamTasks.push((async () => {
+      try {
+        const resolvedId = await resolveAnimeId(id);
+        const proxyId = resolvedId || (rawId.match(/^\d+$/) ? `tmdb:${rawId}` : rawId);
+        const proxyType = 'series';
+        const qs = `?season=${season}&episode=${episode}`;
+        const data = await proxyPigamer(`/stream/${proxyType}/${encodeURIComponent(proxyId)}.json${qs}`);
+        const pigStreams = parseSources(data);
+        console.log(`  [Pigamer37] ${pigStreams.length} streams (s${season}e${episode})`);
+        return pigStreams.map(s => normalizeStream(s, 'pigamer37', 'Pigamer37')).filter(Boolean);
+      } catch (e) {
+        console.warn(`  [Pigamer37] ${e.message}`);
+        return [];
+      }
+    })());
+  }
 
   if (config.enableBackend && !isAnime) {
     streamTasks.push(...BACKEND_SCRAPERS.map(async (scraper) => {
