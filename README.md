@@ -1,4 +1,4 @@
-# Ovnivers — All-in-One Nuvio Addon v1.4.0
+# Ovnivers — All-in-One Nuvio Addon v1.4.1
 
 Addon para **Nuvio 0.7.5** con 62 scrapers locales (61 originales + 80+ providers de Alfa Kodi) + 4 backend scrapers + anime via Pigamer37.
 
