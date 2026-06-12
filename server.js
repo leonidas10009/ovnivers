@@ -933,17 +933,21 @@ async function handleStream(req, res, type, id) {
   const mediaType = mapType(type);
   const rawId = extractId(parsed.contentId);
 
-  // Detect anime from TMDB genre when ID has no anime prefix (for cache key only)
-  const isAnime = isAnimeId(id) || (config.enableAnime && mediaType === 'tv' && rawId.match(/^\d+$/) && await (async () => {
+  // Detect anime: ID prefix or TMDB genre 16 (Animation)
+  let isAnime = isAnimeId(id);
+  if (!isAnime && config.enableAnime && mediaType === 'tv' && rawId.match(/^\d+$/)) {
     try {
-      const tmdb = await withTimeout(fetchAPI(
-        `https://api.themoviedb.org/3/tv/${rawId}?api_key=${TMDB_KEY}&language=en`
-      ), 5000);
-      const detected = !!tmdb?.genres?.some(g => g.id === 16);
-      if (detected) console.log(`  [anime] detected from TMDB genre (id=${rawId})`);
-      return detected;
-    } catch { return false; }
-  })());
+      const ac = new AbortController();
+      const timer = setTimeout(() => ac.abort(), 3000);
+      const res = await fetch(`https://api.themoviedb.org/3/tv/${rawId}?api_key=${TMDB_KEY}&language=en`, { signal: ac.signal });
+      clearTimeout(timer);
+      if (res.ok) {
+        const data = await res.json();
+        isAnime = data?.genres?.some(g => g.id === 16) === true;
+        if (isAnime) console.log(`  [anime] detected from TMDB genre (id=${rawId})`);
+      }
+    } catch {}
+  }
 
   const ck = cacheKey(type, id, `${season}:${episode}`);
   if (!isAnime) {
@@ -954,13 +958,13 @@ async function handleStream(req, res, type, id) {
     }
   }
 
-  console.log(`[stream] ${type}/${id} media=${mediaType} rawId=${rawId} s${season}e${episode}`);
+  console.log(`[stream] ${type}/${id} media=${mediaType} rawId=${rawId} isAnime=${isAnime} s${season}e${episode}`);
 
   const streams = [];
   const streamTasks = [];
 
-  // Pigamer37: always try for series content (handles FLV/AV1/TioAnime/Henaojara natively)
-  if (mediaType === 'tv' && config.enableAnime) {
+  // ── Pigamer37: solo para anime (FLV/AV1/TioAnime/Henaojara) ──
+  if (isAnime && config.enableAnime) {
     streamTasks.push((async () => {
       try {
         const resolvedId = await resolveAnimeId(id);
@@ -976,7 +980,7 @@ async function handleStream(req, res, type, id) {
     })());
   }
 
-  // Backend scrapers: always try (return empty if they can't handle it)
+  // ── Backend scrapers: para todo contenido ──
   if (config.enableBackend) {
     streamTasks.push(...BACKEND_SCRAPERS.map(async (scraper) => {
       const start = Date.now();
@@ -988,11 +992,12 @@ async function handleStream(req, res, type, id) {
     }));
   }
 
-  // Local providers: always search all relevant categories
+  // ── Local providers: Alfa (categoría principal) + Hermes ──
   if (config.enableLocal) {
     streamTasks.push(scrapeAlfa(rawId, mediaType, type, season, episode, config));
     streamTasks.push(scrapeLocalProviders(rawId, mediaType, type, season, episode, config));
-    if (config.enableAnime && mediaType === 'tv') {
+    // Alfa anime: solo si es anime o serie con posible contenido anime
+    if (isAnime && config.enableAnime && mediaType === 'tv') {
       streamTasks.push(scrapeAlfa(rawId, 'tv', 'anime', season, episode, config));
     }
   }
