@@ -1144,7 +1144,7 @@ function filterStreams(streams, config) {
     if (!matchesQuality(s.name, config.quality)) return false;
     if (enabledLangs.size === 0 || enabledLangs.has('*')) return true;
     // Extract flags from stream name (e.g. "1080p 🇯🇵🇪🇸") and match against enabled languages
-    const nameFlags = (s.name || '').match(/[\u{1F1E6}-\u{1F1FF}]{2,}/ug) || [];
+    const nameFlags = (s.name || '').match(/[\u{1F1E6}-\u{1F1FF}]{2}/ug) || [];
     return nameFlags.length === 0 || nameFlags.some(f => {
       for (const [code, flag] of Object.entries(LANG_TO_FLAG)) {
         if (flag === f && enabledLangs.has(code.replace(/['"]/g, ''))) return true;
