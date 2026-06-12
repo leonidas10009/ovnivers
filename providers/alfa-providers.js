@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-12T09:29:58.360Z
+ * Generated: 2026-06-12T10:02:44.694Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -1309,14 +1309,36 @@ var require_engine = __commonJS({
 
 // src/alfa-providers/index.js
 var providers = require_providers();
-var { fetchHTML, fetchJSON, similarity, getTMDBInfo, searchProvider, getEpisodeUrl, extractVideos, detectServer } = require_engine();
-var TMDB_KEY = "d80ba92bc7cefe3359668d30d06f3305";
+var { fetchHTML, fetchJSON, similarity, searchProvider, getEpisodeUrl, extractVideos, detectServer } = require_engine();
+var TMDB_KEY = process.env.TMDB_KEY || "d80ba92bc7cefe3359668d30d06f3305";
 var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+var ANIME_PREFIXES = ["animeflv:", "animeav1:", "henaojara:", "tioanime:", "anilist:", "kitsu:", "mal:", "anidb:"];
 var titleCache = /* @__PURE__ */ new Map();
+var MAX_CACHE = 500;
+function cacheSet(key, value) {
+  if (titleCache.size >= MAX_CACHE) {
+    const firstKey = titleCache.keys().next().value;
+    titleCache.delete(firstKey);
+  }
+  titleCache.set(key, value);
+}
+function isAnimeId(id) {
+  return ANIME_PREFIXES.some((p) => id.startsWith(p));
+}
+function extractSlug(id) {
+  const parts = id.split(":");
+  return parts.length >= 2 ? parts[1] : id;
+}
 function resolveTitle(id, mediaType) {
   return __async(this, null, function* () {
     const cacheKey = `${mediaType}:${id}`;
     if (titleCache.has(cacheKey)) return titleCache.get(cacheKey);
+    if (isAnimeId(id)) {
+      const slug = extractSlug(id);
+      const info = { title: slug.replace(/-/g, " "), year: "", imdbId: "", slug };
+      cacheSet(cacheKey, info);
+      return info;
+    }
     try {
       let tmdbId = id;
       if (id.startsWith("tt")) {
@@ -1339,25 +1361,36 @@ function resolveTitle(id, mediaType) {
         year: (data.release_date || data.first_air_date || "").substring(0, 4),
         imdbId: data.imdb_id || ""
       };
-      titleCache.set(cacheKey, info);
+      cacheSet(cacheKey, info);
       return info;
     } catch (e) {
       return null;
     }
   });
 }
+function mapTypeToCategory(type) {
+  if (type === "movie") return "movie";
+  if (type === "series" || type === "tv") return "tvshow";
+  if (type === "anime") return "anime";
+  return "movie";
+}
+function mapTypeToTMDB(type) {
+  if (type === "series" || type === "tv" || type === "anime") return "tv";
+  return "movie";
+}
 function scrapeAlfaProviders(type, id, season, episode) {
   return __async(this, null, function* () {
-    const mediaType = type === "series" || type === "tv" ? "tv" : "movie";
+    const category = mapTypeToCategory(type);
+    const mediaType = mapTypeToTMDB(type);
     const info = yield resolveTitle(id, mediaType);
     if (!info || !info.title) return [];
     const title = info.title;
     const year = info.year;
     const activeProviders = providers.filter((p) => {
       if (!p.active || p.adult) return false;
-      if (mediaType === "tv") return p.categories.includes("tvshow") || p.categories.includes("movie");
-      return p.categories.includes("movie") || p.categories.includes("tvshow");
+      return p.categories.includes(category);
     });
+    if (!activeProviders.length) return [];
     const results = [];
     const chunks = chunkArray(activeProviders, 4);
     for (const chunk of chunks) {
@@ -1367,17 +1400,23 @@ function scrapeAlfaProviders(type, id, season, episode) {
             const pageUrl = yield searchProvider(provider, title, year, mediaType);
             if (!pageUrl) return [];
             let targetUrl = pageUrl;
-            if (mediaType === "tv" && season && episode) {
+            if ((category === "tvshow" || category === "anime") && season && episode) {
               const epUrl = yield getEpisodeUrl(provider, pageUrl, season, episode);
               if (epUrl) targetUrl = epUrl;
             }
             const videos = yield extractVideos(provider, targetUrl);
             if (!videos.length) return [];
             return videos.map((v) => ({
-              name: v.quality || "HD",
-              description: `${provider.title} [${v.server || detectServer(v.url)}]`,
+              name: `${provider.title}
+${v.server || detectServer(v.url)}`,
+              title: `${v.quality || "HD"}
+\u2699\uFE0F ${v.server || detectServer(v.url)}
+\u{1F517} ${provider.title}`,
               url: v.url,
-              behaviorHints: { notWebReady: true }
+              behaviorHints: {
+                notWebReady: true,
+                bingeGroup: `alfa|${provider.name}|${v.server || detectServer(v.url)}`
+              }
             }));
           } catch (e) {
             return [];

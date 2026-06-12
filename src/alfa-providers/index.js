@@ -1,14 +1,40 @@
 const providers = require('./providers');
-const { fetchHTML, fetchJSON, similarity, getTMDBInfo, searchProvider, getEpisodeUrl, extractVideos, detectServer } = require('./engine');
+const { fetchHTML, fetchJSON, similarity, searchProvider, getEpisodeUrl, extractVideos, detectServer } = require('./engine');
 
-const TMDB_KEY = 'd80ba92bc7cefe3359668d30d06f3305';
+const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+const ANIME_PREFIXES = ['animeflv:', 'animeav1:', 'henaojara:', 'tioanime:', 'anilist:', 'kitsu:', 'mal:', 'anidb:'];
 
-let titleCache = new Map();
+const titleCache = new Map();
+const MAX_CACHE = 500;
+
+function cacheSet(key, value) {
+  if (titleCache.size >= MAX_CACHE) {
+    const firstKey = titleCache.keys().next().value;
+    titleCache.delete(firstKey);
+  }
+  titleCache.set(key, value);
+}
+
+function isAnimeId(id) {
+  return ANIME_PREFIXES.some(p => id.startsWith(p));
+}
+
+function extractSlug(id) {
+  const parts = id.split(':');
+  return parts.length >= 2 ? parts[1] : id;
+}
 
 async function resolveTitle(id, mediaType) {
   const cacheKey = `${mediaType}:${id}`;
   if (titleCache.has(cacheKey)) return titleCache.get(cacheKey);
+
+  if (isAnimeId(id)) {
+    const slug = extractSlug(id);
+    const info = { title: slug.replace(/-/g, ' '), year: '', imdbId: '', slug };
+    cacheSet(cacheKey, info);
+    return info;
+  }
 
   try {
     let tmdbId = id;
@@ -33,13 +59,27 @@ async function resolveTitle(id, mediaType) {
       year: (data.release_date || data.first_air_date || '').substring(0, 4),
       imdbId: data.imdb_id || ''
     };
-    titleCache.set(cacheKey, info);
+    cacheSet(cacheKey, info);
     return info;
   } catch { return null; }
 }
 
+function mapTypeToCategory(type) {
+  if (type === 'movie') return 'movie';
+  if (type === 'series' || type === 'tv') return 'tvshow';
+  if (type === 'anime') return 'anime';
+  return 'movie';
+}
+
+function mapTypeToTMDB(type) {
+  if (type === 'series' || type === 'tv' || type === 'anime') return 'tv';
+  return 'movie';
+}
+
 async function scrapeAlfaProviders(type, id, season, episode) {
-  const mediaType = type === 'series' || type === 'tv' ? 'tv' : 'movie';
+  const category = mapTypeToCategory(type);
+  const mediaType = mapTypeToTMDB(type);
+
   const info = await resolveTitle(id, mediaType);
   if (!info || !info.title) return [];
 
@@ -48,9 +88,10 @@ async function scrapeAlfaProviders(type, id, season, episode) {
 
   const activeProviders = providers.filter(p => {
     if (!p.active || p.adult) return false;
-    if (mediaType === 'tv') return p.categories.includes('tvshow') || p.categories.includes('movie');
-    return p.categories.includes('movie') || p.categories.includes('tvshow');
+    return p.categories.includes(category);
   });
+
+  if (!activeProviders.length) return [];
 
   const results = [];
   const chunks = chunkArray(activeProviders, 4);
@@ -63,7 +104,7 @@ async function scrapeAlfaProviders(type, id, season, episode) {
           if (!pageUrl) return [];
 
           let targetUrl = pageUrl;
-          if (mediaType === 'tv' && season && episode) {
+          if ((category === 'tvshow' || category === 'anime') && season && episode) {
             const epUrl = await getEpisodeUrl(provider, pageUrl, season, episode);
             if (epUrl) targetUrl = epUrl;
           }
@@ -72,10 +113,13 @@ async function scrapeAlfaProviders(type, id, season, episode) {
           if (!videos.length) return [];
 
           return videos.map(v => ({
-            name: v.quality || 'HD',
-            description: `${provider.title} [${v.server || detectServer(v.url)}]`,
+            name: `${provider.title}\n${v.server || detectServer(v.url)}`,
+            title: `${v.quality || 'HD'}\n⚙️ ${v.server || detectServer(v.url)}\n🔗 ${provider.title}`,
             url: v.url,
-            behaviorHints: { notWebReady: true }
+            behaviorHints: {
+              notWebReady: true,
+              bingeGroup: `alfa|${provider.name}|${v.server || detectServer(v.url)}`
+            }
           }));
         } catch { return []; }
       })

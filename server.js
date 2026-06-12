@@ -11,7 +11,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
-const TMDB_KEY = 'd80ba92bc7cefe3359668d30d06f3305';
+const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 const VERSION = '1.5.0';
 const ADDON_ID = 'com.ovnivers.allinone';
@@ -51,8 +51,17 @@ try {
 
 const streamCache = new Map();
 const CACHE_TTL = 10 * 60 * 1000;
+const MAX_CACHE = 1000;
 const metaCache = new Map();
 const META_TTL = 60 * 60 * 1000;
+
+function cacheSet(cache, key, value, max) {
+  if (cache.size >= max) {
+    const firstKey = cache.keys().next().value;
+    cache.delete(firstKey);
+  }
+  cache.set(key, value);
+}
 
 // ─── Helpers ──────────────────────────────
 
@@ -224,7 +233,7 @@ async function scrapeCuevana2Espanol(rawId, mediaType, season, episode) {
       const txt = m.match(/>([^<]+)</)?.[1]?.trim();
       if (!href || !txt) continue;
       const s = txt.toLowerCase().includes(info.title.toLowerCase().substring(0, 5)) ? 1 : 0;
-      if (info.year && txt.includes(info.year)) s + 0.2;
+      if (info.year && txt.includes(info.year)) s += 0.2;
       if (s > bestScore) { bestScore = s; bestUrl = `https://www.cuevana2espanol.net${href}`; }
     }
     if (!bestUrl) return [];
@@ -267,7 +276,7 @@ async function scrapePoseidonHD(rawId, mediaType, season, episode) {
       const txt = m.match(/>([^<]+)</)?.[1]?.trim();
       if (!href || !txt) continue;
       const s = txt.toLowerCase().includes(info.title.toLowerCase().substring(0, 5)) ? 1 : 0;
-      if (info.year && txt.includes(info.year)) s + 0.2;
+      if (info.year && txt.includes(info.year)) s += 0.2;
       if (s > bestScore) { bestScore = s; bestUrl = `https://www.poseidonhd2.co${href}`; }
     }
     if (!bestUrl) return [];
@@ -383,7 +392,7 @@ app.get('/manifest.json', (req, res) => {
   if (config.enableAnime) enabledTypes.push('anime');
 
     const allPrefixes = [];
-    if (config.enableBackend) allPrefixes.push('tt', 'tmdb');
+    if (config.enableBackend) allPrefixes.push('tt', 'tmdb', 'tmdb-genre:');
     if (config.enableAnime) allPrefixes.push(...ANIME_PREFIXES);
 
     const resources = [
@@ -431,11 +440,11 @@ app.get('/stream/:type/:id.json', async (req, res) => {
   }
 
   // Anime → proxy pigamer37
-  if (isAnimeId(id) || type === 'anime') {
+  if (isAnimeId(id)) {
     if (!config.enableAnime) return res.json({ streams: [] });
-    const proxyType = (type === 'anime') ? 'series' : type;
+    const proxyType = 'series';
     const qs = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
-    const data = await proxyPigamer(`/stream/${proxyType}/${encodeURIComponent(id)}.json${qs}`);
+    const data = await proxyPigamer(`/stream/${proxyType}/${encodeURIComponent(fixPigamerId(id))}.json${qs}`);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cache-Control', `public, max-age=${CACHE_TTL / 1000}`);
     return res.json(data || { streams: [] });
@@ -485,7 +494,7 @@ app.get('/stream/:type/:id.json', async (req, res) => {
   }
 
   console.log(`[stream] ${type}/${id} → ${streams.length} total`);
-  streamCache.set(ck, { data: streams, time: Date.now() });
+  cacheSet(streamCache, ck, { data: streams, time: Date.now() }, MAX_CACHE);
 
   const filtered = filterStreams(streams, config);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -510,11 +519,12 @@ app.get('/catalog/:type/:id.json', async (req, res) => {
   }
 
   // Anime catalogs → proxy pigamer37
-  if (isAnimeId(id.replace('|onair', '').replace('|search', '').replace('%7C', '|')) || type === 'anime') {
+  const cleanId = id.replace('|onair', '').replace('|search', '').replace('%7C', '|');
+  if (isAnimeId(cleanId)) {
     if (!config.enableAnime) return res.json({ metas: [] });
     const proxyType = 'series';
     const qs = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
-    const data = await proxyPigamer(`/catalog/${proxyType}/${encodeURIComponent(id)}.json${qs}`);
+    const data = await proxyPigamer(`/catalog/${proxyType}/${encodeURIComponent(fixPigamerId(id))}.json${qs}`);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cache-Control', `public, max-age=${META_TTL / 1000}`);
     return res.json(data || { metas: [] });
@@ -580,7 +590,7 @@ app.get('/catalog/:type/:id.json', async (req, res) => {
       imdbRating: item.vote_average ? String(item.vote_average) : null
     }));
 
-    metaCache.set(ck, { data: metas, time: Date.now() });
+    cacheSet(metaCache, ck, { data: metas, time: Date.now() }, MAX_CACHE);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cache-Control', `public, max-age=${META_TTL / 1000}`);
     res.json({ metas });
@@ -604,10 +614,10 @@ app.get('/meta/:type/:id.json', async (req, res) => {
   }
 
   // Anime meta → proxy pigamer37
-  if (isAnimeId(id) || type === 'anime') {
+  if (isAnimeId(id)) {
     if (!config.enableAnime) return res.json({ meta: null });
     const proxyType = 'series';
-    const data = await proxyPigamer(`/meta/${proxyType}/${encodeURIComponent(id)}.json`);
+    const data = await proxyPigamer(`/meta/${proxyType}/${encodeURIComponent(fixPigamerId(id))}.json`);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cache-Control', `public, max-age=${META_TTL / 1000}`);
     return res.json(data || { meta: null });
@@ -643,7 +653,7 @@ app.get('/meta/:type/:id.json', async (req, res) => {
       imdbRating: data.vote_average ? String(data.vote_average) : null,
       genres: (data.genres || []).map(g => g.name)
     };
-    metaCache.set(ck, { data: meta, time: Date.now() });
+    cacheSet(metaCache, ck, { data: meta, time: Date.now() }, MAX_CACHE);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cache-Control', `public, max-age=${META_TTL / 1000}`);
     res.json({ meta });
