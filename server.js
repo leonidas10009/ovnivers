@@ -14,7 +14,7 @@ const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.3.2';
+const VERSION = '1.3.3';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 const PIGAMER = 'https://pigamer37.alwaysdata.net';
@@ -564,10 +564,31 @@ const SERVER_MAP = [
   [/\bkatfile\b/i, 'KatFile'],
   [/\bddownload\b/i, 'DDownload'],
   [/\bfiledot?com\b/i, 'FileCom'],
+  [/\b321moviesfree\b/i, '321MoviesFree'],
+  [/\bvoxzer\b/i, 'Voxzer'],
+  [/\bhostingersite\b/i, 'Hostinger'],
+  [/\bworkers\.dev\b/i, 'Cloudflare Worker'],
+  [/\bnotorrent2?\.workers\.dev\b/i, 'NoTorrent CDN'],
+  [/\b(?:www\.)?aqua-vulture/i, 'Hostinger'],
+  [/\bvoxzer\b/i, 'Voxzer'],
+  [/\bpkcdn\b/i, 'PKCDN'],
+  [/\bnotorrent2?\.workers\.dev\b/i, 'NoTorrent CDN'],
 ];
 
 function detectServerName(url) {
   if (!url) return '';
+  // Try extracting real URL from proxy query params (?url=...)
+  try {
+    const parsed = new URL(url);
+    const proxiedUrl = parsed.searchParams.get('url');
+    if (proxiedUrl) {
+      for (const [re, name] of SERVER_MAP) {
+        if (re.test(proxiedUrl)) return name;
+      }
+      const proxyHost = new URL(proxiedUrl).hostname.replace(/^www\./, '');
+      return proxyHost.substring(0, 25);
+    }
+  } catch {}
   for (const [re, name] of SERVER_MAP) {
     if (re.test(url)) return name;
   }
@@ -587,11 +608,36 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
 
   const rawName = stream.name || '';
   const rawTitle = stream.title || '';
-  const nameLines = rawName.split('\n');
+  let nameLines = rawName.split('\n');
+  // Handle "Source • Server" format (NoTorrent: "NoTorrent • Audio latino")
+  if (nameLines.length === 1 && nameLines[0].includes(' • ')) {
+    const parts = nameLines[0].split(' • ');
+    nameLines = [parts[0], parts.slice(1).join(' • ')];
+  }
   const titleLines = rawTitle.split('\n');
 
   const sourceName = nameLines[0] || '';
   const serverName = nameLines.length > 1 ? nameLines.slice(1).join('\n') : '';
+
+  // Detect language from audio descriptors in name/title
+  const AUDIO_LANG_MAP = [
+    [/[áa]udio latino/i, 'lat'],
+    [/[áa]udio castellano/i, 'cast'],
+    [/[áa]udio espa\u00F1ol|[áa]udio espanol/i, 'es'],
+    [/[áa]udio ingl[eé]s|[áa]udio ingles/i, 'en'],
+    [/[áa]udio japon[eé]s|[áa]udio japones/i, 'ja'],
+    [/[áa]udio coreano/i, 'ko'],
+    [/[áa]udio portugu[eê]s|[áa]udio portugues/i, 'pt'],
+    [/[áa]udio franc[eé]s|[áa]udio frances/i, 'fr'],
+    [/t[uü]rk[çc]e ses/i, 'tr'],
+  ];
+  let audioLang = '';
+  for (const [re, lang] of AUDIO_LANG_MAP) {
+    if (re.test(rawName + ' ' + rawTitle)) {
+      audioLang = lang;
+      break;
+    }
+  }
 
   // Extract quality from ANYWHERE in stream data
   const allText = [stream.quality, rawName, rawTitle].filter(Boolean).join(' ');
@@ -600,12 +646,13 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
     || 'HD';
 
   // Language flags: from contentLanguage (authoritative), description (Alfa),
-  // or from name/title lines (Pigamer37 embeds flags inline)
+  // audio descriptor, or inline emoji in name/title
   const contentFlags = Array.isArray(opts.contentLanguage) ? langToFlags(opts.contentLanguage.join(',')) : '';
   const descriptionFlags = langToFlags(stream.description || '');
+  const audioFlags = audioLang ? langToFlags(audioLang) : '';
   const inlineFlagLine = [...nameLines, ...titleLines].find(l => /[\u{1F1E6}-\u{1F1FF}]{2,}/u.test(l)) || '';
   const inlineFlags = inlineFlagLine ? (inlineFlagLine.match(/[\u{1F1E6}-\u{1F1FF}]{2,}/ug) || []).join('') : '';
-  const flags = contentFlags || descriptionFlags || inlineFlags;
+  const flags = contentFlags || audioFlags || descriptionFlags || inlineFlags;
 
   // Provider label
   const isPigamer = providerId === 'pigamer37';
@@ -659,8 +706,8 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
     if (cleaned) addLine(cleaned);
   }
 
-  // URL domain fallback with server name detection
-  if (titleParts.length === 1 && url) {
+  // URL server name detection (always add if found)
+  if (url) {
     const serverName = detectServerName(url);
     if (serverName) addLine(serverName);
   }

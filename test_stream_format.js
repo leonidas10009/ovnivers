@@ -66,10 +66,27 @@ const SERVER_MAP = [
   [/\bkatfile\b/i, 'KatFile'],
   [/\bddownload\b/i, 'DDownload'],
   [/\bfiledot?com\b/i, 'FileCom'],
+  [/\b321moviesfree\b/i, '321MoviesFree'],
+  [/\bvoxzer\b/i, 'Voxzer'],
+  [/\bhostingersite\b/i, 'Hostinger'],
+  [/\bworkers\.dev\b/i, 'Cloudflare Worker'],
+  [/\bnotorrent2?\.workers\.dev\b/i, 'NoTorrent CDN'],
+  [/\b(?:www\.)?aqua-vulture/i, 'Hostinger'],
 ];
 
 function detectServerName(url) {
   if (!url) return '';
+  try {
+    const parsed = new URL(url);
+    const proxiedUrl = parsed.searchParams.get('url');
+    if (proxiedUrl) {
+      for (const [re, name] of SERVER_MAP) {
+        if (re.test(proxiedUrl)) return name;
+      }
+      const proxyHost = new URL(proxiedUrl).hostname.replace(/^www\./, '');
+      return proxyHost.substring(0, 25);
+    }
+  } catch {}
   for (const [re, name] of SERVER_MAP) {
     if (re.test(url)) return name;
   }
@@ -89,10 +106,34 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
 
   const rawName = stream.name || '';
   const rawTitle = stream.title || '';
-  const nameLines = rawName.split('\n');
+  let nameLines = rawName.split('\n');
+  if (nameLines.length === 1 && nameLines[0].includes(' \u2022 ')) {
+    const parts = nameLines[0].split(' \u2022 ');
+    nameLines = [parts[0], parts.slice(1).join(' \u2022 ')];
+  }
   const titleLines = rawTitle.split('\n');
 
   const sourceName = nameLines[0] || '';
+
+  // Detect language from audio descriptors
+  const AUDIO_LANG_MAP = [
+    [/[áa]udio latino/i, 'lat'],
+    [/[áa]udio castellano/i, 'cast'],
+    [/[áa]udio espa\u00F1ol|[áa]udio espanol/i, 'es'],
+    [/[áa]udio ingl[eé]s|[áa]udio ingles/i, 'en'],
+    [/[áa]udio japon[eé]s|[áa]udio japones/i, 'ja'],
+    [/[áa]udio coreano/i, 'ko'],
+    [/[áa]udio portugu[eê]s|[áa]udio portugues/i, 'pt'],
+    [/[áa]udio franc[eé]s|[áa]udio frances/i, 'fr'],
+    [/t[uü]rk[çc]e ses/i, 'tr'],
+  ];
+  let audioLang = '';
+  for (const [re, lang] of AUDIO_LANG_MAP) {
+    if (re.test(rawName + ' ' + rawTitle)) {
+      audioLang = lang;
+      break;
+    }
+  }
 
   const allText = [stream.quality, rawName, rawTitle].filter(Boolean).join(' ');
   const quality = stream.quality
@@ -101,9 +142,10 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
 
   const contentFlags = Array.isArray(opts.contentLanguage) ? langToFlags(opts.contentLanguage.join(',')) : '';
   const descriptionFlags = langToFlags(stream.description || '');
+  const audioFlags = audioLang ? langToFlags(audioLang) : '';
   const inlineFlagLine = [...nameLines, ...titleLines].find(l => /[\u{1F1E6}-\u{1F1FF}]{2,}/u.test(l)) || '';
   const inlineFlags = inlineFlagLine ? (inlineFlagLine.match(/[\u{1F1E6}-\u{1F1FF}]{2,}/ug) || []).join('') : '';
-  const flags = contentFlags || descriptionFlags || inlineFlags;
+  const flags = contentFlags || audioFlags || descriptionFlags || inlineFlags;
 
   const isPigamer = providerId === 'pigamer37';
   let providerLabel;
@@ -148,8 +190,8 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
     if (cleaned) addLine(cleaned);
   }
 
-  // URL domain fallback with server name detection
-  if (titleParts.length === 1 && url) {
+  // URL server name detection (always add if found)
+  if (url) {
     const serverName = detectServerName(url);
     if (serverName) addLine(serverName);
   }
@@ -383,6 +425,51 @@ const SIMULATED_STREAMS = {
     expect: {
       name_contains: ["Cineby", "720p", "🇪🇸"],
       title_contains: ["720p | Cineby", "S1", "🇪🇸"]
+    }
+  },
+
+  // ── NoTorrent bullet separator format ──
+  notorrent_bullet: {
+    raw: {
+      name: "NoTorrent • Audio latino",
+      title: "1080p",
+      quality: "1080p",
+      url: "https://lat.notorrent2.workers.dev/?url=https://ww20.321moviesfree.com/detail/movie"
+    },
+    opts: { contentLanguage: [] },
+    expect: {
+      name_contains: ["NoTorrent", "1080p", "🇪🇸"],
+      title_contains: ["1080p | NoTorrent", "Audio latino", "321MoviesFree", "🇪🇸"]
+    }
+  },
+
+  // ── NoTorrent with original audio (no flag) ──
+  notorrent_original: {
+    raw: {
+      name: "NoTorrent • Original audio",
+      title: "1080p",
+      quality: "1080p",
+      url: "https://en.notorrent2.workers.dev/?url=https://ww20.321moviesfree.com/es/detail/serie"
+    },
+    opts: { contentLanguage: [] },
+    expect: {
+      name_contains: ["NoTorrent", "1080p"],
+      title_contains: ["1080p | NoTorrent", "Original audio", "321MoviesFree"]
+    }
+  },
+
+  // ── NoTorrent with Portuguese audio ──
+  notorrent_portuguese: {
+    raw: {
+      name: "NoTorrent • Áudio português",
+      title: "720p",
+      quality: "720p",
+      url: "https://pt.notorrent2.workers.dev/?url=https://ww20.321moviesfree.com/es/detail/movie"
+    },
+    opts: { contentLanguage: [] },
+    expect: {
+      name_contains: ["NoTorrent", "720p", "🇧🇷"],
+      title_contains: ["720p | NoTorrent", "Áudio português", "321MoviesFree", "🇧🇷"]
     }
   },
 };
