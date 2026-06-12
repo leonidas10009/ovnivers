@@ -6,6 +6,7 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const cheerio = require('cheerio');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -661,6 +662,71 @@ async function scrapeAlfa(rawId, mediaType, type, season, episode, config) {
   }
 }
 
+async function searchAlfaAnime(query) {
+  let providers;
+  try {
+    providers = require('./src/alfa-providers/providers.js');
+  } catch { return []; }
+
+  const animeProviders = providers.filter(p =>
+    p.active && !p.adult && p.categories.includes('anime') && p.search
+  );
+
+  const results = [];
+  const seen = new Set();
+
+  await Promise.allSettled(animeProviders.map(async (p) => {
+    try {
+      const searchUrl = p.baseUrl.replace(/\/+$/, '') + '/' + p.search.url.replace(/^\//, '').replace('{query}', encodeURIComponent(query));
+      const html = await fetchAPI(searchUrl, {}, 10000);
+      if (!html || typeof html !== 'string') return;
+
+      const $ = cheerio.load(html);
+      const items = $(p.search.itemSelector).toArray().slice(0, 5);
+
+      for (const item of items) {
+        const el = $(item);
+        let title = '';
+        let link = '';
+
+        if (p.search.titleSelector === '&') {
+          title = el.text().trim();
+        } else if (p.search.titleAttr) {
+          title = el.find(p.search.titleSelector).attr(p.search.titleAttr) || el.text().trim();
+        } else {
+          title = el.find(p.search.titleSelector).first().text().trim();
+        }
+
+        if (p.search.linkSelector === '&') {
+          link = el.attr('href') || '';
+        } else {
+          link = el.find(p.search.linkSelector).first().attr('href') || '';
+        }
+
+        if (!title || title.length < 2 || !link) continue;
+        if (link && !link.startsWith('http')) {
+          try { link = new URL(link, p.baseUrl).href; } catch { continue; }
+        }
+
+        const key = title.toLowerCase().trim();
+        if (seen.has(key)) continue;
+        seen.add(key);
+
+        results.push({
+          id: `${p.name}:${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`,
+          type: 'series',
+          name: title,
+          poster: null,
+          posterShape: 'poster',
+          description: `From ${p.title} (Alfa provider)`
+        });
+      }
+    } catch {}
+  }));
+
+  return results;
+}
+
 // ─── Manifest ─────────────────────────────
 
 app.get('/manifest.json', async (req, res) => {
@@ -935,6 +1001,10 @@ async function handleCatalog(req, res, type, id) {
             })
           );
         }
+      }
+
+      if (config.enableLocal) {
+        tasks.push(searchAlfaAnime(search));
       }
 
       const settled = await Promise.allSettled(tasks);

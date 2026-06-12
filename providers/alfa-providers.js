@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-12T10:06:14.951Z
+ * Generated: 2026-06-12T12:33:26.028Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -706,7 +706,7 @@ var require_providers = __commonJS({
         baseUrl: "https://cinehdplus.gratis",
         categories: ["anime", "vos"],
         language: ["lat", "cast", "vose"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }

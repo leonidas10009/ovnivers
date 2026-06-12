@@ -127,9 +127,9 @@ const OTHER_SERVICES = [
 ];
 
 (async () => {
-  console.log('╔══════════════════════════════════════════════════════╗');
-  console.log('║     Ovnivers v1.5.0 — Complete Provider Test         ║');
-  console.log('╚══════════════════════════════════════════════════════╝\n');
+console.log('╔══════════════════════════════════════════════════════╗');
+console.log('║     Ovnivers v1.2.7 — Complete Provider Test         ║');
+console.log('╚══════════════════════════════════════════════════════╝\n');
 
   // ─── Backend Scrapers ───
   console.log('─── BACKEND SCRAPERS (6) ───\n');

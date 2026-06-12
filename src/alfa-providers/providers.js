@@ -369,7 +369,7 @@ module.exports = [
   },
   {
     name: 'repelishd', title: 'RepelisHD', baseUrl: 'https://cinehdplus.gratis',
-    categories: ['anime', 'vos'], language: ['lat', 'cast', 'vose'], active: true, adult: false,
+    categories: ['anime', 'vos'], language: ['lat', 'cast', 'vose'], active: false, adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
   },
