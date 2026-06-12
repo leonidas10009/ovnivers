@@ -1089,7 +1089,8 @@ async function handleStream(req, res, type, id) {
     streamTasks.push((async () => {
       try {
         const resolvedId = await resolveAnimeId(id);
-        const proxyId = resolvedId || id;
+        // Reconstruct TMDB ID format when rawId is numeric (e.g. tmdb:1298:1:1 → tmdb:1298)
+        const proxyId = resolvedId || (rawId.match(/^\d+$/) ? `tmdb:${rawId}` : rawId);
         const proxyType = 'series';
         const qs = `?season=${season}&episode=${episode}`;
         const data = await proxyPigamer(`/stream/${proxyType}/${encodeURIComponent(proxyId)}.json${qs}`);
