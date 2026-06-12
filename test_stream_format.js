@@ -30,6 +30,57 @@ function langToFlags(langStr) {
   return [...set].join('');
 }
 
+const SERVER_MAP = [
+  [/\b(?:mega\.nz|mega\.co\.nz)\b/i, 'Mega'],
+  [/\bok\.ru\b/i, 'Okru'],
+  [/\bmp4upload\.(?:com|to)\b/i, 'Mp4Upload'],
+  [/\bstreamtape\b/i, 'Streamtape'],
+  [/\bstreamsb\b/i, 'StreamSB'],
+  [/\bstreamlare\b/i, 'StreamLare'],
+  [/\bdoood?ster\b/i, 'DoodStream'],
+  [/\byourupload\b/i, 'YourUpload'],
+  [/\bmediafire\b/i, 'MediaFire'],
+  [/\bdrive\.google\b/i, 'Google Drive'],
+  [/\bgounlimited\b/i, 'GoUnlimited'],
+  [/\bfembed\b/i, 'Fembed'],
+  [/\bvidstream\b/i, 'VidStream'],
+  [/\bnetutv\b/i, 'NetuTV'],
+  [/\brapidvideo\b/i, 'RapidVideo'],
+  [/\bstreamango\b/i, 'Streamango'],
+  [/\bmail\.ru\b/i, 'MailRu'],
+  [/\bupstream\b/i, 'Upstream'],
+  [/\bvidcache\b/i, 'VidCache'],
+  [/\bvideawe\b/i, 'VideaWe'],
+  [/\bvudeo\b/i, 'Vudeo'],
+  [/\bstreamwire\b/i, 'StreamWire'],
+  [/\bclipwatching\b/i, 'ClipWatching'],
+  [/\bvidmoly\b/i, 'VidMoly'],
+  [/\bstreamvid\b/i, 'StreamVid'],
+  [/\bembed(?:\.)?(?:6|7|8|9)\b/i, 'Embed'],
+  [/\bpixeldrain\b/i, 'PixelDrain'],
+  [/\b1fichier\b/i, '1Fichier'],
+  [/\buptobox\b/i, 'UptoBox'],
+  [/\bturbobit\b/i, 'TurboBit'],
+  [/\bhitfile\b/i, 'HitFile'],
+  [/\buploaded\b/i, 'Uploaded'],
+  [/\bkatfile\b/i, 'KatFile'],
+  [/\bddownload\b/i, 'DDownload'],
+  [/\bfiledot?com\b/i, 'FileCom'],
+];
+
+function detectServerName(url) {
+  if (!url) return '';
+  for (const [re, name] of SERVER_MAP) {
+    if (re.test(url)) return name;
+  }
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, '');
+    return host.substring(0, 25);
+  } catch {
+    return url.substring(0, 25);
+  }
+}
+
 function normalizeStream(stream, providerId, providerName, opts = {}) {
   if (!stream || typeof stream !== 'object') return null;
   const url = stream.url || stream.file || stream.src || stream.link;
@@ -72,8 +123,7 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
     const t = text.trim();
     if (t && !seen.has(t.toLowerCase()) && t !== providerLabel && t !== sourceName && t !== quality
         && !t.match(/^\s*(HD|4K|2160p?|1080p?|720p?|480p?)\s*$/i)
-        && !t.match(/^[\u{1F1E6}-\u{1F1FF}]{2,}$/u)
-        && !t.match(/^\s*(HD|4K|2160p?|1080p?|720p?|480p?)\s*[|\-·]/i)) {
+        && !t.match(/^[\u{1F1E6}-\u{1F1FF}]{2,}$/u)) {
       seen.add(t.toLowerCase());
       titleParts.push(t);
     }
@@ -90,18 +140,18 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
   }
 
   for (const line of titleLines) {
-    const cleaned = line
+    let cleaned = line
       .replace(/^[⚙️🔗📦\s]+/, '')
       .replace(/[\s,;]+/g, ' ')
       .trim();
+    cleaned = cleaned.replace(/^\s*(HD|4K|2160p?|1080p?|720p?|480p?)\s*[|\-·]\s*/i, '').trim();
     if (cleaned) addLine(cleaned);
   }
 
+  // URL domain fallback with server name detection
   if (titleParts.length === 1 && url) {
-    try {
-      const host = new URL(url).hostname.replace(/^www\./, '');
-      addLine(host.substring(0, 30));
-    } catch {}
+    const serverName = detectServerName(url);
+    if (serverName) addLine(serverName);
   }
 
   if (flags && !titleParts.some(p => p.includes(flags))) {
@@ -266,6 +316,73 @@ const SIMULATED_STREAMS = {
     expect: {
       name_contains: ["ProviderTitle", "1080p", "🇪🇸"],
       title_contains: ["1080p | ProviderTitle", "ServerX", "🇪🇸"]
+    }
+  },
+
+  // ── MOVIE/TV: VidSrc type stream ──
+  vidsrc_movie: {
+    raw: {
+      name: "VidSrc\n1080p",
+      url: "https://vidsrc.example/embed/movie/550"
+    },
+    providerId: 'vidsrc', opts: { contentLanguage: ['en'] },
+    expect: {
+      name_contains: ["VidSrc", "1080p", "🇬🇧"],
+      title_contains: ["1080p | VidSrc"]
+    }
+  },
+
+  // ── MOVIE/TV: goes through Alfa provider with no language flags ──
+  alfa_movie_generic: {
+    raw: {
+      name: "MovieSource\nServerX",
+      title: "1080p\n⚙️ ServerX\n🔗 MovieSource\nen",
+      url: "https://example.com/stream"
+    },
+    opts: { contentLanguage: ['en'] },
+    expect: {
+      name_contains: ["MovieSource", "1080p", "🇬🇧"],
+      title_contains: ["1080p | MovieSource", "ServerX", "🇬🇧"]
+    }
+  },
+
+  // ── MOVIE/TV: NoTorrent with known server URL ──
+  notorrent_mega: {
+    raw: {
+      name: "NoTorrent\n1080p",
+      url: "https://mega.nz/file/abc123"
+    },
+    providerId: 'notorrent', opts: { contentLanguage: ['en'] },
+    expect: {
+      name_contains: ["NoTorrent", "1080p", "🇬🇧"],
+      title_contains: ["1080p | NoTorrent", "Mega", "🇬🇧"]
+    }
+  },
+
+  // ── MOVIE/TV: 4K quality ──
+  movie_4k_quality: {
+    raw: {
+      name: "StreamFlix\n4K",
+      url: "https://streamflix.example/play"
+    },
+    providerId: 'streamflix', opts: { contentLanguage: ['en'] },
+    expect: {
+      name_contains: ["StreamFlix", "4K", "🇬🇧"],
+      title_contains: ["4K | StreamFlix"]
+    }
+  },
+
+  // ── Alfa from provider with language in contentLanguage ──
+  alfa_series_with_lang: {
+    raw: {
+      name: "Cineby\nS1",
+      title: "720p\n⚙️ S1\n🔗 Cineby",
+      url: "https://s1.example.com/video"
+    },
+    opts: { contentLanguage: ['es'] },
+    expect: {
+      name_contains: ["Cineby", "720p", "🇪🇸"],
+      title_contains: ["720p | Cineby", "S1", "🇪🇸"]
     }
   },
 };
