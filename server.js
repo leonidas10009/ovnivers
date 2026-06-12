@@ -508,6 +508,25 @@ function withTimeout(promise, timeoutMs) {
   ]).finally(() => clearTimeout(timer));
 }
 
+const LANG_TO_FLAG = {
+  'cast': '🇪🇸',   'lat': '🇪🇸',    'es': '🇪🇸',
+  'ja': '🇯🇵',     'jp': '🇯🇵',
+  'en': '🇬🇧',     'us': '🇺🇸',
+  'ko': '🇰🇷',     'kr': '🇰🇷',
+  'vose': '🇬🇧🇪🇸', 'vos': '🇬🇧🇪🇸',
+  'fr': '🇫🇷',     'pt': '🇧🇷',
+  'zh': '🇨🇳',     'cn': '🇨🇳',
+  'de': '🇩🇪',     'it': '🇮🇹',
+  'th': '🇹🇭',     'ar': '🇸🇦',
+  '*': ''
+};
+
+function langToFlags(langStr) {
+  if (!langStr) return '';
+  if (/[\u{1F1E6}-\u{1F1FF}]{2,}/u.test(langStr)) return langStr;
+  return langStr.split(/[,;\s]+/).map(l => LANG_TO_FLAG[l.trim().toLowerCase()] || '').filter(Boolean).join('');
+}
+
 function normalizeStream(stream, providerId, providerName) {
   if (!stream || typeof stream !== 'object') return null;
   const url = stream.url || stream.file || stream.src || stream.link;
@@ -528,8 +547,10 @@ function normalizeStream(stream, providerId, providerName) {
     || (sourceName.match(/\b(4K|2160p?|1080p?|720p?|480p?|HD|FHD|SD)\b/i)?.[0])
     || 'HD';
 
-  // Extract language flags from original title (regional indicator symbols)
-  const flags = titleLines.find(l => /[\u{1F1E6}-\u{1F1FF}]{2,}/u.test(l)) || '';
+  // Extract language flags: from description (Alfa) or title (Pigamer37)
+  const titleFlags = titleLines.find(l => /[\u{1F1E6}-\u{1F1FF}]{2,}/u.test(l)) || '';
+  const descriptionFlags = langToFlags(stream.description || '');
+  const flags = descriptionFlags || titleFlags;
 
   // First line is episode info if it's not quality/metadata
   const epInfo = titleLines[0] && !titleLines[0].match(/^(HD|4K|1080p|720p|⚙️|🔗|📦)/i)
@@ -556,10 +577,12 @@ function normalizeStream(stream, providerId, providerName) {
   const title = titleParts.join('\n');
 
   return {
-    ...stream,
     name,
     title,
     ...(url ? { url } : {}),
+    ...(stream.infoHash ? { infoHash: stream.infoHash } : {}),
+    ...(stream.externalUrl ? { externalUrl: stream.externalUrl } : {}),
+    ...(stream.file ? { file: stream.file } : {}),
     behaviorHints: {
       notWebReady: true,
       bingeGroup: `provider|${providerId}`,
@@ -862,13 +885,10 @@ async function handleStream(req, res, type, id) {
         const resolvedId = await resolveAnimeId(id);
         const proxyId = resolvedId || id;
         const proxyType = 'series';
-        const qsParts = [];
-        if (season > 1) qsParts.push(`season=${season}`);
-        if (episode > 1) qsParts.push(`episode=${episode}`);
-        const qs = qsParts.length ? '?' + qsParts.join('&') : '';
+        const qs = `?season=${season}&episode=${episode}`;
         const data = await proxyPigamer(`/stream/${proxyType}/${encodeURIComponent(proxyId)}.json${qs}`);
         const pigStreams = parseSources(data);
-        console.log(`  [Pigamer37] ${pigStreams.length} streams`);
+        console.log(`  [Pigamer37] ${pigStreams.length} streams (s${season}e${episode})`);
         return pigStreams.map(s => normalizeStream(s, 'pigamer37', 'Pigamer37')).filter(Boolean);
       } catch (e) {
         console.warn(`  [Pigamer37] ${e.message}`);

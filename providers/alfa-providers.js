@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-12T12:33:26.028Z
+ * Generated: 2026-06-12T12:42:48.843Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -1412,6 +1412,7 @@ ${v.server || detectServer(v.url)}`,
               title: `${v.quality || "HD"}
 \u2699\uFE0F ${v.server || detectServer(v.url)}
 \u{1F517} ${provider.title}`,
+              description: v.lang || (Array.isArray(provider.language) ? provider.language.join(",") : ""),
               url: v.url,
               behaviorHints: {
                 notWebReady: true,

@@ -115,6 +115,7 @@ async function scrapeAlfaProviders(type, id, season, episode) {
           return videos.map(v => ({
             name: `${provider.title}\n${v.server || detectServer(v.url)}`,
             title: `${v.quality || 'HD'}\n⚙️ ${v.server || detectServer(v.url)}\n🔗 ${provider.title}`,
+            description: v.lang || (Array.isArray(provider.language) ? provider.language.join(',') : ''),
             url: v.url,
             behaviorHints: {
               notWebReady: true,
