@@ -837,6 +837,8 @@ async function scrapeAlfa(rawId, mediaType, type, season, episode, config) {
     } else {
       const proxyId = await resolveAnimeId(rawId) || rawId;
       tmdbId = await getAnimeTMDbId(proxyId);
+      // Fallback: pass anime slug directly to Alfa (resolveTitle handles it natively)
+      if (!tmdbId) tmdbId = proxyId;
     }
   } else {
     tmdbId = await resolveTMDbIdForProviders(rawId, mediaType);
