@@ -13,7 +13,7 @@ const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.5.0';
+const VERSION = '1.6.0';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 const PIGAMER = 'https://pigamer37.alwaysdata.net';
@@ -54,6 +54,25 @@ const CACHE_TTL = 10 * 60 * 1000;
 const MAX_CACHE = 1000;
 const metaCache = new Map();
 const META_TTL = 60 * 60 * 1000;
+const genreCache = { movie: null, tv: null, loadedAt: 0 };
+const GENRE_TTL = 24 * 60 * 60 * 1000;
+
+async function loadGenres() {
+  const now = Date.now();
+  if (genreCache.loadedAt && (now - genreCache.loadedAt) < GENRE_TTL) return;
+  try {
+    const [movieGenres, tvGenres] = await Promise.all([
+      fetchAPI(`https://api.themoviedb.org/3/genre/movie/list?api_key=${TMDB_KEY}&language=en`),
+      fetchAPI(`https://api.themoviedb.org/3/genre/tv/list?api_key=${TMDB_KEY}&language=en`)
+    ]);
+    genreCache.movie = (movieGenres?.genres || []).map(g => g.name);
+    genreCache.tv = (tvGenres?.genres || []).map(g => g.name);
+    genreCache.loadedAt = now;
+    console.log(`Loaded ${genreCache.movie.length} movie genres, ${genreCache.tv.length} TV genres`);
+  } catch (e) {
+    console.warn('Failed to load genres:', e.message);
+  }
+}
 
 function cacheSet(cache, key, value, max) {
   if (cache.size >= max) {
@@ -74,8 +93,8 @@ async function fetchAPI(url, opts = {}, timeout = 15000) {
       signal: ctrl.signal, ...opts
     });
     if (!res.ok) return null;
-    const ct = res.headers.get('content-type') || '';
-    return ct.includes('json') ? await res.json().catch(() => null) : await res.text();
+    const text = await res.text();
+    try { return JSON.parse(text); } catch { return text; }
   } catch { return null; }
   finally { clearTimeout(timer); }
 }
@@ -88,6 +107,54 @@ function parseSources(data) {
   if (Array.isArray(data.streams)) return data.streams;
   if (Array.isArray(data.results)) return data.results;
   return [];
+}
+
+function parse2embedHTML(html) {
+  if (!html || typeof html !== 'string') return [];
+  const streams = [];
+  const seen = new Set();
+
+  const m3u8Re = /https?:\/\/[^"'\s<>(){}[\]]+\.m3u8[^"'\s<>(){}[\]]*/gi;
+  const mp4Re = /https?:\/\/[^"'\s<>(){}[\]]+\.mp4[^"'\s<>(){}[\]]*/gi;
+  const iframeRe = /<iframe[^>]+src=["']([^"']+)["']/gi;
+  const jsUrlRe = /(?:file|src|url|source|videoSrc|streamUrl)\s*[:=]\s*["']([^"']+)["']/gi;
+  const dataSrcRe = /data-(?:src|file|url|video)=["']([^"']+)["']/gi;
+  const jsonBlockRe = /"((?:https?:)?\/\/[^"]+(?:m3u8|mp4|mkv|embed|hls)[^"]*)"/gi;
+
+  let m;
+  while ((m = m3u8Re.exec(html)) !== null) {
+    if (!seen.has(m[0])) { seen.add(m[0]); streams.push({ name: 'Adaptive', description: '2embed', url: m[0], behaviorHints: { notWebReady: true } }); }
+  }
+  while ((m = mp4Re.exec(html)) !== null) {
+    if (!seen.has(m[0])) { seen.add(m[0]); streams.push({ name: 'HD', description: '2embed', url: m[0], behaviorHints: { notWebReady: true } }); }
+  }
+  while ((m = iframeRe.exec(html)) !== null) {
+    const src = m[1];
+    if (src && !seen.has(src) && (src.includes('m3u8') || src.includes('mp4') || src.includes('embed') || src.includes('player') || src.includes('stream'))) {
+      seen.add(src); streams.push({ name: 'HD', description: '2embed', url: src, behaviorHints: { notWebReady: true } });
+    }
+  }
+  while ((m = jsUrlRe.exec(html)) !== null) {
+    const url = m[1];
+    if (url && url.startsWith('http') && !seen.has(url)) {
+      seen.add(url); streams.push({ name: 'HD', description: '2embed', url: url, behaviorHints: { notWebReady: true } });
+    }
+  }
+  while ((m = dataSrcRe.exec(html)) !== null) {
+    const url = m[1];
+    if (url && url.startsWith('http') && !seen.has(url)) {
+      seen.add(url); streams.push({ name: 'HD', description: '2embed', url: url, behaviorHints: { notWebReady: true } });
+    }
+  }
+  while ((m = jsonBlockRe.exec(html)) !== null) {
+    const url = m[1];
+    const fullUrl = url.startsWith('//') ? 'https:' + url : url;
+    if (!seen.has(fullUrl)) {
+      seen.add(fullUrl); streams.push({ name: 'HD', description: '2embed', url: fullUrl, behaviorHints: { notWebReady: true } });
+    }
+  }
+
+  return streams;
 }
 
 function parseConfig(req) {
@@ -143,6 +210,7 @@ async function scrape2embedVesy(rawId, mediaType, season, episode) {
     let url = `https://streamsrcs.2embed.cc/vesy?tmdb=${tmdbId}`;
     if (mediaType === 'tv') url += `&s=${season}&e=${episode}`;
     const data = await fetchAPI(url, {}, 12000);
+    if (typeof data === 'string') return parse2embedHTML(data);
     return parseSources(data).map(s => ({
       name: s.quality || s.label || s.resolution || 'HD',
       description: '2embed',
@@ -162,6 +230,7 @@ async function scrape2embedVsrc(rawId, mediaType, season, episode) {
     let url = `https://streamsrcs.2embed.cc/vsrc?imdb=${imdbId}`;
     if (mediaType === 'tv') url += `&s=${season}&e=${episode}`;
     const data = await fetchAPI(url, {}, 12000);
+    if (typeof data === 'string') return parse2embedHTML(data);
     return parseSources(data).map(s => ({
       name: s.quality || s.label || s.resolution || 'HD',
       description: '2embed (IMDb)',
@@ -184,45 +253,19 @@ async function scrapeVidSrcRip(tmdbId, mediaType, season, episode) {
   } catch { return []; }
 }
 
-async function scrapeEZTV(rawId, mediaType, season, episode) {
-  try {
-    let imdbId = rawId;
-    if (!rawId.startsWith('tt')) {
-      imdbId = await getIMDbId(rawId, mediaType);
-      if (!imdbId) return [];
-    }
-    const searchUrl = `https://eztvx.to/search/${imdbId}`;
-    const html = await fetchAPI(searchUrl, {}, 12000);
-    if (!html || typeof html !== 'string') return [];
-    const magnetMatch = html.match(/href="(magnet:\?[^"]+)"/g);
-    if (!magnetMatch) return [];
-    return magnetMatch.slice(0, 5).map(m => {
-      const url = m.match(/href="([^"]+)"/)[1];
-      return { name: 'HD', description: 'EZTV', url, behaviorHints: { notWebReady: true } };
-    });
-  } catch { return []; }
-}
-
-async function getTitle(rawId, mediaType) {
+async function scrapePoseidonHD(rawId, mediaType, season, episode) {
   try {
     let tmdbId = rawId;
     if (rawId.startsWith('tt')) {
-      const r = await fetchAPI(`https://api.themoviedb.org/3/find/${rawId}?api_key=${TMDB_KEY}&external_source=imdb_id`);
-      const results = r?.[mediaType === 'tv' ? 'tv_results' : 'movie_results'];
-      if (results?.[0]) tmdbId = results[0].id;
-      else return null;
+      tmdbId = await getTMDbId(rawId, mediaType);
+      if (!tmdbId) return [];
     }
-    const typeStr = mediaType === 'tv' ? 'tv' : 'movie';
-    const data = await fetchAPI(`https://api.themoviedb.org/3/${typeStr}/${tmdbId}?api_key=${TMDB_KEY}&language=en`);
-    return data ? { title: data.title || data.name || '', year: (data.release_date || data.first_air_date || '').substring(0, 4) } : null;
-  } catch { return null; }
-}
-
-async function scrapeCuevana2Espanol(rawId, mediaType, season, episode) {
-  try {
-    const info = await getTitle(rawId, mediaType);
-    if (!info?.title) return [];
-    const searchUrl = `https://www.cuevana2espanol.net/search?q=${encodeURIComponent(info.title)}`;
+    const meta = await getTMDbMeta(tmdbId, mediaType);
+    if (!meta) return [];
+    const title = meta.title || meta.name || '';
+    const year = (meta.release_date || meta.first_air_date || '').substring(0, 4);
+    if (!title) return [];
+    const searchUrl = `https://www.poseidonhd2.co/search?q=${encodeURIComponent(title)}`;
     const html = await fetchAPI(searchUrl, {}, 12000);
     if (!html || typeof html !== 'string') return [];
     const linkMatch = html.match(/href="(\/[^"]*pelicula[^"]*)"[^>]*>([^<]*)<\/a>/gi);
@@ -232,51 +275,8 @@ async function scrapeCuevana2Espanol(rawId, mediaType, season, episode) {
       const href = m.match(/href="([^"]+)"/)?.[1];
       const txt = m.match(/>([^<]+)</)?.[1]?.trim();
       if (!href || !txt) continue;
-      const s = txt.toLowerCase().includes(info.title.toLowerCase().substring(0, 5)) ? 1 : 0;
-      if (info.year && txt.includes(info.year)) s += 0.2;
-      if (s > bestScore) { bestScore = s; bestUrl = `https://www.cuevana2espanol.net${href}`; }
-    }
-    if (!bestUrl) return [];
-    const pageHtml = await fetchAPI(bestUrl, {}, 12000);
-    if (!pageHtml || typeof pageHtml !== 'string') return [];
-    const jsonMatch = pageHtml.match(/<script type="application\/json"[^>]*>(.*?)<\/script>/);
-    if (!jsonMatch) return [];
-    const data = JSON.parse(jsonMatch[1]);
-    const players = data?.props?.pageProps?.post?.players;
-    if (!players) return [];
-    const streams = [];
-    for (const [lang, arr] of Object.entries(players)) {
-      if (Array.isArray(arr)) {
-        for (const p of arr) {
-          if (p.result) streams.push({
-            name: p.quality || 'HD',
-            description: `Cuevana2 [${lang}]`,
-            url: p.result,
-            behaviorHints: { notWebReady: true }
-          });
-        }
-      }
-    }
-    return streams;
-  } catch { return []; }
-}
-
-async function scrapePoseidonHD(rawId, mediaType, season, episode) {
-  try {
-    const info = await getTitle(rawId, mediaType);
-    if (!info?.title) return [];
-    const searchUrl = `https://www.poseidonhd2.co/search?q=${encodeURIComponent(info.title)}`;
-    const html = await fetchAPI(searchUrl, {}, 12000);
-    if (!html || typeof html !== 'string') return [];
-    const linkMatch = html.match(/href="(\/[^"]*pelicula[^"]*)"[^>]*>([^<]*)<\/a>/gi);
-    if (!linkMatch) return [];
-    let bestUrl = null, bestScore = 0;
-    for (const m of linkMatch) {
-      const href = m.match(/href="([^"]+)"/)?.[1];
-      const txt = m.match(/>([^<]+)</)?.[1]?.trim();
-      if (!href || !txt) continue;
-      const s = txt.toLowerCase().includes(info.title.toLowerCase().substring(0, 5)) ? 1 : 0;
-      if (info.year && txt.includes(info.year)) s += 0.2;
+      let s = txt.toLowerCase().includes(title.toLowerCase().substring(0, 5)) ? 1 : 0;
+      if (year && txt.includes(year)) s += 0.2;
       if (s > bestScore) { bestScore = s; bestUrl = `https://www.poseidonhd2.co${href}`; }
     }
     if (!bestUrl) return [];
@@ -319,11 +319,19 @@ function isAnimeId(id) {
 }
 
 function fixPigamerId(id) {
-  return id.replace(/:/g, '%7C');
+  return id.replace(/:/g, '|');
 }
 
-function fixPigamerType(type) {
-  return 'series';
+function parsePathExtras(extraStr) {
+  const params = {};
+  if (!extraStr) return params;
+  const pairs = extraStr.split('&');
+  for (const pair of pairs) {
+    const eq = pair.indexOf('=');
+    if (eq > 0) params[pair.substring(0, eq)] = pair.substring(eq + 1);
+    else if (pair) params[pair] = '';
+  }
+  return params;
 }
 
 async function proxyPigamer(pathSuffix, timeout = 20000) {
@@ -349,17 +357,19 @@ function cacheKey(type, id, extra) {
 
 // ─── Manifest ─────────────────────────────
 
-app.get('/manifest.json', (req, res) => {
+app.get('/manifest.json', async (req, res) => {
   const config = parseConfig(req);
   const enabledCatalogs = [];
+
+  await loadGenres();
 
   if (config.enableMovies) {
     enabledCatalogs.push(
       { type: 'movie', id: 'tmdb-popular', name: 'Popular Movies' },
       { type: 'movie', id: 'tmdb-trending', name: 'Trending Movies' },
       { type: 'movie', id: 'tmdb-top', name: 'Top Rated Movies' },
-      { type: 'movie', id: 'tmdb-genres', name: 'Movies by Genre', extra: [{ name: 'genre', isRequired: false, optionsLimit: 1 }] },
-      { type: 'movie', id: 'tmdb-year', name: 'Movies by Year', extra: [{ name: 'search', isRequired: false }] }
+      { type: 'movie', id: 'tmdb-genres', name: 'Movies by Genre', extra: [{ name: 'genre', options: genreCache.movie || [], optionsLimit: 1 }] },
+      { type: 'movie', id: 'tmdb-year', name: 'Movies by Year', extra: [{ name: 'search', isRequired: true }] }
     );
   }
   if (config.enableSeries) {
@@ -367,20 +377,20 @@ app.get('/manifest.json', (req, res) => {
       { type: 'series', id: 'tmdb-popular', name: 'Popular Series' },
       { type: 'series', id: 'tmdb-trending', name: 'Trending Series' },
       { type: 'series', id: 'tmdb-top', name: 'Top Rated Series' },
-      { type: 'series', id: 'tmdb-genres', name: 'Series by Genre', extra: [{ name: 'genre', isRequired: false, optionsLimit: 1 }] },
-      { type: 'series', id: 'tmdb-year', name: 'Series by Year', extra: [{ name: 'search', isRequired: false }] }
+      { type: 'series', id: 'tmdb-genres', name: 'Series by Genre', extra: [{ name: 'genre', options: genreCache.tv || [], optionsLimit: 1 }] },
+      { type: 'series', id: 'tmdb-year', name: 'Series by Year', extra: [{ name: 'search', isRequired: true }] }
     );
   }
   if (config.enableAnime) {
     enabledCatalogs.push(
-      { type: 'anime', id: 'animeflv|onair', name: 'AnimeFLV On Air' },
-      { type: 'anime', id: 'animeav1|onair', name: 'AnimeAV1 On Air' },
-      { type: 'anime', id: 'tioanime|onair', name: 'TioAnime On Air' },
-      { type: 'anime', id: 'henaojara|onair', name: 'Henaojara On Air' },
-      { type: 'anime', id: 'animeflv|search', name: 'AnimeFLV Search', extra: [{ name: 'search', isRequired: true }, { name: 'skip', isRequired: false }] },
-      { type: 'anime', id: 'animeav1|search', name: 'AnimeAV1 Search', extra: [{ name: 'search', isRequired: true }, { name: 'skip', isRequired: false }] },
-      { type: 'anime', id: 'tioanime|search', name: 'TioAnime Search', extra: [{ name: 'search', isRequired: true }, { name: 'skip', isRequired: false }] },
-      { type: 'anime', id: 'henaojara|search', name: 'Henaojara Search', extra: [{ name: 'search', isRequired: true }, { name: 'skip', isRequired: false }] }
+      { type: 'series', id: 'animeflv|onair', name: 'AnimeFLV On Air' },
+      { type: 'series', id: 'animeav1|onair', name: 'AnimeAV1 On Air' },
+      { type: 'series', id: 'tioanime|onair', name: 'TioAnime On Air' },
+      { type: 'series', id: 'henaojara|onair', name: 'Henaojara On Air' },
+      { type: 'series', id: 'animeflv|search', name: 'AnimeFLV Search', extra: [{ name: 'search', isRequired: true }, { name: 'skip', isRequired: false }] },
+      { type: 'series', id: 'animeav1|search', name: 'AnimeAV1 Search', extra: [{ name: 'search', isRequired: true }, { name: 'skip', isRequired: false }] },
+      { type: 'series', id: 'tioanime|search', name: 'TioAnime Search', extra: [{ name: 'search', isRequired: true }, { name: 'skip', isRequired: false }] },
+      { type: 'series', id: 'henaojara|search', name: 'Henaojara Search', extra: [{ name: 'search', isRequired: true }, { name: 'skip', isRequired: false }] }
     );
   }
 
@@ -424,8 +434,19 @@ app.get('/manifest.json', (req, res) => {
 
 // ─── Stream ───────────────────────────────
 
-app.get('/stream/:type/:id.json', async (req, res) => {
+app.get('/stream/:type/:id/:extra(*).json', async (req, res) => {
   const { type, id } = req.params;
+  const extraStr = req.params.extra || '';
+  const extraParams = parsePathExtras(extraStr);
+  req.query = { ...req.query, ...extraParams };
+  handleStream(req, res, type, id);
+});
+
+app.get('/stream/:type/:id.json', async (req, res) => {
+  handleStream(req, res, req.params.type, req.params.id);
+});
+
+async function handleStream(req, res, type, id) {
   const config = parseConfig(req);
   const season = parseInt(req.query.season) || 1;
   const episode = parseInt(req.query.episode) || 1;
@@ -498,7 +519,7 @@ app.get('/stream/:type/:id.json', async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', `public, max-age=${CACHE_TTL / 1000}`);
   res.json({ streams: filtered });
-});
+}
 
 function filterStreams(streams, config) {
   return streams.filter(s => matchesQuality(s.name, config.quality));
@@ -506,8 +527,19 @@ function filterStreams(streams, config) {
 
 // ─── Catalog ──────────────────────────────
 
-app.get('/catalog/:type/:id.json', async (req, res) => {
+app.get('/catalog/:type/:id/:extra(*).json', async (req, res) => {
   const { type, id } = req.params;
+  const extraStr = req.params.extra || '';
+  const extraParams = parsePathExtras(extraStr);
+  req.query = { ...req.query, ...extraParams };
+  handleCatalog(req, res, type, id);
+});
+
+app.get('/catalog/:type/:id.json', async (req, res) => {
+  handleCatalog(req, res, req.params.type, req.params.id);
+});
+
+async function handleCatalog(req, res, type, id) {
   const config = parseConfig(req);
 
   if ((type === 'movie' && !config.enableMovies) ||
@@ -518,7 +550,7 @@ app.get('/catalog/:type/:id.json', async (req, res) => {
 
   // Anime catalogs → proxy pigamer37
   const cleanId = id.replace('|onair', '').replace('|search', '').replace('%7C', '|');
-  if (isAnimeId(cleanId)) {
+  if (isAnimeId(cleanId + ':')) {
     if (!config.enableAnime) return res.json({ metas: [] });
     const proxyType = 'series';
     const qs = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
@@ -597,12 +629,23 @@ app.get('/catalog/:type/:id.json', async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.json({ metas: [] });
   }
-});
+}
 
 // ─── Meta ─────────────────────────────────
 
-app.get('/meta/:type/:id.json', async (req, res) => {
+app.get('/meta/:type/:id/:extra(*).json', async (req, res) => {
   const { type, id } = req.params;
+  const extraStr = req.params.extra || '';
+  const extraParams = parsePathExtras(extraStr);
+  req.query = { ...req.query, ...extraParams };
+  handleMeta(req, res, type, id);
+});
+
+app.get('/meta/:type/:id.json', async (req, res) => {
+  handleMeta(req, res, req.params.type, req.params.id);
+});
+
+async function handleMeta(req, res, type, id) {
   const config = parseConfig(req);
 
   if ((type === 'movie' && !config.enableMovies) ||
@@ -660,7 +703,7 @@ app.get('/meta/:type/:id.json', async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.json({ meta: null });
   }
-});
+}
 
 // ─── Configure (functional) ───────────────
 
@@ -800,7 +843,7 @@ footer a{color:var(--accent2);text-decoration:none}
       <h3>Scrapers</h3>
     </div>
     <div class="toggle-row">
-      <div><div class="label">Backend scrapers</div><div class="hint">6 server-side sources (2embed, EZTV, Cuevana2, PoseidonHD)</div></div>
+      <div><div class="label">Backend scrapers</div><div class="hint">4 server-side sources (2embed Vesy, 2embed Vsrc, VidSrc, PoseidonHD)</div></div>
       <label class="toggle"><input type="checkbox" name="enableBackend"${currentConfig.enableBackend ? ' checked' : ''}><span class="track"></span></label>
     </div>
     <div class="toggle-row">
