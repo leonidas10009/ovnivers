@@ -13,7 +13,7 @@ const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.2.6';
+const VERSION = '1.2.7';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 const PIGAMER = 'https://pigamer37.alwaysdata.net';
@@ -513,8 +513,51 @@ function normalizeStream(stream, providerId, providerName) {
   const hasPlayableTarget = url || stream.externalUrl || stream.infoHash;
   if (!hasPlayableTarget) return null;
 
-  const base = {
+  const rawName = stream.name || '';
+  const rawTitle = stream.title || '';
+  const nameLines = rawName.split('\n');
+  const titleLines = rawTitle.split('\n');
+
+  const sourceName = nameLines[0] || '';
+  const serverName = nameLines.length > 1 ? nameLines.slice(1).join(' ') : '';
+
+  // Extract quality from stream.quality, first title line, or source name
+  const quality = stream.quality
+    || (titleLines[0]?.match(/\b(4K|2160p?|1080p?|720p?|480p?|HD|FHD|SD)\b/i)?.[0])
+    || (sourceName.match(/\b(4K|2160p?|1080p?|720p?|480p?|HD|FHD|SD)\b/i)?.[0])
+    || 'HD';
+
+  // Extract language flags from original title (regional indicator symbols)
+  const flags = titleLines.find(l => /[\u{1F1E6}-\u{1F1FF}]{2,}/u.test(l)) || '';
+
+  // First line is episode info if it's not quality/metadata
+  const epInfo = titleLines[0] && !titleLines[0].match(/^(HD|4K|1080p|720p|⚙️|🔗|📦)/i)
+    ? titleLines[0] : '';
+
+  // Provider label: Pigamer37 → "Pigamer37: Source", Alfa → "Alfa: Source", else providerName
+  const isPigamer = providerId === 'pigamer37';
+  const isAlfa = providerId === 'alfa-providers';
+  const providerLabel = isPigamer && sourceName && sourceName !== quality
+    ? `Pigamer37: ${sourceName}`
+    : isAlfa && sourceName && sourceName !== quality
+      ? `Alfa: ${sourceName}`
+      : providerName;
+
+  // Unified format for all providers
+  const name = `${providerLabel}\n${quality}${flags ? ' ' + flags : ''}`;
+
+  const titleParts = [`${quality} | ${providerLabel}`];
+  if (serverName && !serverName.match(/^(HD|4K|1080p|720p)$/i)) {
+    titleParts.push(serverName.replace(/^[⚙️🔗📦\s]+/, '').trim());
+  }
+  if (flags) titleParts.push(flags);
+  if (epInfo) titleParts.push(epInfo);
+  const title = titleParts.join('\n');
+
+  return {
     ...stream,
+    name,
+    title,
     ...(url ? { url } : {}),
     behaviorHints: {
       notWebReady: true,
@@ -522,17 +565,6 @@ function normalizeStream(stream, providerId, providerName) {
       ...(stream.behaviorHints || {})
     }
   };
-
-  const rawName = stream.name || '';
-
-  // Preserve streams that already have multiline format (e.g. Pigamer37)
-  if (rawName.includes('\n')) return base;
-
-  const quality = stream.quality || rawName || 'HD';
-  base.name = `${providerName}\n${quality}`;
-  if (!stream.title) base.title = `${quality}\n${providerName}`;
-
-  return base;
 }
 
 function dedupeStreams(streams) {
