@@ -194,14 +194,43 @@ async function scrapeEZTV(rawId, mediaType, season, episode) {
   } catch { return []; }
 }
 
+async function getTitle(rawId, mediaType) {
+  try {
+    let tmdbId = rawId;
+    if (rawId.startsWith('tt')) {
+      const r = await fetchAPI(`https://api.themoviedb.org/3/find/${rawId}?api_key=${TMDB_KEY}&external_source=imdb_id`);
+      const results = r?.[mediaType === 'tv' ? 'tv_results' : 'movie_results'];
+      if (results?.[0]) tmdbId = results[0].id;
+      else return null;
+    }
+    const typeStr = mediaType === 'tv' ? 'tv' : 'movie';
+    const data = await fetchAPI(`https://api.themoviedb.org/3/${typeStr}/${tmdbId}?api_key=${TMDB_KEY}&language=en`);
+    return data ? { title: data.title || data.name || '', year: (data.release_date || data.first_air_date || '').substring(0, 4) } : null;
+  } catch { return null; }
+}
+
 async function scrapeCuevana2Espanol(rawId, mediaType, season, episode) {
   try {
-    const tmdbId = rawId.startsWith('tt') ? await getTMDbId(rawId, mediaType) : rawId;
-    if (!tmdbId) return [];
-    const searchUrl = `https://www.cuevana2espanol.net/search?q=${tmdbId}`;
+    const info = await getTitle(rawId, mediaType);
+    if (!info?.title) return [];
+    const searchUrl = `https://www.cuevana2espanol.net/search?q=${encodeURIComponent(info.title)}`;
     const html = await fetchAPI(searchUrl, {}, 12000);
     if (!html || typeof html !== 'string') return [];
-    const jsonMatch = html.match(/<script type="application\/json"[^>]*>(.*?)<\/script>/);
+    const linkMatch = html.match(/href="(\/[^"]*pelicula[^"]*)"[^>]*>([^<]*)<\/a>/gi);
+    if (!linkMatch) return [];
+    let bestUrl = null, bestScore = 0;
+    for (const m of linkMatch) {
+      const href = m.match(/href="([^"]+)"/)?.[1];
+      const txt = m.match(/>([^<]+)</)?.[1]?.trim();
+      if (!href || !txt) continue;
+      const s = txt.toLowerCase().includes(info.title.toLowerCase().substring(0, 5)) ? 1 : 0;
+      if (info.year && txt.includes(info.year)) s + 0.2;
+      if (s > bestScore) { bestScore = s; bestUrl = `https://www.cuevana2espanol.net${href}`; }
+    }
+    if (!bestUrl) return [];
+    const pageHtml = await fetchAPI(bestUrl, {}, 12000);
+    if (!pageHtml || typeof pageHtml !== 'string') return [];
+    const jsonMatch = pageHtml.match(/<script type="application\/json"[^>]*>(.*?)<\/script>/);
     if (!jsonMatch) return [];
     const data = JSON.parse(jsonMatch[1]);
     const players = data?.props?.pageProps?.post?.players;
@@ -225,12 +254,26 @@ async function scrapeCuevana2Espanol(rawId, mediaType, season, episode) {
 
 async function scrapePoseidonHD(rawId, mediaType, season, episode) {
   try {
-    const tmdbId = rawId.startsWith('tt') ? await getTMDbId(rawId, mediaType) : rawId;
-    if (!tmdbId) return [];
-    const searchUrl = `https://www.poseidonhd2.co/search?q=${tmdbId}`;
+    const info = await getTitle(rawId, mediaType);
+    if (!info?.title) return [];
+    const searchUrl = `https://www.poseidonhd2.co/search?q=${encodeURIComponent(info.title)}`;
     const html = await fetchAPI(searchUrl, {}, 12000);
     if (!html || typeof html !== 'string') return [];
-    const nextMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/);
+    const linkMatch = html.match(/href="(\/[^"]*pelicula[^"]*)"[^>]*>([^<]*)<\/a>/gi);
+    if (!linkMatch) return [];
+    let bestUrl = null, bestScore = 0;
+    for (const m of linkMatch) {
+      const href = m.match(/href="([^"]+)"/)?.[1];
+      const txt = m.match(/>([^<]+)</)?.[1]?.trim();
+      if (!href || !txt) continue;
+      const s = txt.toLowerCase().includes(info.title.toLowerCase().substring(0, 5)) ? 1 : 0;
+      if (info.year && txt.includes(info.year)) s + 0.2;
+      if (s > bestScore) { bestScore = s; bestUrl = `https://www.poseidonhd2.co${href}`; }
+    }
+    if (!bestUrl) return [];
+    const pageHtml = await fetchAPI(bestUrl, {}, 12000);
+    if (!pageHtml || typeof pageHtml !== 'string') return [];
+    const nextMatch = pageHtml.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/);
     if (!nextMatch) return [];
     const data = JSON.parse(nextMatch[1]);
     const players = data?.props?.pageProps?.post?.players;
@@ -304,21 +347,33 @@ app.get('/manifest.json', (req, res) => {
   const enabledCatalogs = [];
 
   if (config.enableMovies) {
-    enabledCatalogs.push({ type: 'movie', id: 'tmdb-popular', name: 'Popular Movies' });
+    enabledCatalogs.push(
+      { type: 'movie', id: 'tmdb-popular', name: 'Popular Movies' },
+      { type: 'movie', id: 'tmdb-trending', name: 'Trending Movies' },
+      { type: 'movie', id: 'tmdb-top', name: 'Top Rated Movies' },
+      { type: 'movie', id: 'tmdb-genres', name: 'Movies by Genre', extra: [{ name: 'genre', isRequired: false, optionsLimit: 1 }] },
+      { type: 'movie', id: 'tmdb-year', name: 'Movies by Year', extra: [{ name: 'search', isRequired: false }] }
+    );
   }
   if (config.enableSeries) {
-    enabledCatalogs.push({ type: 'series', id: 'tmdb-popular', name: 'Popular Series' });
+    enabledCatalogs.push(
+      { type: 'series', id: 'tmdb-popular', name: 'Popular Series' },
+      { type: 'series', id: 'tmdb-trending', name: 'Trending Series' },
+      { type: 'series', id: 'tmdb-top', name: 'Top Rated Series' },
+      { type: 'series', id: 'tmdb-genres', name: 'Series by Genre', extra: [{ name: 'genre', isRequired: false, optionsLimit: 1 }] },
+      { type: 'series', id: 'tmdb-year', name: 'Series by Year', extra: [{ name: 'search', isRequired: false }] }
+    );
   }
   if (config.enableAnime) {
     enabledCatalogs.push(
-      { type: 'series', id: 'animeflv|onair', name: 'AnimeFLV On Air' },
-      { type: 'series', id: 'animeav1|onair', name: 'AnimeAV1 On Air' },
-      { type: 'series', id: 'tioanime|onair', name: 'TioAnime On Air' },
-      { type: 'series', id: 'henaojara|onair', name: 'Henaojara On Air' },
-      { type: 'series', id: 'animeflv|search', name: 'AnimeFLV', extra: [{ name: 'search', isRequired: true }, { name: 'genre', optionsLimit: 1, isRequired: false }, { name: 'skip', isRequired: false }] },
-      { type: 'series', id: 'animeav1|search', name: 'AnimeAV1', extra: [{ name: 'search', isRequired: true }, { name: 'genre', optionsLimit: 1, isRequired: false }, { name: 'skip', isRequired: false }] },
-      { type: 'series', id: 'tioanime|search', name: 'TioAnime', extra: [{ name: 'search', isRequired: true }, { name: 'genre', optionsLimit: 1, isRequired: false }, { name: 'skip', isRequired: false }] },
-      { type: 'series', id: 'henaojara|search', name: 'Henaojara', extra: [{ name: 'search', isRequired: true }, { name: 'genre', optionsLimit: 1, isRequired: false }, { name: 'skip', isRequired: false }] }
+      { type: 'anime', id: 'animeflv|onair', name: 'AnimeFLV On Air' },
+      { type: 'anime', id: 'animeav1|onair', name: 'AnimeAV1 On Air' },
+      { type: 'anime', id: 'tioanime|onair', name: 'TioAnime On Air' },
+      { type: 'anime', id: 'henaojara|onair', name: 'Henaojara On Air' },
+      { type: 'anime', id: 'animeflv|search', name: 'AnimeFLV Search', extra: [{ name: 'search', isRequired: true }, { name: 'skip', isRequired: false }] },
+      { type: 'anime', id: 'animeav1|search', name: 'AnimeAV1 Search', extra: [{ name: 'search', isRequired: true }, { name: 'skip', isRequired: false }] },
+      { type: 'anime', id: 'tioanime|search', name: 'TioAnime Search', extra: [{ name: 'search', isRequired: true }, { name: 'skip', isRequired: false }] },
+      { type: 'anime', id: 'henaojara|search', name: 'Henaojara Search', extra: [{ name: 'search', isRequired: true }, { name: 'skip', isRequired: false }] }
     );
   }
 
@@ -480,16 +535,34 @@ app.get('/catalog/:type/:id.json', async (req, res) => {
   try {
     const mediaType = type === 'series' ? 'tv' : 'movie';
     let tmdbUrl;
+    let page = Math.floor(skip / 20) + 1;
+
     if (id === 'tmdb-popular') {
-      tmdbUrl = `https://api.themoviedb.org/3/${mediaType}/popular?api_key=${TMDB_KEY}&language=en&page=1`;
+      tmdbUrl = `https://api.themoviedb.org/3/${mediaType}/popular?api_key=${TMDB_KEY}&language=en&page=${page}`;
     } else if (id === 'tmdb-trending') {
-      tmdbUrl = `https://api.themoviedb.org/3/trending/${mediaType}/week?api_key=${TMDB_KEY}&language=en`;
+      tmdbUrl = `https://api.themoviedb.org/3/trending/${mediaType}/week?api_key=${TMDB_KEY}&language=en&page=${page}`;
     } else if (id === 'tmdb-top') {
-      tmdbUrl = `https://api.themoviedb.org/3/${mediaType}/top_rated?api_key=${TMDB_KEY}&language=en&page=1`;
+      tmdbUrl = `https://api.themoviedb.org/3/${mediaType}/top_rated?api_key=${TMDB_KEY}&language=en&page=${page}`;
+    } else if (id === 'tmdb-genres') {
+      if (!genre) {
+        const genreList = await fetchAPI(`https://api.themoviedb.org/3/genre/${mediaType}/list?api_key=${TMDB_KEY}&language=en`);
+        const metas = (genreList?.genres || []).map(g => ({
+          id: `tmdb-genre:${g.id}`, type,
+          name: g.name,
+          poster: null,
+          posterShape: 'square'
+        }));
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        return res.json({ metas });
+      }
+      tmdbUrl = `https://api.themoviedb.org/3/discover/${mediaType}?api_key=${TMDB_KEY}&language=en&with_genres=${genre}&page=${page}&sort_by=popularity.desc`;
+    } else if (id === 'tmdb-year') {
+      const year = req.query.search || new Date().getFullYear();
+      tmdbUrl = `https://api.themoviedb.org/3/discover/${mediaType}?api_key=${TMDB_KEY}&language=en&primary_release_year=${year}&page=${page}&sort_by=popularity.desc`;
     } else {
       return res.json({ metas: [] });
     }
-    if (genre) tmdbUrl += `&with_genres=${genre}`;
+    if (genre && id !== 'tmdb-genres') tmdbUrl += `&with_genres=${genre}`;
 
     const data = await fetchAPI(tmdbUrl);
     if (!data || !data.results) {
@@ -587,59 +660,115 @@ app.get('/configure', (req, res) => {
   const currentConfig = parseConfig(req);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Ovnivers — Configure</title>
 <style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #13131a;
+  --surface2: #1a1a24;
+  --border: #252536;
+  --text: #e4e4ed;
+  --text2: #8888a0;
+  --accent: #6c5ce7;
+  --accent2: #a29bfe;
+  --green: #00b894;
+  --red: #e17055;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:system-ui;background:#0d1117;color:#c9d1d9;padding:20px;max-width:600px;margin:0 auto}
-h1{color:#e94560;font-size:1.8em;text-align:center;margin-bottom:5px}
-.sub{text-align:center;font-size:13px;color:#8b949e;margin-bottom:25px}
-.section{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:16px;margin-bottom:14px}
-.section h3{color:#e94560;font-size:14px;margin-bottom:12px}
-.row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #21262d;font-size:13px}
-.row:last-child{border-bottom:none}
-.row label{flex:1}
-.toggle{position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.container{width:100%;max-width:640px}
+header{text-align:center;margin-bottom:28px}
+header .logo{width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,var(--accent),#e84393);display:inline-flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;margin-bottom:12px}
+header h1{font-size:24px;font-weight:700;color:var(--text)}
+header p{font-size:13px;color:var(--text2);margin-top:4px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:14px}
+.card-header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.card-header .icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.card-header .icon.types{background:#6c5ce722;color:var(--accent2)}
+.card-header .icon.quality{background:#00b89422;color:var(--green)}
+.card-header .icon.lang{background:#fdcb6e22;color:#fdcb6e}
+.card-header .icon.scrapers{background:#e1705522;color:var(--red)}
+.card-header h3{font-size:14px;font-weight:600}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-row .label{font-size:13px;color:var(--text)}
+.toggle-row .hint{font-size:11px;color:var(--text2)}
+.toggle{position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0}
 .toggle input{opacity:0;width:0;height:0}
-.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#30363d;border-radius:20px;transition:.2s}
-.slider:before{position:absolute;content:"";height:14px;width:14px;left:3px;bottom:3px;background:#c9d1d9;border-radius:50%;transition:.2s}
-input:checked+.slider{background:#2ea043}
-input:checked+.slider:before{transform:translateX(16px)}
+.toggle .track{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:var(--border);border-radius:24px;transition:.2s}
+.toggle .track::before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:var(--text2);border-radius:50%;transition:.2s}
+.toggle input:checked+.track{background:var(--accent)}
+.toggle input:checked+.track::before{transform:translateX(20px);background:#fff}
+select{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;font-size:13px;width:140px;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238888a0' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;cursor:pointer}
 .lang-grid{display:flex;flex-wrap:wrap;gap:6px}
 .lang-chip{position:relative;cursor:pointer}
 .lang-chip input{position:absolute;opacity:0}
-.lang-chip span{display:inline-block;padding:4px 10px;border-radius:14px;font-size:12px;background:#21262d;color:#8b949e;border:1px solid #30363d;transition:.15s}
-.lang-chip input:checked+span{background:#1f6feb22;color:#58a6ff;border-color:#1f6feb}
-select{background:#21262d;color:#c9d1d9;border:1px solid #30363d;border-radius:6px;padding:6px 10px;font-size:13px;width:120px}
-.actions{display:flex;gap:10px;margin-top:20px;justify-content:center}
-.btn{padding:10px 22px;border-radius:8px;font-size:14px;cursor:pointer;border:none;font-weight:600}
-.btn-save{background:#2ea043;color:#fff}
-.btn-save:hover{background:#3fb950}
-.btn-reset{background:#30363d;color:#c9d1d9}
-.btn-reset:hover{background:#484f58}
-.status{text-align:center;font-size:13px;margin-top:12px;min-height:20px}
-.success{color:#2ea043}
-.error{color:#e94560}
+.lang-chip span{display:inline-block;padding:6px 12px;border-radius:20px;font-size:12px;background:var(--surface2);color:var(--text2);border:1px solid var(--border);transition:.15s;user-select:none}
+.lang-chip input:checked+span{background:var(--accent);color:#fff;border-color:var(--accent)}
+.lang-chip:hover span{border-color:var(--accent2)}
+.actions{display:flex;gap:10px;margin-top:24px}
+.btn{padding:12px 24px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;border:none;transition:.15s;flex:1;text-align:center}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#7c6ff7;transform:translateY(-1px)}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{background:var(--border)}
+.result{margin-top:16px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;display:none}
+.result.show{display:block}
+.result .url{font-size:12px;color:var(--accent2);word-break:break-all;font-family:'SF Mono',monospace;background:var(--bg);padding:10px;border-radius:6px;margin-bottom:10px}
+.result .hint{font-size:11px;color:var(--text2);margin-bottom:10px}
+.result .copy-btn{background:var(--accent);color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;margin-right:6px}
+.result .copy-btn:hover{background:#7c6ff7}
+.status{text-align:center;font-size:13px;margin-top:10px;min-height:20px}
+.status.ok{color:var(--green)}
+.status.err{color:var(--red)}
+footer{text-align:center;margin-top:20px;font-size:11px;color:var(--text2)}
+footer a{color:var(--accent2);text-decoration:none}
 </style>
-
-<h1>Ovnivers</h1>
-<p class="sub">Configure your streaming preferences</p>
+</head>
+<body>
+<div class="container">
+<header>
+  <div class="logo">O</div>
+  <h1>Ovnivers</h1>
+  <p>Configure your streaming experience</p>
+</header>
 
 <form id="cfgForm" onsubmit="return false">
-  <div class="section">
-    <h3>Content Types</h3>
-    <div class="row"><label>Movies</label><label class="toggle"><input type="checkbox" name="enableMovies"${currentConfig.enableMovies ? ' checked' : ''}><span class="slider"></span></label></div>
-    <div class="row"><label>TV Series</label><label class="toggle"><input type="checkbox" name="enableSeries"${currentConfig.enableSeries ? ' checked' : ''}><span class="slider"></span></label></div>
-    <div class="row"><label>Anime</label><label class="toggle"><input type="checkbox" name="enableAnime"${currentConfig.enableAnime ? ' checked' : ''}><span class="slider"></span></label></div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="icon types">&#9654;</div>
+      <h3>Content Types</h3>
+    </div>
+    <div class="toggle-row">
+      <div><div class="label">Movies</div><div class="hint">Hollywood, Bollywood, international films</div></div>
+      <label class="toggle"><input type="checkbox" name="enableMovies"${currentConfig.enableMovies ? ' checked' : ''}><span class="track"></span></label>
+    </div>
+    <div class="toggle-row">
+      <div><div class="label">TV Series</div><div class="hint">Shows, dramas, cartoons, documentaries</div></div>
+      <label class="toggle"><input type="checkbox" name="enableSeries"${currentConfig.enableSeries ? ' checked' : ''}><span class="track"></span></label>
+    </div>
+    <div class="toggle-row">
+      <div><div class="label">Anime</div><div class="hint">Japanese, Chinese (donghua), subtitled</div></div>
+      <label class="toggle"><input type="checkbox" name="enableAnime"${currentConfig.enableAnime ? ' checked' : ''}><span class="track"></span></label>
+    </div>
   </div>
 
-  <div class="section">
-    <h3>Stream Quality</h3>
-    <div class="row">
-      <label>Preferred quality</label>
+  <div class="card">
+    <div class="card-header">
+      <div class="icon quality">&#9733;</div>
+      <h3>Stream Quality</h3>
+    </div>
+    <div class="toggle-row">
+      <div class="label">Preferred quality</div>
       <select name="quality">
-        <option value="all"${currentConfig.quality === 'all' ? ' selected' : ''}>All</option>
+        <option value="all"${currentConfig.quality === 'all' ? ' selected' : ''}>All qualities</option>
         <option value="4k"${currentConfig.quality === '4k' ? ' selected' : ''}>4K only</option>
         <option value="1080p"${currentConfig.quality === '1080p' ? ' selected' : ''}>1080p+</option>
         <option value="720p"${currentConfig.quality === '720p' ? ' selected' : ''}>720p+</option>
@@ -647,38 +776,49 @@ select{background:#21262d;color:#c9d1d9;border:1px solid #30363d;border-radius:6
     </div>
   </div>
 
-  <div class="section">
-    <h3>Languages (preferred)</h3>
+  <div class="card">
+    <div class="card-header">
+      <div class="icon lang">&#127760;</div>
+      <h3>Languages</h3>
+    </div>
     <div class="lang-grid">
       ${Object.entries(ALL_LANGS).map(([code, name]) => `<label class="lang-chip"><input type="checkbox" name="lang_${code}"${currentConfig.langs.includes(code) ? ' checked' : ''}><span>${name}</span></label>`).join('')}
     </div>
   </div>
 
-  <div class="section">
-    <h3>Backend Scrapers (server-side)</h3>
-    <div class="row"><label>Enable backend streaming</label><label class="toggle"><input type="checkbox" name="enableBackend"${currentConfig.enableBackend ? ' checked' : ''}><span class="slider"></span></label></div>
-  </div>
-
-  <div class="section">
-    <h3>Local Scrapers (device-side, 61 providers)</h3>
-    <div class="row"><label>Enable local scrapers</label><label class="toggle"><input type="checkbox" name="enableLocal"${currentConfig.enableLocal ? ' checked' : ''}><span class="slider"></span></label></div>
+  <div class="card">
+    <div class="card-header">
+      <div class="icon scrapers">&#9881;</div>
+      <h3>Scrapers</h3>
+    </div>
+    <div class="toggle-row">
+      <div><div class="label">Backend scrapers</div><div class="hint">6 server-side sources (2embed, EZTV, Cuevana2, PoseidonHD)</div></div>
+      <label class="toggle"><input type="checkbox" name="enableBackend"${currentConfig.enableBackend ? ' checked' : ''}><span class="track"></span></label>
+    </div>
+    <div class="toggle-row">
+      <div><div class="label">Local scrapers</div><div class="hint">62 device-side providers (80+ Alfa channels + 61 original)</div></div>
+      <label class="toggle"><input type="checkbox" name="enableLocal"${currentConfig.enableLocal ? ' checked' : ''}><span class="track"></span></label>
+    </div>
   </div>
 
   <div class="actions">
-    <button class="btn btn-save" onclick="generateUrl()">Generate Install URL</button>
-    <button class="btn btn-reset" onclick="resetConfig()">Reset Defaults</button>
+    <button class="btn btn-primary" onclick="generateUrl()">Generate Install URL</button>
+    <button class="btn btn-secondary" onclick="resetConfig()">Reset</button>
   </div>
+
   <div class="status" id="status"></div>
-  <div class="url-box" id="urlBox" style="display:none"></div>
+  <div class="result" id="result">
+    <div class="url" id="urlText"></div>
+    <div class="hint">Copy this URL into Nuvio Settings &rarr; Addons to install with your preferences.</div>
+    <button class="copy-btn" onclick="copyUrl()">Copy URL</button>
+    <button class="copy-btn" onclick="installStremio()">Open in Stremio</button>
+  </div>
 </form>
 
-<style>
-.url-box{margin-top:12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:10px;word-break:break-all}
-.url-box code{font-size:11px;color:#58a6ff}
-.url-box .url-hint{font-size:11px;color:#8b949e;margin-top:6px}
-.copy-btn{background:#1f6feb;color:#fff;border:none;padding:4px 12px;border-radius:4px;font-size:11px;cursor:pointer;margin-top:8px}
-.copy-btn:hover{background:#388bfd}
-</style>
+<footer>
+  Ovnivers v${VERSION} &middot; <a href="https://github.com/leonidas10009/ovnivers" target="_blank">GitHub</a>
+</footer>
+</div>
 
 <script>
 function getConfig() {
@@ -706,16 +846,10 @@ function generateUrl() {
   const url = '${BASE_URL}/manifest.json?configured=' + b64;
   const stremioUrl = 'stremio://${BASE_URL}/manifest.json?configured=' + b64;
 
-  const s = document.getElementById('status');
-  s.className = 'success';
-  s.textContent = 'Install URL generated!';
-
-  const box = document.getElementById('urlBox');
-  box.style.display = 'block';
-  box.innerHTML = '<code>' + url + '</code>' +
-    '<div class="url-hint">Copy this URL into Nuvio Settings > Addons to install with your preferences.</div>' +
-    '<button class="copy-btn" onclick="copyUrl()">Copy URL</button>' +
-    ' <button class="copy-btn" onclick="installStremio()">Install in Stremio</button>';
+  document.getElementById('status').className = 'status ok';
+  document.getElementById('status').textContent = 'Install URL ready!';
+  document.getElementById('urlText').textContent = url;
+  document.getElementById('result').classList.add('show');
 
   window.__installUrl = url;
   window.__stremioUrl = stremioUrl;
@@ -727,8 +861,9 @@ function generateUrl() {
 
 function copyUrl() {
   navigator.clipboard.writeText(window.__installUrl).then(() => {
-    const s = document.getElementById('status');
-    s.textContent = 'URL copied to clipboard!';
+    document.getElementById('status').textContent = 'Copied to clipboard!';
+  }).catch(() => {
+    document.getElementById('status').textContent = 'Select and copy the URL above';
   });
 }
 
@@ -744,27 +879,17 @@ function resetConfig() {
   f.quality.value = 'all';
   f.enableBackend.checked = true;
   f.enableLocal.checked = true;
-  // reset all language checkboxes
   ${JSON.stringify(Object.keys(ALL_LANGS))}.forEach(code => {
     const cb = f['lang_' + code];
     if (cb) cb.checked = true;
   });
-  const s = document.getElementById('status');
-  s.className = 'success';
-  s.textContent = 'Reset to defaults. Click "Generate Install URL" to apply.';
-  const box = document.getElementById('urlBox');
-  if (box) box.style.display = 'none';
+  document.getElementById('status').className = 'status ok';
+  document.getElementById('status').textContent = 'Reset to defaults. Generate URL to apply.';
+  document.getElementById('result').classList.remove('show');
 }
-
-function setDefaults() {
-  const cfg = ${JSON.stringify(currentConfig)};
-  const f = document.getElementById('cfgForm');
-  Object.keys(cfg).forEach(k => {
-    if (k === 'quality') { f.quality.value = cfg[k]; return; }
-    if (f[k]) f[k].checked = cfg[k];
-  });
-}
-</script>`);
+</script>
+</body>
+</html>`);
 });
 
 // ─── Health ───────────────────────────────

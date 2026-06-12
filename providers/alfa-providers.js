@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-12T09:14:47.196Z
+ * Generated: 2026-06-12T09:29:58.360Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -923,17 +923,19 @@ var require_providers = __commonJS({
 // src/alfa-providers/engine.js
 var require_engine = __commonJS({
   "src/alfa-providers/engine.js"(exports2, module2) {
-    var cheerio = require("cheerio");
-    var CryptoJS = require("crypto-js");
-    var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
-    var TMDB_KEY = "d80ba92bc7cefe3359668d30d06f3305";
-    function fetchHTML(_0) {
+    var cheerio = require("cheerio-without-node-native") || require("cheerio");
+    var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+    var TMDB_KEY2 = "d80ba92bc7cefe3359668d30d06f3305";
+    function fetchHTML2(_0) {
       return __async(this, arguments, function* (url, opts = {}) {
         try {
-          const res = yield fetch(url, __spreadValues({
-            headers: __spreadValues({ "User-Agent": UA, "Accept": "text/html,*/*" }, opts.headers),
-            signal: AbortSignal.timeout(opts.timeout || 15e3)
-          }, opts));
+          const ctrl = new AbortController();
+          const t = setTimeout(() => ctrl.abort(), opts.timeout || 1e4);
+          const res = yield fetch(url, {
+            headers: __spreadValues({ "User-Agent": UA2, "Accept": "text/html,application/xhtml+xml,*/*" }, opts.headers),
+            signal: ctrl.signal
+          });
+          clearTimeout(t);
           if (!res.ok) return null;
           return yield res.text();
         } catch (e) {
@@ -941,13 +943,16 @@ var require_engine = __commonJS({
         }
       });
     }
-    function fetchJSON(_0) {
+    function fetchJSON2(_0) {
       return __async(this, arguments, function* (url, opts = {}) {
         try {
-          const res = yield fetch(url, __spreadValues({
-            headers: __spreadValues({ "User-Agent": UA, "Accept": "application/json" }, opts.headers),
-            signal: AbortSignal.timeout(opts.timeout || 15e3)
-          }, opts));
+          const ctrl = new AbortController();
+          const t = setTimeout(() => ctrl.abort(), opts.timeout || 1e4);
+          const res = yield fetch(url, {
+            headers: __spreadValues({ "User-Agent": UA2, "Accept": "application/json" }, opts.headers),
+            signal: ctrl.signal
+          });
+          clearTimeout(t);
           if (!res.ok) return null;
           return yield res.json();
         } catch (e) {
@@ -955,7 +960,7 @@ var require_engine = __commonJS({
         }
       });
     }
-    function similarity(a, b) {
+    function similarity2(a, b) {
       if (!a || !b) return 0;
       const sa = a.toLowerCase().replace(/[^a-z0-9]/g, "");
       const sb = b.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -963,38 +968,48 @@ var require_engine = __commonJS({
       if (sa.length < 2 || sb.length < 2) return 0;
       const longer = sa.length > sb.length ? sa : sb;
       const shorter = sa.length > sb.length ? sb : sa;
-      const longerLen = longer.length;
-      if (longerLen === 0) return 1;
+      if (longer.length === 0) return 1;
       const bigrams = /* @__PURE__ */ new Map();
       for (let i = 0; i < shorter.length - 1; i++) {
-        const bigram = shorter.substring(i, i + 2);
-        bigrams.set(bigram, (bigrams.get(bigram) || 0) + 1);
+        const bg = shorter.substring(i, i + 2);
+        bigrams.set(bg, (bigrams.get(bg) || 0) + 1);
       }
       let common = 0;
       for (let i = 0; i < longer.length - 1; i++) {
-        const bigram = longer.substring(i, i + 2);
-        const count = bigrams.get(bigram) || 0;
+        const bg = longer.substring(i, i + 2);
+        const count = bigrams.get(bg) || 0;
         if (count > 0) {
           common++;
-          bigrams.set(bigram, count - 1);
+          bigrams.set(bg, count - 1);
         }
       }
-      return 2 * common / (longerLen + shorter.length - 2);
+      return 2 * common / (longer.length + shorter.length - 2);
     }
-    function getTMDBInfo(tmdbId, mediaType) {
+    function resolveTMDB(id, mediaType) {
       return __async(this, null, function* () {
-        const type = mediaType === "tv" || mediaType === "tvshow" ? "tv" : "movie";
-        const url = `https://api.themoviedb.org/3/${type}/${tmdbId}?api_key=${TMDB_KEY}&language=en`;
-        const data = yield fetchJSON(url);
-        if (!data) return null;
-        return {
-          title: data.title || data.name || "",
-          year: (data.release_date || data.first_air_date || "").substring(0, 4),
-          imdbId: data.imdb_id || ""
-        };
+        try {
+          let tmdbId = id;
+          if (id.startsWith("tt")) {
+            const r = yield fetchJSON2(`https://api.themoviedb.org/3/find/${id}?api_key=${TMDB_KEY2}&external_source=imdb_id`);
+            const results = r == null ? void 0 : r[mediaType === "tv" ? "tv_results" : "movie_results"];
+            if (results == null ? void 0 : results[0]) tmdbId = results[0].id;
+            else return null;
+          }
+          const typeStr = mediaType === "tv" ? "tv" : "movie";
+          const data = yield fetchJSON2(`https://api.themoviedb.org/3/${typeStr}/${tmdbId}?api_key=${TMDB_KEY2}&language=en`);
+          if (!data) return null;
+          return {
+            title: data.title || data.name || "",
+            year: (data.release_date || data.first_air_date || "").substring(0, 4),
+            imdbId: data.imdb_id || "",
+            tmdbId: String(data.id)
+          };
+        } catch (e) {
+          return null;
+        }
       });
     }
-    function searchProvider(provider, title, year, mediaType) {
+    function searchProvider2(provider, title, year, mediaType) {
       return __async(this, null, function* () {
         const cfg = provider.search;
         if (!cfg) return null;
@@ -1004,7 +1019,7 @@ var require_engine = __commonJS({
         } else {
           searchUrl = provider.baseUrl + cfg.url.replace("{query}", encodeURIComponent(title));
         }
-        const html = yield fetchHTML(searchUrl, { headers: cfg.headers });
+        const html = yield fetchHTML2(searchUrl, { headers: cfg.headers, timeout: 12e3 });
         if (!html) return null;
         const $ = cheerio.load(html);
         const items = $(cfg.itemSelector).toArray();
@@ -1016,18 +1031,22 @@ var require_engine = __commonJS({
           let itemTitle = "";
           let itemLink = "";
           if (cfg.titleSelector) {
-            const titleEl = el.find(cfg.titleSelector).first();
+            const titleEl = cfg.titleSelector === "&" ? el : el.find(cfg.titleSelector).first();
             itemTitle = cfg.titleAttr ? titleEl.attr(cfg.titleAttr) || "" : titleEl.text().trim();
           }
           if (cfg.linkSelector) {
-            const linkEl = el.find(cfg.linkSelector).first();
+            const linkEl = cfg.linkSelector === "&" ? el : el.find(cfg.linkSelector).first();
             itemLink = (linkEl.attr("href") || "").trim();
             if (itemLink && !itemLink.startsWith("http")) {
-              itemLink = new URL(itemLink, provider.baseUrl).href;
+              try {
+                itemLink = new URL(itemLink, provider.baseUrl).href;
+              } catch (e) {
+                continue;
+              }
             }
           }
           if (!itemTitle || !itemLink) continue;
-          let score = similarity(itemTitle, title);
+          let score = similarity2(itemTitle, title);
           if (year) {
             const itemYear = el.text().match(/\b(19|20)\d{2}\b/);
             if (itemYear && itemYear[0] === year) score += 0.2;
@@ -1040,43 +1059,51 @@ var require_engine = __commonJS({
         return bestMatch;
       });
     }
-    function getEpisodeUrl(provider, seriesUrl, season, episode) {
+    function getEpisodeUrl2(provider, seriesUrl, season, episode) {
       return __async(this, null, function* () {
         var _a, _b, _c;
         const cfg = provider.episodes;
         if (!cfg) return seriesUrl;
-        const html = yield fetchHTML(seriesUrl);
+        const html = yield fetchHTML2(seriesUrl);
         if (!html) return null;
         const $ = cheerio.load(html);
         if (cfg.type === "post") {
-          const formData = new URLSearchParams();
-          formData.append(cfg.seasonParam || "season", season);
-          formData.append(cfg.episodeParam || "episode", episode);
+          const fd = new URLSearchParams();
+          fd.append(cfg.seasonParam || "season", String(season));
+          fd.append(cfg.episodeParam || "episode", String(episode));
           if (cfg.extraParams) {
             for (const [k, v] of Object.entries(cfg.extraParams)) {
-              formData.append(k, typeof v === "function" ? v($, html) : v);
+              fd.append(k, typeof v === "function" ? v($, html) : v);
             }
           }
-          const res = yield fetch(cfg.url || seriesUrl, {
+          const postUrl = cfg.url || seriesUrl;
+          const res = yield fetch(postUrl, {
             method: "POST",
-            headers: __spreadValues({ "User-Agent": UA, "Content-Type": "application/x-www-form-urlencoded" }, cfg.headers),
-            body: formData.toString(),
-            signal: AbortSignal.timeout(15e3)
+            headers: __spreadValues({ "User-Agent": UA2, "Content-Type": "application/x-www-form-urlencoded" }, cfg.headers),
+            body: fd.toString(),
+            signal: AbortSignal.timeout(12e3)
           });
           if (!res.ok) return null;
           const data = yield res.text();
           const $$ = cheerio.load(data);
           const epLink = $$(cfg.episodeSelector).first().attr("href");
-          return epLink ? new URL(epLink, provider.baseUrl).href : null;
+          if (epLink) {
+            try {
+              return new URL(epLink, provider.baseUrl).href;
+            } catch (e) {
+              return null;
+            }
+          }
+          return null;
         }
         if (cfg.type === "season-list") {
           const seasonEls = $(cfg.seasonSelector).toArray();
           for (const sel of seasonEls) {
             const sNum = parseInt(((_a = $(sel).text().match(/\d+/)) == null ? void 0 : _a[0]) || "0");
             if (sNum === season) {
-              const seasonUrl = $(sel).attr("href");
-              if (seasonUrl) {
-                const sHtml = yield fetchHTML(new URL(seasonUrl, provider.baseUrl).href);
+              const sUrl = $(sel).attr("href");
+              if (sUrl) {
+                const sHtml = yield fetchHTML2(new URL(sUrl, provider.baseUrl).href);
                 if (sHtml) {
                   const $$ = cheerio.load(sHtml);
                   const epEls = $$(cfg.episodeSelector).toArray();
@@ -1084,7 +1111,13 @@ var require_engine = __commonJS({
                     const eNum = parseInt(((_b = $$(eel).text().match(/\d+/)) == null ? void 0 : _b[0]) || "0");
                     if (eNum === episode) {
                       const epUrl = $$(eel).attr("href");
-                      return epUrl ? new URL(epUrl, provider.baseUrl).href : null;
+                      if (epUrl) {
+                        try {
+                          return new URL(epUrl, provider.baseUrl).href;
+                        } catch (e) {
+                          return null;
+                        }
+                      }
                     }
                   }
                 }
@@ -1100,7 +1133,13 @@ var require_engine = __commonJS({
               const ep = episodes.find(
                 (e) => (e.season || e.temporada) == season && (e.episode || e.capitulo) == episode
               );
-              if (ep) return new URL(ep.url || ep.link, provider.baseUrl).href;
+              if ((ep == null ? void 0 : ep.url) || (ep == null ? void 0 : ep.link)) {
+                try {
+                  return new URL(ep.url || ep.link, provider.baseUrl).href;
+                } catch (e) {
+                  return null;
+                }
+              }
             } catch (e) {
             }
           }
@@ -1111,14 +1150,18 @@ var require_engine = __commonJS({
             try {
               const data = JSON.parse(match[1]);
               let obj = data;
-              for (const key of cfg.dataPath.split(".")) {
-                obj = obj == null ? void 0 : obj[key];
-              }
+              for (const key of cfg.dataPath.split(".")) obj = obj == null ? void 0 : obj[key];
               if (obj == null ? void 0 : obj.seasons) {
                 for (const s of obj.seasons) {
                   if (s.number == season) {
                     const ep = (_c = s.episodes) == null ? void 0 : _c.find((e) => e.number == episode);
-                    if (ep == null ? void 0 : ep.url) return new URL(ep.url, provider.baseUrl).href;
+                    if (ep == null ? void 0 : ep.url) {
+                      try {
+                        return new URL(ep.url, provider.baseUrl).href;
+                      } catch (e) {
+                        return null;
+                      }
+                    }
                   }
                 }
               }
@@ -1133,7 +1176,7 @@ var require_engine = __commonJS({
       return __async(this, null, function* () {
         const cfg = provider.videos;
         if (!cfg) return [];
-        const html = yield fetchHTML(pageUrl);
+        const html = yield fetchHTML2(pageUrl);
         if (!html) return [];
         const $ = cheerio.load(html);
         const results = [];
@@ -1141,51 +1184,28 @@ var require_engine = __commonJS({
           const container = cfg.containerSelector ? $(cfg.containerSelector) : $;
           const iframes = container.find(cfg.iframeSelector || "iframe").toArray();
           for (const iframe of iframes) {
-            const src = $(iframe).attr(cfg.srcAttr || "src");
+            const src = $(iframe).attr(cfg.srcAttr || "src") || $(iframe).attr("data-src");
             if (src) {
               const url = src.startsWith("//") ? "https:" + src : src;
-              results.push({ url, server: detectServer(url), quality: cfg.defaultQuality || "HD" });
+              results.push({ url, server: detectServer2(url), quality: cfg.defaultQuality || "HD" });
             }
           }
         }
         if (cfg.type === "nextjs") {
-          const match = html.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/);
-          if (!match) {
-            const match2 = html.match(/<script type="application\/json"[^>]*>(.*?)<\/script>/);
-            if (match2) {
-              try {
-                const data = JSON.parse(match2[1]);
-                let obj = data;
-                for (const key of cfg.dataPath.split(".")) obj = obj == null ? void 0 : obj[key];
-                if (obj) {
-                  for (const [lang, players] of Object.entries(obj)) {
-                    if (Array.isArray(players)) {
-                      for (const p of players) {
-                        results.push({
-                          url: p.result || p.url || p.link,
-                          server: p.cyberlocker || p.server || detectServer(p.result || p.url),
-                          quality: p.quality || cfg.defaultQuality || "HD",
-                          lang
-                        });
-                      }
-                    }
-                  }
-                }
-              } catch (e) {
-              }
-            }
-          } else {
+          const match = html.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/) || html.match(/<script type="application\/json"[^>]*>(.*?)<\/script>/);
+          if (match) {
             try {
               const data = JSON.parse(match[1]);
               let obj = data;
               for (const key of cfg.dataPath.split(".")) obj = obj == null ? void 0 : obj[key];
-              if (obj) {
+              if (obj && typeof obj === "object") {
                 for (const [lang, players] of Object.entries(obj)) {
                   if (Array.isArray(players)) {
                     for (const p of players) {
-                      results.push({
-                        url: p.result || p.url || p.link,
-                        server: p.cyberlocker || p.server || detectServer(p.result || p.url),
+                      const pUrl = p.result || p.url || p.link;
+                      if (pUrl) results.push({
+                        url: pUrl,
+                        server: p.cyberlocker || p.server || detectServer2(pUrl),
                         quality: p.quality || cfg.defaultQuality || "HD",
                         lang
                       });
@@ -1204,14 +1224,12 @@ var require_engine = __commonJS({
               const videos = JSON.parse(match[1]);
               for (const v of videos) {
                 const server = Array.isArray(v) ? v[0] : v.server || v.name;
-                const url = Array.isArray(v) ? v[1] : v.url || v.link || v.code;
-                if (url) {
-                  results.push({
-                    url,
-                    server: server || detectServer(url),
-                    quality: v.quality || cfg.defaultQuality || "HD"
-                  });
-                }
+                const vUrl = Array.isArray(v) ? v[1] : v.url || v.link || v.code;
+                if (vUrl) results.push({
+                  url: vUrl,
+                  server: server || detectServer2(vUrl),
+                  quality: v.quality || cfg.defaultQuality || "HD"
+                });
               }
             } catch (e) {
             }
@@ -1219,316 +1237,148 @@ var require_engine = __commonJS({
         }
         if (cfg.type === "api") {
           const apiUrl = typeof cfg.apiUrl === "function" ? cfg.apiUrl(provider.baseUrl, pageUrl, html) : provider.baseUrl + cfg.apiUrl;
-          const data = yield fetchJSON(apiUrl, { headers: cfg.headers });
+          const data = yield fetchJSON2(apiUrl, { headers: cfg.headers });
           if (data) {
             const sources = data.sources || data.data || data;
             for (const s of Array.isArray(sources) ? sources : []) {
-              results.push({
-                url: s.url || s.file || s.link || s.src,
-                server: s.server || detectServer(s.url || s.file),
+              const sUrl = s.url || s.file || s.link || s.src;
+              if (sUrl) results.push({
+                url: sUrl,
+                server: s.server || detectServer2(sUrl),
                 quality: s.quality || s.label || cfg.defaultQuality || "HD"
               });
             }
           }
         }
         if (cfg.type === "torrent") {
-          const links = $(cfg.linkSelector || 'a[href*="magnet"], a[href*=".torrent"]').toArray();
+          const links = $(cfg.linkSelector || 'a[href*="magnet:"], a[href$=".torrent"]').toArray();
           for (const link of links) {
             const href = $(link).attr("href");
             if (href && (href.startsWith("magnet:") || href.endsWith(".torrent"))) {
-              const title = $(link).text().trim() || cfg.defaultQuality || "HD";
-              results.push({
-                url: href,
-                server: "torrent",
-                quality: title
-              });
+              const label = $(link).text().trim() || cfg.defaultQuality || "HD";
+              results.push({ url: href, server: "torrent", quality: label });
             }
           }
         }
         return results;
       });
     }
-    function detectServer(url) {
+    function detectServer2(url) {
       if (!url) return "direct";
-      const patterns = {
-        "streamwish": /streamwish\./i,
-        "filemoon": /filemoon\./i,
-        "voes": /voes\./i,
-        "doodstream": /dood\.|doodstream\./i,
-        "streamtape": /streamtape\./i,
-        "fembed": /fembed\.|fembeds\./i,
-        "okru": /ok\.ru|odnoklassniki/i,
-        "mixdrop": /mixdrop\./i,
-        "upstream": /upstream\./i,
-        "vidhide": /vidhide|vidpro/i,
-        "voe": /voe\.sx|voe\./i,
-        "wolfmax": /wolfmax\./i,
-        "mega": /mega\.nz/i,
-        "gvideo": /drive\.google\.|googlevideo/i,
-        "youtube": /youtube\.|youtu\.be/i,
-        "mystream": /mystream\./i,
-        "netutv": /netu\.tv|netutv/i,
-        "yourupload": /yourupload\./i,
-        "jawcloud": /jawcloud\./i,
-        "streampe": /streampe\./i,
-        "directo": /\.mp4|\.m3u8|\.mkv|\.webm|\.avi/i,
-        "torrent": /magnet:|\btorrent\b/i
-      };
-      for (const [name, pattern] of Object.entries(patterns)) {
-        if (pattern.test(url)) return name;
+      if (/\.(mp4|m3u8|mkv|webm|avi)(\?|$)/i.test(url)) return "direct";
+      if (/magnet:/i.test(url)) return "torrent";
+      const patterns = [
+        ["streamwish", /streamwish/i],
+        ["filemoon", /filemoon/i],
+        ["voes", /voes\./i],
+        ["doodstream", /dood/i],
+        ["streamtape", /streamtape/i],
+        ["fembed", /fembed/i],
+        ["okru", /ok\.ru|odnoklassniki/i],
+        ["mixdrop", /mixdrop/i],
+        ["upstream", /upstream/i],
+        ["vidhide", /vidhide|vidpro/i],
+        ["voe", /voe\.sx/i],
+        ["mystream", /mystream/i],
+        ["netutv", /netu\.tv/i],
+        ["yourupload", /yourupload/i],
+        ["jawcloud", /jawcloud/i],
+        ["streampe", /streampe/i],
+        ["gvideo", /drive\.google|googlevideo/i],
+        ["mega", /mega\.nz/i],
+        ["wolfmax", /wolfmax/i],
+        ["youtube", /youtube|youtu\.be/i]
+      ];
+      for (const [name, re] of patterns) {
+        if (re.test(url)) return name;
       }
-      return "unknown";
-    }
-    function resolveVideoUrl2(url, server) {
-      return __async(this, null, function* () {
-        if (!url) return null;
-        if (/\.(mp4|m3u8|mkv|webm|avi)(\?|$)/i.test(url)) return url;
-        if (url.startsWith("magnet:")) return url;
-        const resolvers = {
-          "streamwish": resolveStreamwish,
-          "filemoon": resolveFilemoon,
-          "voes": resolveVoes,
-          "doodstream": resolveDoodstream,
-          "streamtape": resolveStreamtape,
-          "fembed": resolveFembed,
-          "okru": resolveOkru,
-          "mixdrop": resolveMixdrop,
-          "upstream": resolveUpstream,
-          "vidhide": resolveVidhide,
-          "voe": resolveVoe,
-          "mystream": resolveMystream,
-          "netutv": resolveNetuTV,
-          "yourupload": resolveYourUpload,
-          "jawcloud": resolveJawcloud,
-          "streampe": resolveStreampe,
-          "gvideo": resolveGvideo,
-          "directo": (url2) => url2
-        };
-        const resolver = resolvers[server] || resolvers[detectServer(url)] || resolveGeneric;
-        try {
-          return yield resolver(url);
-        } catch (e) {
-          return null;
-        }
-      });
-    }
-    function resolveStreamwish(url) {
-      return __async(this, null, function* () {
-        const html = yield fetchHTML(url);
-        if (!html) return null;
-        const match = html.match(/file:\s*"([^"]+)"/) || html.match(/src:\s*"([^"]+)"/);
-        return (match == null ? void 0 : match[1]) || null;
-      });
-    }
-    function resolveFilemoon(url) {
-      return __async(this, null, function* () {
-        const html = yield fetchHTML(url);
-        if (!html) return null;
-        const match = html.match(/file:\s*"([^"]+)"/) || html.match(/src:\s*"([^"]+)"/);
-        return (match == null ? void 0 : match[1]) || null;
-      });
-    }
-    function resolveVoes(url) {
-      return __async(this, null, function* () {
-        const html = yield fetchHTML(url);
-        if (!html) return null;
-        const match = html.match(/src:\s*"([^"]+\.m3u8[^"]*)"/) || html.match(/src:\s*"([^"]+\.mp4[^"]*)"/);
-        return (match == null ? void 0 : match[1]) || null;
-      });
-    }
-    function resolveDoodstream(url) {
-      return __async(this, null, function* () {
-        const html = yield fetchHTML(url);
-        if (!html) return null;
-        const match = html.match(/\$\.get\('([^']+)'/);
-        if (match) {
-          const passUrl = new URL(match[1], url).href;
-          const data = yield fetchHTML(passUrl);
-          if (data) return data.trim();
-        }
-        const directMatch = html.match(/src:\s*"([^"]+\.m3u8[^"]*)"/) || html.match(/src:\s*"([^"]+\.mp4[^"]*)"/);
-        return (directMatch == null ? void 0 : directMatch[1]) || null;
-      });
-    }
-    function resolveStreamtape(url) {
-      return __async(this, null, function* () {
-        const html = yield fetchHTML(url);
-        if (!html) return null;
-        const match = html.match(/robotlink'\s*\.\s*innerHTML\s*=\s*'([^']+)'/);
-        if (match) {
-          const token = match[1].replace(/&amp;/g, "&");
-          const fullUrl = "https:/" + token;
-          const data = yield fetchHTML(fullUrl);
-          if (data) {
-            const vidMatch = data.match(/src:\s*"([^"]+\.m3u8[^"]*)"/) || data.match(/src:\s*"([^"]+\.mp4[^"]*)"/);
-            return (vidMatch == null ? void 0 : vidMatch[1]) || null;
-          }
-        }
-        return null;
-      });
-    }
-    function resolveFembed(url) {
-      return __async(this, null, function* () {
-        const html = yield fetchHTML(url);
-        if (!html) return null;
-        const match = html.match(/src:\s*"([^"]+\.m3u8[^"]*)"/) || html.match(/src:\s*"([^"]+\.mp4[^"]*)"/);
-        return (match == null ? void 0 : match[1]) || null;
-      });
-    }
-    function resolveOkru(url) {
-      return __async(this, null, function* () {
-        const html = yield fetchHTML(url);
-        if (!html) return null;
-        const match = html.match(/src:\s*"([^"]+\.m3u8[^"]*)"/) || html.match(/src:\s*"([^"]+\.mp4[^"]*)"/);
-        return (match == null ? void 0 : match[1]) || null;
-      });
-    }
-    function resolveMixdrop(url) {
-      return __async(this, null, function* () {
-        const html = yield fetchHTML(url);
-        if (!html) return null;
-        const match = html.match(/src:\s*"([^"]+\.m3u8[^"]*)"/) || html.match(/src:\s*"([^"]+\.mp4[^"]*)"/);
-        return (match == null ? void 0 : match[1]) || null;
-      });
-    }
-    function resolveUpstream(url) {
-      return __async(this, null, function* () {
-        const html = yield fetchHTML(url);
-        if (!html) return null;
-        const match = html.match(/src:\s*"([^"]+\.m3u8[^"]*)"/) || html.match(/src:\s*"([^"]+\.mp4[^"]*)"/);
-        return (match == null ? void 0 : match[1]) || null;
-      });
-    }
-    function resolveVidhide(url) {
-      return __async(this, null, function* () {
-        const html = yield fetchHTML(url);
-        if (!html) return null;
-        const match = html.match(/file:\s*"([^"]+)"/) || html.match(/src:\s*"([^"]+)"/);
-        return (match == null ? void 0 : match[1]) || null;
-      });
-    }
-    function resolveVoe(url) {
-      return __async(this, null, function* () {
-        const html = yield fetchHTML(url);
-        if (!html) return null;
-        const match = html.match(/src:\s*"([^"]+\.m3u8[^"]*)"/) || html.match(/src:\s*"([^"]+\.mp4[^"]*)"/);
-        return (match == null ? void 0 : match[1]) || null;
-      });
-    }
-    function resolveMystream(url) {
-      return __async(this, null, function* () {
-        const html = yield fetchHTML(url);
-        if (!html) return null;
-        const match = html.match(/src:\s*"([^"]+\.m3u8[^"]*)"/) || html.match(/src:\s*"([^"]+\.mp4[^"]*)"/);
-        return (match == null ? void 0 : match[1]) || null;
-      });
-    }
-    function resolveNetuTV(url) {
-      return __async(this, null, function* () {
-        const html = yield fetchHTML(url);
-        if (!html) return null;
-        const match = html.match(/src:\s*"([^"]+\.m3u8[^"]*)"/) || html.match(/src:\s*"([^"]+\.mp4[^"]*)"/);
-        return (match == null ? void 0 : match[1]) || null;
-      });
-    }
-    function resolveYourUpload(url) {
-      return __async(this, null, function* () {
-        const html = yield fetchHTML(url);
-        if (!html) return null;
-        const match = html.match(/src:\s*"([^"]+\.m3u8[^"]*)"/) || html.match(/src:\s*"([^"]+\.mp4[^"]*)"/);
-        return (match == null ? void 0 : match[1]) || null;
-      });
-    }
-    function resolveJawcloud(url) {
-      return __async(this, null, function* () {
-        const html = yield fetchHTML(url);
-        if (!html) return null;
-        const match = html.match(/src:\s*"([^"]+\.m3u8[^"]*)"/) || html.match(/src:\s*"([^"]+\.mp4[^"]*)"/);
-        return (match == null ? void 0 : match[1]) || null;
-      });
-    }
-    function resolveStreampe(url) {
-      return __async(this, null, function* () {
-        const html = yield fetchHTML(url);
-        if (!html) return null;
-        const match = html.match(/src:\s*"([^"]+\.m3u8[^"]*)"/) || html.match(/src:\s*"([^"]+\.mp4[^"]*)"/);
-        return (match == null ? void 0 : match[1]) || null;
-      });
-    }
-    function resolveGvideo(url) {
-      return __async(this, null, function* () {
-        const match = url.match(/\/d\/([^/]+)/);
-        if (match) {
-          const confirm = yield fetchHTML(`https://drive.google.com/uc?export=download&id=${match[1]}`);
-          if (confirm) {
-            const dlMatch = confirm.match(/href="(\/uc\?export=download[^"]+)"/);
-            if (dlMatch) return `https://drive.google.com${dlMatch[1].replace(/&amp;/g, "&")}`;
-            return `https://drive.google.com/uc?export=download&id=${match[1]}`;
-          }
-        }
-        return url;
-      });
-    }
-    function resolveGeneric(url) {
-      return __async(this, null, function* () {
-        const html = yield fetchHTML(url);
-        if (!html) return null;
-        const match = html.match(/src:\s*"([^"]+\.(?:m3u8|mp4|mkv|webm)[^"]*)"/) || html.match(/file:\s*"([^"]+)"/) || html.match(/source\s+src="([^"]+)"/) || html.match(/videoSrc\s*=\s*"([^"]+)"/);
-        return (match == null ? void 0 : match[1]) || null;
-      });
+      return "embed";
     }
     module2.exports = {
-      fetchHTML,
-      fetchJSON,
-      similarity,
-      getTMDBInfo,
-      searchProvider,
-      getEpisodeUrl,
+      fetchHTML: fetchHTML2,
+      fetchJSON: fetchJSON2,
+      similarity: similarity2,
+      resolveTMDB,
+      searchProvider: searchProvider2,
+      getEpisodeUrl: getEpisodeUrl2,
       extractVideos: extractVideos2,
-      resolveVideoUrl: resolveVideoUrl2,
-      detectServer
+      detectServer: detectServer2
     };
   }
 });
 
 // src/alfa-providers/index.js
 var providers = require_providers();
-var { searchContent, getEpisodes, extractVideos, resolveVideoUrl } = require_engine();
+var { fetchHTML, fetchJSON, similarity, getTMDBInfo, searchProvider, getEpisodeUrl, extractVideos, detectServer } = require_engine();
+var TMDB_KEY = "d80ba92bc7cefe3359668d30d06f3305";
+var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+var titleCache = /* @__PURE__ */ new Map();
+function resolveTitle(id, mediaType) {
+  return __async(this, null, function* () {
+    const cacheKey = `${mediaType}:${id}`;
+    if (titleCache.has(cacheKey)) return titleCache.get(cacheKey);
+    try {
+      let tmdbId = id;
+      if (id.startsWith("tt")) {
+        const findRes = yield fetch(`https://api.themoviedb.org/3/find/${id}?api_key=${TMDB_KEY}&external_source=imdb_id`, {
+          headers: { "User-Agent": UA }
+        });
+        if (findRes.ok) {
+          const data2 = yield findRes.json();
+          const results = data2 == null ? void 0 : data2[mediaType === "tv" ? "tv_results" : "movie_results"];
+          if (results == null ? void 0 : results[0]) tmdbId = results[0].id;
+        }
+      }
+      const res = yield fetch(`https://api.themoviedb.org/3/${mediaType === "tv" ? "tv" : "movie"}/${tmdbId}?api_key=${TMDB_KEY}&language=en`, {
+        headers: { "User-Agent": UA }
+      });
+      if (!res.ok) return null;
+      const data = yield res.json();
+      const info = {
+        title: data.title || data.name || "",
+        year: (data.release_date || data.first_air_date || "").substring(0, 4),
+        imdbId: data.imdb_id || ""
+      };
+      titleCache.set(cacheKey, info);
+      return info;
+    } catch (e) {
+      return null;
+    }
+  });
+}
 function scrapeAlfaProviders(type, id, season, episode) {
   return __async(this, null, function* () {
+    const mediaType = type === "series" || type === "tv" ? "tv" : "movie";
+    const info = yield resolveTitle(id, mediaType);
+    if (!info || !info.title) return [];
+    const title = info.title;
+    const year = info.year;
+    const activeProviders = providers.filter((p) => {
+      if (!p.active || p.adult) return false;
+      if (mediaType === "tv") return p.categories.includes("tvshow") || p.categories.includes("movie");
+      return p.categories.includes("movie") || p.categories.includes("tvshow");
+    });
     const results = [];
-    const mediaType = type === "series" ? "tvshow" : type;
-    const activeProviders = providers.filter(
-      (p) => p.active && p.categories.includes(mediaType) && !p.adult
-    );
-    const chunks = chunkArray(activeProviders, 5);
+    const chunks = chunkArray(activeProviders, 4);
     for (const chunk of chunks) {
       const chunkResults = yield Promise.allSettled(
         chunk.map((provider) => __async(null, null, function* () {
           try {
-            const contentUrl = yield searchContent(provider, id, mediaType, season, episode);
-            if (!contentUrl) return [];
-            let videoUrls;
-            if (mediaType === "tvshow" && season && episode) {
-              const epUrl = yield getEpisodes(provider, contentUrl, season, episode);
-              if (!epUrl) return [];
-              videoUrls = yield extractVideos(provider, epUrl);
-            } else {
-              videoUrls = yield extractVideos(provider, contentUrl);
+            const pageUrl = yield searchProvider(provider, title, year, mediaType);
+            if (!pageUrl) return [];
+            let targetUrl = pageUrl;
+            if (mediaType === "tv" && season && episode) {
+              const epUrl = yield getEpisodeUrl(provider, pageUrl, season, episode);
+              if (epUrl) targetUrl = epUrl;
             }
-            const streams = [];
-            for (const v of videoUrls) {
-              const resolved = yield resolveVideoUrl(v.url, v.server);
-              if (resolved) {
-                streams.push({
-                  name: v.quality || "HD",
-                  description: `${provider.title} [${v.server || "direct"}]`,
-                  url: resolved,
-                  behaviorHints: { notWebReady: true }
-                });
-              }
-            }
-            return streams;
+            const videos = yield extractVideos(provider, targetUrl);
+            if (!videos.length) return [];
+            return videos.map((v) => ({
+              name: v.quality || "HD",
+              description: `${provider.title} [${v.server || detectServer(v.url)}]`,
+              url: v.url,
+              behaviorHints: { notWebReady: true }
+            }));
           } catch (e) {
             return [];
           }
@@ -1537,6 +1387,7 @@ function scrapeAlfaProviders(type, id, season, episode) {
       for (const r of chunkResults) {
         if (r.status === "fulfilled") results.push(...r.value);
       }
+      if (results.length >= 30) break;
     }
     return results.slice(0, 50);
   });
