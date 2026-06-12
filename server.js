@@ -580,7 +580,8 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
     const t = text.trim();
     if (t && !seen.has(t.toLowerCase()) && t !== providerLabel && t !== sourceName && t !== quality
         && !t.match(/^\s*(HD|4K|2160p?|1080p?|720p?|480p?)\s*$/i)
-        && !t.match(/^[\u{1F1E6}-\u{1F1FF}]{2,}$/u)) {
+        && !t.match(/^[\u{1F1E6}-\u{1F1FF}]{2,}$/u)
+        && !t.match(/^\s*(HD|4K|2160p?|1080p?|720p?|480p?)\s*[|\-·]/i)) {
       seen.add(t.toLowerCase());
       titleParts.push(t);
     }

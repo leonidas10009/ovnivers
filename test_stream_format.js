@@ -72,7 +72,8 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
     const t = text.trim();
     if (t && !seen.has(t.toLowerCase()) && t !== providerLabel && t !== sourceName && t !== quality
         && !t.match(/^\s*(HD|4K|2160p?|1080p?|720p?|480p?)\s*$/i)
-        && !t.match(/^[\u{1F1E6}-\u{1F1FF}]{2,}$/u)) {
+        && !t.match(/^[\u{1F1E6}-\u{1F1FF}]{2,}$/u)
+        && !t.match(/^\s*(HD|4K|2160p?|1080p?|720p?|480p?)\s*[|\-·]/i)) {
       seen.add(t.toLowerCase());
       titleParts.push(t);
     }
@@ -357,64 +358,70 @@ try {
   console.log(`⚠️  Could not load manifest.json: ${e.message}`);
 }
 
-// Filter to providers that support movie (simpler test)
-const movieProviders = manifestScrapers.filter(s =>
-  s?.enabled && s.filename &&
-  s.supportedTypes?.includes('movie') &&
-  !s.filename.includes('alfa-providers')
-);
+(async () => {
+  // ── Test configurations ──
+  const testCases = [
+    { label: 'MOVIE (550 - Fight Club)', type: 'movie',  id: '550', season: 1, episode: 1, filter: s => s.supportedTypes?.includes('movie') },
+    { label: 'SERIES (1399 - GoT)',       type: 'tv',     id: '1399', season: 1, episode: 1, filter: s => s.supportedTypes?.includes('tv') },
+    { label: 'ANIME (1429 - SnK)',         type: 'tv',     id: '1429', season: 1, episode: 1, filter: s => s.supportedTypes?.includes('tv') },
+  ];
 
-console.log(`Found ${movieProviders.length} movie providers in manifest.json\n`);
-console.log('Testing each provider with TMDB ID 550 (Fight Club)...\n');
+  for (const tc of testCases) {
+    console.log(`\n─── ${tc.label} ───\n`);
+    const providers = manifestScrapers.filter(s =>
+      s?.enabled && s.filename && tc.filter(s) &&
+      !s.filename.includes('alfa-providers')
+    );
 
-let loadedCount = 0;
-for (const scraper of movieProviders.slice(0, 10)) { // Test first 10
-  const filename = path.normalize(scraper.filename);
-  const fullPath = path.resolve(__dirname, filename);
-  if (!fullPath.startsWith(path.resolve(__dirname))) continue;
+    console.log(`  Found ${providers.length} providers\n`);
 
-  try {
-    const mod = require(fullPath);
-    const getStreams = mod?.getStreams || mod?.default?.getStreams;
-    if (typeof getStreams !== 'function') {
-      console.log(`  ⏭️  ${scraper.id.padEnd(16)} no getStreams function`);
-      continue;
+    let loaded = 0;
+    let hadStreams = 0;
+
+    for (const scraper of providers.slice(0, 25)) { // Test up to 25 per category
+      const filename = path.normalize(scraper.filename);
+      const fullPath = path.resolve(__dirname, filename);
+      if (!fullPath.startsWith(path.resolve(__dirname))) continue;
+
+      try {
+        const mod = require(fullPath);
+        const getStreams = mod?.getStreams || mod?.default?.getStreams;
+        if (typeof getStreams !== 'function') continue;
+
+        loaded++;
+        const data = await Promise.resolve(getStreams(tc.id, tc.type, tc.season, tc.episode)).catch(() => []);
+        const streams = Array.isArray(data) ? data : [];
+
+        if (streams.length === 0) continue;
+        hadStreams++;
+
+        const raw = streams[0];
+        const norm = normalizeStream(raw, scraper.id, scraper.name || scraper.id, {
+          contentLanguage: scraper.contentLanguage
+        });
+
+        console.log(`  📦 ${(scraper.name || scraper.id).padEnd(18)} (${streams.length})`);
+        console.log(`      RAW  name: ${JSON.stringify(raw.name || '')}`);
+        console.log(`      RAW  title:${JSON.stringify(raw.title || '')}`);
+        console.log(`      RAW  q:${raw.quality || '-'}  desc:${raw.description ? raw.description.substring(0,30) : '-'}  infoHash:${!!raw.infoHash}  file:${!!raw.file}`);
+        console.log(`      NORM name: ${norm.name.replace(/\n/g, ' │ ')}`);
+        if (norm.title.includes('\n')) {
+          const tlines = norm.title.split('\n');
+          console.log(`      NORM title:${tlines[0]}`);
+          for (let i = 1; i < tlines.length; i++) {
+            console.log(`                  ${tlines[i]}`);
+          }
+        } else {
+          console.log(`      NORM title:${norm.title}`);
+        }
+        console.log('');
+      } catch (e) {
+        // silently skip load errors
+      }
     }
 
-    const result = getStreams('550', 'movie', 1, 1);
-    const streams = Array.isArray(result) ? result : [];
-
-    if (streams.length === 0) {
-      console.log(`  ⚠️  ${scraper.id.padEnd(16)} returned 0 streams`);
-      continue;
-    }
-
-    loadedCount++;
-
-    // Show first stream RAW vs NORMALIZED
-    const raw = streams[0];
-    const norm = normalizeStream(raw, scraper.id, scraper.name || scraper.id, {
-      contentLanguage: scraper.contentLanguage
-    });
-
-    console.log(`\n  📦 ${(scraper.name || scraper.id).padEnd(16)} (${streams.length} streams)`);
-    console.log(`      RAW name:     ${JSON.stringify(raw.name || '')}`);
-    console.log(`      RAW title:    ${JSON.stringify(raw.title || '')}`);
-    console.log(`      RAW quality:  ${JSON.stringify(raw.quality || '')}`);
-    console.log(`      RAW desc:     ${JSON.stringify(raw.description || '')}`);
-    console.log(`      RAW infoHash: ${JSON.stringify(!!raw.infoHash)}`);
-    console.log(`      RAW file:     ${JSON.stringify(!!raw.file)}`);
-    console.log(`      ───────────────────────────────────`);
-    console.log(`      NORM name:    ${norm.name.replace(/\n/g, ' | ')}`);
-    console.log(`      NORM title:   ${norm.title.replace(/\n/g, ' → ')}`);
-
-  } catch (e) {
-    console.log(`  ❌ ${scraper.id.padEnd(16)} load error: ${e.message.substring(0, 80)}`);
+    console.log(`  → ${hadStreams}/${loaded} providers returned streams\n`);
   }
-}
 
-if (loadedCount === 0) {
-  console.log('⚠️  No providers could be loaded. Try running from project root.');
-}
-
-console.log(`\n--- Live provider test complete (${loadedCount} loaded) ---`);
+  console.log('--- Live provider test complete ---');
+})();
