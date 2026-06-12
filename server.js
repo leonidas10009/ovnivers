@@ -13,7 +13,7 @@ const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.2.5';
+const VERSION = '1.2.6';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 const PIGAMER = 'https://pigamer37.alwaysdata.net';
@@ -383,6 +383,25 @@ function fixPigamerId(id) {
   return id;
 }
 
+async function getAnimeTMDbId(id) {
+  try {
+    const meta = await proxyPigamer(`/meta/series/${encodeURIComponent(id)}.json`);
+    if (meta?.meta) {
+      if (Array.isArray(meta.meta.links)) {
+        for (const link of meta.meta.links) {
+          if (link.category === 'tmdb' || (typeof link.name === 'string' && link.name.toLowerCase().includes('tmdb'))) {
+            const url = link.url || '';
+            const match = url.match(/\/(\d+)$/);
+            if (match) return match[1];
+          }
+        }
+      }
+      if (meta.meta.tmdb_id) return String(meta.meta.tmdb_id);
+    }
+  } catch {}
+  return null;
+}
+
 function parsePathExtras(extraStr) {
   const params = {};
   if (!extraStr) return params;
@@ -494,15 +513,8 @@ function normalizeStream(stream, providerId, providerName) {
   const hasPlayableTarget = url || stream.externalUrl || stream.infoHash;
   if (!hasPlayableTarget) return null;
 
-  const quality = stream.quality || stream.name || stream.title || 'HD';
-  const rawName = stream.name || quality;
-  const hasProvider = rawName.includes('\n') || rawName.includes(providerName);
-  const name = hasProvider ? rawName : `${providerName}\n${rawName}`;
-  const title = stream.title || `${quality}\n${providerName}`;
-  return {
+  const base = {
     ...stream,
-    name,
-    title,
     ...(url ? { url } : {}),
     behaviorHints: {
       notWebReady: true,
@@ -510,6 +522,17 @@ function normalizeStream(stream, providerId, providerName) {
       ...(stream.behaviorHints || {})
     }
   };
+
+  const rawName = stream.name || '';
+
+  // Preserve streams that already have multiline format (e.g. Pigamer37)
+  if (rawName.includes('\n')) return base;
+
+  const quality = stream.quality || rawName || 'HD';
+  base.name = `${providerName}\n${quality}`;
+  if (!stream.title) base.title = `${quality}\n${providerName}`;
+
+  return base;
 }
 
 function dedupeStreams(streams) {
@@ -641,7 +664,8 @@ app.get('/manifest.json', async (req, res) => {
       { type: 'series', id: 'animeflv|search', name: 'AnimeFLV Search', extra: [{ name: 'search', isRequired: true }, { name: 'skip', isRequired: false }] },
       { type: 'series', id: 'animeav1|search', name: 'AnimeAV1 Search', extra: [{ name: 'search', isRequired: true }, { name: 'skip', isRequired: false }] },
       { type: 'series', id: 'tioanime|search', name: 'TioAnime Search', extra: [{ name: 'search', isRequired: true }, { name: 'skip', isRequired: false }] },
-      { type: 'series', id: 'henaojara|search', name: 'Henaojara Search', extra: [{ name: 'search', isRequired: true }, { name: 'skip', isRequired: false }] }
+      { type: 'series', id: 'henaojara|search', name: 'Henaojara Search', extra: [{ name: 'search', isRequired: true }, { name: 'skip', isRequired: false }] },
+      { type: 'series', id: 'all-search', name: 'All Sources Search', extra: [{ name: 'search', isRequired: true }, { name: 'skip', isRequired: false }] }
     );
   }
 
@@ -770,10 +794,23 @@ async function handleStream(req, res, type, id) {
   }
 
   if (config.enableLocal) {
-    streamTasks.push(
-      scrapeAlfa(rawId, mediaType, type, season, episode, config),
-      scrapeLocalProviders(rawId, mediaType, type, season, episode, config)
-    );
+    if (isAnimeId(id)) {
+      // Anime: usar categoría 'anime' para alfa, resolver TMDB ID para locales
+      streamTasks.push(scrapeAlfa(rawId, 'tv', 'anime', season, episode, config));
+      streamTasks.push((async () => {
+        try {
+          const proxyId = await resolveAnimeId(id) || id;
+          const tmdbId = await getAnimeTMDbId(proxyId);
+          if (!tmdbId) return [];
+          return await scrapeLocalProviders(tmdbId, 'tv', 'anime', season, episode, config);
+        } catch { return []; }
+      })());
+    } else {
+      streamTasks.push(
+        scrapeAlfa(rawId, mediaType, type, season, episode, config),
+        scrapeLocalProviders(rawId, mediaType, type, season, episode, config)
+      );
+    }
   }
 
   const settled = await Promise.allSettled(streamTasks);
@@ -828,6 +865,69 @@ async function handleCatalog(req, res, type, id) {
   const config = parseConfig(req);
 
   if (!isTypeEnabled(type, config)) return res.json({ metas: [] });
+
+  // Combined search → TMDB + all anime sources
+  if (id === 'all-search') {
+    const search = req.query.search;
+    if (!search) return res.json({ metas: [] });
+    if (!config.enableBackend && !config.enableAnime) return res.json({ metas: [] });
+
+    try {
+      const tasks = [];
+
+      if (config.enableBackend) {
+        const mediaType = type === 'series' ? 'tv' : 'movie';
+        const tmdbUrl = `https://api.themoviedb.org/3/search/${mediaType}?api_key=${TMDB_KEY}&language=en&query=${encodeURIComponent(search)}&page=1`;
+        tasks.push(fetchAPI(tmdbUrl).then(data => {
+          if (!data?.results) return [];
+          return data.results.slice(0, 10).map(item => ({
+            id: `tmdb:${item.id}`, type,
+            name: item.title || item.name || 'Unknown',
+            poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : null,
+            posterShape: 'poster',
+            description: item.overview || '',
+            releaseInfo: (item.release_date || item.first_air_date || '').substring(0, 4),
+            imdbRating: item.vote_average ? String(item.vote_average) : null
+          }));
+        }));
+      }
+
+      if (config.enableAnime) {
+        for (const source of ['animeflv', 'animeav1', 'tioanime', 'henaojara']) {
+          const sid = `${source}|search`;
+          const qs = `?search=${encodeURIComponent(search)}`;
+          tasks.push(
+            proxyPigamer(`/catalog/series/${encodeURIComponent(sid)}.json${qs}`).then(data => {
+              if (!data?.metas) return [];
+              return data.metas.slice(0, 10).map(m => ({ ...m, type }));
+            })
+          );
+        }
+      }
+
+      const settled = await Promise.allSettled(tasks);
+      const metas = [];
+      for (const r of settled) {
+        if (r.status === 'fulfilled' && Array.isArray(r.value)) metas.push(...r.value);
+      }
+
+      const seen = new Set();
+      const unique = metas.filter(m => {
+        const key = (m.name || '').toLowerCase().trim();
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cache-Control', `public, max-age=${META_TTL / 1000}`);
+      return res.json({ metas: unique.slice(0, 50) });
+    } catch (e) {
+      console.error('[catalog:all-search]', e.message);
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      return res.json({ metas: [] });
+    }
+  }
 
   // Anime catalogs → proxy pigamer37
   const cleanId = id.replace('|onair', '').replace('|search', '').replace('%7C', '|');
