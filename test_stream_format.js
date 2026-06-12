@@ -115,6 +115,27 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
 
   const sourceName = nameLines[0] || '';
 
+  // If sourceName is generic, use the real server/page name from URL
+  let effectiveSource = sourceName;
+  if (effectiveSource && url && (effectiveSource === providerName || effectiveSource === 'NoTorrent')) {
+    try {
+      const parsedUrl = new URL(url);
+      const rawHost = parsedUrl.hostname.replace(/^www\./, '');
+      const detectedServer = detectServerName(url);
+      if (detectedServer && detectedServer !== rawHost.substring(0, 25)) {
+        effectiveSource = detectedServer;
+      } else {
+        const proxiedUrl = parsedUrl.searchParams.get('url');
+        if (proxiedUrl) {
+          const proxyHost = new URL(proxiedUrl).hostname.replace(/^www\./, '').split('.')[0];
+          if (proxyHost && proxyHost.length > 3) {
+            effectiveSource = proxyHost.charAt(0).toUpperCase() + proxyHost.slice(1);
+          }
+        }
+      }
+    } catch {}
+  }
+
   // Detect language from audio descriptors
   const AUDIO_LANG_MAP = [
     [/[áa]udio latino/i, 'lat'],
@@ -154,6 +175,8 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
     providerLabel = `Pigamer37: ${sourceName}`;
   } else if (isAlfa && sourceName && !sourceName.match(/^\d+$/) && sourceName !== quality && sourceName !== providerName) {
     providerLabel = `Alfa: ${sourceName}`;
+  } else if (effectiveSource && !effectiveSource.match(/^\d+$/) && effectiveSource !== quality && effectiveSource !== providerName) {
+    providerLabel = effectiveSource;
   } else if (sourceName && !sourceName.match(/^\d+$/) && sourceName !== quality && sourceName !== providerName) {
     providerLabel = sourceName;
   } else {
@@ -399,8 +422,8 @@ const SIMULATED_STREAMS = {
     },
     providerId: 'notorrent', opts: { contentLanguage: ['en'] },
     expect: {
-      name_contains: ["NoTorrent", "1080p", "🇬🇧"],
-      title_contains: ["1080p | NoTorrent", "Mega", "🇬🇧"]
+      name_contains: ["Mega", "1080p", "🇬🇧"],
+      title_contains: ["1080p | Mega"]
     }
   },
 
@@ -441,8 +464,8 @@ const SIMULATED_STREAMS = {
     },
     opts: { contentLanguage: [] },
     expect: {
-      name_contains: ["NoTorrent", "1080p", "🇪🇸"],
-      title_contains: ["1080p | NoTorrent", "Audio latino", "321MoviesFree", "🇪🇸"]
+      name_contains: ["321MoviesFree", "1080p", "🇪🇸"],
+      title_contains: ["1080p | 321MoviesFree", "Audio latino", "🇪🇸"]
     }
   },
 
@@ -456,8 +479,8 @@ const SIMULATED_STREAMS = {
     },
     opts: { contentLanguage: [] },
     expect: {
-      name_contains: ["NoTorrent", "1080p"],
-      title_contains: ["1080p | NoTorrent", "Original audio", "321MoviesFree"]
+      name_contains: ["321MoviesFree", "1080p"],
+      title_contains: ["1080p | 321MoviesFree", "Original audio"]
     }
   },
 
@@ -471,8 +494,8 @@ const SIMULATED_STREAMS = {
     },
     opts: { contentLanguage: [] },
     expect: {
-      name_contains: ["NoTorrent", "720p", "🇧🇷"],
-      title_contains: ["720p | NoTorrent", "Áudio português", "321MoviesFree", "🇧🇷"]
+      name_contains: ["321MoviesFree", "720p", "🇧🇷"],
+      title_contains: ["720p | 321MoviesFree", "Áudio português", "🇧🇷"]
     }
   },
 };

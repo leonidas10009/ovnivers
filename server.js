@@ -617,6 +617,30 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
   const titleLines = rawTitle.split('\n');
 
   const sourceName = nameLines[0] || '';
+
+  // If sourceName is generic (same as provider or a proxy name), use the real server/page name from URL
+  let effectiveSource = sourceName;
+  if (effectiveSource && url && (effectiveSource === providerName || effectiveSource === 'NoTorrent')) {
+    try {
+      const parsedUrl = new URL(url);
+      const rawHost = parsedUrl.hostname.replace(/^www\./, '');
+      const detectedServer = detectServerName(url);
+      // Only use detected server if it's different from raw hostname (meaning it matched SERVER_MAP)
+      // or if the proxied URL has a real source in query params
+      if (detectedServer && detectedServer !== rawHost.substring(0, 25)) {
+        effectiveSource = detectedServer;
+      } else {
+        // Check if URL has a ?url= parameter with a real source
+        const proxiedUrl = parsedUrl.searchParams.get('url');
+        if (proxiedUrl) {
+          const proxyHost = new URL(proxiedUrl).hostname.replace(/^www\./, '').split('.')[0];
+          if (proxyHost && proxyHost.length > 3) {
+            effectiveSource = proxyHost.charAt(0).toUpperCase() + proxyHost.slice(1);
+          }
+        }
+      }
+    } catch {}
+  }
   const serverName = nameLines.length > 1 ? nameLines.slice(1).join('\n') : '';
 
   // Detect language from audio descriptors in name/title
@@ -662,6 +686,8 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
     providerLabel = `Pigamer37: ${sourceName}`;
   } else if (isAlfa && sourceName && !sourceName.match(/^\d+$/) && sourceName !== quality && sourceName !== providerName) {
     providerLabel = `Alfa: ${sourceName}`;
+  } else if (effectiveSource && !effectiveSource.match(/^\d+$/) && effectiveSource !== quality && effectiveSource !== providerName) {
+    providerLabel = effectiveSource;
   } else if (sourceName && !sourceName.match(/^\d+$/) && sourceName !== quality && sourceName !== providerName) {
     providerLabel = sourceName;
   } else {
