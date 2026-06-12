@@ -148,10 +148,13 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
   const flags = contentFlags || audioFlags || descriptionFlags || inlineFlags;
 
   const isPigamer = providerId === 'pigamer37';
+  const isAlfa = providerId === 'alfa-providers';
   let providerLabel;
-  if (isPigamer && sourceName && !sourceName.match(/^\d/) && sourceName !== quality && sourceName !== providerName) {
+  if (isPigamer && sourceName && !sourceName.match(/^\d+$/) && sourceName !== quality && sourceName !== providerName) {
     providerLabel = `Pigamer37: ${sourceName}`;
-  } else if (sourceName && !sourceName.match(/^\d+$/) && sourceName !== quality && sourceName !== providerName && providerId !== 'alfa-providers') {
+  } else if (isAlfa && sourceName && !sourceName.match(/^\d+$/) && sourceName !== quality && sourceName !== providerName) {
+    providerLabel = `Alfa: ${sourceName}`;
+  } else if (sourceName && !sourceName.match(/^\d+$/) && sourceName !== quality && sourceName !== providerName) {
     providerLabel = sourceName;
   } else {
     providerLabel = providerName;

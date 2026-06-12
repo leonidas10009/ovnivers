@@ -14,7 +14,7 @@ const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.3.3';
+const VERSION = '1.3.4';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 const PIGAMER = 'https://pigamer37.alwaysdata.net';
@@ -656,10 +656,13 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
 
   // Provider label
   const isPigamer = providerId === 'pigamer37';
+  const isAlfa = providerId === 'alfa-providers';
   let providerLabel;
   if (isPigamer && sourceName && !sourceName.match(/^\d+$/) && sourceName !== quality && sourceName !== providerName) {
     providerLabel = `Pigamer37: ${sourceName}`;
-  } else if (sourceName && !sourceName.match(/^\d+$/) && sourceName !== quality && sourceName !== providerName && providerId !== 'alfa-providers') {
+  } else if (isAlfa && sourceName && !sourceName.match(/^\d+$/) && sourceName !== quality && sourceName !== providerName) {
+    providerLabel = `Alfa: ${sourceName}`;
+  } else if (sourceName && !sourceName.match(/^\d+$/) && sourceName !== quality && sourceName !== providerName) {
     providerLabel = sourceName;
   } else {
     providerLabel = providerName;
