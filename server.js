@@ -559,9 +559,9 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
   // Provider label
   const isPigamer = providerId === 'pigamer37';
   let providerLabel;
-  if (isPigamer && sourceName && !sourceName.match(/^\d/) && sourceName !== quality && sourceName !== providerName) {
+  if (isPigamer && sourceName && !sourceName.match(/^\d+$/) && sourceName !== quality && sourceName !== providerName) {
     providerLabel = `Pigamer37: ${sourceName}`;
-  } else if (sourceName && !sourceName.match(/^\d/) && sourceName !== quality && sourceName !== providerName && providerId !== 'alfa-providers') {
+  } else if (sourceName && !sourceName.match(/^\d+$/) && sourceName !== quality && sourceName !== providerName && providerId !== 'alfa-providers') {
     providerLabel = sourceName;
   } else {
     providerLabel = providerName;
