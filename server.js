@@ -1084,26 +1084,6 @@ async function handleStream(req, res, type, id) {
   const streams = [];
   const streamTasks = [];
 
-  // Anime → proxy pigamer37 (no early return, merge with other providers)
-  if (isAnime && config.enableAnime) {
-    streamTasks.push((async () => {
-      try {
-        const resolvedId = await resolveAnimeId(id);
-        // Reconstruct TMDB ID format when rawId is numeric (e.g. tmdb:1298:1:1 → tmdb:1298)
-        const proxyId = resolvedId || (rawId.match(/^\d+$/) ? `tmdb:${rawId}` : rawId);
-        const proxyType = 'series';
-        const qs = `?season=${season}&episode=${episode}`;
-        const data = await proxyPigamer(`/stream/${proxyType}/${encodeURIComponent(proxyId)}.json${qs}`);
-        const pigStreams = parseSources(data);
-        console.log(`  [Pigamer37] ${pigStreams.length} streams (s${season}e${episode})`);
-        return pigStreams.map(s => normalizeStream(s, 'pigamer37', 'Pigamer37')).filter(Boolean);
-      } catch (e) {
-        console.warn(`  [Pigamer37] ${e.message}`);
-        return [];
-      }
-    })());
-  }
-
   if (config.enableBackend && !isAnime) {
     streamTasks.push(...BACKEND_SCRAPERS.map(async (scraper) => {
       const start = Date.now();
@@ -1119,23 +1099,12 @@ async function handleStream(req, res, type, id) {
   }
 
   if (config.enableLocal) {
-    if (isAnime) {
-      // Anime: usar categoría 'anime' para alfa, resolver TMDB ID para locales
+    // Always search primary category (series/movie)
+    streamTasks.push(scrapeAlfa(rawId, mediaType, type, season, episode, config));
+    streamTasks.push(scrapeLocalProviders(rawId, mediaType, type, season, episode, config));
+    // For series, also search anime category (Alfa anime covers FLV, TioAnime, etc.)
+    if (config.enableAnime && mediaType === 'tv') {
       streamTasks.push(scrapeAlfa(rawId, 'tv', 'anime', season, episode, config));
-      streamTasks.push((async () => {
-        try {
-          const proxyId = await resolveAnimeId(id) || id;
-          // Use raw TMDB ID directly if numeric, otherwise resolve via Pigamer37 meta
-          const tmdbId = rawId.match(/^\d+$/) ? rawId : await getAnimeTMDbId(proxyId);
-          if (!tmdbId) return [];
-          return await scrapeLocalProviders(tmdbId, 'tv', 'anime', season, episode, config);
-        } catch { return []; }
-      })());
-    } else {
-      streamTasks.push(
-        scrapeAlfa(rawId, mediaType, type, season, episode, config),
-        scrapeLocalProviders(rawId, mediaType, type, season, episode, config)
-      );
     }
   }
 
