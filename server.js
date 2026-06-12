@@ -14,7 +14,7 @@ const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.4.4';
+const VERSION = '1.4.5';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 const PIGAMER = 'https://pigamer37.alwaysdata.net';
@@ -779,7 +779,17 @@ async function resolveTMDbIdForProviders(rawId, mediaType) {
 
 async function scrapeLocalProviders(rawId, mediaType, type, season, episode, config) {
   if (!config.enableLocal) return [];
-  const tmdbId = await resolveTMDbIdForProviders(rawId, mediaType);
+  let tmdbId;
+  if (type === 'anime') {
+    if (rawId.match(/^\d+$/)) {
+      tmdbId = rawId;
+    } else {
+      const proxyId = await resolveAnimeId(rawId) || rawId;
+      tmdbId = await getAnimeTMDbId(proxyId);
+    }
+  } else {
+    tmdbId = await resolveTMDbIdForProviders(rawId, mediaType);
+  }
   if (!tmdbId) return [];
 
   const providers = localProviders.filter(provider =>
@@ -988,8 +998,8 @@ async function handleStream(req, res, type, id) {
     // Always search primary category (series/movie)
     streamTasks.push(scrapeAlfa(rawId, mediaType, type, season, episode, config));
     streamTasks.push(scrapeLocalProviders(rawId, mediaType, type, season, episode, config));
-    // For series, also search anime category (Alfa anime covers FLV, TioAnime, etc.)
-    if (config.enableAnime && mediaType === 'tv') {
+    // For series (not already anime), also search anime category (Alfa anime covers FLV, TioAnime, etc.)
+    if (config.enableAnime && mediaType === 'tv' && type !== 'anime') {
       streamTasks.push(scrapeAlfa(rawId, 'tv', 'anime', season, episode, config));
     }
   }
