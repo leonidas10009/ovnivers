@@ -1,6 +1,6 @@
-# Ovnivers — Stream Provider v1.4.4
+# Ovnivers — Stream Provider v1.4.9
 
-Addon para **Stremio** con streams de multiples fuentes. Sin catalogos — funciona con addons de catalogo externos (ej. TMDB Community Addon).
+Addon para **Stremio** con streams de multiples fuentes. Sin catalogos propios — funciona con addons de catalogo externos (ej. TMDB Community Addon).
 
 ## Instalacion
 
@@ -15,12 +15,14 @@ Addon para **Stremio** con streams de multiples fuentes. Sin catalogos — funci
 ## Features
 
 | Funcionalidad | Detalle |
-|---|---|
+|---|---|---|
 | **Backend scrapers** | 2embed (Vesy + Vsrc), VidSrc, PoseidonHD |
-| **Anime** (proxy) | AnimeFLV, AnimeAV1, TioAnime, Henaojara via Pigamer37 |
-| **Alfa Providers** (server) | 80+ canales de Alfa Kodi: peliculas, series, anime, documentales, torrents |
-| **Local scrapers** | 62 providers locales |
+| **Pigamer37** (proxy anime) | AnimeFLV, AnimeAV1, TioAnime, Henaojara — siempre activo para series |
+| **Alfa Providers** (server) | 80+ canales: peliculas, series, anime, documentales, torrents |
+| **Alfa multi-título** | Busca por título EN + ES + JA + slug en paralelo para máximo match |
+| **Local scrapers** | 62 providers Hermes ejecutados server-side |
 | **Config panel** | `/configure` — tipos, calidad, idiomas, scrapers on/off |
+| **Sin dependencia de detección** | Todos los providers se llaman siempre, sin depender de genre TMDB |
 
 ## Catalogs (18)
 
@@ -32,13 +34,13 @@ Addon para **Stremio** con streams de multiples fuentes. Sin catalogos — funci
 
 ## Alfa Providers (80+ canales)
 
-Scraper unificado del addon **Alfa** de Kodi. Corre server-side en Render (Node.js).
+Scraper unificado del addon **Alfa** de Kodi. Corre server-side en Render (Node.js). Busca con multiples variantes del título (EN/ES/JA/slug) en paralelo.
 
 | Categoria | Count | Providers |
 |---|---|---|
 | **Peliculas** | 42 | AllCalidad, Cuevana2Espanol, PelisPedia, PoseidonHD, HDFull, Gnula, WolfMax4K, CineCalidad, DivXTotal, PelisFlix, TubePelis, ZonaLeros, AllPeliculas, BlogHorror, Cine24H, CineLibreOnline, DeTodoPeliculas, DoramasFlix, DoramedPlay, EntrePeliculasYSeries, EstrenosCinesaa, FlizzMovies, GenteClic, GranTorrent, HomeCine, LegalmenteGratis, MiraPeliculas, MiTorrent, OsjoNosu, PeliCineHD, PeliculasFlix, Pelis182, PelisForte, RetroTV, SeriesKao, TubeOnline, Yandispoiler, Zoowomaniacos, eCarteleraTrailers, HDFullS, Cuevana2, SinPeli |
 | **Series** | 26 | EZTV, DoramasYT, FullSerieHD, SeriesRetro, LaCartoons, DoramasFlix, EntrePeliculasYSeries, SeriesKao, Asialiveaction, DivXTotal, DonTorrent, DoramedPlay, EstrenosCinesaa, EstrenosDoramas, GranTorrent, HDFull, HDFullS, HomeCine, MiTorrent, OsjoNosu, Pelis182, PelisPedia, PoseidonHD, RetroTV, TubeOnline, WolfMax4K, Yandispoiler, ZonaLeros |
-| **Anime** | 20 | AnimeFLV, JKAnime, TioAnime, MonosChinos (TVAnime), VerAnime, LatAnime, HenaoJara, MundoDonghua, EstrenosAnime, AnimeJara, AnimeJL, HackTorrent, LaMovie, PelisPanda, PelisPlus, RepelisHD, SoloLatino, TioDonghua, VerAnimeAssistant, VerOnline, DoramasQueen, Ennovelas |
+| **Anime** | 22 | AnimeFLV, JKAnime, TioAnime, MonosChinos (TVAnime), VerAnime, LatAnime, HenaoJara, MundoDonghua, EstrenosAnime, AnimeJara, AnimeJL, HackTorrent, LaMovie, PelisPanda, PelisPlus, RepelisHD, SoloLatino, TioDonghua, VerAnimeAssistant, VerOnline, DoramasQueen, Ennovelas |
 | **Documentales** | 5 | AreaDocumental, DocumentalesOnline, EliteTorrent, MejorTorrent, PelisPlus |
 | **Torrents** | 12 | DonTorrent, GranTorrent, WolfMax4K, EZTV, HackTorrent, MiTorrent, EliteTorrent, MejorTorrent, BlogHorror, CineCalidad, DivXTotal, PelisPanda |
 
