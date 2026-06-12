@@ -384,20 +384,30 @@ function fixPigamerId(id) {
   return id;
 }
 
+const animeTMDbCache = new Map();
+const ANIME_TMDB_CACHE_TTL = 24 * 60 * 60 * 1000; // 24h
+
 async function getAnimeTMDbId(id) {
+  const cached = animeTMDbCache.get(id);
+  if (cached && Date.now() - cached.time < ANIME_TMDB_CACHE_TTL) return cached.tmdbId;
   try {
     const meta = await proxyPigamer(`/meta/series/${encodeURIComponent(id)}.json`);
     if (meta?.meta) {
+      let tmdbId = null;
       if (Array.isArray(meta.meta.links)) {
         for (const link of meta.meta.links) {
           if (link.category === 'tmdb' || (typeof link.name === 'string' && link.name.toLowerCase().includes('tmdb'))) {
             const url = link.url || '';
             const match = url.match(/\/(\d+)$/);
-            if (match) return match[1];
+            if (match) { tmdbId = match[1]; break; }
           }
         }
       }
-      if (meta.meta.tmdb_id) return String(meta.meta.tmdb_id);
+      if (!tmdbId && meta.meta.tmdb_id) tmdbId = String(meta.meta.tmdb_id);
+      if (tmdbId) {
+        animeTMDbCache.set(id, { tmdbId, time: Date.now() });
+        return tmdbId;
+      }
     }
   } catch {}
   return null;
@@ -839,8 +849,13 @@ async function scrapeAlfa(rawId, mediaType, type, season, episode, config) {
   if (!rawId) return [];
   let tmdbId;
   if (type === 'anime') {
-    const proxyId = await resolveAnimeId(rawId) || rawId;
-    tmdbId = await getAnimeTMDbId(proxyId);
+    // If rawId is already a numeric TMDB ID, use it directly (no Pigamer37 meta needed)
+    if (rawId.match(/^\d+$/)) {
+      tmdbId = rawId;
+    } else {
+      const proxyId = await resolveAnimeId(rawId) || rawId;
+      tmdbId = await getAnimeTMDbId(proxyId);
+    }
   } else {
     tmdbId = await resolveTMDbIdForProviders(rawId, mediaType);
   }
@@ -1052,13 +1067,16 @@ async function handleStream(req, res, type, id) {
     } catch {}
   }
 
+  // Only cache non-anime results (anime needs fresh merge every time)
   const ck = cacheKey(type, id, `${season}:${episode}`);
-  const cached = streamCache.get(ck);
-  if (cached && Date.now() - cached.time < CACHE_TTL) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    return res.json({
-      streams: filterStreams(cached.data, config)
-    });
+  if (!isAnime) {
+    const cached = streamCache.get(ck);
+    if (cached && Date.now() - cached.time < CACHE_TTL) {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      return res.json({
+        streams: filterStreams(cached.data, config)
+      });
+    }
   }
 
   console.log(`[stream] ${type}/${id} media=${mediaType} rawId=${rawId} s${season}e${episode}`);
@@ -1106,7 +1124,8 @@ async function handleStream(req, res, type, id) {
       streamTasks.push((async () => {
         try {
           const proxyId = await resolveAnimeId(id) || id;
-          const tmdbId = await getAnimeTMDbId(proxyId);
+          // Use raw TMDB ID directly if numeric, otherwise resolve via Pigamer37 meta
+          const tmdbId = rawId.match(/^\d+$/) ? rawId : await getAnimeTMDbId(proxyId);
           if (!tmdbId) return [];
           return await scrapeLocalProviders(tmdbId, 'tv', 'anime', season, episode, config);
         } catch { return []; }
@@ -1141,7 +1160,7 @@ async function handleStream(req, res, type, id) {
 
   const uniqueStreams = dedupeStreams(streams).slice(0, MAX_STREAM_RESULTS);
   console.log(`[stream] ${type}/${id} → ${uniqueStreams.length} unique (${streams.length} raw)`);
-  cacheSet(streamCache, ck, { data: uniqueStreams, time: Date.now() }, MAX_CACHE);
+  if (!isAnime) cacheSet(streamCache, ck, { data: uniqueStreams, time: Date.now() }, MAX_CACHE);
 
   const filtered = filterStreams(uniqueStreams, config);
   res.setHeader('Access-Control-Allow-Origin', '*');
