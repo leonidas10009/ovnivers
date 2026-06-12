@@ -780,7 +780,8 @@ async function resolveTMDbIdForProviders(rawId, mediaType) {
 async function scrapeLocalProviders(rawId, mediaType, type, season, episode, config) {
   if (!config.enableLocal) return [];
   let tmdbId;
-  if (type === 'anime') {
+  const isIdAnime = type === 'anime' || ANIME_PREFIXES.some(p => rawId.startsWith(p.replace(':', '|')) || rawId.startsWith(p));
+  if (isIdAnime) {
     if (rawId.match(/^\d+$/)) {
       tmdbId = rawId;
     } else {
