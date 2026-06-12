@@ -91,13 +91,13 @@ Todos los streams se normalizan al mismo formato:
 
 ```
 name:  "ProviderName\n1080p 🇯🇵🇪🇸"
-title: "1080p | ProviderName\nServerName\nSerieEpisodio\n🇯🇵🇪🇸"
+title: "1080p | ProviderName\nServerName\nSerieEpisodio"
 ```
 
-- **ProviderName** — etiqueta del provider (ej. `Pigamer37: AnimeFLV`, `Alfa: Cuevana2`, `2embed`, `NoTorrent`)
+- **ProviderName** — etiqueta del provider (ej. `AnimeFLV`, `Alfa: Cuevana2`, `2embed`, `321MoviesFree`, `Mega`)
 - **ServerName** — nombre detectado desde la URL (Mega, Streamtape, Mp4Upload, Okru, StreamSB...)
 - **Línea extra** — episodio, HDR, Dual Audio, etc. (preservado del title original)
-- **Flags** — banderas de idioma desde `contentLanguage` del scraper o `description` del stream
+- **Flags** — banderas de idioma en `name` junto a la calidad (no se repiten en `title`)
 
 ## Creditos
 
