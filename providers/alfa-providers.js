@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-12T15:54:25.563Z
+ * Generated: 2026-06-12T16:53:03.304Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -1330,15 +1330,23 @@ function extractSlug(id) {
   const parts = id.split(":");
   return parts.length >= 2 ? parts[1] : id;
 }
-function resolveTitle(id, mediaType) {
+function resolveTitles(id, mediaType) {
   return __async(this, null, function* () {
-    const cacheKey = `${mediaType}:${id}`;
+    const cacheKey = `titles:${mediaType}:${id}`;
     if (titleCache.has(cacheKey)) return titleCache.get(cacheKey);
+    const variants = [];
+    const seen = /* @__PURE__ */ new Set();
+    function addVariant(title, year) {
+      const t = (title || "").trim();
+      if (t && !seen.has(t.toLowerCase())) {
+        variants.push({ title: t, year: year || "" });
+        seen.add(t.toLowerCase());
+      }
+    }
     if (isAnimeId(id)) {
       const slug = extractSlug(id);
-      const info = { title: slug.replace(/-/g, " "), year: "", imdbId: "", slug };
-      cacheSet(cacheKey, info);
-      return info;
+      addVariant(slug.replace(/-/g, " "), "");
+      if (slug.includes("-")) addVariant(slug, "");
     }
     try {
       let tmdbId = id;
@@ -1347,26 +1355,48 @@ function resolveTitle(id, mediaType) {
           headers: { "User-Agent": UA }
         });
         if (findRes.ok) {
-          const data2 = yield findRes.json();
-          const results = data2 == null ? void 0 : data2[mediaType === "tv" ? "tv_results" : "movie_results"];
-          if (results == null ? void 0 : results[0]) tmdbId = results[0].id;
+          const data = yield findRes.json();
+          const results2 = data == null ? void 0 : data[mediaType === "tv" ? "tv_results" : "movie_results"];
+          if (results2 == null ? void 0 : results2[0]) tmdbId = String(results2[0].id);
         }
       }
-      const res = yield fetch(`https://api.themoviedb.org/3/${mediaType === "tv" ? "tv" : "movie"}/${tmdbId}?api_key=${TMDB_KEY}&language=en`, {
-        headers: { "User-Agent": UA }
-      });
-      if (!res.ok) return null;
-      const data = yield res.json();
-      const info = {
-        title: data.title || data.name || "",
-        year: (data.release_date || data.first_air_date || "").substring(0, 4),
-        imdbId: data.imdb_id || ""
-      };
-      cacheSet(cacheKey, info);
-      return info;
+      if (!tmdbId.match(/^\d+$/)) {
+        cacheSet(cacheKey, variants);
+        return variants;
+      }
+      const langs = ["en", "es", "ja"];
+      const results = yield Promise.allSettled(
+        langs.map(
+          (lang) => fetch(`https://api.themoviedb.org/3/${mediaType === "tv" ? "tv" : "movie"}/${tmdbId}?api_key=${TMDB_KEY}&language=${lang}`, {
+            headers: { "User-Agent": UA }
+          }).then((r) => r.ok ? r.json() : null)
+        )
+      );
+      let firstYear = "";
+      for (const result of results) {
+        if (result.status === "fulfilled" && result.value) {
+          const data = result.value;
+          const title = data.title || data.name || "";
+          const year = (data.release_date || data.first_air_date || "").substring(0, 4);
+          if (!firstYear) firstYear = year;
+          addVariant(title, year);
+          if (data.original_title && data.original_title !== title && data.original_language === "ja") {
+            addVariant(data.original_title, year);
+          }
+        }
+      }
+      if (firstYear && variants.length > 0) {
+        for (const v of variants) {
+          if (!v.year) v.year = firstYear;
+        }
+      }
     } catch (e) {
-      return null;
     }
+    if (variants.length === 0) {
+      variants.push({ title: id, year: "" });
+    }
+    cacheSet(cacheKey, variants);
+    return variants;
   });
 }
 function mapTypeToCategory(type) {
@@ -1383,10 +1413,8 @@ function scrapeAlfaProviders(type, id, season, episode) {
   return __async(this, null, function* () {
     const category = mapTypeToCategory(type);
     const mediaType = mapTypeToTMDB(type);
-    const info = yield resolveTitle(id, mediaType);
-    if (!info || !info.title) return [];
-    const title = info.title;
-    const year = info.year;
+    const titleVariants = yield resolveTitles(id, mediaType);
+    if (!titleVariants.length || !titleVariants[0].title) return [];
     const activeProviders = providers.filter((p) => {
       if (!p.active || p.adult) return false;
       return p.categories.includes(category);
@@ -1398,7 +1426,12 @@ function scrapeAlfaProviders(type, id, season, episode) {
       const chunkResults = yield Promise.allSettled(
         chunk.map((provider) => __async(null, null, function* () {
           try {
-            const pageUrl = yield searchProvider(provider, title, year, mediaType);
+            let pageUrl = null;
+            for (const tv of titleVariants) {
+              if (!tv.title) continue;
+              pageUrl = yield searchProvider(provider, tv.title, tv.year, mediaType);
+              if (pageUrl) break;
+            }
             if (!pageUrl) return [];
             let targetUrl = pageUrl;
             if ((category === "tvshow" || category === "anime") && season && episode) {

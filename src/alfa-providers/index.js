@@ -25,15 +25,25 @@ function extractSlug(id) {
   return parts.length >= 2 ? parts[1] : id;
 }
 
-async function resolveTitle(id, mediaType) {
-  const cacheKey = `${mediaType}:${id}`;
+async function resolveTitles(id, mediaType) {
+  const cacheKey = `titles:${mediaType}:${id}`;
   if (titleCache.has(cacheKey)) return titleCache.get(cacheKey);
+
+  const variants = [];
+  const seen = new Set();
+
+  function addVariant(title, year) {
+    const t = (title || '').trim();
+    if (t && !seen.has(t.toLowerCase())) {
+      variants.push({ title: t, year: year || '' });
+      seen.add(t.toLowerCase());
+    }
+  }
 
   if (isAnimeId(id)) {
     const slug = extractSlug(id);
-    const info = { title: slug.replace(/-/g, ' '), year: '', imdbId: '', slug };
-    cacheSet(cacheKey, info);
-    return info;
+    addVariant(slug.replace(/-/g, ' '), '');
+    if (slug.includes('-')) addVariant(slug, '');
   }
 
   try {
@@ -45,23 +55,51 @@ async function resolveTitle(id, mediaType) {
       if (findRes.ok) {
         const data = await findRes.json();
         const results = data?.[mediaType === 'tv' ? 'tv_results' : 'movie_results'];
-        if (results?.[0]) tmdbId = results[0].id;
+        if (results?.[0]) tmdbId = String(results[0].id);
       }
     }
 
-    const res = await fetch(`https://api.themoviedb.org/3/${mediaType === 'tv' ? 'tv' : 'movie'}/${tmdbId}?api_key=${TMDB_KEY}&language=en`, {
-      headers: { 'User-Agent': UA }
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const info = {
-      title: data.title || data.name || '',
-      year: (data.release_date || data.first_air_date || '').substring(0, 4),
-      imdbId: data.imdb_id || ''
-    };
-    cacheSet(cacheKey, info);
-    return info;
-  } catch { return null; }
+    if (!tmdbId.match(/^\d+$/)) {
+      cacheSet(cacheKey, variants);
+      return variants;
+    }
+
+    const langs = ['en', 'es', 'ja'];
+    const results = await Promise.allSettled(
+      langs.map(lang =>
+        fetch(`https://api.themoviedb.org/3/${mediaType === 'tv' ? 'tv' : 'movie'}/${tmdbId}?api_key=${TMDB_KEY}&language=${lang}`, {
+          headers: { 'User-Agent': UA }
+        }).then(r => r.ok ? r.json() : null)
+      )
+    );
+
+    let firstYear = '';
+    for (const result of results) {
+      if (result.status === 'fulfilled' && result.value) {
+        const data = result.value;
+        const title = data.title || data.name || '';
+        const year = (data.release_date || data.first_air_date || '').substring(0, 4);
+        if (!firstYear) firstYear = year;
+        addVariant(title, year);
+        if (data.original_title && data.original_title !== title && data.original_language === 'ja') {
+          addVariant(data.original_title, year);
+        }
+      }
+    }
+
+    if (firstYear && variants.length > 0) {
+      for (const v of variants) {
+        if (!v.year) v.year = firstYear;
+      }
+    }
+  } catch {}
+
+  if (variants.length === 0) {
+    variants.push({ title: id, year: '' });
+  }
+
+  cacheSet(cacheKey, variants);
+  return variants;
 }
 
 function mapTypeToCategory(type) {
@@ -80,11 +118,8 @@ async function scrapeAlfaProviders(type, id, season, episode) {
   const category = mapTypeToCategory(type);
   const mediaType = mapTypeToTMDB(type);
 
-  const info = await resolveTitle(id, mediaType);
-  if (!info || !info.title) return [];
-
-  const title = info.title;
-  const year = info.year;
+  const titleVariants = await resolveTitles(id, mediaType);
+  if (!titleVariants.length || !titleVariants[0].title) return [];
 
   const activeProviders = providers.filter(p => {
     if (!p.active || p.adult) return false;
@@ -100,7 +135,12 @@ async function scrapeAlfaProviders(type, id, season, episode) {
     const chunkResults = await Promise.allSettled(
       chunk.map(async (provider) => {
         try {
-          const pageUrl = await searchProvider(provider, title, year, mediaType);
+          let pageUrl = null;
+          for (const tv of titleVariants) {
+            if (!tv.title) continue;
+            pageUrl = await searchProvider(provider, tv.title, tv.year, mediaType);
+            if (pageUrl) break;
+          }
           if (!pageUrl) return [];
 
           let targetUrl = pageUrl;
