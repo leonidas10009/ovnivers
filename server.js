@@ -14,7 +14,7 @@ const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.2.9';
+const VERSION = '1.3.0';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 const PIGAMER = 'https://pigamer37.alwaysdata.net';
@@ -528,7 +528,7 @@ function langToFlags(langStr) {
   return [...new Set(flags)].join('');
 }
 
-function normalizeStream(stream, providerId, providerName) {
+function normalizeStream(stream, providerId, providerName, opts = {}) {
   if (!stream || typeof stream !== 'object') return null;
   const url = stream.url || stream.file || stream.src || stream.link;
   const hasPlayableTarget = url || stream.externalUrl || stream.infoHash;
@@ -540,56 +540,85 @@ function normalizeStream(stream, providerId, providerName) {
   const titleLines = rawTitle.split('\n');
 
   const sourceName = nameLines[0] || '';
-  const serverName = nameLines.length > 1 ? nameLines.slice(1).join(' ') : '';
+  const serverName = nameLines.length > 1 ? nameLines.slice(1).join('\n') : '';
 
-  // Extract quality from multiple sources
+  // Extract quality from ANYWHERE in stream data
+  const allText = [stream.quality, rawName, rawTitle].filter(Boolean).join(' ');
   const quality = stream.quality
-    || (titleLines[0]?.match(/\b(4K|2160p?|1080p?|720p?|480p?|HD|FHD|SD)\b/i)?.[0])
-    || (sourceName.match(/\b(4K|2160p?|1080p?|720p?|480p?|HD|FHD|SD)\b/i)?.[0])
-    || (serverName.match(/\b(4K|2160p?|1080p?|720p?|480p?|HD|FHD|SD)\b/i)?.[0])
+    || allText.match(/\b(4K|2160p?|1080p?|720p?|480p?|HD|FHD|SD)\b/i)?.[0]
     || 'HD';
 
-  // Extract language flags: from description (Alfa) or title (Pigamer37)
-  const titleFlags = titleLines.find(l => /[\u{1F1E6}-\u{1F1FF}]{2,}/u.test(l)) || '';
+  // Language flags: from contentLanguage (authoritative), description (Alfa),
+  // or from name/title lines (Pigamer37 embeds flags inline)
+  const contentFlags = Array.isArray(opts.contentLanguage) ? langToFlags(opts.contentLanguage.join(',')) : '';
   const descriptionFlags = langToFlags(stream.description || '');
-  const flags = descriptionFlags || titleFlags;
+  const inlineFlagLine = [...nameLines, ...titleLines].find(l => /[\u{1F1E6}-\u{1F1FF}]{2,}/u.test(l)) || '';
+  const inlineFlags = inlineFlagLine ? (inlineFlagLine.match(/[\u{1F1E6}-\u{1F1FF}]{2,}/ug) || []).join('') : '';
+  const flags = contentFlags || descriptionFlags || inlineFlags;
 
-  // Provider label: use sourceName if meaningful, else providerName
+  // Provider label
   const isPigamer = providerId === 'pigamer37';
   let providerLabel;
-  if (isPigamer && sourceName && !sourceName.match(/^\d/) && sourceName !== quality) {
+  if (isPigamer && sourceName && !sourceName.match(/^\d/) && sourceName !== quality && sourceName !== providerName) {
     providerLabel = `Pigamer37: ${sourceName}`;
-  } else if (sourceName && !sourceName.match(/^\d/) && sourceName !== quality && sourceName !== providerName) {
+  } else if (sourceName && !sourceName.match(/^\d/) && sourceName !== quality && sourceName !== providerName && providerId !== 'alfa-providers') {
     providerLabel = sourceName;
   } else {
     providerLabel = providerName;
   }
 
-  // Unified format: line 1 = provider, line 2 = quality + flags
+  // Unified name (short, 2 lines)
   const name = `${providerLabel}\n${quality}${flags ? ' ' + flags : ''}`;
 
-  // Build title: extract server info from serverName, or from titleLines beyond quality
-  let detail = '';
-  if (serverName && !serverName.match(/^\s*(HD|4K|2160p?|1080p?|720p?|480p?)\s*$/i)) {
-    detail = serverName.replace(/^[⚙️🔗📦\s]+/, '').trim();
-  }
-  // If no server info in name, look in title for extra details
-  if (!detail && titleLines.length > 0) {
-    for (const line of titleLines) {
-      const stripped = line
-        .replace(/^\s*(HD|4K|2160p?|1080p?|720p?|480p?)\s*[|\-·]\s*/i, '')
-        .replace(/^[⚙️🔗📦\s]+/, '')
-        .trim();
-      if (stripped && !stripped.match(/^\s*(HD|4K|2160p?|1080p?|720p?|480p?)\s*$/i) && stripped !== providerLabel && !/[\u{1F1E6}-\u{1F1FF}]{2,}/u.test(stripped)) {
-        detail = stripped;
-        break;
-      }
+  // ── Title (detailed) ──
+  // Line 1: unified header
+  const titleParts = [`${quality} | ${providerLabel}`];
+
+  // Collect all meaningful content from original name (lines 2+) and title
+  const seen = new Set();
+  const addLine = (text) => {
+    const t = text.trim();
+    if (t && !seen.has(t.toLowerCase()) && t !== providerLabel && t !== sourceName && t !== quality
+        && !t.match(/^\s*(HD|4K|2160p?|1080p?|720p?|480p?)\s*$/i)
+        && !t.match(/^[\u{1F1E6}-\u{1F1FF}]{2,}$/u)) {
+      seen.add(t.toLowerCase());
+      titleParts.push(t);
     }
+  };
+
+  // From nameLines[1+] (strip quality and flags but keep server info)
+  for (let i = 1; i < nameLines.length; i++) {
+    const cleaned = nameLines[i]
+      .replace(/\b(4K|2160p?|1080p?|720p?|480p?)\b/gi, '')
+      .replace(/[\u{1F1E6}-\u{1F1FF}]{2,}/ug, '')
+      .replace(/^[⚙️🔗📦\s]+/, '')
+      .replace(/[\s,;]+/g, ' ')
+      .trim();
+    if (cleaned) addLine(cleaned);
   }
 
-  const titleParts = [`${quality} | ${providerLabel}`];
-  if (detail) titleParts.push(detail);
-  if (flags) titleParts.push(flags);
+  // From titleLines (preserve original content like anime name, episode)
+  for (const line of titleLines) {
+    const cleaned = line
+      .replace(/^[⚙️🔗📦\s]+/, '')
+      .replace(/[\s,;]+/g, ' ')
+      .trim();
+    if (cleaned) addLine(cleaned);
+  }
+
+  // URL domain fallback if title still only has header
+  if (titleParts.length === 1 && url) {
+    try {
+      const host = new URL(url).hostname.replace(/^www\./, '');
+      addLine(host.substring(0, 30));
+    } catch {}
+  }
+
+  // Add flags as last line if not already present
+  if (flags && !titleParts.some(p => p.includes(flags))) {
+    titleParts.push(flags);
+  }
+
   const title = titleParts.join('\n');
 
   return {
@@ -666,7 +695,7 @@ async function scrapeLocalProviders(rawId, mediaType, type, season, episode, con
           LOCAL_PROVIDER_TIMEOUT
         );
         const normalized = (Array.isArray(data) ? data : [])
-          .map(stream => normalizeStream(stream, provider.id, provider.name))
+          .map(stream => normalizeStream(stream, provider.id, provider.name, { contentLanguage: provider.contentLanguage }))
           .filter(Boolean);
         if (normalized.length) {
           console.log(`  [${provider.name}] ${normalized.length} streams (${Date.now() - start}ms)`);
