@@ -13,7 +13,7 @@ const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.6.0';
+const VERSION = '1.6.1';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 const PIGAMER = 'https://pigamer37.alwaysdata.net';
@@ -341,7 +341,7 @@ async function resolveAnimeId(id) {
 }
 
 function fixPigamerId(id) {
-  return id.replace(/:/g, '|');
+  return id;
 }
 
 function parsePathExtras(extraStr) {
@@ -495,14 +495,20 @@ async function handleStream(req, res, type, id) {
   // Anime → proxy pigamer37
   if (isAnimeId(id)) {
     if (!config.enableAnime) return res.json({ streams: [] });
-    const resolvedId = await resolveAnimeId(id);
-    const proxyId = resolvedId || id;
-    const proxyType = 'series';
-    const qs = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
-    const data = await proxyPigamer(`/stream/${proxyType}/${encodeURIComponent(fixPigamerId(proxyId))}.json${qs}`);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Cache-Control', `public, max-age=${CACHE_TTL / 1000}`);
-    return res.json(data || { streams: [] });
+    try {
+      const resolvedId = await resolveAnimeId(id);
+      const proxyId = resolvedId || id;
+      const proxyType = 'series';
+      const qs = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+      const data = await proxyPigamer(`/stream/${proxyType}/${encodeURIComponent(proxyId)}.json${qs}`);
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cache-Control', `public, max-age=${CACHE_TTL / 1000}`);
+      return res.json(data || { streams: [] });
+    } catch (e) {
+      console.error('[stream:anime]', e.message);
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      return res.json({ streams: [] });
+    }
   }
 
   if (!config.enableBackend) return res.json({ streams: [] });
@@ -588,12 +594,18 @@ async function handleCatalog(req, res, type, id) {
   const cleanId = id.replace('|onair', '').replace('|search', '').replace('%7C', '|');
   if (isAnimeId(cleanId + ':')) {
     if (!config.enableAnime) return res.json({ metas: [] });
-    const proxyType = 'series';
-    const qs = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
-    const data = await proxyPigamer(`/catalog/${proxyType}/${encodeURIComponent(fixPigamerId(id))}.json${qs}`);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Cache-Control', `public, max-age=${META_TTL / 1000}`);
-    return res.json(data || { metas: [] });
+    try {
+      const proxyType = 'series';
+      const qs = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+      const data = await proxyPigamer(`/catalog/${proxyType}/${encodeURIComponent(id)}.json${qs}`);
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cache-Control', `public, max-age=${META_TTL / 1000}`);
+      return res.json(data || { metas: [] });
+    } catch (e) {
+      console.error('[catalog:anime]', e.message);
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      return res.json({ metas: [] });
+    }
   }
 
   if (!config.enableBackend) return res.json({ metas: [] });
@@ -693,11 +705,17 @@ async function handleMeta(req, res, type, id) {
   // Anime meta → proxy pigamer37
   if (isAnimeId(id)) {
     if (!config.enableAnime) return res.json({ meta: null });
-    const proxyType = 'series';
-    const data = await proxyPigamer(`/meta/${proxyType}/${encodeURIComponent(fixPigamerId(id))}.json`);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Cache-Control', `public, max-age=${META_TTL / 1000}`);
-    return res.json(data || { meta: null });
+    try {
+      const proxyType = 'series';
+      const data = await proxyPigamer(`/meta/${proxyType}/${encodeURIComponent(id)}.json`);
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cache-Control', `public, max-age=${META_TTL / 1000}`);
+      return res.json(data || { meta: null });
+    } catch (e) {
+      console.error('[meta:anime]', e.message);
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      return res.json({ meta: null });
+    }
   }
 
   if (!config.enableBackend) return res.json({ meta: null });
