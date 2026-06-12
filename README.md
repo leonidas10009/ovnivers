@@ -22,7 +22,7 @@ Addon para **Stremio** con streams de multiples fuentes. Sin catalogos propios �
 | **Alfa multi-título** | Busca por título EN + ES + JA + slug en paralelo para máximo match |
 | **Local scrapers** | 62 providers Hermes ejecutados server-side |
 | **Config panel** | `/configure` — tipos, calidad, idiomas, scrapers on/off |
-| **Sin dependencia de detección** | Todos los providers se llaman siempre, sin depender de genre TMDB |
+| **Separación por categoría** | Pigamer37 solo para anime detectado; Alfa anime siempre para TV; Alfa principal + Backend + Hermes para todo |
 
 ## Catalogs (18)
 

@@ -996,8 +996,8 @@ async function handleStream(req, res, type, id) {
   if (config.enableLocal) {
     streamTasks.push(scrapeAlfa(rawId, mediaType, type, season, episode, config));
     streamTasks.push(scrapeLocalProviders(rawId, mediaType, type, season, episode, config));
-    // Alfa anime: solo si es anime o serie con posible contenido anime
-    if (isAnime && config.enableAnime && mediaType === 'tv') {
+    // Alfa anime: siempre para TV (scraper, no contamina si no encuentra)
+    if (config.enableAnime && mediaType === 'tv') {
       streamTasks.push(scrapeAlfa(rawId, 'tv', 'anime', season, episode, config));
     }
   }
