@@ -308,8 +308,6 @@ const BACKEND_SCRAPERS = [
   { name: '2embed (Vesy)', fn: scrape2embedVesy },
   { name: '2embed (Vsrc)', fn: scrape2embedVsrc },
   { name: 'VidSrc', fn: scrapeVidSrcRip },
-  { name: 'EZTV', fn: scrapeEZTV },
-  { name: 'Cuevana2', fn: scrapeCuevana2Espanol },
   { name: 'PoseidonHD', fn: scrapePoseidonHD },
 ];
 

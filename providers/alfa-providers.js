@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-12T10:02:44.694Z
+ * Generated: 2026-06-12T10:06:14.951Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -67,7 +67,7 @@ var require_providers = __commonJS({
         baseUrl: "https://allpeliculas.se",
         categories: ["movie", "vos"],
         language: ["lat"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "ul.cc-list > article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".players", iframeSelector: "iframe", srcAttr: "data-src", defaultQuality: "HD" }
@@ -78,7 +78,7 @@ var require_providers = __commonJS({
         baseUrl: "https://asialiveaction.com",
         categories: ["movie", "tvshow", "vos"],
         language: ["cast", "lat"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2.entry-title", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
@@ -133,7 +133,7 @@ var require_providers = __commonJS({
         baseUrl: "https://ww3.cinemundo.online",
         categories: ["movie"],
         language: ["cast", "lat", "vose"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/search/{query}", itemSelector: ".movie-card", titleSelector: ".title", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".player-container", iframeSelector: "iframe", defaultQuality: "HD" }
@@ -144,7 +144,7 @@ var require_providers = __commonJS({
         baseUrl: "https://www.cuevana2espanol.net",
         categories: ["movie"],
         language: ["lat", "cast"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/search?q={query}", itemSelector: 'a[href*="/pelicula/"]', titleSelector: "h2, .title", linkSelector: "&" },
         videos: { type: "nextjs", dataPath: "props.pageProps.post.players", defaultQuality: "HD" }
@@ -232,7 +232,7 @@ var require_providers = __commonJS({
         baseUrl: "https://flizzmovies.com",
         categories: ["movie"],
         language: ["cast", "lat", "vose"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/search/{query}", itemSelector: ".movie-card", titleSelector: ".title", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".player", iframeSelector: "iframe", defaultQuality: "HD" }
@@ -332,7 +332,7 @@ var require_providers = __commonJS({
         baseUrl: "https://osjonosu.xyz",
         categories: ["movie", "tvshow"],
         language: ["cast"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
@@ -343,7 +343,7 @@ var require_providers = __commonJS({
         baseUrl: "https://pelicinehd.com",
         categories: ["movie"],
         language: ["lat", "cast", "vose"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
@@ -354,7 +354,7 @@ var require_providers = __commonJS({
         baseUrl: "https://peliculasflix.co",
         categories: ["movie"],
         language: ["cast", "lat", "vose"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
@@ -365,7 +365,7 @@ var require_providers = __commonJS({
         baseUrl: "https://pelis182.com",
         categories: ["movie", "tvshow"],
         language: ["lat"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
@@ -376,7 +376,7 @@ var require_providers = __commonJS({
         baseUrl: "https://pelisflix2.bond",
         categories: ["movie", "vos"],
         language: ["lat", "cast"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/search/{query}", itemSelector: ".movie-card", titleSelector: ".title", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".player", iframeSelector: "iframe", defaultQuality: "HD" }
@@ -421,7 +421,7 @@ var require_providers = __commonJS({
         baseUrl: "https://retrotv.org",
         categories: ["movie", "tvshow"],
         language: ["lat"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
@@ -487,7 +487,7 @@ var require_providers = __commonJS({
         baseUrl: "https://www.zona-leros.com",
         categories: ["movie", "tvshow"],
         language: ["lat"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
@@ -498,7 +498,7 @@ var require_providers = __commonJS({
         baseUrl: "https://zoowomaniacos.org",
         categories: ["movie", "vos"],
         language: ["lat", "cast"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
@@ -585,7 +585,7 @@ var require_providers = __commonJS({
         baseUrl: "https://animejara.net",
         categories: ["anime"],
         language: ["cast", "lat", "vose"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "jsvar", varPattern: /var videos = (\[.*?\]);/, defaultQuality: "HD" }
@@ -651,7 +651,7 @@ var require_providers = __commonJS({
         baseUrl: "https://la.movie",
         categories: ["anime"],
         language: ["lat", "cast", "vose"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/search/{query}", itemSelector: ".movie-card", titleSelector: ".title", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".player", iframeSelector: "iframe", defaultQuality: "HD" }
@@ -761,7 +761,7 @@ var require_providers = __commonJS({
         baseUrl: "https://ww3.animeonline.ninja",
         categories: ["anime"],
         language: ["cast", "lat", "vose"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "jsvar", varPattern: /var videos = (\[.*?\]);/, defaultQuality: "HD" }
@@ -772,7 +772,7 @@ var require_providers = __commonJS({
         baseUrl: "https://veranimeassistant.com",
         categories: ["anime"],
         language: ["cast", "lat", "vose"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
@@ -783,7 +783,7 @@ var require_providers = __commonJS({
         baseUrl: "https://veronline.tv",
         categories: ["anime"],
         language: ["cast", "lat", "vose"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
@@ -830,7 +830,7 @@ var require_providers = __commonJS({
         baseUrl: "https://www38.mejortorrent.eu",
         categories: ["documentary", "torrent"],
         language: ["cast"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "torrent", linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: "HD" }
@@ -855,7 +855,7 @@ var require_providers = __commonJS({
         baseUrl: "https://www.hdfull.it",
         categories: ["movie", "tvshow"],
         language: ["cast", "lat"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
@@ -866,7 +866,7 @@ var require_providers = __commonJS({
         baseUrl: "https://www26.estrenosdoramas.net",
         categories: ["tvshow", "vos"],
         language: ["lat", "vose"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         episodes: { type: "season-list", seasonSelector: ".season-list a", episodeSelector: ".episode-list a" },
@@ -889,7 +889,7 @@ var require_providers = __commonJS({
         baseUrl: "https://ennovelas.site",
         categories: ["anime", "vos"],
         language: ["lat"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
@@ -900,7 +900,7 @@ var require_providers = __commonJS({
         baseUrl: "https://www.cuevana2.run",
         categories: ["movie", "tvshow", "vos"],
         language: ["*"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/search?q={query}", itemSelector: 'a[href*="/pelicula/"]', titleSelector: ".title", linkSelector: "&" },
         videos: { type: "nextjs", dataPath: "props.pageProps.post.players", defaultQuality: "HD" }
@@ -911,7 +911,7 @@ var require_providers = __commonJS({
         baseUrl: "https://www.sinpeli.com",
         categories: ["movie", "vos"],
         language: ["lat", "cast"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
