@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-12T16:53:03.304Z
+ * Generated: 2026-06-12T16:55:11.402Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -930,7 +930,7 @@ var require_engine = __commonJS({
       return __async(this, arguments, function* (url, opts = {}) {
         try {
           const ctrl = new AbortController();
-          const t = setTimeout(() => ctrl.abort(), opts.timeout || 1e4);
+          const t = setTimeout(() => ctrl.abort(), opts.timeout || 8e3);
           const res = yield fetch(url, {
             headers: __spreadValues({ "User-Agent": UA2, "Accept": "text/html,application/xhtml+xml,*/*" }, opts.headers),
             signal: ctrl.signal
@@ -1019,7 +1019,7 @@ var require_engine = __commonJS({
         } else {
           searchUrl = provider.baseUrl + cfg.url.replace("{query}", encodeURIComponent(title));
         }
-        const html = yield fetchHTML2(searchUrl, { headers: cfg.headers, timeout: 12e3 });
+        const html = yield fetchHTML2(searchUrl, { headers: cfg.headers, timeout: 8e3 });
         if (!html) return null;
         const $ = cheerio.load(html);
         const items = $(cfg.itemSelector).toArray();
@@ -1356,34 +1356,29 @@ function resolveTitles(id, mediaType) {
         });
         if (findRes.ok) {
           const data = yield findRes.json();
-          const results2 = data == null ? void 0 : data[mediaType === "tv" ? "tv_results" : "movie_results"];
-          if (results2 == null ? void 0 : results2[0]) tmdbId = String(results2[0].id);
+          const results = data == null ? void 0 : data[mediaType === "tv" ? "tv_results" : "movie_results"];
+          if (results == null ? void 0 : results[0]) tmdbId = String(results[0].id);
         }
       }
       if (!tmdbId.match(/^\d+$/)) {
         cacheSet(cacheKey, variants);
         return variants;
       }
-      const langs = ["en", "es", "ja"];
-      const results = yield Promise.allSettled(
-        langs.map(
-          (lang) => fetch(`https://api.themoviedb.org/3/${mediaType === "tv" ? "tv" : "movie"}/${tmdbId}?api_key=${TMDB_KEY}&language=${lang}`, {
-            headers: { "User-Agent": UA }
-          }).then((r) => r.ok ? r.json() : null)
-        )
-      );
-      let firstYear = "";
-      for (const result of results) {
-        if (result.status === "fulfilled" && result.value) {
-          const data = result.value;
-          const title = data.title || data.name || "";
-          const year = (data.release_date || data.first_air_date || "").substring(0, 4);
-          if (!firstYear) firstYear = year;
-          addVariant(title, year);
-          if (data.original_title && data.original_title !== title && data.original_language === "ja") {
-            addVariant(data.original_title, year);
-          }
+      const [enRes, esRes] = yield Promise.all([
+        fetch(`https://api.themoviedb.org/3/${mediaType === "tv" ? "tv" : "movie"}/${tmdbId}?api_key=${TMDB_KEY}&language=en`, { headers: { "User-Agent": UA } }),
+        fetch(`https://api.themoviedb.org/3/${mediaType === "tv" ? "tv" : "movie"}/${tmdbId}?api_key=${TMDB_KEY}&language=es`, { headers: { "User-Agent": UA } })
+      ]);
+      if (enRes.ok) {
+        const enData = yield enRes.json();
+        const year = (enData.release_date || enData.first_air_date || "").substring(0, 4);
+        addVariant(enData.title || enData.name || "", year);
+        if (enData.original_language === "ja" && enData.original_title && enData.original_title !== (enData.title || enData.name)) {
+          addVariant(enData.original_title, year);
         }
+      }
+      if (esRes.ok) {
+        const esData = yield esRes.json();
+        addVariant(esData.title || esData.name || "", "");
       }
       if (firstYear && variants.length > 0) {
         for (const v of variants) {
@@ -1427,10 +1422,19 @@ function scrapeAlfaProviders(type, id, season, episode) {
         chunk.map((provider) => __async(null, null, function* () {
           try {
             let pageUrl = null;
-            for (const tv of titleVariants) {
-              if (!tv.title) continue;
-              pageUrl = yield searchProvider(provider, tv.title, tv.year, mediaType);
-              if (pageUrl) break;
+            const validVariants = titleVariants.filter((tv) => tv.title);
+            if (validVariants.length === 1) {
+              pageUrl = yield searchProvider(provider, validVariants[0].title, validVariants[0].year, mediaType);
+            } else if (validVariants.length > 1) {
+              const searchResults = yield Promise.allSettled(
+                validVariants.map((tv) => searchProvider(provider, tv.title, tv.year, mediaType))
+              );
+              for (const r of searchResults) {
+                if (r.status === "fulfilled" && r.value) {
+                  pageUrl = r.value;
+                  break;
+                }
+              }
             }
             if (!pageUrl) return [];
             let targetUrl = pageUrl;

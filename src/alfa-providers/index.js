@@ -64,27 +64,21 @@ async function resolveTitles(id, mediaType) {
       return variants;
     }
 
-    const langs = ['en', 'es', 'ja'];
-    const results = await Promise.allSettled(
-      langs.map(lang =>
-        fetch(`https://api.themoviedb.org/3/${mediaType === 'tv' ? 'tv' : 'movie'}/${tmdbId}?api_key=${TMDB_KEY}&language=${lang}`, {
-          headers: { 'User-Agent': UA }
-        }).then(r => r.ok ? r.json() : null)
-      )
-    );
-
-    let firstYear = '';
-    for (const result of results) {
-      if (result.status === 'fulfilled' && result.value) {
-        const data = result.value;
-        const title = data.title || data.name || '';
-        const year = (data.release_date || data.first_air_date || '').substring(0, 4);
-        if (!firstYear) firstYear = year;
-        addVariant(title, year);
-        if (data.original_title && data.original_title !== title && data.original_language === 'ja') {
-          addVariant(data.original_title, year);
-        }
+    const [enRes, esRes] = await Promise.all([
+      fetch(`https://api.themoviedb.org/3/${mediaType === 'tv' ? 'tv' : 'movie'}/${tmdbId}?api_key=${TMDB_KEY}&language=en`, { headers: { 'User-Agent': UA } }),
+      fetch(`https://api.themoviedb.org/3/${mediaType === 'tv' ? 'tv' : 'movie'}/${tmdbId}?api_key=${TMDB_KEY}&language=es`, { headers: { 'User-Agent': UA } })
+    ]);
+    if (enRes.ok) {
+      const enData = await enRes.json();
+      const year = (enData.release_date || enData.first_air_date || '').substring(0, 4);
+      addVariant(enData.title || enData.name || '', year);
+      if (enData.original_language === 'ja' && enData.original_title && enData.original_title !== (enData.title || enData.name)) {
+        addVariant(enData.original_title, year);
       }
+    }
+    if (esRes.ok) {
+      const esData = await esRes.json();
+      addVariant(esData.title || esData.name || '', '');
     }
 
     if (firstYear && variants.length > 0) {
@@ -134,14 +128,20 @@ async function scrapeAlfaProviders(type, id, season, episode) {
   for (const chunk of chunks) {
     const chunkResults = await Promise.allSettled(
       chunk.map(async (provider) => {
-        try {
-          let pageUrl = null;
-          for (const tv of titleVariants) {
-            if (!tv.title) continue;
-            pageUrl = await searchProvider(provider, tv.title, tv.year, mediaType);
-            if (pageUrl) break;
-          }
-          if (!pageUrl) return [];
+          try {
+            let pageUrl = null;
+            const validVariants = titleVariants.filter(tv => tv.title);
+            if (validVariants.length === 1) {
+              pageUrl = await searchProvider(provider, validVariants[0].title, validVariants[0].year, mediaType);
+            } else if (validVariants.length > 1) {
+              const searchResults = await Promise.allSettled(
+                validVariants.map(tv => searchProvider(provider, tv.title, tv.year, mediaType))
+              );
+              for (const r of searchResults) {
+                if (r.status === 'fulfilled' && r.value) { pageUrl = r.value; break; }
+              }
+            }
+            if (!pageUrl) return [];
 
           let targetUrl = pageUrl;
           if ((category === 'tvshow' || category === 'anime') && season && episode) {

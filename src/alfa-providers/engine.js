@@ -6,7 +6,7 @@ const TMDB_KEY = 'd80ba92bc7cefe3359668d30d06f3305';
 async function fetchHTML(url, opts = {}) {
   try {
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), opts.timeout || 10000);
+    const t = setTimeout(() => ctrl.abort(), opts.timeout || 8000);
     const res = await fetch(url, {
       headers: { 'User-Agent': UA, 'Accept': 'text/html,application/xhtml+xml,*/*', ...opts.headers },
       signal: ctrl.signal
@@ -86,7 +86,7 @@ async function searchProvider(provider, title, year, mediaType) {
     searchUrl = provider.baseUrl + cfg.url.replace('{query}', encodeURIComponent(title));
   }
 
-  const html = await fetchHTML(searchUrl, { headers: cfg.headers, timeout: 12000 });
+  const html = await fetchHTML(searchUrl, { headers: cfg.headers, timeout: 8000 });
   if (!html) return null;
 
   const $ = cheerio.load(html);
