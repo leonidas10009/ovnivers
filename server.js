@@ -14,7 +14,7 @@ const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.4.2';
+const VERSION = '1.4.3';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 const PIGAMER = 'https://pigamer37.alwaysdata.net';
@@ -39,7 +39,6 @@ const DEFAULT_CONFIG = {
   enableAnime: true,
   enableBackend: true,
   enableLocal: true,                     // run bundled providers server-side
-  enableCatalogs: true,                  // expose this addon's TMDb/anime catalogs
   exposeLocalScrapers: false             // legacy Nuvio local scraper manifest field
 };
 
@@ -95,25 +94,6 @@ const CACHE_TTL = 10 * 60 * 1000;
 const MAX_CACHE = 1000;
 const metaCache = new Map();
 const META_TTL = 60 * 60 * 1000;
-const genreCache = { movie: null, tv: null, loadedAt: 0 };
-const GENRE_TTL = 24 * 60 * 60 * 1000;
-
-async function loadGenres() {
-  const now = Date.now();
-  if (genreCache.loadedAt && (now - genreCache.loadedAt) < GENRE_TTL) return;
-  try {
-    const [movieGenres, tvGenres] = await Promise.all([
-      fetchAPI(`https://api.themoviedb.org/3/genre/movie/list?api_key=${TMDB_KEY}&language=en`),
-      fetchAPI(`https://api.themoviedb.org/3/genre/tv/list?api_key=${TMDB_KEY}&language=en`)
-    ]);
-    genreCache.movie = (movieGenres?.genres || []).map(g => ({ id: String(g.id), name: g.name }));
-    genreCache.tv = (tvGenres?.genres || []).map(g => ({ id: String(g.id), name: g.name }));
-    genreCache.loadedAt = now;
-    console.log(`Loaded ${genreCache.movie.length} movie genres, ${genreCache.tv.length} TV genres`);
-  } catch (e) {
-    console.warn('Failed to load genres:', e.message);
-  }
-}
 
 function cacheSet(cache, key, value, max) {
   if (cache.size >= max) {
@@ -472,17 +452,6 @@ function parseStreamId(id, fallbackSeason = 1, fallbackEpisode = 1) {
   }
 
   return { contentId, season, episode };
-}
-
-function parseGenreId(value) {
-  if (!value) return '';
-  const decoded = decodeURIComponent(String(value));
-  const match = decoded.match(/^(\d+)(?::|%3A|\s+-\s+|\s)/);
-  return match ? match[1] : decoded;
-}
-
-function genreOptions(genres) {
-  return (genres || []).map(g => `${g.id}: ${g.name}`);
 }
 
 function isTypeEnabled(type, config) {
@@ -876,110 +845,12 @@ async function scrapeAlfa(rawId, mediaType, type, season, episode, config) {
   }
 }
 
-async function searchAlfaAnime(query) {
-  let providers;
-  try {
-    providers = require('./src/alfa-providers/providers.js');
-  } catch { return []; }
 
-  const animeProviders = providers.filter(p =>
-    p.active && !p.adult && p.categories.includes('anime') && p.search
-  );
-
-  const results = [];
-  const seen = new Set();
-
-  await Promise.allSettled(animeProviders.map(async (p) => {
-    try {
-      const searchUrl = p.baseUrl.replace(/\/+$/, '') + '/' + p.search.url.replace(/^\//, '').replace('{query}', encodeURIComponent(query));
-      const html = await fetchAPI(searchUrl, {}, 10000);
-      if (!html || typeof html !== 'string') return;
-
-      const $ = cheerio.load(html);
-      const items = $(p.search.itemSelector).toArray().slice(0, 5);
-
-      for (const item of items) {
-        const el = $(item);
-        let title = '';
-        let link = '';
-
-        if (p.search.titleSelector === '&') {
-          title = el.text().trim();
-        } else if (p.search.titleAttr) {
-          title = el.find(p.search.titleSelector).attr(p.search.titleAttr) || el.text().trim();
-        } else {
-          title = el.find(p.search.titleSelector).first().text().trim();
-        }
-
-        if (p.search.linkSelector === '&') {
-          link = el.attr('href') || '';
-        } else {
-          link = el.find(p.search.linkSelector).first().attr('href') || '';
-        }
-
-        if (!title || title.length < 2 || !link) continue;
-        if (link && !link.startsWith('http')) {
-          try { link = new URL(link, p.baseUrl).href; } catch { continue; }
-        }
-
-        const key = title.toLowerCase().trim();
-        if (seen.has(key)) continue;
-        seen.add(key);
-
-        results.push({
-          id: `${p.name}:${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`,
-          type: 'series',
-          name: title,
-          poster: null,
-          posterShape: 'poster',
-          description: `From ${p.title} (Alfa provider)`
-        });
-      }
-    } catch {}
-  }));
-
-  return results;
-}
 
 // ─── Manifest ─────────────────────────────
 
 app.get('/manifest.json', async (req, res) => {
   const config = parseConfig(req);
-  const enabledCatalogs = [];
-
-  await loadGenres();
-
-  if (config.enableCatalogs && config.enableMovies) {
-    enabledCatalogs.push(
-      { type: 'movie', id: 'tmdb-popular', name: 'Popular Movies' },
-      { type: 'movie', id: 'tmdb-trending', name: 'Trending Movies' },
-      { type: 'movie', id: 'tmdb-top', name: 'Top Rated Movies' },
-      { type: 'movie', id: 'tmdb-genres', name: 'Movies by Genre', extra: [{ name: 'genre', options: genreOptions(genreCache.movie), optionsLimit: 1 }] },
-      { type: 'movie', id: 'tmdb-year', name: 'Movies by Year', extra: [{ name: 'search', isRequired: true }] }
-    );
-  }
-  if (config.enableCatalogs && config.enableSeries) {
-    enabledCatalogs.push(
-      { type: 'series', id: 'tmdb-popular', name: 'Popular Series' },
-      { type: 'series', id: 'tmdb-trending', name: 'Trending Series' },
-      { type: 'series', id: 'tmdb-top', name: 'Top Rated Series' },
-      { type: 'series', id: 'tmdb-genres', name: 'Series by Genre', extra: [{ name: 'genre', options: genreOptions(genreCache.tv), optionsLimit: 1 }] },
-      { type: 'series', id: 'tmdb-year', name: 'Series by Year', extra: [{ name: 'search', isRequired: true }] }
-    );
-  }
-  if (config.enableCatalogs && config.enableAnime) {
-    enabledCatalogs.push(
-      { type: 'series', id: 'animeflv|onair', name: 'AnimeFLV On Air' },
-      { type: 'series', id: 'animeav1|onair', name: 'AnimeAV1 On Air' },
-      { type: 'series', id: 'tioanime|onair', name: 'TioAnime On Air' },
-      { type: 'series', id: 'henaojara|onair', name: 'Henaojara On Air' },
-      { type: 'series', id: 'animeflv|search', name: 'AnimeFLV Search', extra: [{ name: 'search', isRequired: true }, { name: 'skip', isRequired: false }] },
-      { type: 'series', id: 'animeav1|search', name: 'AnimeAV1 Search', extra: [{ name: 'search', isRequired: true }, { name: 'skip', isRequired: false }] },
-      { type: 'series', id: 'tioanime|search', name: 'TioAnime Search', extra: [{ name: 'search', isRequired: true }, { name: 'skip', isRequired: false }] },
-      { type: 'series', id: 'henaojara|search', name: 'Henaojara Search', extra: [{ name: 'search', isRequired: true }, { name: 'skip', isRequired: false }] },
-      { type: 'series', id: 'all-search', name: 'All Sources Search', extra: [{ name: 'search', isRequired: true }, { name: 'skip', isRequired: false }] }
-    );
-  }
 
   const enabledTypes = [];
   if (config.enableMovies) enabledTypes.push('movie');
@@ -990,37 +861,31 @@ app.get('/manifest.json', async (req, res) => {
   if (config.enableBackend) streamPrefixes.push('tt', 'tmdb');
   if (config.enableAnime) streamPrefixes.push(...ANIME_PREFIXES);
 
-  const catalogPrefixes = [];
-  if (config.enableBackend) catalogPrefixes.push('tmdb', 'tmdb-genre:');
-  if (config.enableAnime) catalogPrefixes.push(...ANIME_PREFIXES);
-
   const metaPrefixes = [];
   if (config.enableBackend) metaPrefixes.push('tt', 'tmdb');
   if (config.enableAnime) metaPrefixes.push(...ANIME_PREFIXES);
 
-  const allPrefixes = [...new Set([...streamPrefixes, ...catalogPrefixes, ...metaPrefixes])];
+  const allPrefixes = [...new Set([...streamPrefixes, ...metaPrefixes])];
 
   const resources = [
     { name: 'stream', types: enabledTypes, idPrefixes: streamPrefixes },
-    { name: 'catalog', types: enabledTypes, idPrefixes: catalogPrefixes },
     { name: 'meta', types: enabledTypes, idPrefixes: metaPrefixes }
   ];
 
   const manifest = {
     id: ADDON_ID,
     version: VERSION,
-    name: 'Ovnivers All-in-One',
-    description: `${localProviders.length} server-side providers + Alfa + ${BACKEND_SCRAPERS.length} backend + AnimeFLV/AnimeAV1/TioAnime/Henaojara. Works with external catalogs.`,
+    name: 'Ovnivers Streams',
+    description: `Stream provider: ${localProviders.length} local + Alfa + ${BACKEND_SCRAPERS.length} backend + Pigamer37 anime. Use with external catalogs.`,
     logo: `${BASE_URL}/logo.png`,
-    catalogs: enabledCatalogs,
+    catalogs: [],
     resources,
     types: enabledTypes,
     idPrefixes: allPrefixes,
     behaviorHints: {
       adult: false,
       configurable: true,
-      configurationRequired: false,
-      newEpisodeNotifications: true
+      configurationRequired: false
     }
   };
   if (config.exposeLocalScrapers) manifest.scrapers = manifestScrapers;
@@ -1175,180 +1040,15 @@ function filterStreams(streams, config) {
   });
 }
 
-// ─── Catalog ──────────────────────────────
+// ─── Catalog (disabled - pure stream provider) ──
 
-app.get('/catalog/:type/:id/:extra(*).json', async (req, res) => {
-  const { type, id } = req.params;
-  const extraStr = req.params.extra || '';
-  const extraParams = parsePathExtras(extraStr);
-  req.query = { ...req.query, ...extraParams };
-  handleCatalog(req, res, type, id);
+app.get('/catalog/:type/:id/:extra(*).json', (req, res) => {
+  res.json({ metas: [] });
 });
 
-app.get('/catalog/:type/:id.json', async (req, res) => {
-  handleCatalog(req, res, req.params.type, req.params.id);
+app.get('/catalog/:type/:id.json', (req, res) => {
+  res.json({ metas: [] });
 });
-
-async function handleCatalog(req, res, type, id) {
-  const config = parseConfig(req);
-
-  if (!isTypeEnabled(type, config)) return res.json({ metas: [] });
-
-  // Combined search → TMDB + all anime sources
-  if (id === 'all-search') {
-    const search = req.query.search;
-    if (!search) return res.json({ metas: [] });
-    if (!config.enableBackend && !config.enableAnime) return res.json({ metas: [] });
-
-    try {
-      const tasks = [];
-
-      if (config.enableBackend) {
-        const mediaType = type === 'series' ? 'tv' : 'movie';
-        const tmdbUrl = `https://api.themoviedb.org/3/search/${mediaType}?api_key=${TMDB_KEY}&language=en&query=${encodeURIComponent(search)}&page=1`;
-        tasks.push(fetchAPI(tmdbUrl).then(data => {
-          if (!data?.results) return [];
-          return data.results.slice(0, 10).map(item => ({
-            id: `tmdb:${item.id}`, type,
-            name: item.title || item.name || 'Unknown',
-            poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : null,
-            posterShape: 'poster',
-            description: item.overview || '',
-            releaseInfo: (item.release_date || item.first_air_date || '').substring(0, 4),
-            imdbRating: item.vote_average ? String(item.vote_average) : null
-          }));
-        }));
-      }
-
-      if (config.enableAnime) {
-        for (const source of ['animeflv', 'animeav1', 'tioanime', 'henaojara']) {
-          const sid = `${source}|search`;
-          const qs = `?search=${encodeURIComponent(search)}`;
-          tasks.push(
-            proxyPigamer(`/catalog/series/${encodeURIComponent(sid)}.json${qs}`).then(data => {
-              if (!data?.metas) return [];
-              return data.metas.slice(0, 10).map(m => ({ ...m, type }));
-            })
-          );
-        }
-      }
-
-      if (config.enableLocal) {
-        tasks.push(searchAlfaAnime(search));
-      }
-
-      const settled = await Promise.allSettled(tasks);
-      const metas = [];
-      for (const r of settled) {
-        if (r.status === 'fulfilled' && Array.isArray(r.value)) metas.push(...r.value);
-      }
-
-      const seen = new Set();
-      const unique = metas.filter(m => {
-        const key = (m.name || '').toLowerCase().trim();
-        if (!key || seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Cache-Control', `public, max-age=${META_TTL / 1000}`);
-      return res.json({ metas: unique.slice(0, 50) });
-    } catch (e) {
-      console.error('[catalog:all-search]', e.message);
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      return res.json({ metas: [] });
-    }
-  }
-
-  // Anime catalogs → proxy pigamer37
-  const cleanId = id.replace('|onair', '').replace('|search', '').replace('%7C', '|');
-  if (isAnimeId(cleanId + ':')) {
-    if (!config.enableAnime) return res.json({ metas: [] });
-    try {
-      const proxyType = 'series';
-      const qs = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
-      const data = await proxyPigamer(`/catalog/${proxyType}/${encodeURIComponent(id)}.json${qs}`);
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Cache-Control', `public, max-age=${META_TTL / 1000}`);
-      return res.json(data || { metas: [] });
-    } catch (e) {
-      console.error('[catalog:anime]', e.message);
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      return res.json({ metas: [] });
-    }
-  }
-
-  if (!config.enableBackend) return res.json({ metas: [] });
-
-  const genre = parseGenreId(req.query.genre);
-  const skip = parseInt(req.query.skip) || 0;
-  const ck = cacheKey(type, id, `${skip}:${genre || ''}`);
-
-  const cached = metaCache.get(ck);
-  if (cached && Date.now() - cached.time < META_TTL) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    return res.json({ metas: cached.data });
-  }
-
-  try {
-    const mediaType = type === 'series' ? 'tv' : 'movie';
-    let tmdbUrl;
-    let page = Math.floor(skip / 20) + 1;
-
-    if (id === 'tmdb-popular') {
-      tmdbUrl = `https://api.themoviedb.org/3/${mediaType}/popular?api_key=${TMDB_KEY}&language=en&page=${page}`;
-    } else if (id === 'tmdb-trending') {
-      tmdbUrl = `https://api.themoviedb.org/3/trending/${mediaType}/week?api_key=${TMDB_KEY}&language=en&page=${page}`;
-    } else if (id === 'tmdb-top') {
-      tmdbUrl = `https://api.themoviedb.org/3/${mediaType}/top_rated?api_key=${TMDB_KEY}&language=en&page=${page}`;
-    } else if (id === 'tmdb-genres') {
-      if (!genre) {
-        const genreList = await fetchAPI(`https://api.themoviedb.org/3/genre/${mediaType}/list?api_key=${TMDB_KEY}&language=en`);
-        const metas = (genreList?.genres || []).map(g => ({
-          id: `tmdb-genre:${g.id}`, type,
-          name: g.name,
-          poster: null,
-          posterShape: 'square'
-        }));
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        return res.json({ metas });
-      }
-      tmdbUrl = `https://api.themoviedb.org/3/discover/${mediaType}?api_key=${TMDB_KEY}&language=en&with_genres=${genre}&page=${page}&sort_by=popularity.desc`;
-    } else if (id === 'tmdb-year') {
-      const year = req.query.search || new Date().getFullYear();
-      tmdbUrl = `https://api.themoviedb.org/3/discover/${mediaType}?api_key=${TMDB_KEY}&language=en&primary_release_year=${year}&page=${page}&sort_by=popularity.desc`;
-    } else {
-      return res.json({ metas: [] });
-    }
-    if (genre && id !== 'tmdb-genres') tmdbUrl += `&with_genres=${genre}`;
-
-    const data = await fetchAPI(tmdbUrl);
-    if (!data || !data.results) {
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      return res.json({ metas: [] });
-    }
-
-    const metas = data.results.slice(0, 50).map(item => ({
-      id: `tmdb:${item.id}`, type,
-      name: item.title || item.name || 'Unknown',
-      poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : null,
-      posterShape: 'poster',
-      description: item.overview || '',
-      releaseInfo: (item.release_date || item.first_air_date || '').substring(0, 4),
-      imdbRating: item.vote_average ? String(item.vote_average) : null
-    }));
-
-    cacheSet(metaCache, ck, { data: metas, time: Date.now() }, MAX_CACHE);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Cache-Control', `public, max-age=${META_TTL / 1000}`);
-    res.json({ metas });
-  } catch (e) {
-    console.error('[catalog]', e.message);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.json({ metas: [] });
-  }
-}
 
 // ─── Meta ─────────────────────────────────
 
@@ -1508,7 +1208,7 @@ footer a{color:var(--accent2);text-decoration:none}
 <header>
   <div class="logo">O</div>
   <h1>Ovnivers</h1>
-  <p>Configure your streaming experience</p>
+  <p>Stream provider for external catalogs</p>
 </header>
 
 <form id="cfgForm" onsubmit="return false">
@@ -1568,7 +1268,7 @@ footer a{color:var(--accent2);text-decoration:none}
       <label class="toggle"><input type="checkbox" name="enableBackend"${currentConfig.enableBackend ? ' checked' : ''}><span class="track"></span></label>
     </div>
     <div class="toggle-row">
-      <div><div class="label">Local scrapers</div><div class="hint">62 device-side providers (80+ Alfa channels + 61 original)</div></div>
+      <div><div class="label">Local scrapers</div><div class="hint">Alfa providers + device-side scrapers</div></div>
       <label class="toggle"><input type="checkbox" name="enableLocal"${currentConfig.enableLocal ? ' checked' : ''}><span class="track"></span></label>
     </div>
   </div>
@@ -1669,10 +1369,10 @@ function resetConfig() {
 app.get('/', (req, res) => {
   const config = parseConfig(req);
   res.json({
-    name: 'Ovnivers All-in-One',
+    name: 'Ovnivers Streams',
     version: VERSION,
     addon: ADDON_ID,
-    config: config,
+    config: { ...config, enableCatalogs: undefined },
     backendScrapers: BACKEND_SCRAPERS.map(s => s.name),
     animeProxy: 'Pigamer37 (AnimeFLV, AnimeAV1, TioAnime, Henaojara)',
     localScrapers: manifestScrapers.length,
