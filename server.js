@@ -964,7 +964,7 @@ async function handleStream(req, res, type, id) {
     streamTasks.push((async () => {
       try {
         const resolvedId = await resolveAnimeId(id);
-        const proxyId = resolvedId || rawId;
+        const proxyId = resolvedId || (rawId.match(/^\d+$/) ? `tmdb:${rawId}` : rawId);
         const data = await proxyPigamer(`/stream/series/${encodeURIComponent(proxyId)}.json?season=${season}&episode=${episode}`);
         const pigStreams = parseSources(data);
         if (pigStreams.length) console.log(`  [Pigamer37] ${pigStreams.length} streams (s${season}e${episode})`);
