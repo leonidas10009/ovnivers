@@ -1,4 +1,4 @@
-# Ovnivers — All-in-One Nuvio Addon v1.7.0
+# Ovnivers — All-in-One Nuvio Addon v1.2.5
 
 Addon para **Nuvio 0.7.5** con 62 scrapers locales (61 originales + 80+ providers de Alfa Kodi) + 4 backend scrapers + anime via Pigamer37.
 
@@ -59,7 +59,7 @@ Scraper unificado del addon **Alfa** de Kodi. Corre localmente en el dispositivo
 | VidSrc | vidsrc.rip | API/HTML | Fetch con fallbacks |
 | PoseidonHD | poseidonhd2.co | Next.js JSON | |
 
-> **EZTV** y **Cuevana2** removidos en v1.6.1 — bloqueados desde Render (403/fetch failed).
+> **EZTV** y **Cuevana2** removidos en v1.2.0 — bloqueados desde Render (403/fetch failed).
 
 ## Endpoints
 

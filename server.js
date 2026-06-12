@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.7.0
+ * Ovnivers — Stremio Addon Backend v1.2.5
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
@@ -13,7 +13,7 @@ const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.7.0';
+const VERSION = '1.2.5';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 const PIGAMER = 'https://pigamer37.alwaysdata.net';
@@ -495,7 +495,9 @@ function normalizeStream(stream, providerId, providerName) {
   if (!hasPlayableTarget) return null;
 
   const quality = stream.quality || stream.name || stream.title || 'HD';
-  const name = stream.name || `${providerName} ${quality}`;
+  const rawName = stream.name || quality;
+  const hasProvider = rawName.includes('\n') || rawName.includes(providerName);
+  const name = hasProvider ? rawName : `${providerName}\n${rawName}`;
   const title = stream.title || `${quality}\n${providerName}`;
   return {
     ...stream,
@@ -712,25 +714,6 @@ async function handleStream(req, res, type, id) {
   const season = parsed.season;
   const episode = parsed.episode;
 
-  // Anime → proxy pigamer37
-  if (isAnimeId(id)) {
-    if (!config.enableAnime) return res.json({ streams: [] });
-    try {
-      const resolvedId = await resolveAnimeId(id);
-      const proxyId = resolvedId || id;
-      const proxyType = 'series';
-      const qs = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
-      const data = await proxyPigamer(`/stream/${proxyType}/${encodeURIComponent(proxyId)}.json${qs}`);
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Cache-Control', `public, max-age=${CACHE_TTL / 1000}`);
-      return res.json(data || { streams: [] });
-    } catch (e) {
-      console.error('[stream:anime]', e.message);
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      return res.json({ streams: [] });
-    }
-  }
-
   if (!isTypeEnabled(type, config)) return res.json({ streams: [] });
 
   const mediaType = mapType(type);
@@ -750,14 +733,36 @@ async function handleStream(req, res, type, id) {
   const streams = [];
   const streamTasks = [];
 
-  if (config.enableBackend) {
+  // Anime → proxy pigamer37 (no early return, merge with other providers)
+  if (isAnimeId(id) && config.enableAnime) {
+    streamTasks.push((async () => {
+      try {
+        const resolvedId = await resolveAnimeId(id);
+        const proxyId = resolvedId || id;
+        const proxyType = 'series';
+        const qsParts = [];
+        if (season > 1) qsParts.push(`season=${season}`);
+        if (episode > 1) qsParts.push(`episode=${episode}`);
+        const qs = qsParts.length ? '?' + qsParts.join('&') : '';
+        const data = await proxyPigamer(`/stream/${proxyType}/${encodeURIComponent(proxyId)}.json${qs}`);
+        const pigStreams = parseSources(data);
+        console.log(`  [Pigamer37] ${pigStreams.length} streams`);
+        return pigStreams.map(s => normalizeStream(s, 'pigamer37', 'Pigamer37')).filter(Boolean);
+      } catch (e) {
+        console.warn(`  [Pigamer37] ${e.message}`);
+        return [];
+      }
+    })());
+  }
+
+  if (config.enableBackend && !isAnimeId(id)) {
     streamTasks.push(...BACKEND_SCRAPERS.map(async (scraper) => {
       const start = Date.now();
       try {
         const results = await scraper.fn(rawId, mediaType, season, episode);
         if (results.length > 0) {
           console.log(`  [${scraper.name}] ${results.length} streams (${Date.now() - start}ms)`);
-          return results;
+          return results.map(s => normalizeStream(s, scraper.name, scraper.name)).filter(Boolean);
         }
       } catch {}
       return [];
@@ -776,7 +781,7 @@ async function handleStream(req, res, type, id) {
     if (item.status === 'fulfilled' && Array.isArray(item.value)) streams.push(...item.value);
   }
 
-  if (streams.length === 0 && config.enableBackend) {
+  if (streams.length === 0 && config.enableBackend && !isAnimeId(id)) {
     const altId = !rawId.startsWith('tt')
       ? await getIMDbId(rawId, mediaType)
       : await getTMDbId(rawId, mediaType);
@@ -785,7 +790,7 @@ async function handleStream(req, res, type, id) {
       await Promise.allSettled(BACKEND_SCRAPERS.map(async (scraper) => {
         try {
           const results = await scraper.fn(altId, mediaType, season, episode);
-          if (results.length > 0) streams.push(...results);
+          if (results.length > 0) streams.push(...results.map(s => normalizeStream(s, scraper.name, scraper.name)).filter(Boolean));
         } catch {}
       }));
     }
