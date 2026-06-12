@@ -1,4 +1,4 @@
-# Ovnivers — All-in-One Nuvio Addon v1.2.5
+# Ovnivers — All-in-One Nuvio Addon v1.3.2
 
 Addon para **Nuvio 0.7.5** con 62 scrapers locales (61 originales + 80+ providers de Alfa Kodi) + 4 backend scrapers + anime via Pigamer37.
 
@@ -20,7 +20,7 @@ Addon para **Nuvio 0.7.5** con 62 scrapers locales (61 originales + 80+ provider
 |---|---|
 | **Movies & TV** (backend) | 2embed (Vesy + Vsrc), VidSrc, PoseidonHD |
 | **Anime** (proxy) | AnimeFLV, AnimeAV1, TioAnime, Henaojara via Pigamer37 |
-| **Alfa Providers** (local) | 80+ canales de Alfa Kodi: peliculas, series, anime, documentales, torrents |
+| **Alfa Providers** (server) | 80+ canales de Alfa Kodi: peliculas, series, anime, documentales, torrents |
 | **Original scrapers** (local) | 61 providers de All-in-One-Nuvio (EN, HI, FR, JA, KO, ZH) |
 | **Catalogs** | 18 catalogs: Popular, Trending, Top Rated, By Genre, By Year + Anime On Air/Search |
 | **Metadata** | TMDb + anime providers |
@@ -36,7 +36,7 @@ Addon para **Nuvio 0.7.5** con 62 scrapers locales (61 originales + 80+ provider
 
 ## Alfa Providers (80+ canales)
 
-Scraper unificado del addon **Alfa** de Kodi. Corre localmente en el dispositivo.
+Scraper unificado del addon **Alfa** de Kodi. Corre server-side en Render (Node.js).
 
 | Categoria | Count | Providers |
 |---|---|---|
@@ -84,6 +84,20 @@ node build.js    # Build de scrapers desde src/
 
 - **Render.com** — auto-deploy desde `main`
 - **URL:** https://ovnivers.onrender.com
+
+## Stream Format (v1.3+)
+
+Todos los streams se normalizan al mismo formato:
+
+```
+name:  "ProviderName\n1080p 🇯🇵🇪🇸"
+title: "1080p | ProviderName\nServerName\nSerieEpisodio\n🇯🇵🇪🇸"
+```
+
+- **ProviderName** — etiqueta del provider (ej. `Pigamer37: AnimeFLV`, `Alfa: Cuevana2`, `2embed`, `NoTorrent`)
+- **ServerName** — nombre detectado desde la URL (Mega, Streamtape, Mp4Upload, Okru, StreamSB...)
+- **Línea extra** — episodio, HDR, Dual Audio, etc. (preservado del title original)
+- **Flags** — banderas de idioma desde `contentLanguage` del scraper o `description` del stream
 
 ## Creditos
 
