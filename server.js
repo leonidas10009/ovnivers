@@ -18,6 +18,8 @@ const ADDON_ID = 'com.ovnivers.allinone';
 
 const PIGAMER = 'https://pigamer37.alwaysdata.net';
 const ANIME_PREFIXES = ['animeflv:', 'animeav1:', 'henaojara:', 'tioanime:', 'anilist:', 'kitsu:', 'mal:', 'anidb:'];
+const ANIME_SOURCE_PREFIXES = ['animeflv:', 'animeav1:', 'henaojara:', 'tioanime:'];
+const ANIME_XREF_PREFIXES = ['anilist:', 'kitsu:', 'mal:', 'anidb:'];
 
 // Available languages for filtering
 const ALL_LANGS = {
@@ -314,8 +316,28 @@ const BACKEND_SCRAPERS = [
 // ─── Pigamer37 Proxy ────────────────────
 
 function isAnimeId(id) {
-  // detect both colon and pipe variants
   return ANIME_PREFIXES.some(p => id.startsWith(p) || id.startsWith(p.replace(':', '|')));
+}
+
+function isAnimeSourceId(id) {
+  return ANIME_SOURCE_PREFIXES.some(p => id.startsWith(p) || id.startsWith(p.replace(':', '|')));
+}
+
+function isAnimeXrefId(id) {
+  return ANIME_XREF_PREFIXES.some(p => id.startsWith(p) || id.startsWith(p.replace(':', '|')));
+}
+
+async function resolveAnimeId(id) {
+  if (isAnimeSourceId(id)) return id;
+  if (!isAnimeXrefId(id)) return null;
+  try {
+    const meta = await proxyPigamer(`/meta/series/${encodeURIComponent(fixPigamerId(id))}.json`);
+    if (meta?.meta?.id && isAnimeSourceId(meta.meta.id)) {
+      console.log(`[anime] resolved ${id} → ${meta.meta.id}`);
+      return meta.meta.id;
+    }
+  } catch {}
+  return null;
 }
 
 function fixPigamerId(id) {
@@ -398,16 +420,27 @@ app.get('/manifest.json', async (req, res) => {
   if (config.enableMovies) enabledTypes.push('movie');
   if (config.enableSeries) enabledTypes.push('series');
   if (config.enableAnime) enabledTypes.push('anime');
+  enabledTypes.push('other');
 
-    const allPrefixes = [];
-    if (config.enableBackend) allPrefixes.push('tt', 'tmdb', 'tmdb-genre:');
-    if (config.enableAnime) allPrefixes.push(...ANIME_PREFIXES);
+  const streamPrefixes = [];
+  if (config.enableBackend) streamPrefixes.push('tt', 'tmdb');
+  if (config.enableAnime) streamPrefixes.push(...ANIME_PREFIXES);
 
-    const resources = [
-      { name: 'stream', types: enabledTypes, idPrefixes: allPrefixes },
-      { name: 'catalog', types: enabledTypes, idPrefixes: allPrefixes },
-      { name: 'meta', types: enabledTypes, idPrefixes: allPrefixes }
-    ];
+  const catalogPrefixes = [];
+  if (config.enableBackend) catalogPrefixes.push('tmdb', 'tmdb-genre:');
+  if (config.enableAnime) catalogPrefixes.push(...ANIME_PREFIXES);
+
+  const metaPrefixes = [];
+  if (config.enableBackend) metaPrefixes.push('tt', 'tmdb');
+  if (config.enableAnime) metaPrefixes.push(...ANIME_PREFIXES);
+
+  const allPrefixes = [...new Set([...streamPrefixes, ...catalogPrefixes, ...metaPrefixes])];
+
+  const resources = [
+    { name: 'stream', types: enabledTypes, idPrefixes: streamPrefixes },
+    { name: 'catalog', types: enabledTypes, idPrefixes: catalogPrefixes },
+    { name: 'meta', types: enabledTypes, idPrefixes: metaPrefixes }
+  ];
 
   const manifest = {
     id: ADDON_ID,
@@ -422,7 +455,8 @@ app.get('/manifest.json', async (req, res) => {
     behaviorHints: {
       adult: false,
       configurable: true,
-      configurationRequired: false
+      configurationRequired: false,
+      newEpisodeNotifications: true
     }
   };
   if (config.enableLocal) manifest.scrapers = manifestScrapers;
@@ -461,9 +495,11 @@ async function handleStream(req, res, type, id) {
   // Anime → proxy pigamer37
   if (isAnimeId(id)) {
     if (!config.enableAnime) return res.json({ streams: [] });
+    const resolvedId = await resolveAnimeId(id);
+    const proxyId = resolvedId || id;
     const proxyType = 'series';
     const qs = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
-    const data = await proxyPigamer(`/stream/${proxyType}/${encodeURIComponent(fixPigamerId(id))}.json${qs}`);
+    const data = await proxyPigamer(`/stream/${proxyType}/${encodeURIComponent(fixPigamerId(proxyId))}.json${qs}`);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cache-Control', `public, max-age=${CACHE_TTL / 1000}`);
     return res.json(data || { streams: [] });

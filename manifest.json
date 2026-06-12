@@ -2,17 +2,18 @@
   "id": "com.ovnivers.allinone",
   "version": "1.6.0",
   "name": "Ovnivers All-in-One",
-  "description": "62 scrapers + 6 backend + AnimeFLV/AnimeAV1/TioAnime/Henaojara. Movies, TV, anime, multi-language, up to 4K.",
+  "description": "62 scrapers + 4 backend + AnimeFLV/AnimeAV1/TioAnime/Henaojara. Movies, TV, anime, multi-language, up to 4K.",
   "logo": "https://raw.githubusercontent.com/leonidas10009/ovnivers/main/logo.png",
   "resources": [
-    { "name": "stream", "types": ["movie", "series", "anime"], "idPrefixes": ["tt", "tmdb", "tmdb-genre:", "animeflv:", "animeav1:", "henaojara:", "tioanime:", "anilist:", "kitsu:", "mal:", "anidb:"] },
-    { "name": "catalog", "types": ["movie", "series", "anime"], "idPrefixes": ["tmdb", "tmdb-genre:", "animeflv:", "animeav1:", "henaojara:", "tioanime:", "anilist:", "kitsu:", "mal:", "anidb:"] },
-    { "name": "meta", "types": ["movie", "series", "anime"], "idPrefixes": ["tt", "tmdb", "tmdb-genre:", "animeflv:", "animeav1:", "henaojara:", "tioanime:", "anilist:", "kitsu:", "mal:", "anidb:"] }
+    { "name": "stream", "types": ["movie", "series", "anime", "other"], "idPrefixes": ["tt", "tmdb", "animeflv:", "animeav1:", "henaojara:", "tioanime:", "anilist:", "kitsu:", "mal:", "anidb:"] },
+    { "name": "catalog", "types": ["movie", "series", "anime", "other"], "idPrefixes": ["tmdb", "tmdb-genre:", "animeflv:", "animeav1:", "henaojara:", "tioanime:", "anilist:", "kitsu:", "mal:", "anidb:"] },
+    { "name": "meta", "types": ["movie", "series", "anime", "other"], "idPrefixes": ["tt", "tmdb", "animeflv:", "animeav1:", "henaojara:", "tioanime:", "anilist:", "kitsu:", "mal:", "anidb:"] }
   ],
   "types": [
     "movie",
     "series",
-    "anime"
+    "anime",
+    "other"
   ],
   "idPrefixes": [
     "tt",
@@ -50,7 +51,8 @@
   "behaviorHints": {
     "adult": false,
     "configurable": true,
-    "configurationRequired": false
+    "configurationRequired": false,
+    "newEpisodeNotifications": true
   },
   "scrapers": [
     {
