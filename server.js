@@ -14,7 +14,7 @@ const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.4.7';
+const VERSION = '1.5.0';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 const PIGAMER = 'https://pigamer37.alwaysdata.net';
@@ -933,29 +933,24 @@ async function handleStream(req, res, type, id) {
   const mediaType = mapType(type);
   const rawId = extractId(parsed.contentId);
 
-  // Detect anime from TMDB genre when ID has no anime prefix
-  let isAnime = isAnimeId(id);
-  if (!isAnime && config.enableAnime && mediaType === 'tv' && rawId.match(/^\d+$/)) {
+  // Detect anime from TMDB genre when ID has no anime prefix (for cache key only)
+  const isAnime = isAnimeId(id) || (config.enableAnime && mediaType === 'tv' && rawId.match(/^\d+$/) && await (async () => {
     try {
       const tmdb = await withTimeout(fetchAPI(
         `https://api.themoviedb.org/3/tv/${rawId}?api_key=${TMDB_KEY}&language=en`
       ), 5000);
-      if (tmdb?.genres?.some(g => g.id === 16)) {
-        console.log(`  [anime] detected from TMDB genre (id=${rawId})`);
-        isAnime = true;
-      }
-    } catch {}
-  }
+      const detected = !!tmdb?.genres?.some(g => g.id === 16);
+      if (detected) console.log(`  [anime] detected from TMDB genre (id=${rawId})`);
+      return detected;
+    } catch { return false; }
+  })());
 
-  // Only cache non-anime results (anime needs fresh merge every time)
   const ck = cacheKey(type, id, `${season}:${episode}`);
   if (!isAnime) {
     const cached = streamCache.get(ck);
     if (cached && Date.now() - cached.time < CACHE_TTL) {
       res.setHeader('Access-Control-Allow-Origin', '*');
-      return res.json({
-        streams: filterStreams(cached.data, config)
-      });
+      return res.json({ streams: filterStreams(cached.data, config) });
     }
   }
 
@@ -964,17 +959,15 @@ async function handleStream(req, res, type, id) {
   const streams = [];
   const streamTasks = [];
 
-  // Anime → proxy pigamer37 (primary source for AnimeFLV/TioAnime/etc.)
-  if (isAnime && config.enableAnime) {
+  // Pigamer37: always try for series content (handles FLV/AV1/TioAnime/Henaojara natively)
+  if (mediaType === 'tv' && config.enableAnime) {
     streamTasks.push((async () => {
       try {
         const resolvedId = await resolveAnimeId(id);
-        const proxyId = resolvedId || (rawId.match(/^\d+$/) ? `tmdb:${rawId}` : rawId);
-        const proxyType = 'series';
-        const qs = `?season=${season}&episode=${episode}`;
-        const data = await proxyPigamer(`/stream/${proxyType}/${encodeURIComponent(proxyId)}.json${qs}`);
+        const proxyId = resolvedId || rawId;
+        const data = await proxyPigamer(`/stream/series/${encodeURIComponent(proxyId)}.json?season=${season}&episode=${episode}`);
         const pigStreams = parseSources(data);
-        console.log(`  [Pigamer37] ${pigStreams.length} streams (s${season}e${episode})`);
+        if (pigStreams.length) console.log(`  [Pigamer37] ${pigStreams.length} streams (s${season}e${episode})`);
         return pigStreams.map(s => normalizeStream(s, 'pigamer37', 'Pigamer37')).filter(Boolean);
       } catch (e) {
         console.warn(`  [Pigamer37] ${e.message}`);
@@ -983,26 +976,23 @@ async function handleStream(req, res, type, id) {
     })());
   }
 
-  if (config.enableBackend && !isAnime) {
+  // Backend scrapers: always try (return empty if they can't handle it)
+  if (config.enableBackend) {
     streamTasks.push(...BACKEND_SCRAPERS.map(async (scraper) => {
       const start = Date.now();
       try {
         const results = await scraper.fn(rawId, mediaType, season, episode);
-        if (results.length > 0) {
-          console.log(`  [${scraper.name}] ${results.length} streams (${Date.now() - start}ms)`);
-          return results.map(s => normalizeStream(s, scraper.name, scraper.name)).filter(Boolean);
-        }
-      } catch {}
-      return [];
+        if (results.length > 0) console.log(`  [${scraper.name}] ${results.length} streams (${Date.now() - start}ms)`);
+        return results.map(s => normalizeStream(s, scraper.name, scraper.name)).filter(Boolean);
+      } catch { return []; }
     }));
   }
 
+  // Local providers: always search all relevant categories
   if (config.enableLocal) {
-    // Always search primary category (series/movie)
     streamTasks.push(scrapeAlfa(rawId, mediaType, type, season, episode, config));
     streamTasks.push(scrapeLocalProviders(rawId, mediaType, type, season, episode, config));
-    // For series (not already anime), also search anime category (Alfa anime covers FLV, TioAnime, etc.)
-    if (config.enableAnime && mediaType === 'tv' && type !== 'anime') {
+    if (config.enableAnime && mediaType === 'tv') {
       streamTasks.push(scrapeAlfa(rawId, 'tv', 'anime', season, episode, config));
     }
   }
@@ -1012,10 +1002,9 @@ async function handleStream(req, res, type, id) {
     if (item.status === 'fulfilled' && Array.isArray(item.value)) streams.push(...item.value);
   }
 
-  if (streams.length === 0 && config.enableBackend && !isAnime) {
-    const altId = !rawId.startsWith('tt')
-      ? await getIMDbId(rawId, mediaType)
-      : await getTMDbId(rawId, mediaType);
+  // Retry backend with alt ID if empty
+  if (streams.length === 0 && config.enableBackend) {
+    const altId = !rawId.startsWith('tt') ? await getIMDbId(rawId, mediaType) : await getTMDbId(rawId, mediaType);
     if (altId) {
       console.log(`[stream] retry with alt ID: ${altId}`);
       await Promise.allSettled(BACKEND_SCRAPERS.map(async (scraper) => {
