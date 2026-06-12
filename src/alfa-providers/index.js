@@ -64,20 +64,22 @@ async function resolveTitles(id, mediaType) {
       return variants;
     }
 
-    const [enRes, esRes] = await Promise.all([
-      fetch(`https://api.themoviedb.org/3/${mediaType === 'tv' ? 'tv' : 'movie'}/${tmdbId}?api_key=${TMDB_KEY}&language=en`, { headers: { 'User-Agent': UA } }),
-      fetch(`https://api.themoviedb.org/3/${mediaType === 'tv' ? 'tv' : 'movie'}/${tmdbId}?api_key=${TMDB_KEY}&language=es`, { headers: { 'User-Agent': UA } })
-    ]);
-    if (enRes.ok) {
-      const enData = await enRes.json();
+    async function tmdbFetch(lang) {
+      try {
+        const ac = new AbortController(); setTimeout(() => ac.abort(), 6000);
+        const r = await fetch(`https://api.themoviedb.org/3/${mediaType === 'tv' ? 'tv' : 'movie'}/${tmdbId}?api_key=${TMDB_KEY}&language=${lang}`, { headers: { 'User-Agent': UA }, signal: ac.signal });
+        return r.ok ? r.json() : null;
+      } catch { return null; }
+    }
+    const [enData, esData] = await Promise.all([tmdbFetch('en'), tmdbFetch('es')]);
+    if (enData) {
       const year = (enData.release_date || enData.first_air_date || '').substring(0, 4);
       addVariant(enData.title || enData.name || '', year);
       if (enData.original_language === 'ja' && enData.original_title && enData.original_title !== (enData.title || enData.name)) {
         addVariant(enData.original_title, year);
       }
     }
-    if (esRes.ok) {
-      const esData = await esRes.json();
+    if (esData) {
       addVariant(esData.title || esData.name || '', '');
     }
 
@@ -88,7 +90,7 @@ async function resolveTitles(id, mediaType) {
     }
   } catch {}
 
-  if (variants.length === 0) {
+  if (variants.length === 0 && !id.match(/^\d+$/)) {
     variants.push({ title: id, year: '' });
   }
 

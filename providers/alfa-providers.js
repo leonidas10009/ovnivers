@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-12T16:55:11.402Z
+ * Generated: 2026-06-12T17:13:49.943Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -1364,20 +1364,27 @@ function resolveTitles(id, mediaType) {
         cacheSet(cacheKey, variants);
         return variants;
       }
-      const [enRes, esRes] = yield Promise.all([
-        fetch(`https://api.themoviedb.org/3/${mediaType === "tv" ? "tv" : "movie"}/${tmdbId}?api_key=${TMDB_KEY}&language=en`, { headers: { "User-Agent": UA } }),
-        fetch(`https://api.themoviedb.org/3/${mediaType === "tv" ? "tv" : "movie"}/${tmdbId}?api_key=${TMDB_KEY}&language=es`, { headers: { "User-Agent": UA } })
-      ]);
-      if (enRes.ok) {
-        const enData = yield enRes.json();
+      function tmdbFetch(lang) {
+        return __async(this, null, function* () {
+          try {
+            const ac = new AbortController();
+            setTimeout(() => ac.abort(), 6e3);
+            const r = yield fetch(`https://api.themoviedb.org/3/${mediaType === "tv" ? "tv" : "movie"}/${tmdbId}?api_key=${TMDB_KEY}&language=${lang}`, { headers: { "User-Agent": UA }, signal: ac.signal });
+            return r.ok ? r.json() : null;
+          } catch (e) {
+            return null;
+          }
+        });
+      }
+      const [enData, esData] = yield Promise.all([tmdbFetch("en"), tmdbFetch("es")]);
+      if (enData) {
         const year = (enData.release_date || enData.first_air_date || "").substring(0, 4);
         addVariant(enData.title || enData.name || "", year);
         if (enData.original_language === "ja" && enData.original_title && enData.original_title !== (enData.title || enData.name)) {
           addVariant(enData.original_title, year);
         }
       }
-      if (esRes.ok) {
-        const esData = yield esRes.json();
+      if (esData) {
         addVariant(esData.title || esData.name || "", "");
       }
       if (firstYear && variants.length > 0) {
@@ -1387,7 +1394,7 @@ function resolveTitles(id, mediaType) {
       }
     } catch (e) {
     }
-    if (variants.length === 0) {
+    if (variants.length === 0 && !id.match(/^\d+$/)) {
       variants.push({ title: id, year: "" });
     }
     cacheSet(cacheKey, variants);

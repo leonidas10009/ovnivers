@@ -937,15 +937,11 @@ async function handleStream(req, res, type, id) {
   let isAnime = isAnimeId(id);
   if (!isAnime && config.enableAnime && mediaType === 'tv' && rawId.match(/^\d+$/)) {
     try {
-      const ac = new AbortController();
-      const timer = setTimeout(() => ac.abort(), 3000);
-      const res = await fetch(`https://api.themoviedb.org/3/tv/${rawId}?api_key=${TMDB_KEY}&language=en`, { signal: ac.signal });
-      clearTimeout(timer);
-      if (res.ok) {
-        const data = await res.json();
-        isAnime = data?.genres?.some(g => g.id === 16) === true;
-        if (isAnime) console.log(`  [anime] detected from TMDB genre (id=${rawId})`);
-      }
+      const tmdb = await withTimeout(fetchAPI(
+        `https://api.themoviedb.org/3/tv/${rawId}?api_key=${TMDB_KEY}&language=en`
+      ), 5000);
+      isAnime = !!tmdb?.genres?.some(g => g.id === 16);
+      if (isAnime) console.log(`  [anime] detected from TMDB genre (id=${rawId})`);
     } catch {}
   }
 
