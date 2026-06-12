@@ -172,7 +172,7 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
   const isAlfa = providerId === 'alfa-providers';
   let providerLabel;
   if (isPigamer && sourceName && !sourceName.match(/^\d+$/) && sourceName !== quality && sourceName !== providerName) {
-    providerLabel = `Pigamer37: ${sourceName}`;
+    providerLabel = sourceName;
   } else if (isAlfa && sourceName && !sourceName.match(/^\d+$/) && sourceName !== quality && sourceName !== providerName) {
     providerLabel = `Alfa: ${sourceName}`;
   } else if (effectiveSource && !effectiveSource.match(/^\d+$/) && effectiveSource !== quality && effectiveSource !== providerName) {
@@ -222,10 +222,6 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
     if (serverName) addLine(serverName);
   }
 
-  if (flags && !titleParts.some(p => p.includes(flags))) {
-    titleParts.push(flags);
-  }
-
   const title = titleParts.join('\n');
 
   return { name, title, ...(url ? { url } : {}) };
@@ -242,8 +238,8 @@ const SIMULATED_STREAMS = {
     raw: { name: "AnimeFLV\nMega\n1080p🇯🇵🇪🇸", title: "1080p\n⚙️ Mega\n🔗 AnimeFLV\n🇯🇵🇪🇸\nNaruto Shippuden 220", url: "https://mega.nz/file/example" },
     providerId: 'pigamer37', opts: {},
     expect: {
-      name_contains: ["Pigamer37: AnimeFLV", "1080p", "🇯🇵🇪🇸"],
-      title_contains: ["1080p | Pigamer37: AnimeFLV", "Mega", "Naruto Shippuden 220", "🇯🇵🇪🇸"]
+      name_contains: ["AnimeFLV", "1080p", "🇯🇵🇪🇸"],
+      title_contains: ["1080p | AnimeFLV", "Mega", "Naruto Shippuden 220"]
     }
   },
 
@@ -251,8 +247,8 @@ const SIMULATED_STREAMS = {
     raw: { name: "TioAnime\nStreamtape\n720p🇪🇸", title: "720p\n⚙️ Streamtape\n🔗 TioAnime\n🇪🇸\nOne Piece 1070", url: "https://streamtape.com/v/example" },
     providerId: 'pigamer37', opts: {},
     expect: {
-      name_contains: ["Pigamer37: TioAnime", "720p", "🇪🇸"],
-      title_contains: ["720p | Pigamer37: TioAnime", "Streamtape", "One Piece 1070", "🇪🇸"]
+      name_contains: ["TioAnime", "720p", "🇪🇸"],
+      title_contains: ["720p | TioAnime", "Streamtape", "One Piece 1070"]
     }
   },
 
@@ -260,8 +256,8 @@ const SIMULATED_STREAMS = {
     raw: { name: "AnimeAV1\nMp4Upload\n1080p🇯🇵🇪🇸", title: "1080p\n⚙️ Mp4Upload\n🔗 AnimeAV1\n🇯🇵🇪🇸\nJujutsu Kaisen 24", url: "https://www.mp4upload.com/example" },
     providerId: 'pigamer37', opts: {},
     expect: {
-      name_contains: ["Pigamer37: AnimeAV1", "1080p", "🇯🇵🇪🇸"],
-      title_contains: ["1080p | Pigamer37: AnimeAV1", "Mp4Upload", "Jujutsu Kaisen 24"]
+      name_contains: ["AnimeAV1", "1080p", "🇯🇵🇪🇸"],
+      title_contains: ["1080p | AnimeAV1", "Mp4Upload", "Jujutsu Kaisen 24"]
     }
   },
 
@@ -326,7 +322,7 @@ const SIMULATED_STREAMS = {
     opts: {},
     expect: {
       name_contains: ["AnimeFLV", "1080p", "🇪🇸"],
-      title_contains: ["1080p | AnimeFLV", "Server1", "🇪🇸"]
+      title_contains: ["1080p | AnimeFLV", "Server1"]
     }
   },
 
@@ -339,7 +335,7 @@ const SIMULATED_STREAMS = {
     opts: {},
     expect: {
       name_contains: ["TioAnime", "720p", "🇯🇵🇪🇸"],
-      title_contains: ["720p | TioAnime", "Server2", "🇯🇵🇪🇸"]
+      title_contains: ["720p | TioAnime", "Server2"]
     }
   },
 
@@ -358,8 +354,8 @@ const SIMULATED_STREAMS = {
     raw: { name: "AnimeFLV\nTorrent\n1080p🇯🇵🇪🇸", title: "1080p\n🔗 Torrent\n🔗 AnimeFLV\n🇯🇵🇪🇸", infoHash: "abcdef1234567890abcdef1234567890abcdef12", url: "d14:announce...le" },
     providerId: 'pigamer37', opts: {},
     expect: {
-      name_contains: ["Pigamer37: AnimeFLV", "1080p", "🇯🇵🇪🇸"],
-      title_contains: ["1080p | Pigamer37: AnimeFLV", "Torrent", "🇯🇵🇪🇸"]
+      name_contains: ["AnimeFLV", "1080p", "🇯🇵🇪🇸"],
+      title_contains: ["1080p | AnimeFLV", "Torrent"]
     }
   },
 
@@ -368,8 +364,8 @@ const SIMULATED_STREAMS = {
     raw: { name: "Henaojara\nOkru\n480p🇪🇸", url: "https://ok.ru/video/example" },
     providerId: 'pigamer37', opts: {},
     expect: {
-      name_contains: ["Pigamer37: Henaojara", "480p", "🇪🇸"],
-      title_contains: ["480p | Pigamer37: Henaojara", "Okru"]
+      name_contains: ["Henaojara", "480p", "🇪🇸"],
+      title_contains: ["480p | Henaojara", "Okru"]
     }
   },
 
@@ -383,7 +379,7 @@ const SIMULATED_STREAMS = {
     opts: {},
     expect: {
       name_contains: ["ProviderTitle", "1080p", "🇪🇸"],
-      title_contains: ["1080p | ProviderTitle", "ServerX", "🇪🇸"]
+      title_contains: ["1080p | ProviderTitle", "ServerX"]
     }
   },
 
@@ -410,7 +406,7 @@ const SIMULATED_STREAMS = {
     opts: { contentLanguage: ['en'] },
     expect: {
       name_contains: ["MovieSource", "1080p", "🇬🇧"],
-      title_contains: ["1080p | MovieSource", "ServerX", "🇬🇧"]
+      title_contains: ["1080p | MovieSource", "ServerX", "en"]
     }
   },
 
@@ -450,7 +446,7 @@ const SIMULATED_STREAMS = {
     opts: { contentLanguage: ['es'] },
     expect: {
       name_contains: ["Cineby", "720p", "🇪🇸"],
-      title_contains: ["720p | Cineby", "S1", "🇪🇸"]
+      title_contains: ["720p | Cineby", "S1"]
     }
   },
 
@@ -465,7 +461,7 @@ const SIMULATED_STREAMS = {
     opts: { contentLanguage: [] },
     expect: {
       name_contains: ["321MoviesFree", "1080p", "🇪🇸"],
-      title_contains: ["1080p | 321MoviesFree", "Audio latino", "🇪🇸"]
+      title_contains: ["1080p | 321MoviesFree", "Audio latino"]
     }
   },
 
@@ -495,7 +491,7 @@ const SIMULATED_STREAMS = {
     opts: { contentLanguage: [] },
     expect: {
       name_contains: ["321MoviesFree", "720p", "🇧🇷"],
-      title_contains: ["720p | 321MoviesFree", "Áudio português", "🇧🇷"]
+      title_contains: ["720p | 321MoviesFree", "Áudio português"]
     }
   },
 };

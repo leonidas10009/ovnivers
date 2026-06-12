@@ -683,7 +683,7 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
   const isAlfa = providerId === 'alfa-providers';
   let providerLabel;
   if (isPigamer && sourceName && !sourceName.match(/^\d+$/) && sourceName !== quality && sourceName !== providerName) {
-    providerLabel = `Pigamer37: ${sourceName}`;
+    providerLabel = sourceName;
   } else if (isAlfa && sourceName && !sourceName.match(/^\d+$/) && sourceName !== quality && sourceName !== providerName) {
     providerLabel = `Alfa: ${sourceName}`;
   } else if (effectiveSource && !effectiveSource.match(/^\d+$/) && effectiveSource !== quality && effectiveSource !== providerName) {
@@ -739,11 +739,6 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
   if (url) {
     const serverName = detectServerName(url);
     if (serverName) addLine(serverName);
-  }
-
-  // Add flags as last line if not already present
-  if (flags && !titleParts.some(p => p.includes(flags))) {
-    titleParts.push(flags);
   }
 
   const title = titleParts.join('\n');
@@ -1043,6 +1038,20 @@ async function handleStream(req, res, type, id) {
   const mediaType = mapType(type);
   const rawId = extractId(parsed.contentId);
 
+  // Detect anime from TMDB genre when ID has no anime prefix
+  let isAnime = isAnimeId(id);
+  if (!isAnime && config.enableAnime && mediaType === 'tv' && rawId.match(/^\d+$/)) {
+    try {
+      const tmdb = await withTimeout(fetchAPI(
+        `https://api.themoviedb.org/3/tv/${rawId}?api_key=${TMDB_KEY}&language=en`
+      ), 5000);
+      if (tmdb?.genres?.some(g => g.id === 16)) {
+        console.log(`  [anime] detected from TMDB genre (id=${rawId})`);
+        isAnime = true;
+      }
+    } catch {}
+  }
+
   const ck = cacheKey(type, id, `${season}:${episode}`);
   const cached = streamCache.get(ck);
   if (cached && Date.now() - cached.time < CACHE_TTL) {
@@ -1058,7 +1067,7 @@ async function handleStream(req, res, type, id) {
   const streamTasks = [];
 
   // Anime → proxy pigamer37 (no early return, merge with other providers)
-  if (isAnimeId(id) && config.enableAnime) {
+  if (isAnime && config.enableAnime) {
     streamTasks.push((async () => {
       try {
         const resolvedId = await resolveAnimeId(id);
@@ -1076,7 +1085,7 @@ async function handleStream(req, res, type, id) {
     })());
   }
 
-  if (config.enableBackend && !isAnimeId(id)) {
+  if (config.enableBackend && !isAnime) {
     streamTasks.push(...BACKEND_SCRAPERS.map(async (scraper) => {
       const start = Date.now();
       try {
@@ -1091,7 +1100,7 @@ async function handleStream(req, res, type, id) {
   }
 
   if (config.enableLocal) {
-    if (isAnimeId(id)) {
+    if (isAnime) {
       // Anime: usar categoría 'anime' para alfa, resolver TMDB ID para locales
       streamTasks.push(scrapeAlfa(rawId, 'tv', 'anime', season, episode, config));
       streamTasks.push((async () => {
@@ -1115,7 +1124,7 @@ async function handleStream(req, res, type, id) {
     if (item.status === 'fulfilled' && Array.isArray(item.value)) streams.push(...item.value);
   }
 
-  if (streams.length === 0 && config.enableBackend && !isAnimeId(id)) {
+  if (streams.length === 0 && config.enableBackend && !isAnime) {
     const altId = !rawId.startsWith('tt')
       ? await getIMDbId(rawId, mediaType)
       : await getTMDbId(rawId, mediaType);
