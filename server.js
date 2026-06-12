@@ -14,7 +14,7 @@ const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.3.4';
+const VERSION = '1.4.0';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 const PIGAMER = 'https://pigamer37.alwaysdata.net';
