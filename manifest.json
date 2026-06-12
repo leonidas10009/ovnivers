@@ -1,6 +1,6 @@
 {
   "id": "com.ovnivers.allinone",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "name": "Ovnivers All-in-One",
   "description": "61 local scrapers + backend. Movies, TV, anime, multi-language, up to 4K.",
   "logo": "https://raw.githubusercontent.com/leonidas10009/ovnivers/main/logo.png",
@@ -1395,6 +1395,34 @@
         "ch",
         "ja",
         "th"
+      ]
+    },
+    {
+      "id": "alfa-providers",
+      "name": "Alfa Providers (80+)",
+      "description": "80+ scrapers from Alfa Kodi addon: movies, series, anime, documentaries, torrents. Multi-language (ES, LAT, VOSE).",
+      "version": "1.0.0",
+      "author": "Ovnivers Team",
+      "supportedTypes": [
+        "movie",
+        "tv",
+        "anime"
+      ],
+      "filename": "providers/alfa-providers.js",
+      "enabled": true,
+      "formats": [
+        "mp4",
+        "mkv",
+        "m3u8"
+      ],
+      "logo": "https://raw.githubusercontent.com/leonidas10009/ovnivers/main/logo.png",
+      "contentLanguage": [
+        "es",
+        "en",
+        "ja",
+        "ko",
+        "hi",
+        "pt"
       ]
     }
   ]

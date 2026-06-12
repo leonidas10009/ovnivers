@@ -1,6 +1,6 @@
-# Ovnivers — All-in-One Nuvio Addon v1.4.0
+# Ovnivers — All-in-One Nuvio Addon v1.5.0
 
-Addon para **Nuvio 0.7.5** con 61 scrapers locales + backend + anime via AnimeFLV/AnimeAV1/TioAnime/Henaojara.
+Addon para **Nuvio 0.7.5** con 62 scrapers locales (61 originales + 80+ providers de Alfa Kodi) + backend + anime via AnimeFLV/AnimeAV1/TioAnime/Henaojara.
 
 ## Instalacion
 
@@ -19,16 +19,33 @@ Addon para **Nuvio 0.7.5** con 61 scrapers locales + backend + anime via AnimeFL
 
 | Funcionalidad | Fuente |
 |---|---|
-| **Movies & TV** (backend) | 2embed (Vesy + Vsrc), VidSrc |
+| **Movies & TV** (backend) | 2embed (Vesy + Vsrc), VidSrc, EZTV, Cuevana2, PoseidonHD |
 | **Anime** (proxy) | AnimeFLV, AnimeAV1, TioAnime, Henaojara via Pigamer37 |
-| **Local scrapers** (61) | Ejecutados en el dispositivo (Hermes engine) |
+| **Local scrapers** (62) | Ejecutados en el dispositivo (Hermes engine) |
+| **Alfa Providers** (80+) | Peliculas, series, anime, documentales, torrents — extraidos del addon Alfa de Kodi |
 | **Catalogs** | TMDb Popular + Anime On Air + Search |
 | **Metadata** | TMDb + anime providers |
 | **Config panel** | `/configure` — idioma, calidad, tipos, on/off |
 
-## Providers locales incluidos (61)
+## Providers locales incluidos (62)
 
-### English / Multi-language
+### Alfa Providers (80+ canales) — NUEVO v1.5.0
+
+Scraper unificado que integra los providers activos del addon **Alfa** de Kodi. Corre localmente en el dispositivo para evitar bloqueos IP.
+
+| Categoria | Count | Providers destacados |
+|---|---|---|
+| **Peliculas** | 42 | AllCalidad, Cuevana2Espanol, PelisPedia, PoseidonHD, HDFull, Gnula, WolfMax4K, CineCalidad, DivXTotal, PelisFlix, TubePelis, ZonaLeros |
+| **Series** | 26 | EZTV, DoramasYT, FullSerieHD, SeriesRetro, LaCartoons, DoramasFlix, EntrePeliculasYSeries, SeriesKao |
+| **Anime** | 20 | AnimeFLV, JKAnime, TioAnime, MonosChinos (TVAnime), VerAnime, LatAnime, HenaoJara, MundoDonghua, EstrenosAnime |
+| **Documentales** | 5 | AreaDocumental, DocumentalesOnline, EliteTorrent, MejorTorrent |
+| **Torrents** | 12 | DonTorrent, GranTorrent, WolfMax4K, EZTV, HackTorrent, MiTorrent, EliteTorrent, MejorTorrent |
+
+**Idiomas:** Castellano, Latino, VOSE, English, Japanese, Korean, Hindi, Portuguese.
+
+**Servidores soportados:** streamwish, filemoon, doodstream, streamtape, fembed, okru, mixdrop, upstream, vidhide, voe, mystream, netutv, yourupload, jawcloud, streampe, gvideo, torrent/magnet.
+
+### English / Multi-language (61 originales)
 
 | Provider | Contenido | Idioma |
 |---|---|---|
@@ -143,6 +160,13 @@ npm start        # Servidor en http://localhost:3000
 
 En Nuvio agregas `http://TU_IP:3000/manifest.json`.
 
+## Build de scrapers
+
+```bash
+node build.js              # Build all providers from src/
+node build.js alfa-providers  # Build only alfa-providers
+```
+
 ## Deploy
 
 - **Render.com** — auto-deploy desde `main`
@@ -152,3 +176,4 @@ En Nuvio agregas `http://TU_IP:3000/manifest.json`.
 
 Scrapers originales: Yoruix, Phisher98, Wooodyhood, Piratezoro9 (Kabir), Abinanthankv, KennethJYS, Real-Morpheus, Xyr0nX, Yatin-Code, RaymondNoodles, D3adlyRocket.
 Anime proxy: [Pigamer37/animeflv-stremio-addon](https://github.com/Pigamer37/animeflv-stremio-addon).
+Alfa providers: extraidos del addon [alfa-addon/addon](https://github.com/alfa-addon/addon) (Kodi, GPL-3.0).

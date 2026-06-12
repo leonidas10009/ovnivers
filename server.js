@@ -13,7 +13,7 @@ const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
 const TMDB_KEY = 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.4.0';
+const VERSION = '1.5.0';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 const PIGAMER = 'https://pigamer37.alwaysdata.net';
@@ -175,10 +175,90 @@ async function scrapeVidSrcRip(tmdbId, mediaType, season, episode) {
   } catch { return []; }
 }
 
+async function scrapeEZTV(rawId, mediaType, season, episode) {
+  try {
+    let imdbId = rawId;
+    if (!rawId.startsWith('tt')) {
+      imdbId = await getIMDbId(rawId, mediaType);
+      if (!imdbId) return [];
+    }
+    const searchUrl = `https://eztvx.to/search/${imdbId}`;
+    const html = await fetchAPI(searchUrl, {}, 12000);
+    if (!html || typeof html !== 'string') return [];
+    const magnetMatch = html.match(/href="(magnet:\?[^"]+)"/g);
+    if (!magnetMatch) return [];
+    return magnetMatch.slice(0, 5).map(m => {
+      const url = m.match(/href="([^"]+)"/)[1];
+      return { name: 'HD', description: 'EZTV', url, behaviorHints: { notWebReady: true } };
+    });
+  } catch { return []; }
+}
+
+async function scrapeCuevana2Espanol(rawId, mediaType, season, episode) {
+  try {
+    const tmdbId = rawId.startsWith('tt') ? await getTMDbId(rawId, mediaType) : rawId;
+    if (!tmdbId) return [];
+    const searchUrl = `https://www.cuevana2espanol.net/search?q=${tmdbId}`;
+    const html = await fetchAPI(searchUrl, {}, 12000);
+    if (!html || typeof html !== 'string') return [];
+    const jsonMatch = html.match(/<script type="application\/json"[^>]*>(.*?)<\/script>/);
+    if (!jsonMatch) return [];
+    const data = JSON.parse(jsonMatch[1]);
+    const players = data?.props?.pageProps?.post?.players;
+    if (!players) return [];
+    const streams = [];
+    for (const [lang, arr] of Object.entries(players)) {
+      if (Array.isArray(arr)) {
+        for (const p of arr) {
+          if (p.result) streams.push({
+            name: p.quality || 'HD',
+            description: `Cuevana2 [${lang}]`,
+            url: p.result,
+            behaviorHints: { notWebReady: true }
+          });
+        }
+      }
+    }
+    return streams;
+  } catch { return []; }
+}
+
+async function scrapePoseidonHD(rawId, mediaType, season, episode) {
+  try {
+    const tmdbId = rawId.startsWith('tt') ? await getTMDbId(rawId, mediaType) : rawId;
+    if (!tmdbId) return [];
+    const searchUrl = `https://www.poseidonhd2.co/search?q=${tmdbId}`;
+    const html = await fetchAPI(searchUrl, {}, 12000);
+    if (!html || typeof html !== 'string') return [];
+    const nextMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/);
+    if (!nextMatch) return [];
+    const data = JSON.parse(nextMatch[1]);
+    const players = data?.props?.pageProps?.post?.players;
+    if (!players) return [];
+    const streams = [];
+    for (const [lang, arr] of Object.entries(players)) {
+      if (Array.isArray(arr)) {
+        for (const p of arr) {
+          if (p.result) streams.push({
+            name: p.quality || 'HD',
+            description: `PoseidonHD [${lang}]`,
+            url: p.result,
+            behaviorHints: { notWebReady: true }
+          });
+        }
+      }
+    }
+    return streams;
+  } catch { return []; }
+}
+
 const BACKEND_SCRAPERS = [
   { name: '2embed (Vesy)', fn: scrape2embedVesy },
   { name: '2embed (Vsrc)', fn: scrape2embedVsrc },
   { name: 'VidSrc', fn: scrapeVidSrcRip },
+  { name: 'EZTV', fn: scrapeEZTV },
+  { name: 'Cuevana2', fn: scrapeCuevana2Espanol },
+  { name: 'PoseidonHD', fn: scrapePoseidonHD },
 ];
 
 // ─── Pigamer37 Proxy ────────────────────
