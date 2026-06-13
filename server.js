@@ -880,8 +880,8 @@ app.get('/manifest.json', async (req, res) => {
   if (config.enableBackend) streamPrefixes.push('tt', 'tmdb');
   if (config.enableAnime) streamPrefixes.push(...ANIME_PREFIXES);
 
-  const metaPrefixes = [];
-  if (config.enableBackend) metaPrefixes.push('tt', 'tmdb');
+  const metaPrefixes = ['tmdb'];
+  if (config.enableBackend) metaPrefixes.push('tt');
   if (config.enableAnime) metaPrefixes.push(...ANIME_PREFIXES);
 
   const allPrefixes = [...new Set([...streamPrefixes, ...metaPrefixes])];
@@ -1178,7 +1178,8 @@ async function handleMeta(req, res, type, id) {
     }
   }
 
-  if (!config.enableBackend) return res.json({ meta: null });
+  // Meta: siempre disponible para TMDB IDs, independiente de enableBackend
+  // (el catálogo ya tiene los datos correctos, solo necesitamos enriquecer la ficha)
 
   let contentId = extractId(id);
   let mediaType = type === 'series' ? 'tv' : 'movie';
