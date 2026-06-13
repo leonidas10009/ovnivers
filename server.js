@@ -558,6 +558,7 @@ const SERVER_MAP = [
 
 function detectServerName(url) {
   if (!url) return '';
+  if (/^magnet:/i.test(url)) return 'Torrent';
   // Try extracting real URL from proxy query params (?url=...)
   try {
     const parsed = new URL(url);
@@ -724,15 +725,18 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
 
   const title = titleParts.join('\n');
 
+  const hasInfoHash = !!stream.infoHash;
   return {
     name,
     title,
-    ...(url ? { url } : {}),
-    ...(stream.infoHash ? { infoHash: stream.infoHash } : {}),
+    ...(!hasInfoHash && url ? { url } : {}),
+    ...(hasInfoHash ? { infoHash: stream.infoHash } : {}),
+    ...(stream.fileIdx !== undefined ? { fileIdx: stream.fileIdx } : {}),
+    ...(stream.sources ? { sources: stream.sources } : {}),
     ...(stream.externalUrl ? { externalUrl: stream.externalUrl } : {}),
     ...(stream.file ? { file: stream.file } : {}),
     behaviorHints: {
-      notWebReady: true,
+      notWebReady: !hasInfoHash,
       bingeGroup: `provider|${providerId}`,
       ...(stream.behaviorHints || {})
     }

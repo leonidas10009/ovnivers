@@ -1,46 +1,6 @@
-/**
- * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-13T05:59:49.168Z
- */
-var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __spreadValues = (a, b) => {
-  for (var prop in b || (b = {}))
-    if (__hasOwnProp.call(b, prop))
-      __defNormalProp(a, prop, b[prop]);
-  if (__getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(b)) {
-      if (__propIsEnum.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    }
-  return a;
-};
 var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
-};
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
 };
 
 // src/alfa-providers/providers.js
@@ -927,39 +887,35 @@ var require_engine = __commonJS({
     var cheerio = require("cheerio-without-node-native") || require("cheerio");
     var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
     var TMDB_KEY2 = "d80ba92bc7cefe3359668d30d06f3305";
-    function fetchHTML2(_0) {
-      return __async(this, arguments, function* (url, opts = {}) {
-        try {
-          const ctrl = new AbortController();
-          const t = setTimeout(() => ctrl.abort(), opts.timeout || 12e3);
-          const res = yield fetch(url, {
-            headers: __spreadValues({ "User-Agent": UA2, "Accept": "text/html,application/xhtml+xml,*/*" }, opts.headers),
-            signal: ctrl.signal
-          });
-          clearTimeout(t);
-          if (!res.ok) return null;
-          return yield res.text();
-        } catch (e) {
-          return null;
-        }
-      });
+    async function fetchHTML2(url, opts = {}) {
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), opts.timeout || 12e3);
+        const res = await fetch(url, {
+          headers: { "User-Agent": UA2, "Accept": "text/html,application/xhtml+xml,*/*", ...opts.headers },
+          signal: ctrl.signal
+        });
+        clearTimeout(t);
+        if (!res.ok) return null;
+        return await res.text();
+      } catch {
+        return null;
+      }
     }
-    function fetchJSON2(_0) {
-      return __async(this, arguments, function* (url, opts = {}) {
-        try {
-          const ctrl = new AbortController();
-          const t = setTimeout(() => ctrl.abort(), opts.timeout || 1e4);
-          const res = yield fetch(url, {
-            headers: __spreadValues({ "User-Agent": UA2, "Accept": "application/json" }, opts.headers),
-            signal: ctrl.signal
-          });
-          clearTimeout(t);
-          if (!res.ok) return null;
-          return yield res.json();
-        } catch (e) {
-          return null;
-        }
-      });
+    async function fetchJSON2(url, opts = {}) {
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), opts.timeout || 1e4);
+        const res = await fetch(url, {
+          headers: { "User-Agent": UA2, "Accept": "application/json", ...opts.headers },
+          signal: ctrl.signal
+        });
+        clearTimeout(t);
+        if (!res.ok) return null;
+        return await res.json();
+      } catch {
+        return null;
+      }
     }
     function similarity2(a, b) {
       if (!a || !b) return 0;
@@ -986,319 +942,324 @@ var require_engine = __commonJS({
       }
       return 2 * common / (longer.length + shorter.length - 2);
     }
-    function resolveTMDB(id, mediaType) {
-      return __async(this, null, function* () {
+    async function resolveTMDB(id, mediaType) {
+      try {
+        let tmdbId = id;
+        if (id.startsWith("tt")) {
+          const r = await fetchJSON2(`https://api.themoviedb.org/3/find/${id}?api_key=${TMDB_KEY2}&external_source=imdb_id`);
+          const results = r?.[mediaType === "tv" ? "tv_results" : "movie_results"];
+          if (results?.[0]) tmdbId = results[0].id;
+          else return null;
+        }
+        const typeStr = mediaType === "tv" ? "tv" : "movie";
+        const data = await fetchJSON2(`https://api.themoviedb.org/3/${typeStr}/${tmdbId}?api_key=${TMDB_KEY2}&language=en`);
+        if (!data) return null;
+        return {
+          title: data.title || data.name || "",
+          year: (data.release_date || data.first_air_date || "").substring(0, 4),
+          imdbId: data.imdb_id || "",
+          tmdbId: String(data.id)
+        };
+      } catch {
+        return null;
+      }
+    }
+    async function searchProvider2(provider, title, year, mediaType) {
+      const cfg = provider.search;
+      if (!cfg) return null;
+      const titleClean = title.replace(/[_-]/g, " ").replace(/\s+/g, " ").trim();
+      async function trySearch(query) {
+        let searchUrl;
+        if (typeof cfg.url === "function") {
+          searchUrl = cfg.url(provider.baseUrl, query);
+        } else {
+          searchUrl = provider.baseUrl + cfg.url.replace("{query}", encodeURIComponent(query));
+        }
+        return await fetchHTML2(searchUrl, { headers: cfg.headers, timeout: 1e4 });
+      }
+      let html = await trySearch(titleClean);
+      if (!html && titleClean.includes(" ")) {
+        const short = titleClean.split(" ").slice(0, 2).join(" ");
+        if (short.length > 3) html = await trySearch(short);
+      }
+      if (!html) return null;
+      const $ = cheerio.load(html);
+      const items = $(cfg.itemSelector).toArray();
+      if (!items.length) return null;
+      let bestMatch = null;
+      let bestScore = 0;
+      for (const item of items) {
+        const el = $(item);
+        let itemTitle = "";
+        let itemLink = "";
+        if (cfg.titleSelector) {
+          const titleEl = cfg.titleSelector === "&" ? el : el.find(cfg.titleSelector).first();
+          itemTitle = cfg.titleAttr ? titleEl.attr(cfg.titleAttr) || "" : titleEl.text().trim();
+        }
+        if (cfg.linkSelector) {
+          const linkEl = cfg.linkSelector === "&" ? el : el.find(cfg.linkSelector).first();
+          itemLink = (linkEl.attr("href") || "").trim();
+          if (itemLink && !itemLink.startsWith("http")) {
+            try {
+              itemLink = new URL(itemLink, provider.baseUrl).href;
+            } catch {
+              continue;
+            }
+          }
+        }
+        if (!itemTitle || !itemLink) continue;
+        let score = similarity2(itemTitle, title);
+        const titleClean2 = titleClean.replace(/[^a-z0-9]/g, "");
+        const itemClean = itemTitle.toLowerCase().replace(/[^a-z0-9]/g, "");
+        if (itemClean === titleClean2) score = Math.max(score, 0.9);
+        if (itemClean.includes(titleClean2) || titleClean2.includes(itemClean)) {
+          score = Math.max(score, 0.75);
+        }
+        if (year) {
+          const itemYear = el.text().match(/\b(19|20)\d{2}\b/);
+          if (itemYear && itemYear[0] === year) score += 0.2;
+        }
+        if (score > bestScore && score > 0.35) {
+          bestScore = score;
+          bestMatch = itemLink;
+        }
+      }
+      return bestMatch;
+    }
+    async function getEpisodeUrl2(provider, seriesUrl, season, episode) {
+      const cfg = provider.episodes;
+      if (!cfg) return seriesUrl;
+      if (cfg.type === "url") {
+        const slug = seriesUrl.replace(/\/+$/, "").split("/").pop();
+        const url = cfg.pattern.replace("{slug}", slug).replace("{episode}", episode);
         try {
-          let tmdbId = id;
-          if (id.startsWith("tt")) {
-            const r = yield fetchJSON2(`https://api.themoviedb.org/3/find/${id}?api_key=${TMDB_KEY2}&external_source=imdb_id`);
-            const results = r == null ? void 0 : r[mediaType === "tv" ? "tv_results" : "movie_results"];
-            if (results == null ? void 0 : results[0]) tmdbId = results[0].id;
-            else return null;
-          }
-          const typeStr = mediaType === "tv" ? "tv" : "movie";
-          const data = yield fetchJSON2(`https://api.themoviedb.org/3/${typeStr}/${tmdbId}?api_key=${TMDB_KEY2}&language=en`);
-          if (!data) return null;
-          return {
-            title: data.title || data.name || "",
-            year: (data.release_date || data.first_air_date || "").substring(0, 4),
-            imdbId: data.imdb_id || "",
-            tmdbId: String(data.id)
-          };
-        } catch (e) {
-          return null;
+          return new URL(url, provider.baseUrl).href;
+        } catch {
+          return seriesUrl;
         }
-      });
-    }
-    function searchProvider2(provider, title, year, mediaType) {
-      return __async(this, null, function* () {
-        const cfg = provider.search;
-        if (!cfg) return null;
-        const titleClean = title.replace(/[_-]/g, " ").replace(/\s+/g, " ").trim();
-        function trySearch(query) {
-          return __async(this, null, function* () {
-            let searchUrl;
-            if (typeof cfg.url === "function") {
-              searchUrl = cfg.url(provider.baseUrl, query);
-            } else {
-              searchUrl = provider.baseUrl + cfg.url.replace("{query}", encodeURIComponent(query));
-            }
-            return yield fetchHTML2(searchUrl, { headers: cfg.headers, timeout: 1e4 });
-          });
-        }
-        let html = yield trySearch(titleClean);
-        if (!html && titleClean.includes(" ")) {
-          const short = titleClean.split(" ").slice(0, 2).join(" ");
-          if (short.length > 3) html = yield trySearch(short);
-        }
-        if (!html) return null;
-        const $ = cheerio.load(html);
-        const items = $(cfg.itemSelector).toArray();
-        if (!items.length) return null;
-        let bestMatch = null;
-        let bestScore = 0;
-        for (const item of items) {
-          const el = $(item);
-          let itemTitle = "";
-          let itemLink = "";
-          if (cfg.titleSelector) {
-            const titleEl = cfg.titleSelector === "&" ? el : el.find(cfg.titleSelector).first();
-            itemTitle = cfg.titleAttr ? titleEl.attr(cfg.titleAttr) || "" : titleEl.text().trim();
-          }
-          if (cfg.linkSelector) {
-            const linkEl = cfg.linkSelector === "&" ? el : el.find(cfg.linkSelector).first();
-            itemLink = (linkEl.attr("href") || "").trim();
-            if (itemLink && !itemLink.startsWith("http")) {
-              try {
-                itemLink = new URL(itemLink, provider.baseUrl).href;
-              } catch (e) {
-                continue;
-              }
-            }
-          }
-          if (!itemTitle || !itemLink) continue;
-          let score = similarity2(itemTitle, title);
-          const titleClean2 = titleClean.replace(/[^a-z0-9]/g, "");
-          const itemClean = itemTitle.toLowerCase().replace(/[^a-z0-9]/g, "");
-          if (itemClean === titleClean2) score = Math.max(score, 0.9);
-          if (itemClean.includes(titleClean2) || titleClean2.includes(itemClean)) {
-            score = Math.max(score, 0.75);
-          }
-          if (year) {
-            const itemYear = el.text().match(/\b(19|20)\d{2}\b/);
-            if (itemYear && itemYear[0] === year) score += 0.2;
-          }
-          if (score > bestScore && score > 0.35) {
-            bestScore = score;
-            bestMatch = itemLink;
+      }
+      const html = await fetchHTML2(seriesUrl);
+      if (!html) return null;
+      const $ = cheerio.load(html);
+      if (cfg.type === "post") {
+        const fd = new URLSearchParams();
+        fd.append(cfg.seasonParam || "season", String(season));
+        fd.append(cfg.episodeParam || "episode", String(episode));
+        if (cfg.extraParams) {
+          for (const [k, v] of Object.entries(cfg.extraParams)) {
+            fd.append(k, typeof v === "function" ? v($, html) : v);
           }
         }
-        return bestMatch;
-      });
-    }
-    function getEpisodeUrl2(provider, seriesUrl, season, episode) {
-      return __async(this, null, function* () {
-        var _a, _b, _c;
-        const cfg = provider.episodes;
-        if (!cfg) return seriesUrl;
-        if (cfg.type === "url") {
-          const slug = seriesUrl.replace(/\/+$/, "").split("/").pop();
-          const url = cfg.pattern.replace("{slug}", slug).replace("{episode}", episode);
+        const postUrl = cfg.url || seriesUrl;
+        const res = await fetch(postUrl, {
+          method: "POST",
+          headers: { "User-Agent": UA2, "Content-Type": "application/x-www-form-urlencoded", ...cfg.headers },
+          body: fd.toString(),
+          signal: AbortSignal.timeout(12e3)
+        });
+        if (!res.ok) return null;
+        const data = await res.text();
+        const $$ = cheerio.load(data);
+        const epLink = $$(cfg.episodeSelector).first().attr("href");
+        if (epLink) {
           try {
-            return new URL(url, provider.baseUrl).href;
-          } catch (e) {
-            return seriesUrl;
+            return new URL(epLink, provider.baseUrl).href;
+          } catch {
+            return null;
           }
         }
-        const html = yield fetchHTML2(seriesUrl);
-        if (!html) return null;
-        const $ = cheerio.load(html);
-        if (cfg.type === "post") {
-          const fd = new URLSearchParams();
-          fd.append(cfg.seasonParam || "season", String(season));
-          fd.append(cfg.episodeParam || "episode", String(episode));
-          if (cfg.extraParams) {
-            for (const [k, v] of Object.entries(cfg.extraParams)) {
-              fd.append(k, typeof v === "function" ? v($, html) : v);
-            }
-          }
-          const postUrl = cfg.url || seriesUrl;
-          const res = yield fetch(postUrl, {
-            method: "POST",
-            headers: __spreadValues({ "User-Agent": UA2, "Content-Type": "application/x-www-form-urlencoded" }, cfg.headers),
-            body: fd.toString(),
-            signal: AbortSignal.timeout(12e3)
-          });
-          if (!res.ok) return null;
-          const data = yield res.text();
-          const $$ = cheerio.load(data);
-          const epLink = $$(cfg.episodeSelector).first().attr("href");
-          if (epLink) {
-            try {
-              return new URL(epLink, provider.baseUrl).href;
-            } catch (e) {
-              return null;
-            }
-          }
-          return null;
-        }
-        if (cfg.type === "season-list") {
-          const seasonEls = $(cfg.seasonSelector).toArray();
-          for (const sel of seasonEls) {
-            const sNum = parseInt(((_a = $(sel).text().match(/\d+/)) == null ? void 0 : _a[0]) || "0");
-            if (sNum === season) {
-              const sUrl = $(sel).attr("href");
-              if (sUrl) {
-                const sHtml = yield fetchHTML2(new URL(sUrl, provider.baseUrl).href);
-                if (sHtml) {
-                  const $$ = cheerio.load(sHtml);
-                  const epEls = $$(cfg.episodeSelector).toArray();
-                  for (const eel of epEls) {
-                    const eNum = parseInt(((_b = $$(eel).text().match(/\d+/)) == null ? void 0 : _b[0]) || "0");
-                    if (eNum === episode) {
-                      const epUrl = $$(eel).attr("href");
-                      if (epUrl) {
-                        try {
-                          return new URL(epUrl, provider.baseUrl).href;
-                        } catch (e) {
-                          return null;
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-        if (cfg.type === "jsvar") {
-          const match = html.match(cfg.varPattern);
-          if (match) {
-            try {
-              const episodes = JSON.parse(match[1]);
-              const ep = episodes.find(
-                (e) => (e.season || e.temporada) == season && (e.episode || e.capitulo) == episode
-              );
-              if ((ep == null ? void 0 : ep.url) || (ep == null ? void 0 : ep.link)) {
-                try {
-                  return new URL(ep.url || ep.link, provider.baseUrl).href;
-                } catch (e) {
-                  return null;
-                }
-              }
-            } catch (e) {
-            }
-          }
-        }
-        if (cfg.type === "nextjs") {
-          const match = html.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/);
-          if (match) {
-            try {
-              const data = JSON.parse(match[1]);
-              let obj = data;
-              for (const key of cfg.dataPath.split(".")) obj = obj == null ? void 0 : obj[key];
-              if (obj == null ? void 0 : obj.seasons) {
-                for (const s of obj.seasons) {
-                  if (s.number == season) {
-                    const ep = (_c = s.episodes) == null ? void 0 : _c.find((e) => e.number == episode);
-                    if (ep == null ? void 0 : ep.url) {
+        return null;
+      }
+      if (cfg.type === "season-list") {
+        const seasonEls = $(cfg.seasonSelector).toArray();
+        for (const sel of seasonEls) {
+          const sNum = parseInt($(sel).text().match(/\d+/)?.[0] || "0");
+          if (sNum === season) {
+            const sUrl = $(sel).attr("href");
+            if (sUrl) {
+              const sHtml = await fetchHTML2(new URL(sUrl, provider.baseUrl).href);
+              if (sHtml) {
+                const $$ = cheerio.load(sHtml);
+                const epEls = $$(cfg.episodeSelector).toArray();
+                for (const eel of epEls) {
+                  const eNum = parseInt($$(eel).text().match(/\d+/)?.[0] || "0");
+                  if (eNum === episode) {
+                    const epUrl = $$(eel).attr("href");
+                    if (epUrl) {
                       try {
-                        return new URL(ep.url, provider.baseUrl).href;
-                      } catch (e) {
+                        return new URL(epUrl, provider.baseUrl).href;
+                      } catch {
                         return null;
                       }
                     }
                   }
                 }
               }
-            } catch (e) {
             }
           }
         }
-        return seriesUrl;
-      });
-    }
-    function extractVideos2(provider, pageUrl) {
-      return __async(this, null, function* () {
-        const cfg = provider.videos;
-        if (!cfg) return [];
-        const html = yield fetchHTML2(pageUrl);
-        if (!html) return [];
-        const $ = cheerio.load(html);
-        const results = [];
-        if (cfg.type === "iframe") {
-          const container = cfg.containerSelector ? $(cfg.containerSelector) : $;
-          const iframes = container.find(cfg.iframeSelector || "iframe").toArray();
-          for (const iframe of iframes) {
-            const src = $(iframe).attr(cfg.srcAttr || "src") || $(iframe).attr("data-src");
-            if (src) {
-              const url = src.startsWith("//") ? "https:" + src : src;
-              results.push({ url, server: detectServer2(url), quality: cfg.defaultQuality || "HD" });
+      }
+      if (cfg.type === "jsvar") {
+        const match = html.match(cfg.varPattern);
+        if (match) {
+          try {
+            const episodes = JSON.parse(match[1]);
+            const ep = episodes.find(
+              (e) => (e.season || e.temporada) == season && (e.episode || e.capitulo) == episode
+            );
+            if (ep?.url || ep?.link) {
+              try {
+                return new URL(ep.url || ep.link, provider.baseUrl).href;
+              } catch {
+                return null;
+              }
             }
+          } catch {
           }
         }
-        if (cfg.type === "nextjs") {
-          const match = html.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/) || html.match(/<script type="application\/json"[^>]*>(.*?)<\/script>/);
-          if (match) {
-            try {
-              const data = JSON.parse(match[1]);
-              let obj = data;
-              for (const key of cfg.dataPath.split(".")) obj = obj == null ? void 0 : obj[key];
-              if (obj && typeof obj === "object") {
-                for (const [lang, players] of Object.entries(obj)) {
-                  if (Array.isArray(players)) {
-                    for (const p of players) {
-                      const pUrl = p.result || p.url || p.link;
-                      if (pUrl) results.push({
-                        url: pUrl,
-                        server: p.cyberlocker || p.server || detectServer2(pUrl),
-                        quality: p.quality || cfg.defaultQuality || "HD",
-                        lang
-                      });
+      }
+      if (cfg.type === "nextjs") {
+        const match = html.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/);
+        if (match) {
+          try {
+            const data = JSON.parse(match[1]);
+            let obj = data;
+            for (const key of cfg.dataPath.split(".")) obj = obj?.[key];
+            if (obj?.seasons) {
+              for (const s of obj.seasons) {
+                if (s.number == season) {
+                  const ep = s.episodes?.find((e) => e.number == episode);
+                  if (ep?.url) {
+                    try {
+                      return new URL(ep.url, provider.baseUrl).href;
+                    } catch {
+                      return null;
                     }
                   }
                 }
               }
-            } catch (e) {
             }
+          } catch {
           }
         }
-        if (cfg.type === "jsvar") {
-          const match = html.match(cfg.varPattern);
-          if (match) {
-            try {
-              const videos = JSON.parse(match[1]);
-              for (const v of videos) {
-                const server = Array.isArray(v) ? v[0] : v.server || v.name;
-                const vUrl = Array.isArray(v) ? v[1] : v.url || v.link || v.code;
-                if (vUrl) results.push({
-                  url: vUrl,
-                  server: server || detectServer2(vUrl),
-                  quality: v.quality || cfg.defaultQuality || "HD",
-                  lang: v.lang || v.idioma || v.audio || ""
-                });
+      }
+      return seriesUrl;
+    }
+    async function extractVideos2(provider, pageUrl) {
+      const cfg = provider.videos;
+      if (!cfg) return [];
+      const html = await fetchHTML2(pageUrl);
+      if (!html) return [];
+      const $ = cheerio.load(html);
+      const results = [];
+      if (cfg.type === "iframe") {
+        const container = cfg.containerSelector ? $(cfg.containerSelector) : $;
+        const iframes = container.find(cfg.iframeSelector || "iframe").toArray();
+        for (const iframe of iframes) {
+          const src = $(iframe).attr(cfg.srcAttr || "src") || $(iframe).attr("data-src");
+          if (src) {
+            const url = src.startsWith("//") ? "https:" + src : src;
+            results.push({ url, server: detectServer2(url), quality: cfg.defaultQuality || "HD" });
+          }
+        }
+      }
+      if (cfg.type === "nextjs") {
+        const match = html.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/) || html.match(/<script type="application\/json"[^>]*>(.*?)<\/script>/);
+        if (match) {
+          try {
+            const data = JSON.parse(match[1]);
+            let obj = data;
+            for (const key of cfg.dataPath.split(".")) obj = obj?.[key];
+            if (obj && typeof obj === "object") {
+              for (const [lang, players] of Object.entries(obj)) {
+                if (Array.isArray(players)) {
+                  for (const p of players) {
+                    const pUrl = p.result || p.url || p.link;
+                    if (pUrl) results.push({
+                      url: pUrl,
+                      server: p.cyberlocker || p.server || detectServer2(pUrl),
+                      quality: p.quality || cfg.defaultQuality || "HD",
+                      lang
+                    });
+                  }
+                }
               }
-            } catch (e) {
             }
+          } catch {
           }
         }
-        if (cfg.type === "jslist") {
-          const re = cfg.varPattern instanceof RegExp ? cfg.varPattern : new RegExp(cfg.varPattern, "g");
-          let m;
-          while ((m = re.exec(html)) !== null) {
-            const src = (m[1] || "").match(/src=["']([^"']+)["']/);
-            if (src) {
-              results.push({ url: src[1], server: detectServer2(src[1]), quality: cfg.defaultQuality || "HD" });
-            }
-          }
-        }
-        if (cfg.type === "api") {
-          const apiUrl = typeof cfg.apiUrl === "function" ? cfg.apiUrl(provider.baseUrl, pageUrl, html) : provider.baseUrl + cfg.apiUrl;
-          const data = yield fetchJSON2(apiUrl, { headers: cfg.headers });
-          if (data) {
-            const sources = data.sources || data.data || data;
-            for (const s of Array.isArray(sources) ? sources : []) {
-              const sUrl = s.url || s.file || s.link || s.src;
-              if (sUrl) results.push({
-                url: sUrl,
-                server: s.server || detectServer2(sUrl),
-                quality: s.quality || s.label || cfg.defaultQuality || "HD"
+      }
+      if (cfg.type === "jsvar") {
+        const match = html.match(cfg.varPattern);
+        if (match) {
+          try {
+            const videos = JSON.parse(match[1]);
+            for (const v of videos) {
+              const server = Array.isArray(v) ? v[0] : v.server || v.name;
+              const vUrl = Array.isArray(v) ? v[1] : v.url || v.link || v.code;
+              if (vUrl) results.push({
+                url: vUrl,
+                server: server || detectServer2(vUrl),
+                quality: v.quality || cfg.defaultQuality || "HD",
+                lang: v.lang || v.idioma || v.audio || ""
               });
             }
+          } catch {
           }
         }
-        if (cfg.type === "torrent") {
-          const links = $(cfg.linkSelector || 'a[href*="magnet:"], a[href$=".torrent"]').toArray();
-          for (const link of links) {
-            const href = $(link).attr("href");
-            if (href && (href.startsWith("magnet:") || href.endsWith(".torrent"))) {
-              const label = $(link).text().trim() || cfg.defaultQuality || "HD";
-              results.push({ url: href, server: "torrent", quality: label });
+      }
+      if (cfg.type === "jslist") {
+        const re = cfg.varPattern instanceof RegExp ? cfg.varPattern : new RegExp(cfg.varPattern, "g");
+        let m;
+        while ((m = re.exec(html)) !== null) {
+          const src = (m[1] || "").match(/src=["']([^"']+)["']/);
+          if (src) {
+            results.push({ url: src[1], server: detectServer2(src[1]), quality: cfg.defaultQuality || "HD" });
+          }
+        }
+      }
+      if (cfg.type === "api") {
+        const apiUrl = typeof cfg.apiUrl === "function" ? cfg.apiUrl(provider.baseUrl, pageUrl, html) : provider.baseUrl + cfg.apiUrl;
+        const data = await fetchJSON2(apiUrl, { headers: cfg.headers });
+        if (data) {
+          const sources = data.sources || data.data || data;
+          for (const s of Array.isArray(sources) ? sources : []) {
+            const sUrl = s.url || s.file || s.link || s.src;
+            if (sUrl) results.push({
+              url: sUrl,
+              server: s.server || detectServer2(sUrl),
+              quality: s.quality || s.label || cfg.defaultQuality || "HD"
+            });
+          }
+        }
+      }
+      if (cfg.type === "torrent") {
+        const links = $(cfg.linkSelector || 'a[href*="magnet:"], a[href$=".torrent"]').toArray();
+        for (const link of links) {
+          const href = $(link).attr("href");
+          if (href && (href.startsWith("magnet:") || href.endsWith(".torrent"))) {
+            const label = $(link).text().trim() || "";
+            const infoHashMatch = href.match(/urn:btih:([a-fA-F0-9]{40})/i);
+            const qualityMatch = label.match(/\b(4K|2160p?|1080p?|720p?|480p?)\b/i);
+            const sources = [];
+            const trRe = /tr=([^&]+)/g;
+            let m;
+            while ((m = trRe.exec(href)) !== null) {
+              sources.push("tracker:" + decodeURIComponent(m[1]));
             }
+            if (infoHashMatch) sources.push("dht:" + infoHashMatch[1].toLowerCase());
+            results.push({
+              url: href,
+              server: "torrent",
+              quality: (qualityMatch ? qualityMatch[1] : "") || cfg.defaultQuality || "HD",
+              ...infoHashMatch ? { infoHash: infoHashMatch[1].toLowerCase() } : {},
+              ...sources.length ? { sources } : {},
+              ...label ? { filename: label } : {}
+            });
           }
         }
-        return results;
-      });
+      }
+      return results;
     }
     function detectServer2(url) {
       if (!url) return "direct";
@@ -1366,86 +1327,82 @@ function extractSlug(id) {
   const parts = id.split(":");
   return parts.length >= 2 ? parts[1] : id;
 }
-function resolveTitles(id, mediaType) {
-  return __async(this, null, function* () {
-    const cacheKey = `titles:${mediaType}:${id}`;
-    if (titleCache.has(cacheKey)) return titleCache.get(cacheKey);
-    const variants = [];
-    const seen = /* @__PURE__ */ new Set();
-    function addVariant(title, year) {
-      const t = (title || "").trim();
-      if (t && !seen.has(t.toLowerCase())) {
-        variants.push({ title: t, year: year || "" });
-        seen.add(t.toLowerCase());
+async function resolveTitles(id, mediaType) {
+  const cacheKey = `titles:${mediaType}:${id}`;
+  if (titleCache.has(cacheKey)) return titleCache.get(cacheKey);
+  const variants = [];
+  const seen = /* @__PURE__ */ new Set();
+  function addVariant(title, year) {
+    const t = (title || "").trim();
+    if (t && !seen.has(t.toLowerCase())) {
+      variants.push({ title: t, year: year || "" });
+      seen.add(t.toLowerCase());
+    }
+  }
+  if (isAnimeId(id)) {
+    const slug = extractSlug(id);
+    addVariant(slug.replace(/-/g, " "), "");
+    if (slug.includes("-")) addVariant(slug, "");
+  }
+  try {
+    let tmdbId = id;
+    if (id.startsWith("tt")) {
+      const findRes = await fetch(`https://api.themoviedb.org/3/find/${id}?api_key=${TMDB_KEY}&external_source=imdb_id`, {
+        headers: { "User-Agent": UA }
+      });
+      if (findRes.ok) {
+        const data = await findRes.json();
+        const results = data?.[mediaType === "tv" ? "tv_results" : "movie_results"];
+        if (results?.[0]) tmdbId = String(results[0].id);
       }
     }
-    if (isAnimeId(id)) {
-      const slug = extractSlug(id);
-      addVariant(slug.replace(/-/g, " "), "");
-      if (slug.includes("-")) addVariant(slug, "");
+    if (!tmdbId.match(/^\d+$/)) {
+      cacheSet(cacheKey, variants);
+      return variants;
     }
-    try {
-      let tmdbId = id;
-      if (id.startsWith("tt")) {
-        const findRes = yield fetch(`https://api.themoviedb.org/3/find/${id}?api_key=${TMDB_KEY}&external_source=imdb_id`, {
-          headers: { "User-Agent": UA }
-        });
-        if (findRes.ok) {
-          const data = yield findRes.json();
-          const results = data == null ? void 0 : data[mediaType === "tv" ? "tv_results" : "movie_results"];
-          if (results == null ? void 0 : results[0]) tmdbId = String(results[0].id);
-        }
+    async function tmdbFetch(lang) {
+      try {
+        const ac = new AbortController();
+        setTimeout(() => ac.abort(), 6e3);
+        const r = await fetch(`https://api.themoviedb.org/3/${mediaType === "tv" ? "tv" : "movie"}/${tmdbId}?api_key=${TMDB_KEY}&language=${lang}`, { headers: { "User-Agent": UA }, signal: ac.signal });
+        return r.ok ? r.json() : null;
+      } catch {
+        return null;
       }
-      if (!tmdbId.match(/^\d+$/)) {
-        cacheSet(cacheKey, variants);
-        return variants;
-      }
-      function tmdbFetch(lang) {
-        return __async(this, null, function* () {
-          try {
-            const ac = new AbortController();
-            setTimeout(() => ac.abort(), 6e3);
-            const r = yield fetch(`https://api.themoviedb.org/3/${mediaType === "tv" ? "tv" : "movie"}/${tmdbId}?api_key=${TMDB_KEY}&language=${lang}`, { headers: { "User-Agent": UA }, signal: ac.signal });
-            return r.ok ? r.json() : null;
-          } catch (e) {
-            return null;
-          }
-        });
-      }
-      const [enData, esData, jaData] = yield Promise.all([tmdbFetch("en"), tmdbFetch("es"), tmdbFetch("ja")]);
-      let firstYear = "";
-      if (enData) {
-        firstYear = (enData.release_date || enData.first_air_date || "").substring(0, 4);
-        addVariant(enData.title || enData.name || "", firstYear);
-        if (enData.original_title && enData.original_title !== (enData.title || enData.name)) {
-          addVariant(enData.original_title, firstYear);
-        }
-        if (enData.original_name && enData.original_name !== (enData.name || enData.title)) {
-          addVariant(enData.original_name, firstYear);
-        }
-      }
-      if (esData) {
-        addVariant(esData.title || esData.name || "", firstYear);
-      }
-      if (jaData) {
-        const jaTitle = jaData.title || jaData.name || "";
-        if (jaTitle && !seen.has(jaTitle.toLowerCase())) {
-          addVariant(jaTitle, firstYear);
-        }
-      }
-      if (firstYear) {
-        for (const v of variants) {
-          if (!v.year) v.year = firstYear;
-        }
-      }
-    } catch (e) {
     }
-    if (variants.length === 0 && !id.match(/^\d+$/)) {
-      variants.push({ title: id, year: "" });
+    const [enData, esData, jaData] = await Promise.all([tmdbFetch("en"), tmdbFetch("es"), tmdbFetch("ja")]);
+    let firstYear = "";
+    if (enData) {
+      firstYear = (enData.release_date || enData.first_air_date || "").substring(0, 4);
+      addVariant(enData.title || enData.name || "", firstYear);
+      if (enData.original_title && enData.original_title !== (enData.title || enData.name)) {
+        addVariant(enData.original_title, firstYear);
+      }
+      if (enData.original_name && enData.original_name !== (enData.name || enData.title)) {
+        addVariant(enData.original_name, firstYear);
+      }
     }
-    cacheSet(cacheKey, variants);
-    return variants;
-  });
+    if (esData) {
+      addVariant(esData.title || esData.name || "", firstYear);
+    }
+    if (jaData) {
+      const jaTitle = jaData.title || jaData.name || "";
+      if (jaTitle && !seen.has(jaTitle.toLowerCase())) {
+        addVariant(jaTitle, firstYear);
+      }
+    }
+    if (firstYear) {
+      for (const v of variants) {
+        if (!v.year) v.year = firstYear;
+      }
+    }
+  } catch {
+  }
+  if (variants.length === 0 && !id.match(/^\d+$/)) {
+    variants.push({ title: id, year: "" });
+  }
+  cacheSet(cacheKey, variants);
+  return variants;
 }
 function mapTypeToCategory(type) {
   if (type === "movie") return "movie";
@@ -1457,71 +1414,72 @@ function mapTypeToTMDB(type) {
   if (type === "series" || type === "tv" || type === "anime") return "tv";
   return "movie";
 }
-function scrapeAlfaProviders(type, id, season, episode) {
-  return __async(this, null, function* () {
-    const category = mapTypeToCategory(type);
-    const mediaType = mapTypeToTMDB(type);
-    const titleVariants = yield resolveTitles(id, mediaType);
-    if (!titleVariants.length || !titleVariants[0].title) return [];
-    const activeProviders = providers.filter((p) => {
-      if (!p.active || p.adult) return false;
-      return p.categories.includes(category);
-    });
-    if (!activeProviders.length) return [];
-    const results = [];
-    const chunks = chunkArray(activeProviders, 4);
-    for (const chunk of chunks) {
-      const chunkResults = yield Promise.allSettled(
-        chunk.map((provider) => __async(null, null, function* () {
-          try {
-            let pageUrl = null;
-            const validVariants = titleVariants.filter((tv) => tv.title);
-            if (validVariants.length === 1) {
-              pageUrl = yield searchProvider(provider, validVariants[0].title, validVariants[0].year, mediaType);
-            } else if (validVariants.length > 1) {
-              const searchResults = yield Promise.allSettled(
-                validVariants.map((tv) => searchProvider(provider, tv.title, tv.year, mediaType))
-              );
-              for (const r of searchResults) {
-                if (r.status === "fulfilled" && r.value) {
-                  pageUrl = r.value;
-                  break;
-                }
+async function scrapeAlfaProviders(type, id, season, episode) {
+  const category = mapTypeToCategory(type);
+  const mediaType = mapTypeToTMDB(type);
+  const titleVariants = await resolveTitles(id, mediaType);
+  if (!titleVariants.length || !titleVariants[0].title) return [];
+  const activeProviders = providers.filter((p) => {
+    if (!p.active || p.adult) return false;
+    return p.categories.includes(category);
+  });
+  if (!activeProviders.length) return [];
+  const results = [];
+  const chunks = chunkArray(activeProviders, 4);
+  for (const chunk of chunks) {
+    const chunkResults = await Promise.allSettled(
+      chunk.map(async (provider) => {
+        try {
+          let pageUrl = null;
+          const validVariants = titleVariants.filter((tv) => tv.title);
+          if (validVariants.length === 1) {
+            pageUrl = await searchProvider(provider, validVariants[0].title, validVariants[0].year, mediaType);
+          } else if (validVariants.length > 1) {
+            const searchResults = await Promise.allSettled(
+              validVariants.map((tv) => searchProvider(provider, tv.title, tv.year, mediaType))
+            );
+            for (const r of searchResults) {
+              if (r.status === "fulfilled" && r.value) {
+                pageUrl = r.value;
+                break;
               }
             }
-            if (!pageUrl) return [];
-            let targetUrl = pageUrl;
-            if ((category === "tvshow" || category === "anime") && season && episode) {
-              const epUrl = yield getEpisodeUrl(provider, pageUrl, season, episode);
-              if (epUrl) targetUrl = epUrl;
-            }
-            const videos = yield extractVideos(provider, targetUrl);
-            if (!videos.length) return [];
-            return videos.map((v) => ({
-              name: `${provider.title}
+          }
+          if (!pageUrl) return [];
+          let targetUrl = pageUrl;
+          if ((category === "tvshow" || category === "anime") && season && episode) {
+            const epUrl = await getEpisodeUrl(provider, pageUrl, season, episode);
+            if (epUrl) targetUrl = epUrl;
+          }
+          const videos = await extractVideos(provider, targetUrl);
+          if (!videos.length) return [];
+          return videos.map((v) => ({
+            name: `${provider.title}
 ${v.server || detectServer(v.url)}`,
-              title: `${v.quality || "HD"}
+            title: `${v.quality || "HD"}
 \u2699\uFE0F ${v.server || detectServer(v.url)}
 \u{1F517} ${provider.title}`,
-              description: v.lang || (category === "anime" && !(Array.isArray(provider.language) && provider.language.includes("*")) ? [.../* @__PURE__ */ new Set([...Array.isArray(provider.language) ? provider.language : [], "ja"])].join(",") : Array.isArray(provider.language) ? provider.language.join(",") : ""),
-              url: v.url,
-              behaviorHints: {
-                notWebReady: true,
-                bingeGroup: `alfa|${provider.name}|${v.server || detectServer(v.url)}`
-              }
-            }));
-          } catch (e) {
-            return [];
-          }
-        }))
-      );
-      for (const r of chunkResults) {
-        if (r.status === "fulfilled") results.push(...r.value);
-      }
-      if (results.length >= 30) break;
+            description: v.lang || (category === "anime" && !(Array.isArray(provider.language) && provider.language.includes("*")) ? [.../* @__PURE__ */ new Set([...Array.isArray(provider.language) ? provider.language : [], "ja"])].join(",") : Array.isArray(provider.language) ? provider.language.join(",") : ""),
+            ...v.infoHash ? {} : { url: v.url },
+            ...v.infoHash ? { infoHash: v.infoHash } : {},
+            ...v.sources ? { sources: v.sources } : {},
+            behaviorHints: {
+              notWebReady: !v.infoHash,
+              bingeGroup: `alfa|${provider.name}|${v.server || detectServer(v.url)}`,
+              ...v.filename ? { filename: v.filename } : {}
+            }
+          }));
+        } catch {
+          return [];
+        }
+      })
+    );
+    for (const r of chunkResults) {
+      if (r.status === "fulfilled") results.push(...r.value);
     }
-    return results.slice(0, 50);
-  });
+    if (results.length >= 30) break;
+  }
+  return results.slice(0, 50);
 }
 function chunkArray(arr, size) {
   const chunks = [];

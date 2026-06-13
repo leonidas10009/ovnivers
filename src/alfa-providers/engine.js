@@ -353,8 +353,24 @@ async function extractVideos(provider, pageUrl) {
     for (const link of links) {
       const href = $(link).attr('href');
       if (href && (href.startsWith('magnet:') || href.endsWith('.torrent'))) {
-        const label = $(link).text().trim() || cfg.defaultQuality || 'HD';
-        results.push({ url: href, server: 'torrent', quality: label });
+        const label = $(link).text().trim() || '';
+        const infoHashMatch = href.match(/urn:btih:([a-fA-F0-9]{40})/i);
+        const qualityMatch = label.match(/\b(4K|2160p?|1080p?|720p?|480p?)\b/i);
+        const sources = [];
+        const trRe = /tr=([^&]+)/g;
+        let m;
+        while ((m = trRe.exec(href)) !== null) {
+          sources.push('tracker:' + decodeURIComponent(m[1]));
+        }
+        if (infoHashMatch) sources.push('dht:' + infoHashMatch[1].toLowerCase());
+        results.push({
+          url: href,
+          server: 'torrent',
+          quality: (qualityMatch ? qualityMatch[1] : '') || cfg.defaultQuality || 'HD',
+          ...(infoHashMatch ? { infoHash: infoHashMatch[1].toLowerCase() } : {}),
+          ...(sources.length ? { sources } : {}),
+          ...(label ? { filename: label } : {})
+        });
       }
     }
   }
