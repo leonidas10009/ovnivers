@@ -1,6 +1,6 @@
-# Ovnivers — Stream Provider v1.4.17
+# Ovnivers — Stream Provider v1.4.18
 
-Addon para **Stremio** con streams de multiples fuentes. Sin catalogos propios — funciona con addons de catalogo externos (ej. TMDB Community Addon).
+Addon para **Stremio** con catálogo en español y streams de múltiples fuentes.
 
 ## Instalacion
 
@@ -84,6 +84,7 @@ Busca con multiples variantes del título (EN/ES/JA/slug) en paralelo.
 | `/manifest.json` | Stremio manifest (respeta `?configured=`) |
 | `/stream/:type/:id.json` | Streams (backend + anime proxy + alfa + locals) |
 | `/meta/:type/:id.json` | Metadata (TMDb + anime) |
+| `/health` | Estado de todos los providers (stats, fallos, salud) |
 | `/configure` | Panel de configuracion |
 | `/` | Health check |
 
@@ -118,6 +119,17 @@ node build.js    # Build de scrapers desde src/
 - **Engine**: Threshold de búsqueda 0.35→0.5 + verificación de palabra clave (≥3 chars)
 - **Bundle**: `alfa-providers.js` regenerado con esbuild
 - **Docs**: Versiones sincronizadas a 1.4.15
+
+### v1.4.18 — Paginación real, .env, calidad estandarizada, health check
+
+- **Paginación real**: `skip` → página correcta (antes `skip=100` era página 100, ahora página 6). Campo `next` en respuesta. `{page}` añadido a trending movie/series
+- **Config vía `.env`**: `dotenv` añadido, `TMDB_KEY` y `PORT` desde variables de entorno. `.env.example` creado
+- **Etiquetado de calidad**: `normalizeQuality()` mapea 20+ variantes a 6 estándar (`4K`, `1080p`, `720p`, `480p`, `CAM`, `HD`). Captura `UHD`, `FHD`, `CAM`, `TS`, `TC`, `SCR`, etc. `matchesQuality()` filtra CAM/TS automáticamente
+- **Health check**: Stats por provider (total, ok, fail, failStreak, avgMs). Auto-deshabilitado tras 5 fallos consecutivos. Endpoint `GET /health` con detalle
+- **Meta handler**: `getTMDbMeta()` ahora usa `language=es` para títulos en español
+- **Raíz**: `test_*.js` movidos a `tests/`. `.env` añadido a `.gitignore`
+- **Bundle**: `alfa-providers.js` regenerado con esbuild
+- **Docs**: Versiones sincronizadas a 1.4.18
 
 ### v1.4.17 — Prefijo propio 'ovn:' para catálogo (sin competencia de otros addons)
 
@@ -181,16 +193,17 @@ title: "1080p | ProviderName\nServerName\nSerieEpisodio"
 
 ## TODO / Próximas mejoras
 
+- [x] **Health check de scrapers** — Stats en tiempo real + auto-disable + `GET /health`
+- [x] **Caché de metadata** — `metaCache` con TTL 1h + `MAX_CACHE=1000`
+- [x] **Deduplicación de streams** — `dedupeStreams()` por infoHash/url/name/title
+- [x] **Etiquetado de calidad estandarizado** — `normalizeQuality()` con 20+ variantes → 6 estándar
+- [x] **Paginación real en catálogos** — `skip`→ página, campo `next` en respuesta
+- [x] **Config vía `.env`** — `dotenv` + `.env.example` + `TMDB_KEY`/`PORT` desde entorno
+- [x] **Limpiar raíz** — `test_*.js` movidos a `tests/`
 - [ ] **Tests automatizados** — Suite de tests que verifique que cada scraper responde estructura válida
-- [ ] **Health check de scrapers** — Script que detecte providers caídos automáticamente
-- [ ] **Caché de metadata** — Cache LRU para llamadas a TMDB en meta handler (evitar rate limiting)
-- [ ] **Deduplicación de streams** — Agrupar streams duplicados por infoHash o URL
-- [ ] **Etiquetado de calidad estandarizado** — Extraer calidad de forma consistente en todos los providers
-- [ ] **Paginación real en catálogos** — Exponer páginas de TMDB correctamente en Stremio
-- [ ] **Config vía `.env`** — Mover TMDB key, puerto, etc a variables de entorno
-- [ ] **Limpiar raíz** — Mover `test_*.js` a `tests/`
 - [ ] **Soporte Docker** — Dockerfile + docker-compose.yml para deploy sencillo
 - [ ] **Priorizar providers por velocidad** — Ordenar streams: más rápidos primero
+- [ ] **Idioma configurable en TMDB** — Opción en el panel de configuración para elegir idioma del catálogo/meta
 
 ## Créditos
 
