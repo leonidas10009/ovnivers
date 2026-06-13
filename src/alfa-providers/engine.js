@@ -330,6 +330,30 @@ async function extractVideos(provider, pageUrl) {
     }
   }
 
+  if (cfg.type === 'jkplayer') {
+    const re = cfg.varPattern instanceof RegExp ? cfg.varPattern : new RegExp(cfg.varPattern, 'g');
+    let m;
+    while ((m = re.exec(html)) !== null) {
+      const src = (m[1] || '').match(/src=["']([^"']+)["']/);
+      if (src) results.push({ url: src[1], server: detectServer(src[1]), quality: cfg.defaultQuality || 'HD' });
+    }
+    for (const r of results) {
+      if (!r.url || !r.url.includes('/jkplayer/')) continue;
+      try {
+        const body = await fetchHTML(r.url);
+        let vm = body.match(/url:\s*'([^']+\.m3u8[^']*)'/);
+        if (!vm) {
+          const b64 = body.match(/atob\('([^']+)'\)/);
+          if (b64) vm = [null, Buffer.from(b64[1], 'base64').toString()];
+        }
+        if (vm) {
+          r.url = vm[1];
+          r.server = detectServer(vm[1]);
+        }
+      } catch {}
+    }
+  }
+
   if (cfg.type === 'api') {
     const apiUrl = typeof cfg.apiUrl === 'function'
       ? cfg.apiUrl(provider.baseUrl, pageUrl, html)

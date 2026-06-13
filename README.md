@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.4.13
+# Ovnivers — Stream Provider v1.4.14
 
 Addon para **Stremio** con streams de multiples fuentes. Sin catalogos propios — funciona con addons de catalogo externos (ej. TMDB Community Addon).
 
@@ -41,13 +41,13 @@ Busca con multiples variantes del título (EN/ES/JA/slug) en paralelo.
 | **Anime** | 10 | 12 | AnimeFLV, JKAnime, TioAnime, TVAnime (MonosChinos), HenaoJara, EstrenosAnime, SoloLatino, TioDonghua, DoramasQueen, HackTorrent |
 | **Documentales** | 3 | 1 | AreaDocumental, DocumentalesOnline, EliteTorrent |
 
-> ⚠️ **Nota:** Solo JKAnime extrae videos server-side (JS inline). AnimeFLV, TioAnime, HenaoJara y otros encuentran las páginas pero cargan videos dinámicamente (requieren JS en cliente). Ver [Estado por provider](#estado-por-provider) abajo.
+> ⚠️ **Nota:** JKAnime extrae videos server-side (HLS directo vía resolución de `jkplayer/um`). AnimeFLV, TioAnime, HenaoJara y otros encuentran las páginas pero cargan videos dinámicamente (requieren JS en cliente). Ver [Estado por provider](#estado-por-provider) abajo.
 
 ### Estado por provider
 
 | Provider | Búsqueda | Episodios | Videos | Notas |
 |---|---|---|---|---|
-| **JKAnime** | ✅ | ✅ (`{slug}/{episode}/`) | ✅ (5 src) | Único con video inline |
+| **JKAnime** | ✅ | ✅ (`{slug}/{episode}/`) | ✅ (HLS directo) | Resuelve `jkplayer/um` → `.m3u8` real |
 | **AnimeFLV** | ✅ | 🔄 (`var episodes`) | ❌ dinámico | Encuentra serie, video vía JS |
 | **TioAnime** | ✅ | 🔄 (`var episodes`) | ❌ dinámico | Encuentra serie, video vía JS |
 | **HenaoJara** | ✅ | ❌ sin config | ❌ dinámico | Encuentra página, video vía JS |
@@ -101,6 +101,15 @@ node build.js    # Build de scrapers desde src/
 - **URL:** https://ovnivers.onrender.com
 
 ## Changelog
+
+### v1.4.14 — JKAnime HLS resolution nativa
+
+- **JKAnime**: Nuevo tipo `jkplayer` en engine.js — resuelve iframes `jkplayer/um?e=` a URLs HLS reales (`.m3u8`)
+- **JKAnime**: Streams ahora reproducen directamente en Stremio via `nika.playmudos.com/*.m3u8` (token firmado)
+- **JKAnime**: Fallback `atob()` para URLs embed en segundo DPlayer config
+- **Engine**: Handler aislado (`type: 'jkplayer'`) — riesgo cero a otros providers
+- **Bundle**: `alfa-providers.js` regenerado con esbuild
+- **Docs**: Versiones sincronizadas a 1.4.14
 
 ### v1.4.13 — HackTorrent reactivado, PelisPanda dominio actualizado
 

@@ -336,7 +336,7 @@ module.exports = [
     categories: ['anime'], language: ['cast', 'lat'], active: true, adult: false,
     search: { url: '/buscar/{query}', itemSelector: '.anime__item', titleSelector: 'h5 a', linkSelector: 'a' },
     episodes: { type: 'url', pattern: '/{slug}/{episode}/' },
-    videos: { type: 'jslist', varPattern: /video\[\d+\] = '(.*?)';/g, defaultQuality: 'HD' }
+    videos: { type: 'jkplayer', varPattern: /video\[\d+\] = '(.*?)';/g, defaultQuality: 'HD' }
   },
   {
     name: 'lamovie', title: 'LaMovie', baseUrl: 'https://la.movie',
