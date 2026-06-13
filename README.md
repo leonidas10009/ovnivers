@@ -171,7 +171,20 @@ title: "1080p | ProviderName\nServerName\nSerieEpisodio"
 - **Línea extra** — episodio, HDR, Dual Audio, etc. (preservado del title original)
 - **Flags** — banderas de idioma en `name` junto a la calidad (no se repiten en `title`)
 
-## Creditos
+## TODO / Próximas mejoras
+
+- [ ] **Tests automatizados** — Suite de tests que verifique que cada scraper responde estructura válida
+- [ ] **Health check de scrapers** — Script que detecte providers caídos automáticamente
+- [ ] **Caché de metadata** — Cache LRU para llamadas a TMDB en meta handler (evitar rate limiting)
+- [ ] **Deduplicación de streams** — Agrupar streams duplicados por infoHash o URL
+- [ ] **Etiquetado de calidad estandarizado** — Extraer calidad de forma consistente en todos los providers
+- [ ] **Paginación real en catálogos** — Exponer páginas de TMDB correctamente en Stremio
+- [ ] **Config vía `.env`** — Mover TMDB key, puerto, etc a variables de entorno
+- [ ] **Limpiar raíz** — Mover `test_*.js` a `tests/`
+- [ ] **Soporte Docker** — Dockerfile + docker-compose.yml para deploy sencillo
+- [ ] **Priorizar providers por velocidad** — Ordenar streams: más rápidos primero
+
+## Créditos
 
 - 62 scrapers originales: Yoruix, Phisher98, Wooodyhood, Piratezoro9, Abinanthankv, KennethJYS, Real-Morpheus, Xyr0nX, Yatin-Code, RaymondNoodles, D3adlyRocket
 - Anime proxy: [Pigamer37/animeflv-stremio-addon](https://github.com/Pigamer37/animeflv-stremio-addon)
