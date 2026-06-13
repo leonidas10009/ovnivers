@@ -218,7 +218,7 @@ async function getTMDbId(imdbId, mediaType) {
 }
 
 async function getTMDbMeta(tmdbId, mediaType) {
-  const url = `https://api.themoviedb.org/3/${mediaType === 'tv' ? 'tv' : 'movie'}/${tmdbId}?api_key=${TMDB_KEY}&language=en`;
+  const url = `https://api.themoviedb.org/3/${mediaType === 'tv' ? 'tv' : 'movie'}/${tmdbId}?api_key=${TMDB_KEY}&language=es`;
   return await fetchAPI(url);
 }
 
