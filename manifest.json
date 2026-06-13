@@ -471,9 +471,12 @@
         "m3u8"
       ],
       "logo": "https://i.postimg.cc/CLRByKRf/corsaroviola.png",
-      "contentLanguage": [
+"contentLanguage": [
         "en",
-        "it"
+        "hi",
+        "es",
+        "cast",
+        "lat"
       ]
     },
     {
