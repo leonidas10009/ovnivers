@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.4.18
+# Ovnivers — Stream Provider v1.4.19
 
 Addon para **Stremio** con catálogo en español y streams de múltiples fuentes.
 
@@ -119,6 +119,15 @@ node build.js    # Build de scrapers desde src/
 - **Engine**: Threshold de búsqueda 0.35→0.5 + verificación de palabra clave (≥3 chars)
 - **Bundle**: `alfa-providers.js` regenerado con esbuild
 - **Docs**: Versiones sincronizadas a 1.4.15
+
+### v1.4.19 — Alfa providers fix: selectores actualizados + iframe-chain engine
+
+- **Fix crítico**: `require('./providers/alfa-providers')` devolvía `{__esModule, default: fn}` pero se esperaba la función directa — Alfa providers (80+ scrapers ES) nunca se ejecutaban desde el manifiesto.
+- **Selectores actualizados**: 35 providers ahora funcionales (vs 0). Patrón principal: sitios WordPress cambiaron de `<article>` a `<li>` en resultados de búsqueda.
+- **Nuevo tipo `iframe-chain`**: Resolución en 2 pasos para sitios con iframes anidados — extrae `data-src` → fetch embed page → iframe src real (ej. PelisPedia → fastream.to).
+- **Torrentio**: Añadido `es`, `cast`, `lat` a contentLanguage. Disponible para usuarios español.
+- **Bundle**: `alfa-providers.js` regenerado con esbuild.
+- **Docs**: Versiones sincronizadas a 1.4.19
 
 ### v1.4.18 — Paginación real, .env, calidad estandarizada, health check
 

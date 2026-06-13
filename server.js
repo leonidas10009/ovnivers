@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.4.18
+ * Ovnivers — Stremio Addon Backend v1.4.19
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
@@ -18,7 +18,7 @@ const catalog = require('./src/catalog/index');
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.4.18';
+const VERSION = '1.4.19';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 const PIGAMER = 'https://pigamer37.alwaysdata.net';
