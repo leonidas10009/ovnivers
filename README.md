@@ -102,12 +102,14 @@ node build.js    # Build de scrapers desde src/
 
 ## Changelog
 
-### v1.4.14 — JKAnime HLS resolution nativa
+### v1.4.14 — JKAnime HLS resolution nativa + Meta handler fix
 
 - **JKAnime**: Nuevo tipo `jkplayer` en engine.js — resuelve iframes `jkplayer/um?e=` a URLs HLS reales (`.m3u8`)
 - **JKAnime**: Streams ahora reproducen directamente en Stremio via `nika.playmudos.com/*.m3u8` (token firmado)
 - **JKAnime**: Fallback `atob()` para URLs embed en segundo DPlayer config
 - **Engine**: Handler aislado (`type: 'jkplayer'`) — riesgo cero a otros providers
+- **Engine**: Threshold de búsqueda 0.35→0.5 + verificación de palabra clave para evitar falsos positivos
+- **Meta handler**: Fallback de tipo — si falla la consulta TMDB con un tipo, reintenta con el alternativo (movie↔tv), solucionando fichas incorrectas cuando el tipo no coincide
 - **Bundle**: `alfa-providers.js` regenerado con esbuild
 - **Docs**: Versiones sincronizadas a 1.4.14
 

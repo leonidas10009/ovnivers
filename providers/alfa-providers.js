@@ -50072,7 +50072,15 @@ var require_engine = __commonJS({
           const itemYear = el.text().match(/\b(19|20)\d{2}\b/);
           if (itemYear && itemYear[0] === year) score += 0.2;
         }
-        if (score > bestScore && score > 0.35) {
+        let wordMatch = false;
+        const queryWords = titleClean.split(" ").filter((w) => w.length >= 3);
+        if (queryWords.length > 0) {
+          const itemLower = itemTitle.toLowerCase();
+          wordMatch = queryWords.some((qw) => itemLower.includes(qw.toLowerCase()));
+        } else {
+          wordMatch = true;
+        }
+        if (score > bestScore && score > 0.5 && wordMatch) {
           bestScore = score;
           bestMatch = itemLink;
         }

@@ -1181,7 +1181,7 @@ async function handleMeta(req, res, type, id) {
   if (!config.enableBackend) return res.json({ meta: null });
 
   let contentId = extractId(id);
-  const mediaType = type === 'series' ? 'tv' : 'movie';
+  let mediaType = type === 'series' ? 'tv' : 'movie';
 
   const ck = cacheKey(type, id, 'meta');
   const cached = metaCache.get(ck);
@@ -1195,10 +1195,16 @@ async function handleMeta(req, res, type, id) {
       const converted = await getTMDbId(id, mediaType);
       if (converted) contentId = converted;
     }
-    const data = await getTMDbMeta(contentId, mediaType);
+    let data = await getTMDbMeta(contentId, mediaType);
+    // Fallback: TMDB IDs overlap between movie and TV.
+    // If the requested type returns no data, try the alternative type.
+    if (!data) {
+      mediaType = mediaType === 'tv' ? 'movie' : 'tv';
+      data = await getTMDbMeta(contentId, mediaType);
+    }
     if (!data) { res.setHeader('Access-Control-Allow-Origin', '*'); return res.json({ meta: null }); }
     const meta = {
-      id: `tmdb:${data.id}`, type,
+      id: `tmdb:${data.id}`, type: mediaType === 'tv' ? 'series' : 'movie',
       name: data.title || data.name || 'Unknown',
       poster: data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : null,
       background: data.backdrop_path ? `https://image.tmdb.org/t/p/w1280${data.backdrop_path}` : null,

@@ -126,7 +126,6 @@ async function searchProvider(provider, title, year, mediaType) {
     if (!itemTitle || !itemLink) continue;
 
     let score = similarity(itemTitle, title);
-    // Also compare against cleaned version
     const titleClean2 = titleClean.replace(/[^a-z0-9]/g, '');
     const itemClean = itemTitle.toLowerCase().replace(/[^a-z0-9]/g, '');
     if (itemClean === titleClean2) score = Math.max(score, 0.9);
@@ -138,7 +137,17 @@ async function searchProvider(provider, title, year, mediaType) {
       if (itemYear && itemYear[0] === year) score += 0.2;
     }
 
-    if (score > bestScore && score > 0.35) {
+    // Word-level guard: at least one query word (≥3 chars) must appear in result title
+    let wordMatch = false;
+    const queryWords = titleClean.split(' ').filter(w => w.length >= 3);
+    if (queryWords.length > 0) {
+      const itemLower = itemTitle.toLowerCase();
+      wordMatch = queryWords.some(qw => itemLower.includes(qw.toLowerCase()));
+    } else {
+      wordMatch = true; // skip guard for very short queries
+    }
+
+    if (score > bestScore && score > 0.5 && wordMatch) {
       bestScore = score;
       bestMatch = itemLink;
     }
