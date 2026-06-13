@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.4.15
+# Ovnivers — Stream Provider v1.4.16
 
 Addon para **Stremio** con streams de multiples fuentes. Sin catalogos propios — funciona con addons de catalogo externos (ej. TMDB Community Addon).
 
@@ -118,6 +118,13 @@ node build.js    # Build de scrapers desde src/
 - **Engine**: Threshold de búsqueda 0.35→0.5 + verificación de palabra clave (≥3 chars)
 - **Bundle**: `alfa-providers.js` regenerado con esbuild
 - **Docs**: Versiones sincronizadas a 1.4.15
+
+### v1.4.16 — Fix fichas incorrectas: meta siempre activo para tmdb: IDs
+
+- **Meta handler**: Eliminado guard `enableBackend` — la ficha siempre se sirve para IDs TMDB, independiente de la config de scrapers
+- **Manifest**: `metaPrefixes` ahora siempre incluye `'tmdb'` — Stremio siempre pide la ficha a Ovnivers primero
+- **Engine**: Substring bonus solo si query ≥5 chars; word-level guard con word boundary y mínimo 4 chars
+- **Docs**: Versiones sincronizadas a 1.4.16
 
 ### v1.4.13 — HackTorrent reactivado, PelisPanda dominio actualizado
 
