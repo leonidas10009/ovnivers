@@ -92,6 +92,63 @@ for (const scraper of manifestScrapers) {
   }
 }
 console.log(`Loaded ${localProviders.length} local provider modules`);
+localProviders.forEach(p => initProviderStats(p));
+initProviderStats({ id: 'alfa-providers', name: 'Alfa Providers' });
+initProviderStats({ id: 'backend-scrapers', name: 'Backend (2embed/VidSrc/Poseidon)' });
+initProviderStats({ id: 'pigamer37', name: 'Pigamer37 (Anime Proxy)' });
+
+// ─── Health Check / Provider Stats ─────────
+const CONSECUTIVE_FAIL_LIMIT = 5;
+const providerStats = new Map();
+
+function initProviderStats(provider) {
+  const id = provider.id || provider.name || 'unknown';
+  if (!providerStats.has(id)) {
+    providerStats.set(id, { name: provider.name || id, total: 0, ok: 0, fail: 0, failStreak: 0, totalMs: 0, lastOk: 0, lastFail: 0 });
+  }
+  return providerStats.get(id);
+}
+
+function trackProviderResult(providerId, success, timeMs) {
+  const stat = providerStats.get(providerId);
+  if (!stat) return;
+  stat.total++;
+  stat.totalMs += timeMs;
+  if (success) {
+    stat.ok++;
+    stat.failStreak = 0;
+    stat.lastOk = Date.now();
+  } else {
+    stat.fail++;
+    stat.failStreak++;
+    stat.lastFail = Date.now();
+  }
+}
+
+function isProviderHealthy(providerId) {
+  const stat = providerStats.get(providerId);
+  if (!stat) return true;
+  return stat.failStreak < CONSECUTIVE_FAIL_LIMIT;
+}
+
+function getProviderReport() {
+  const report = [];
+  for (const [id, stat] of providerStats) {
+    report.push({
+      id,
+      name: stat.name,
+      total: stat.total,
+      ok: stat.ok,
+      fail: stat.fail,
+      failStreak: stat.failStreak,
+      avgMs: stat.total > 0 ? Math.round(stat.totalMs / stat.total) : 0,
+      healthy: stat.failStreak < CONSECUTIVE_FAIL_LIMIT,
+      lastOk: stat.lastOk ? new Date(stat.lastOk).toISOString() : null,
+      lastFail: stat.lastFail ? new Date(stat.lastFail).toISOString() : null,
+    });
+  }
+  return report;
+}
 
 const streamCache = new Map();
 const CACHE_TTL = 10 * 60 * 1000;
@@ -818,7 +875,7 @@ async function scrapeLocalProviders(rawId, mediaType, type, season, episode, con
   if (!tmdbId) return [];
 
   const providers = localProviders.filter(provider =>
-    providerSupportsType(provider, mediaType, type) && providerMatchesLang(provider, config)
+    providerSupportsType(provider, mediaType, type) && providerMatchesLang(provider, config) && isProviderHealthy(provider.id)
   );
   if (!providers.length) return [];
 
@@ -835,11 +892,16 @@ async function scrapeLocalProviders(rawId, mediaType, type, season, episode, con
         const normalized = (Array.isArray(data) ? data : [])
           .map(stream => normalizeStream(stream, provider.id, provider.name, { contentLanguage: provider.contentLanguage }))
           .filter(Boolean);
+        const elapsed = Date.now() - start;
+        trackProviderResult(provider.id, normalized.length > 0, elapsed);
         if (normalized.length) {
-          console.log(`  [${provider.name}] ${normalized.length} streams (${Date.now() - start}ms)`);
+          console.log(`  [${provider.name}] ${normalized.length} streams (${elapsed}ms)`);
+        } else if (normalized.length === 0) {
+          console.log(`  [${provider.name}] 0 streams (${elapsed}ms)`);
         }
         return normalized;
       } catch (e) {
+        trackProviderResult(provider.id, false, Date.now() - start);
         console.warn(`  [${provider.name}] ${e.message}`);
         return [];
       }
@@ -868,21 +930,37 @@ async function scrapeAlfa(rawId, mediaType, type, season, episode, config) {
     tmdbId = await resolveTMDbIdForProviders(rawId, mediaType);
   }
   if (!tmdbId) return [];
+  const start = Date.now();
   try {
     const data = await withTimeout(
       Promise.resolve(scrapeAlfaProviders(type === 'anime' ? 'anime' : (isSeriesType(type) ? 'series' : type), String(tmdbId), season, episode)),
       LOCAL_PROVIDER_TIMEOUT
     );
-    return (Array.isArray(data) ? data : [])
+    const streams = (Array.isArray(data) ? data : [])
       .map(stream => normalizeStream(stream, 'alfa-providers', 'Alfa Providers'))
       .filter(Boolean);
+    trackProviderResult('alfa-providers', streams.length > 0, Date.now() - start);
+    return streams;
   } catch (e) {
+    trackProviderResult('alfa-providers', false, Date.now() - start);
     console.warn(`[alfa] ${e.message}`);
     return [];
   }
 }
 
 
+
+app.get('/health', (req, res) => {
+  const report = getProviderReport();
+  const healthy = report.filter(p => p.healthy).length;
+  const total = report.length;
+  res.json({
+    status: healthy === total ? 'ok' : 'degraded',
+    uptime: process.uptime(),
+    providers: { total, healthy, failed: total - healthy },
+    detail: report.sort((a, b) => a.failStreak - b.failStreak)
+  });
+});
 
 // ─── Manifest ─────────────────────────────
 
@@ -1007,14 +1085,17 @@ async function handleStream(req, res, type, id) {
   // ── Pigamer37: solo para anime (FLV/AV1/TioAnime/Henaojara) ──
   if (isAnime && config.enableAnime) {
     streamTasks.push((async () => {
+      const start = Date.now();
       try {
         const resolvedId = await resolveAnimeId(id);
         const proxyId = resolvedId || (rawId.match(/^\d+$/) ? `tmdb:${rawId}` : rawId);
         const data = await proxyPigamer(`/stream/series/${encodeURIComponent(proxyId)}.json?season=${season}&episode=${episode}`);
         const pigStreams = parseSources(data);
+        trackProviderResult('pigamer37', pigStreams.length > 0, Date.now() - start);
         if (pigStreams.length) console.log(`  [Pigamer37] ${pigStreams.length} streams (s${season}e${episode})`);
         return pigStreams.map(s => normalizeStream(s, 'pigamer37', 'Pigamer37')).filter(Boolean);
       } catch (e) {
+        trackProviderResult('pigamer37', false, Date.now() - start);
         console.warn(`  [Pigamer37] ${e.message}`);
         return [];
       }
@@ -1027,9 +1108,13 @@ async function handleStream(req, res, type, id) {
       const start = Date.now();
       try {
         const results = await scraper.fn(rawId, mediaType, season, episode);
+        trackProviderResult('backend-scrapers', results.length > 0, Date.now() - start);
         if (results.length > 0) console.log(`  [${scraper.name}] ${results.length} streams (${Date.now() - start}ms)`);
         return results.map(s => normalizeStream(s, scraper.name, scraper.name)).filter(Boolean);
-      } catch { return []; }
+      } catch {
+        trackProviderResult('backend-scrapers', false, Date.now() - start);
+        return [];
+      }
     }));
   }
 
@@ -1495,6 +1580,8 @@ function resetConfig() {
 
 app.get('/', (req, res) => {
   const config = parseConfig(req);
+  const report = getProviderReport();
+  const healthy = report.filter(p => p.healthy).length;
   res.json({
     name: 'Ovnivers Streams',
     version: VERSION,
@@ -1503,10 +1590,15 @@ app.get('/', (req, res) => {
     backendScrapers: BACKEND_SCRAPERS.map(s => s.name),
     animeProxy: 'Pigamer37 (AnimeFLV, AnimeAV1, TioAnime, Henaojara)',
     localScrapers: manifestScrapers.length,
+    health: {
+      endpoint: `${BASE_URL}/health`,
+      providers: `${healthy}/${report.length} healthy (${report.filter(p => !p.healthy).length} degraded)`
+    },
     uptime: Math.floor(process.uptime()),
     endpoints: {
       manifest: `${BASE_URL}/manifest.json`,
       configure: `${BASE_URL}/configure`,
+      health: `${BASE_URL}/health`,
       stream: `${BASE_URL}/stream/:type/:id.json`,
       catalog: `${BASE_URL}/catalog/:type/:id.json`,
       meta: `${BASE_URL}/meta/:type/:id.json`
