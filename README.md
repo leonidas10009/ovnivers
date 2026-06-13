@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.4.16
+# Ovnivers — Stream Provider v1.4.17
 
 Addon para **Stremio** con streams de multiples fuentes. Sin catalogos propios — funciona con addons de catalogo externos (ej. TMDB Community Addon).
 
@@ -118,6 +118,14 @@ node build.js    # Build de scrapers desde src/
 - **Engine**: Threshold de búsqueda 0.35→0.5 + verificación de palabra clave (≥3 chars)
 - **Bundle**: `alfa-providers.js` regenerado con esbuild
 - **Docs**: Versiones sincronizadas a 1.4.15
+
+### v1.4.17 — Prefijo propio 'ovn:' para catálogo (sin competencia de otros addons)
+
+- **Catálogo**: IDs cambiados de `tmdb:{id}` a `ovn:{id}` — prefijo único que solo Ovnivers maneja
+- **Meta handler**: Devuelve `id: ovn:{id}` en la respuesta; siempre activo sin depender de `enableBackend`
+- **Stream handler**: Reconoce `ovn:` prefix en `extractId()` y `parseStreamId()` — extrae el TMDB ID interno correctamente
+- **Manifest**: `idPrefixes` incluye `"ovn"` en stream, catalog y meta — Stremio nunca pide ficha a otro addon
+- **Docs**: Versiones sincronizadas a 1.4.17
 
 ### v1.4.16 — Fix fichas incorrectas: meta siempre activo para tmdb: IDs
 
