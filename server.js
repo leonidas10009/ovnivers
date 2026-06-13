@@ -897,6 +897,14 @@ app.get('/manifest.json', async (req, res) => {
     type: c.type,
     extra: [{ name: 'search', isRequired: false }]
   }));
+  if (config.enableAnime) {
+    catalogDefs.push(
+      { id: 'amatsu_seasonal_series', name: 'Anime de Temporada (Amatsu)', type: 'anime', extra: [{ name: 'search', isRequired: false }] },
+      { id: 'amatsu_airing_series', name: 'Anime Emitiéndose (Amatsu)', type: 'anime', extra: [{ name: 'search', isRequired: false }] },
+      { id: 'amatsu_trending_series', name: 'Anime Tendencias (Amatsu)', type: 'anime', extra: [{ name: 'search', isRequired: false }] },
+      { id: 'amatsu_top_series', name: 'Anime Mejor Valorado (Amatsu)', type: 'anime', extra: [{ name: 'search', isRequired: false }] }
+    );
+  }
   catalogDefs.push({
     id: 'tmdb-search',
     name: 'Búsqueda',
@@ -1087,11 +1095,25 @@ async function handleCatalog(req, res, type, id) {
 
   try {
     if (search) {
-      const result = await catalog.searchCatalog(search, page);
-      return res.json(result);
+      const [tmdbResult, anilistMetas] = await Promise.all([
+        catalog.searchCatalog(search, page),
+        catalog.searchAnilist(search)
+      ]);
+      const allMetas = [...tmdbResult.metas, ...anilistMetas];
+      const seen = new Set();
+      const deduped = [];
+      for (const m of allMetas) {
+        const key = m.id + '|' + m.name;
+        if (!seen.has(key)) { seen.add(key); deduped.push(m); }
+      }
+      return res.json({ metas: deduped.slice(0, 50) });
     }
     if (id === 'tmdb-search') {
       return res.json({ metas: [] });
+    }
+    if (id.startsWith('amatsu_')) {
+      const result = await catalog.getAmatsuCatalog(id, page);
+      return res.json(result);
     }
     const result = await catalog.getCatalog(id, page);
     res.json(result);
@@ -1120,10 +1142,30 @@ async function handleMeta(req, res, type, id) {
 
   if (!isTypeEnabled(type, config)) return res.json({ meta: null });
 
-  // Anime meta → proxy pigamer37
+  // Anime meta → Amatsu (para anilist:) o Pigamer37 (para otros)
   if (isAnimeId(id)) {
     if (!config.enableAnime) return res.json({ meta: null });
     try {
+      // Para anilist: IDs, intentar Amatsu primero (datos más ricos con synonyms)
+      if (id.startsWith('anilist:')) {
+        const amatsu = await catalog.getAmatsuMeta(id);
+        if (amatsu) {
+          const meta = {
+            id: `anilist:${amatsu.anilistId.replace('anilist:', '')}`,
+            type: 'series',
+            name: amatsu.name || amatsu.englishName || 'Unknown',
+            poster: amatsu.poster || null,
+            background: amatsu.background || null,
+            description: (amatsu.description || '').substring(0, 2000),
+            releaseInfo: amatsu.year || '',
+            imdbRating: amatsu.score || null,
+            genres: [],
+          };
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Cache-Control', `public, max-age=${META_TTL / 1000}`);
+          return res.json({ meta });
+        }
+      }
       const proxyType = 'series';
       const data = await proxyPigamer(`/meta/${proxyType}/${encodeURIComponent(id)}.json`);
       res.setHeader('Access-Control-Allow-Origin', '*');

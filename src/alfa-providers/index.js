@@ -44,6 +44,24 @@ async function resolveTitles(id, mediaType) {
     const slug = extractSlug(id);
     addVariant(slug.replace(/-/g, ' '), '');
     if (slug.includes('-')) addVariant(slug, '');
+    // Fetch Amatsu synonyms for anilist: IDs
+    if (id.startsWith('anilist:')) {
+      try {
+        const ac = new AbortController(); setTimeout(() => ac.abort(), 4000);
+        const r = await fetch(`https://amatsu.ruka.pw/meta/anime/${id}.json`, { headers: { 'User-Agent': UA }, signal: ac.signal });
+        if (r.ok) {
+          const data = await r.json();
+          if (data?.meta) {
+            if (data.meta.name) addVariant(data.meta.name, '');
+            if (data.meta.englishName && data.meta.englishName !== data.meta.name) addVariant(data.meta.englishName, '');
+            if (data.meta.altName && data.meta.altName !== data.meta.name) addVariant(data.meta.altName, '');
+            if (Array.isArray(data.meta.synonyms)) {
+              for (const syn of data.meta.synonyms) addVariant(syn, '');
+            }
+          }
+        }
+      } catch {}
+    }
   }
 
   try {

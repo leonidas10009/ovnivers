@@ -160,4 +160,103 @@ async function getFilmaffinityMeta(imdbId) {
   } catch { return null; }
 }
 
-module.exports = { CATEGORIES, catDef, getCatalog, searchCatalog, getFilmaffinityMeta };
+const AMATSU_BASE = 'https://amatsu.ruka.pw';
+
+async function getAmatsuMeta(anilistId) {
+  const id = anilistId.replace(/^anilist:/, '');
+  try {
+    const url = `${AMATSU_BASE}/meta/anime/anilist:${id}.json`;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 6000);
+    const res = await fetch(url, { headers: { 'User-Agent': UA }, signal: ctrl.signal });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data?.meta) return null;
+    return {
+      anilistId: `anilist:${id}`,
+      malId: data.meta.idMal || null,
+      name: data.meta.name,
+      englishName: data.meta.englishName,
+      altName: data.meta.altName,
+      synonyms: data.meta.synonyms || [],
+      poster: data.meta.poster || null,
+      background: data.meta.background || null,
+      description: data.meta.description || null,
+      year: data.meta.releaseInfo || null,
+      score: data.meta.imdbRating || data.meta.score || null,
+      format: (data.meta.description || '').match(/Format:\s*(\S+)/)?.[1] || null,
+      status: (data.meta.description || '').match(/Status:\s*(\S+)/)?.[1] || null,
+    };
+  } catch { return null; }
+}
+
+async function getAmatsuCatalog(catalogId, page = 1) {
+  const VALID = ['amatsu_seasonal_series', 'amatsu_airing_series', 'amatsu_trending_series', 'amatsu_top_series'];
+  if (!VALID.includes(catalogId)) return { metas: [] };
+
+  const ck = `amatsu:${catalogId}:${page}`;
+  const cached = catCache.get(ck);
+  if (cached && Date.now() - cached.time < CACHE_TTL) return { metas: cached.data };
+
+  try {
+    const url = `${AMATSU_BASE}/catalog/anime/${catalogId}.json`;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 10000);
+    const res = await fetch(url, { headers: { 'User-Agent': UA }, signal: ctrl.signal });
+    clearTimeout(timer);
+    if (!res.ok) return { metas: [] };
+    const data = await res.json();
+    if (!data?.metas?.length) return { metas: [] };
+
+    const metas = data.metas.map(m => ({
+      id: m.id,
+      type: 'series',
+      name: m.name || 'Unknown',
+      poster: m.poster || null,
+      background: m.background || null,
+      description: (m.description || '').substring(0, 500),
+      releaseInfo: m.releaseInfo || m.year || '',
+      imdbRating: m.imdbRating || m.score || null,
+      genres: m.genres || [],
+    }));
+
+    catCache.set(ck, { data: metas, time: Date.now() });
+    if (catCache.size > MAX_CACHE) {
+      const first = catCache.keys().next().value;
+      catCache.delete(first);
+    }
+    return { metas };
+  } catch { return { metas: [] }; }
+}
+
+async function searchAnilist(query) {
+  try {
+    const q = encodeURIComponent(query);
+    const url = `${AMATSU_BASE}/catalog/anime/amatsu_search/search=${q}.json`;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8000);
+    const res = await fetch(url, { headers: { 'User-Agent': UA }, signal: ctrl.signal });
+    clearTimeout(timer);
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!data?.metas?.length) return [];
+    return data.metas.map(m => ({
+      id: m.id,
+      type: 'series',
+      name: m.name || 'Unknown',
+      poster: m.poster || null,
+      background: m.background || null,
+      description: (m.description || '').substring(0, 500),
+      releaseInfo: m.releaseInfo || '',
+      imdbRating: m.imdbRating || null,
+      genres: m.genres || [],
+    }));
+  } catch { return []; }
+}
+
+module.exports = {
+  CATEGORIES, catDef, getCatalog, searchCatalog,
+  getFilmaffinityMeta,
+  getAmatsuMeta, getAmatsuCatalog, searchAnilist
+};
