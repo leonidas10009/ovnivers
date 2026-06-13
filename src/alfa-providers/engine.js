@@ -416,7 +416,10 @@ async function extractVideos(provider, pageUrl) {
         const trRe = /tr=([^&]+)/g;
         let m;
         while ((m = trRe.exec(href)) !== null) {
-          sources.push('tracker:' + decodeURIComponent(m[1]));
+          const trackerUrl = decodeURIComponent(m[1]);
+          if (trackerUrl.startsWith('udp://') || trackerUrl.startsWith('http://') || trackerUrl.startsWith('https://') || trackerUrl.startsWith('ws://')) {
+            sources.push(trackerUrl);
+          }
         }
         if (infoHashMatch) sources.push('dht:' + infoHashMatch[1].toLowerCase());
         results.push({

@@ -190,7 +190,7 @@ async function scrapeAlfaProviders(type, id, season, episode) {
             description: v.lang || (category === 'anime' && !(Array.isArray(provider.language) && provider.language.includes('*'))
               ? [...new Set([...(Array.isArray(provider.language) ? provider.language : []), 'ja'])].join(',')
               : (Array.isArray(provider.language) ? provider.language.join(',') : '')),
-            ...(v.infoHash ? {} : { url: v.url }),
+            ...(v.url ? { url: v.url } : {}),
             ...(v.infoHash ? { infoHash: v.infoHash } : {}),
             ...(v.sources ? { sources: v.sources } : {}),
             behaviorHints: {

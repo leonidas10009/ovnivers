@@ -836,7 +836,7 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
   return {
     name,
     title,
-    ...(!hasInfoHash && url ? { url } : {}),
+    ...(url ? { url } : {}),
     ...(hasInfoHash ? { infoHash: stream.infoHash } : {}),
     ...(stream.fileIdx !== undefined ? { fileIdx: stream.fileIdx } : {}),
     ...(stream.sources ? { sources: stream.sources } : {}),
