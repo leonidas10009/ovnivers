@@ -3,6 +3,8 @@
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
+try { require('dotenv').config(); } catch {}
+
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
@@ -1092,7 +1094,9 @@ async function handleCatalog(req, res, type, id) {
   if (!isTypeEnabled(type, config)) return res.json({ metas: [] });
 
   const search = req.query.search || '';
-  const page = parseInt(req.query.page || req.query.skip || '1') || 1;
+  const rawSkip = parseInt(req.query.skip) || 0;
+  const ITEMS_PER_PAGE = 20;
+  const page = parseInt(req.query.page) || (Math.floor(rawSkip / ITEMS_PER_PAGE) + 1);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'public, max-age=3600');
 
@@ -1109,16 +1113,22 @@ async function handleCatalog(req, res, type, id) {
         const key = m.id + '|' + m.name;
         if (!seen.has(key)) { seen.add(key); deduped.push(m); }
       }
-      return res.json({ metas: deduped.slice(0, 50) });
+      const result = { metas: deduped.slice(0, 50) };
+      if (deduped.length >= 50) result.next = `/catalog/${type}/${id}/search=${encodeURIComponent(search)}/skip=${rawSkip + 50}.json`;
+      return res.json(result);
     }
     if (id === 'tmdb-search') {
       return res.json({ metas: [] });
     }
     if (id.startsWith('amatsu_')) {
       const result = await catalog.getAmatsuCatalog(id, page);
+      if (result.next) result.next = `/catalog/${type}/${id}/skip=${rawSkip + ITEMS_PER_PAGE}.json`;
       return res.json(result);
     }
     const result = await catalog.getCatalog(id, page);
+    if (result.next) {
+      result.next = `/catalog/${type}/${id}/skip=${rawSkip + ITEMS_PER_PAGE}.json`;
+    }
     res.json(result);
   } catch (e) {
     console.error('[catalog]', e.message);

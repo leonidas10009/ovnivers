@@ -1,7 +1,7 @@
 const cheerio = require('cheerio-without-node-native') || require('cheerio');
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const TMDB_KEY = 'd80ba92bc7cefe3359668d30d06f3305';
+const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 
 async function fetchHTML(url, opts = {}) {
   try {

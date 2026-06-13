@@ -10,7 +10,7 @@ const CATEGORIES = [
   // ── Movies ──
   { id: 'tmdb-popular-movie',  name: 'Películas Populares',        type: 'movie', tmdb: '/movie/popular?language=es&page={page}' },
   { id: 'tmdb-top-movie',      name: 'Películas Mejor Valoradas',   type: 'movie', tmdb: '/movie/top_rated?language=es&page={page}' },
-  { id: 'tmdb-trending-movie', name: 'Películas en Tendencia',      type: 'movie', tmdb: '/trending/movie/week?language=es' },
+  { id: 'tmdb-trending-movie', name: 'Películas en Tendencia',      type: 'movie', tmdb: '/trending/movie/week?language=es&page={page}' },
   { id: 'tmdb-action-movie',   name: 'Acción',                      type: 'movie', tmdb: '/discover/movie?with_genres=28&language=es&sort_by=popularity.desc&page={page}' },
   { id: 'tmdb-comedy-movie',   name: 'Comedia',                     type: 'movie', tmdb: '/discover/movie?with_genres=35&language=es&sort_by=popularity.desc&page={page}' },
   { id: 'tmdb-drama-movie',    name: 'Drama',                       type: 'movie', tmdb: '/discover/movie?with_genres=18&language=es&sort_by=popularity.desc&page={page}' },
@@ -23,7 +23,7 @@ const CATEGORIES = [
   // ── Series ──
   { id: 'tmdb-popular-series', name: 'Series Populares',            type: 'series', tmdb: '/tv/popular?language=es&page={page}' },
   { id: 'tmdb-top-series',     name: 'Series Mejor Valoradas',      type: 'series', tmdb: '/tv/top_rated?language=es&page={page}' },
-  { id: 'tmdb-trending-series',name: 'Series en Tendencia',         type: 'series', tmdb: '/trending/tv/week?language=es' },
+  { id: 'tmdb-trending-series',name: 'Series en Tendencia',         type: 'series', tmdb: '/trending/tv/week?language=es&page={page}' },
 
   // ── Anime (filtrado por país JP para excluir animación occidental) ──
   { id: 'tmdb-popular-anime',  name: 'Anime Popular',               type: 'series', tmdb: '/discover/tv?with_genres=16&with_origin_country=JP&language=es&sort_by=popularity.desc&vote_count.gte=50&page={page}' },
@@ -83,13 +83,15 @@ function toMetaItem(item, type) {
   };
 }
 
+const ITEMS_PER_PAGE = 20;
+
 async function getCatalog(catalogId, page = 1) {
   const cat = catDef(catalogId);
   if (!cat) return { metas: [] };
 
   const ck = `cat:${catalogId}:${page}`;
   const cached = catCache.get(ck);
-  if (cached && Date.now() - cached.time < CACHE_TTL) return { metas: cached.data };
+  if (cached && Date.now() - cached.time < CACHE_TTL) return cached.data;
 
   await loadGenres();
   const path = cat.tmdb.replace('{page}', page);
@@ -97,12 +99,17 @@ async function getCatalog(catalogId, page = 1) {
   if (!data?.results?.length) return { metas: [] };
 
   const metas = data.results.map(r => toMetaItem(r, cat.type));
-  catCache.set(ck, { data: metas, time: Date.now() });
+  const totalPages = data.total_pages || 1;
+  const result = { metas };
+  if (page < totalPages && page < 500) {
+    result.next = page + 1;
+  }
+  catCache.set(ck, { data: result, time: Date.now() });
   if (catCache.size > MAX_CACHE) {
     const first = catCache.keys().next().value;
     catCache.delete(first);
   }
-  return { metas };
+  return result;
 }
 
 async function searchCatalog(query, page = 1) {
