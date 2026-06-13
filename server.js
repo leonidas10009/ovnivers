@@ -280,6 +280,39 @@ async function getTMDbMeta(tmdbId, mediaType) {
   return await fetchAPI(url);
 }
 
+async function getTMDbEpisodes(tmdbId) {
+  const series = await getTMDbMeta(tmdbId, 'tv');
+  if (!series?.seasons) return [];
+  const seasonNumbers = series.seasons
+    .filter(s => s.season_number > 0 && s.episode_count > 0)
+    .map(s => s.season_number)
+    .slice(0, 10);
+  const results = await Promise.allSettled(seasonNumbers.map(async sn => {
+    const url = `https://api.themoviedb.org/3/tv/${tmdbId}/season/${sn}?api_key=${TMDB_KEY}&language=es`;
+    const data = await fetchAPI(url);
+    return data?.episodes || [];
+  }));
+  const videos = [];
+  for (const item of results) {
+    if (item.status === 'fulfilled') {
+      for (const ep of item.value) {
+        if (ep.episode_number > 0) {
+          videos.push({
+            id: `ovn:${tmdbId}:${ep.season_number}:${ep.episode_number}`,
+            title: ep.name || `Episodio ${ep.episode_number}`,
+            season: ep.season_number,
+            episode: ep.episode_number,
+            released: ep.air_date || '',
+            thumbnail: ep.still_path ? `https://image.tmdb.org/t/p/w300${ep.still_path}` : null,
+            overview: (ep.overview || '').substring(0, 500),
+          });
+        }
+      }
+    }
+  }
+  return videos;
+}
+
 // ─── Backend Scrapers ─────────────────────
 
 async function scrape2embedVesy(rawId, mediaType, season, episode) {
@@ -1323,8 +1356,12 @@ async function handleMeta(req, res, type, id) {
       releaseInfo: (data.release_date || data.first_air_date || '').substring(0, 4),
       runtime: data.runtime ? `${data.runtime} min` : null,
       imdbRating: data.vote_average ? String(data.vote_average) : null,
-      genres: (data.genres || []).map(g => g.name)
+      genres: (data.genres || []).map(g => g.name),
     };
+    if (mediaType === 'tv' && data.seasons?.length) {
+      const episodes = await getTMDbEpisodes(data.id);
+      if (episodes.length) meta.videos = episodes;
+    }
     cacheSet(metaCache, ck, { data: meta, time: Date.now() }, MAX_CACHE);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cache-Control', `public, max-age=${META_TTL / 1000}`);
