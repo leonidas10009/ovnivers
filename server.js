@@ -12,6 +12,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
+const catalog = require('./src/catalog/index');
+
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 const VERSION = '1.4.13';
@@ -889,13 +891,26 @@ app.get('/manifest.json', async (req, res) => {
     { name: 'meta', types: enabledTypes, idPrefixes: metaPrefixes }
   ];
 
+  const catalogDefs = catalog.CATEGORIES.map(c => ({
+    id: c.id,
+    name: c.name,
+    type: c.type,
+    extra: [{ name: 'search', isRequired: false }]
+  }));
+  catalogDefs.push({
+    id: 'tmdb-search',
+    name: 'Búsqueda',
+    type: 'movie',
+    extra: [{ name: 'search', isRequired: true }]
+  });
+
   const manifest = {
     id: ADDON_ID,
     version: VERSION,
     name: 'Ovnivers Streams',
-    description: `Stream provider: ${localProviders.length} local + Alfa + ${BACKEND_SCRAPERS.length} backend + Pigamer37 anime. Use with external catalogs.`,
+    description: `Stream provider: ${localProviders.length} local + Alfa + ${BACKEND_SCRAPERS.length} backend + Pigamer37 anime. Catálogo en español vía TMDB.`,
     logo: `${BASE_URL}/logo.png`,
-    catalogs: [],
+    catalogs: catalogDefs,
     resources,
     types: enabledTypes,
     idPrefixes: allPrefixes,
@@ -1047,15 +1062,44 @@ function filterStreams(streams, config) {
   });
 }
 
-// ─── Catalog (disabled - pure stream provider) ──
+// ─── Catalog (TMDB en español) ────────────
 
-app.get('/catalog/:type/:id/:extra(*).json', (req, res) => {
-  res.json({ metas: [] });
+app.get('/catalog/:type/:id/:extra(*).json', async (req, res) => {
+  const { type, id } = req.params;
+  const extraStr = req.params.extra || '';
+  const extraParams = parsePathExtras(extraStr);
+  req.query = { ...req.query, ...extraParams };
+  handleCatalog(req, res, type, id);
 });
 
-app.get('/catalog/:type/:id.json', (req, res) => {
-  res.json({ metas: [] });
+app.get('/catalog/:type/:id.json', async (req, res) => {
+  handleCatalog(req, res, req.params.type, req.params.id);
 });
+
+async function handleCatalog(req, res, type, id) {
+  const config = parseConfig(req);
+  if (!isTypeEnabled(type, config)) return res.json({ metas: [] });
+
+  const search = req.query.search || '';
+  const page = parseInt(req.query.page || req.query.skip || '1') || 1;
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+
+  try {
+    if (search) {
+      const result = await catalog.searchCatalog(search, page);
+      return res.json(result);
+    }
+    if (id === 'tmdb-search') {
+      return res.json({ metas: [] });
+    }
+    const result = await catalog.getCatalog(id, page);
+    res.json(result);
+  } catch (e) {
+    console.error('[catalog]', e.message);
+    res.json({ metas: [] });
+  }
+}
 
 // ─── Meta ─────────────────────────────────
 
