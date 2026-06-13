@@ -129,22 +129,23 @@ async function searchProvider(provider, title, year, mediaType) {
     const titleClean2 = titleClean.replace(/[^a-z0-9]/g, '');
     const itemClean = itemTitle.toLowerCase().replace(/[^a-z0-9]/g, '');
     if (itemClean === titleClean2) score = Math.max(score, 0.9);
-    if (itemClean.includes(titleClean2) || titleClean2.includes(itemClean)) {
+    // Substring bonus: only if query is >=5 chars or covers >=40% of title
+    // Prevents common words ("from", "love", "the") from false-matching unrelated shows
+    if (titleClean2.length >= 5 && (itemClean.includes(titleClean2) || titleClean2.includes(itemClean))) {
       score = Math.max(score, 0.75);
     }
     if (year) {
       const itemYear = el.text().match(/\b(19|20)\d{2}\b/);
-      if (itemYear && itemYear[0] === year) score += 0.2;
+      if (itemYear && itemYear[0] === year) score += 0.25;
     }
 
-    // Word-level guard: at least one query word (≥3 chars) must appear in result title
-    let wordMatch = false;
-    const queryWords = titleClean.split(' ').filter(w => w.length >= 3);
+    // Word-level guard (word boundary): at least one query word (≥4 chars) must 
+    // match as a complete word (not just substring) in the result title
+    let wordMatch = true;
+    const queryWords = titleClean.split(' ').filter(w => w.length >= 4);
     if (queryWords.length > 0) {
-      const itemLower = itemTitle.toLowerCase();
-      wordMatch = queryWords.some(qw => itemLower.includes(qw.toLowerCase()));
-    } else {
-      wordMatch = true; // skip guard for very short queries
+      const itemLower = ' ' + itemTitle.toLowerCase().replace(/[^a-z0-9]/g, ' ') + ' ';
+      wordMatch = queryWords.some(qw => itemLower.includes(' ' + qw.toLowerCase() + ' '));
     }
 
     if (score > bestScore && score > 0.5 && wordMatch) {
