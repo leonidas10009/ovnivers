@@ -71,7 +71,7 @@ function itemGenres(item) {
 
 function toMetaItem(item, type) {
   return {
-    id: `tmdb:${item.id}`,
+    id: `ovn:${item.id}`,
     type,
     name: item.title || item.name || 'Unknown',
     poster: item.poster_path ? `https://image.tmdb.org/t/p/w342${item.poster_path}` : null,

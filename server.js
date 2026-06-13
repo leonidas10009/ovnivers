@@ -421,7 +421,9 @@ function mapType(type) {
 }
 
 function extractId(rawId) {
-  return rawId.startsWith('tmdb:') ? rawId.substring(5) : rawId;
+  if (rawId.startsWith('tmdb:')) return rawId.substring(5);
+  if (rawId.startsWith('ovn:')) return rawId.substring(4);
+  return rawId;
 }
 
 function cacheKey(type, id, extra) {
@@ -437,9 +439,10 @@ function parseStreamId(id, fallbackSeason = 1, fallbackEpisode = 1) {
   let season = fallbackSeason;
   let episode = fallbackEpisode;
 
-  if (id.startsWith('tmdb:')) {
+  if (id.startsWith('tmdb:') || id.startsWith('ovn:')) {
+    const prefix = id.startsWith('tmdb:') ? 'tmdb:' : 'ovn:';
     const parts = id.split(':');
-    contentId = parts.length > 1 ? parts[1] : id.substring(5);
+    contentId = parts.length > 1 ? parts[1] : id.substring(prefix.length);
     if (parts.length >= 4) {
       season = parseInt(parts[2]) || season;
       episode = parseInt(parts[3]) || episode;
@@ -876,11 +879,11 @@ app.get('/manifest.json', async (req, res) => {
   if (config.enableSeries || config.enableAnime) enabledTypes.push('series');
   if (!enabledTypes.includes('other')) enabledTypes.push('other');
 
-  const streamPrefixes = [];
+  const streamPrefixes = ['ovn'];
   if (config.enableBackend) streamPrefixes.push('tt', 'tmdb');
   if (config.enableAnime) streamPrefixes.push(...ANIME_PREFIXES);
 
-  const metaPrefixes = ['tmdb'];
+  const metaPrefixes = ['ovn', 'tmdb'];
   if (config.enableBackend) metaPrefixes.push('tt');
   if (config.enableAnime) metaPrefixes.push(...ANIME_PREFIXES);
 
@@ -1204,8 +1207,9 @@ async function handleMeta(req, res, type, id) {
       data = await getTMDbMeta(contentId, mediaType);
     }
     if (!data) { res.setHeader('Access-Control-Allow-Origin', '*'); return res.json({ meta: null }); }
+    const metaIdPrefix = id.startsWith('ovn:') ? 'ovn:' : 'tmdb:';
     const meta = {
-      id: `tmdb:${data.id}`, type: mediaType === 'tv' ? 'series' : 'movie',
+      id: `${metaIdPrefix}${data.id}`, type: mediaType === 'tv' ? 'series' : 'movie',
       name: data.title || data.name || 'Unknown',
       poster: data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : null,
       background: data.backdrop_path ? `https://image.tmdb.org/t/p/w1280${data.backdrop_path}` : null,
