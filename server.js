@@ -197,9 +197,10 @@ function parseConfig(req) {
 function matchesQuality(streamName, qualityPref) {
   if (qualityPref === 'all') return true;
   const name = (streamName || '').toLowerCase();
-  if (qualityPref === '4k') return name.includes('4k') || name.includes('2160');
-  if (qualityPref === '1080p') return name.includes('1080') || name.includes('fhd');
-  if (qualityPref === '720p') return name.includes('720') || name.includes('hd');
+  const isLowQuality = /\b(cam|ts|tc|scr|r5|camrip|hdts|hdtc)\b/.test(name);
+  if (qualityPref === '4k') return (name.includes('4k') || name.includes('2160') || name.includes('uhd')) && !isLowQuality;
+  if (qualityPref === '1080p') return (name.includes('1080') || name.includes('fhd')) && !isLowQuality;
+  if (qualityPref === '720p') return (name.includes('720') || name.includes('1080') || name.includes('4k') || name.includes('2160')) && !isLowQuality;
   return true;
 }
 
@@ -589,6 +590,17 @@ function detectServerName(url) {
   }
 }
 
+function normalizeQuality(text) {
+  if (!text) return 'HD';
+  const t = String(text).trim();
+  if (/\b(4K|2160p?|UHD|Ultra\s*HD)\b/i.test(t)) return '4K';
+  if (/\b(1080p?|FHD|Full\s*HD)\b/i.test(t)) return '1080p';
+  if (/\b(720p?|HD\s*Ready)\b/i.test(t)) return '720p';
+  if (/\b(480p?|SD)\b/i.test(t)) return '480p';
+  if (/\b(CAM|TS|TC|SCR|R5|CAMRip|Telesync|HDTS|HDTC)\b/i.test(t)) return 'CAM';
+  return 'HD';
+}
+
 function normalizeStream(stream, providerId, providerName, opts = {}) {
   if (!stream || typeof stream !== 'object') return null;
   const url = stream.url || stream.file || stream.src || stream.link;
@@ -652,11 +664,12 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
     }
   }
 
-  // Extract quality from ANYWHERE in stream data
+  // Extract and normalize quality from ANYWHERE in stream data
   const allText = [stream.quality, rawName, rawTitle].filter(Boolean).join(' ');
-  const quality = stream.quality
-    || allText.match(/\b(4K|2160p?|1080p?|720p?|480p?|HD|FHD|SD)\b/i)?.[0]
-    || 'HD';
+  const rawQuality = stream.quality
+    || allText.match(/\b(4K|2160p?|UHD|Ultra\s*HD|1080p?|FHD|Full\s*HD|720p?|HD\s*Ready|480p?|SD|CAM|TS|TC|SCR|R5|CAMRip|Telesync|HDTS|HDTC)\b/i)?.[0]
+    || '';
+  const quality = normalizeQuality(rawQuality);
 
   // Language flags: from contentLanguage (authoritative), description (Alfa),
   // audio descriptor, or inline emoji in name/title
@@ -695,7 +708,7 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
   const addLine = (text) => {
     const t = text.trim();
     if (t && !seen.has(t.toLowerCase()) && t !== providerLabel && t !== sourceName && t !== quality
-        && !t.match(/^\s*(HD|4K|2160p?|1080p?|720p?|480p?)\s*$/i)
+        && !t.match(/^\s*(4K|UHD|2160p?|1080p?|FHD|720p?|480p?|HD|CAM|TS|TC|SCR|SD)\s*$/i)
         && !t.match(/^[\u{1F1E6}-\u{1F1FF}]{2,}$/u)) {
       seen.add(t.toLowerCase());
       titleParts.push(t);
@@ -705,7 +718,7 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
   // From nameLines[1+] (strip quality and flags but keep server info)
   for (let i = 1; i < nameLines.length; i++) {
     const cleaned = nameLines[i]
-      .replace(/\b(4K|2160p?|1080p?|720p?|480p?)\b/gi, '')
+      .replace(/\b(4K|2160p?|UHD|1080p?|FHD|720p?|480p?|CAM|TS|TC|SCR)\b/gi, '')
       .replace(/[\u{1F1E6}-\u{1F1FF}]{2,}/ug, '')
       .replace(/^[⚙️🔗📦\s]+/, '')
       .replace(/[\s,;]+/g, ' ')
@@ -720,7 +733,7 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
       .replace(/[\s,;]+/g, ' ')
       .trim();
     // Strip quality+separator prefix (e.g., "1080p | Notorrent Server" → "Notorrent Server")
-    cleaned = cleaned.replace(/^\s*(HD|4K|2160p?|1080p?|720p?|480p?)\s*[|\-·]\s*/i, '').trim();
+    cleaned = cleaned.replace(/^\s*(4K|UHD|2160p?|1080p?|FHD|720p?|480p?|HD|CAM|TS|TC|SCR)\s*[|\-·]\s*/i, '').trim();
     if (cleaned) addLine(cleaned);
   }
 
