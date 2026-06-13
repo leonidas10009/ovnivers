@@ -6,7 +6,7 @@ const TMDB_KEY = 'd80ba92bc7cefe3359668d30d06f3305';
 async function fetchHTML(url, opts = {}) {
   try {
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), opts.timeout || 8000);
+    const t = setTimeout(() => ctrl.abort(), opts.timeout || 12000);
     const res = await fetch(url, {
       headers: { 'User-Agent': UA, 'Accept': 'text/html,application/xhtml+xml,*/*', ...opts.headers },
       signal: ctrl.signal
@@ -79,14 +79,24 @@ async function searchProvider(provider, title, year, mediaType) {
   const cfg = provider.search;
   if (!cfg) return null;
 
-  let searchUrl;
-  if (typeof cfg.url === 'function') {
-    searchUrl = cfg.url(provider.baseUrl, title);
-  } else {
-    searchUrl = provider.baseUrl + cfg.url.replace('{query}', encodeURIComponent(title));
+  const titleClean = title.replace(/[_-]/g, ' ').replace(/\s+/g, ' ').trim();
+
+  async function trySearch(query) {
+    let searchUrl;
+    if (typeof cfg.url === 'function') {
+      searchUrl = cfg.url(provider.baseUrl, query);
+    } else {
+      searchUrl = provider.baseUrl + cfg.url.replace('{query}', encodeURIComponent(query));
+    }
+    return await fetchHTML(searchUrl, { headers: cfg.headers, timeout: 10000 });
   }
 
-  const html = await fetchHTML(searchUrl, { headers: cfg.headers, timeout: 8000 });
+  // Try full title first, then fallback to first significant word(s)
+  let html = await trySearch(titleClean);
+  if (!html && titleClean.includes(' ')) {
+    const short = titleClean.split(' ').slice(0, 2).join(' ');
+    if (short.length > 3) html = await trySearch(short);
+  }
   if (!html) return null;
 
   const $ = cheerio.load(html);
@@ -116,12 +126,19 @@ async function searchProvider(provider, title, year, mediaType) {
     if (!itemTitle || !itemLink) continue;
 
     let score = similarity(itemTitle, title);
+    // Also compare against cleaned version
+    const titleClean2 = titleClean.replace(/[^a-z0-9]/g, '');
+    const itemClean = itemTitle.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (itemClean === titleClean2) score = Math.max(score, 0.9);
+    if (itemClean.includes(titleClean2) || titleClean2.includes(itemClean)) {
+      score = Math.max(score, 0.75);
+    }
     if (year) {
       const itemYear = el.text().match(/\b(19|20)\d{2}\b/);
       if (itemYear && itemYear[0] === year) score += 0.2;
     }
 
-    if (score > bestScore && score > 0.4) {
+    if (score > bestScore && score > 0.35) {
       bestScore = score;
       bestMatch = itemLink;
     }
@@ -133,6 +150,12 @@ async function searchProvider(provider, title, year, mediaType) {
 async function getEpisodeUrl(provider, seriesUrl, season, episode) {
   const cfg = provider.episodes;
   if (!cfg) return seriesUrl;
+
+  if (cfg.type === 'url') {
+    const slug = seriesUrl.replace(/\/+$/, '').split('/').pop();
+    const url = cfg.pattern.replace('{slug}', slug).replace('{episode}', episode);
+    try { return new URL(url, provider.baseUrl).href; } catch { return seriesUrl; }
+  }
 
   const html = await fetchHTML(seriesUrl);
   if (!html) return null;
@@ -293,6 +316,17 @@ async function extractVideos(provider, pageUrl) {
           });
         }
       } catch {}
+    }
+  }
+
+  if (cfg.type === 'jslist') {
+    const re = cfg.varPattern instanceof RegExp ? cfg.varPattern : new RegExp(cfg.varPattern, 'g');
+    let m;
+    while ((m = re.exec(html)) !== null) {
+      const src = (m[1] || '').match(/src=["']([^"']+)["']/);
+      if (src) {
+        results.push({ url: src[1], server: detectServer(src[1]), quality: cfg.defaultQuality || 'HD' });
+      }
     }
   }
 

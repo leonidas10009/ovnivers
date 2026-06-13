@@ -292,7 +292,7 @@ module.exports = [
   },
 
   // ═══════════════════════════════════════════
-  // ANIME — 20 active providers
+  // ANIME — 10 active, 12 inactive
   // ═══════════════════════════════════════════
 
   {
@@ -309,14 +309,14 @@ module.exports = [
   },
   {
     name: 'animejl', title: 'AnimeJL', baseUrl: 'https://www.anime-jl.net',
-    categories: ['anime'], language: ['cast', 'lat', 'vose'], active: true, adult: false,
-    search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
+    categories: ['anime'], language: ['cast', 'lat', 'vose'], active: false, adult: false,
+    search: { url: '/?s={query}', itemSelector: 'article.Anime', titleSelector: 'h3.Title', linkSelector: 'a' },
     videos: { type: 'jsvar', varPattern: /var videos = (\[.*?\]);/, defaultQuality: 'HD' }
   },
   {
     name: 'estrenosanime', title: 'EstrenosAnime', baseUrl: 'https://estrenosanime.net',
     categories: ['anime'], language: ['*'], active: true, adult: false,
-    search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
+    search: { url: '/search?keyword={query}', itemSelector: 'a.film-poster-ahref', titleSelector: '&', titleAttr: 'title', linkSelector: '&' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
   },
   {
@@ -328,14 +328,15 @@ module.exports = [
   {
     name: 'henaojara', title: 'HenaoJara', baseUrl: 'https://henaojara.com',
     categories: ['anime'], language: ['cast', 'lat', 'vose'], active: true, adult: false,
-    search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
+    search: { url: '/?s={query}', itemSelector: 'article.TPost', titleSelector: 'h3', linkSelector: 'a' },
     videos: { type: 'jsvar', varPattern: /var videos = (\[.*?\]);/, defaultQuality: 'HD' }
   },
   {
     name: 'jkanime', title: 'JKAnime', baseUrl: 'https://jkanime.net',
     categories: ['anime'], language: ['cast', 'lat'], active: true, adult: false,
-    search: { url: '/buscar/{query}', itemSelector: '.anime-item', titleSelector: '.title', linkSelector: 'a' },
-    videos: { type: 'jsvar', varPattern: /var videos = (\[.*?\]);/, defaultQuality: 'HD' }
+    search: { url: '/buscar/{query}', itemSelector: '.anime__item', titleSelector: 'h5 a', linkSelector: 'a' },
+    episodes: { type: 'url', pattern: '/{slug}/{episode}/' },
+    videos: { type: 'jslist', varPattern: /video\[\d+\] = '(.*?)';/g, defaultQuality: 'HD' }
   },
   {
     name: 'lamovie', title: 'LaMovie', baseUrl: 'https://la.movie',
@@ -345,25 +346,25 @@ module.exports = [
   },
   {
     name: 'latanime', title: 'LatAnime', baseUrl: 'https://latanime.org',
-    categories: ['anime'], language: ['cast', 'lat', 'vose'], active: true, adult: false,
+    categories: ['anime'], language: ['cast', 'lat', 'vose'], active: false, adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'jsvar', varPattern: /var videos = (\[.*?\]);/, defaultQuality: 'HD' }
   },
   {
     name: 'mundodonghua', title: 'MundoDonghua', baseUrl: 'https://www.mundodonghua.com',
-    categories: ['anime', 'vos'], language: ['*'], active: true, adult: false,
-    search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
+    categories: ['anime', 'vos'], language: ['*'], active: false, adult: false,
+    search: { url: '/busquedas/?donghua={query}', itemSelector: '.md-card', titleSelector: '.md-card-title', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
   },
   {
-    name: 'pelispanda', title: 'PelisPanda', baseUrl: 'https://pelispanda.com',
-    categories: ['anime', 'vos', 'torrent'], language: ['lat'], active: true, adult: false,
+    name: 'pelispanda', title: 'PelisPanda', baseUrl: 'https://pelispanda.org',
+    categories: ['anime', 'vos', 'torrent'], language: ['lat'], active: false, adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'torrent', linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: 'HD' }
   },
   {
     name: 'pelisplus', title: 'PelisPlus', baseUrl: 'https://ww3.pelisplus.to',
-    categories: ['anime', 'documentary', 'direct'], language: ['lat'], active: true, adult: false,
+    categories: ['anime', 'documentary', 'direct'], language: ['lat'], active: false, adult: false,
     search: { url: '/search?q={query}', itemSelector: 'a[href*="/pelicula/"]', titleSelector: '.title', linkSelector: '&' },
     videos: { type: 'nextjs', dataPath: 'props.pageProps.post.players', defaultQuality: 'HD' }
   },
@@ -376,7 +377,7 @@ module.exports = [
   {
     name: 'sololatino', title: 'SoloLatino', baseUrl: 'https://sololatino.net',
     categories: ['anime', 'vos'], language: ['lat'], active: true, adult: false,
-    search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
+    search: { url: '/buscar?q={query}', itemSelector: '.card', titleSelector: '.card__title', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
   },
   {
@@ -388,13 +389,13 @@ module.exports = [
   {
     name: 'tiodonghua', title: 'TioDonghua', baseUrl: 'https://tiodonghua.com',
     categories: ['anime', 'vos'], language: ['vose'], active: true, adult: false,
-    search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
+    search: { url: '/?s={query}', itemSelector: 'article', titleSelector: '.title a', linkSelector: '.title a' },
     videos: { type: 'jsvar', varPattern: /var videos = (\[.*?\]);/, defaultQuality: 'HD' }
   },
   {
-    name: 'tvanime', title: 'TVAnime', baseUrl: 'https://ww3.monoschinos3.com',
+    name: 'tvanime', title: 'TVAnime', baseUrl: 'https://vww.monoschinos2.net',
     categories: ['anime', 'vos'], language: ['lat', 'cast'], active: true, adult: false,
-    search: { url: '/buscar?q={query}', itemSelector: '.anime-card', titleSelector: '.title', linkSelector: 'a' },
+    search: { url: '/animes?buscar={query}', itemSelector: 'a[href*="/anime/"]', titleSelector: 'img', titleAttr: 'alt', linkSelector: '&' },
     videos: { type: 'jsvar', varPattern: /var videos = (\[.*?\]);/, defaultQuality: 'HD' }
   },
   {

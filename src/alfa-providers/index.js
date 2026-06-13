@@ -71,19 +71,31 @@ async function resolveTitles(id, mediaType) {
         return r.ok ? r.json() : null;
       } catch { return null; }
     }
-    const [enData, esData] = await Promise.all([tmdbFetch('en'), tmdbFetch('es')]);
+    const [enData, esData, jaData] = await Promise.all([tmdbFetch('en'), tmdbFetch('es'), tmdbFetch('ja')]);
+
+    let firstYear = '';
     if (enData) {
-      const year = (enData.release_date || enData.first_air_date || '').substring(0, 4);
-      addVariant(enData.title || enData.name || '', year);
-      if (enData.original_language === 'ja' && enData.original_title && enData.original_title !== (enData.title || enData.name)) {
-        addVariant(enData.original_title, year);
+      firstYear = (enData.release_date || enData.first_air_date || '').substring(0, 4);
+      addVariant(enData.title || enData.name || '', firstYear);
+      // Original title (native language title — Japanese for anime, etc.)
+      if (enData.original_title && enData.original_title !== (enData.title || enData.name)) {
+        addVariant(enData.original_title, firstYear);
+      }
+      if (enData.original_name && enData.original_name !== (enData.name || enData.title)) {
+        addVariant(enData.original_name, firstYear);
       }
     }
     if (esData) {
-      addVariant(esData.title || esData.name || '', '');
+      addVariant(esData.title || esData.name || '', firstYear);
+    }
+    if (jaData) {
+      const jaTitle = jaData.title || jaData.name || '';
+      if (jaTitle && !seen.has(jaTitle.toLowerCase())) {
+        addVariant(jaTitle, firstYear);
+      }
     }
 
-    if (firstYear && variants.length > 0) {
+    if (firstYear) {
       for (const v of variants) {
         if (!v.year) v.year = firstYear;
       }

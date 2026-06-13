@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.4.9
+# Ovnivers — Stream Provider v1.4.13
 
 Addon para **Stremio** con streams de multiples fuentes. Sin catalogos propios — funciona con addons de catalogo externos (ej. TMDB Community Addon).
 
@@ -20,33 +20,51 @@ Addon para **Stremio** con streams de multiples fuentes. Sin catalogos propios �
 | **Pigamer37** (proxy anime) | AnimeFLV, AnimeAV1, TioAnime, Henaojara — siempre activo para series |
 | **Alfa Providers** (server) | 80+ canales: peliculas, series, anime, documentales, torrents |
 | **Alfa multi-título** | Busca por título EN + ES + JA + slug en paralelo para máximo match |
+| **Alfa episodes** | Soporte de URL pattern (`/{slug}/{episode}/`) y asignaciones JS (`video[N] = '...'`) |
 | **Local scrapers** | 62 providers Hermes ejecutados server-side |
 | **Config panel** | `/configure` — tipos, calidad, idiomas, scrapers on/off |
 | **Separación por categoría** | Pigamer37 solo para anime detectado; Alfa anime siempre para TV; Alfa principal + Backend + Hermes para todo |
 
-## Catalogs (18)
+## Catalogs
 
-| Tipo | Catalogs |
-|---|---|
-| **Movies** | Popular, Trending, Top Rated, By Genre, By Year |
-| **Series** | Popular, Trending, Top Rated, By Genre, By Year |
-| **Anime** | AnimeFLV/AnimeAV1/TioAnime/Henaojara On Air + Search |
+> **Nota:** Los catálogos están deshabilitados en el servidor (ruta `/catalog/*` devuelve vacío). El addon funciona como **proveedor de streams puro** — usa addons de catálogo externos (ej. TMDB Community Addon) para navegar contenido. Los catálogos están definidos en `manifest.json` (18) pero el servidor no los sirve.
 
-## Alfa Providers (80+ canales)
+## Alfa Providers (85 registrados, 52 activos)
 
-Scraper unificado del addon **Alfa** de Kodi. Corre server-side en Render (Node.js). Busca con multiples variantes del título (EN/ES/JA/slug) en paralelo.
+Scraper unificado del addon **Alfa** de Kodi. Corre server-side en Node.js.
+Busca con multiples variantes del título (EN/ES/JA/slug) en paralelo.
 
-| Categoria | Count | Providers |
-|---|---|---|
-| **Peliculas** | 42 | AllCalidad, Cuevana2Espanol, PelisPedia, PoseidonHD, HDFull, Gnula, WolfMax4K, CineCalidad, DivXTotal, PelisFlix, TubePelis, ZonaLeros, AllPeliculas, BlogHorror, Cine24H, CineLibreOnline, DeTodoPeliculas, DoramasFlix, DoramedPlay, EntrePeliculasYSeries, EstrenosCinesaa, FlizzMovies, GenteClic, GranTorrent, HomeCine, LegalmenteGratis, MiraPeliculas, MiTorrent, OsjoNosu, PeliCineHD, PeliculasFlix, Pelis182, PelisForte, RetroTV, SeriesKao, TubeOnline, Yandispoiler, Zoowomaniacos, eCarteleraTrailers, HDFullS, Cuevana2, SinPeli |
-| **Series** | 26 | EZTV, DoramasYT, FullSerieHD, SeriesRetro, LaCartoons, DoramasFlix, EntrePeliculasYSeries, SeriesKao, Asialiveaction, DivXTotal, DonTorrent, DoramedPlay, EstrenosCinesaa, EstrenosDoramas, GranTorrent, HDFull, HDFullS, HomeCine, MiTorrent, OsjoNosu, Pelis182, PelisPedia, PoseidonHD, RetroTV, TubeOnline, WolfMax4K, Yandispoiler, ZonaLeros |
-| **Anime** | 22 | AnimeFLV, JKAnime, TioAnime, MonosChinos (TVAnime), VerAnime, LatAnime, HenaoJara, MundoDonghua, EstrenosAnime, AnimeJara, AnimeJL, HackTorrent, LaMovie, PelisPanda, PelisPlus, RepelisHD, SoloLatino, TioDonghua, VerAnimeAssistant, VerOnline, DoramasQueen, Ennovelas |
-| **Documentales** | 5 | AreaDocumental, DocumentalesOnline, EliteTorrent, MejorTorrent, PelisPlus |
-| **Torrents** | 12 | DonTorrent, GranTorrent, WolfMax4K, EZTV, HackTorrent, MiTorrent, EliteTorrent, MejorTorrent, BlogHorror, CineCalidad, DivXTotal, PelisPanda |
+| Categoria | Activos | Inactivos | Providers destacados |
+|---|---|---|---|
+| **Peliculas** | ~29 | ~13 | AllCalidad, PelisPedia, PoseidonHD, HDFull, Gnula, WolfMax4K, CineCalidad, DivXTotal, TubePelis, Cine24H, CineLibreOnline, DeTodoPeliculas, GranTorrent, HomeCine, MiraPeliculas, PelisForte, SeriesKao, TubeOnline, Yandispoiler, eCarteleraTrailers (+9 más) |
+| **Series** | ~16 | ~6 | EZTV, DoramasYT, FullSerieHD, SeriesRetro, LaCartoons, PelisPedia, PoseidonHD, DivXTotal, DonTorrent, GranTorrent, HDFull, WolfMax4K (+4 más) |
+| **Anime** | 10 | 12 | AnimeFLV, JKAnime, TioAnime, TVAnime (MonosChinos), HenaoJara, EstrenosAnime, SoloLatino, TioDonghua, DoramasQueen, HackTorrent |
+| **Documentales** | 3 | 1 | AreaDocumental, DocumentalesOnline, EliteTorrent |
+
+> ⚠️ **Nota:** Solo JKAnime extrae videos server-side (JS inline). AnimeFLV, TioAnime, HenaoJara y otros encuentran las páginas pero cargan videos dinámicamente (requieren JS en cliente). Ver [Estado por provider](#estado-por-provider) abajo.
+
+### Estado por provider
+
+| Provider | Búsqueda | Episodios | Videos | Notas |
+|---|---|---|---|---|
+| **JKAnime** | ✅ | ✅ (`{slug}/{episode}/`) | ✅ (5 src) | Único con video inline |
+| **AnimeFLV** | ✅ | 🔄 (`var episodes`) | ❌ dinámico | Encuentra serie, video vía JS |
+| **TioAnime** | ✅ | 🔄 (`var episodes`) | ❌ dinámico | Encuentra serie, video vía JS |
+| **HenaoJara** | ✅ | ❌ sin config | ❌ dinámico | Encuentra página, video vía JS |
+| **EstrenosAnime** | ✅ | ❌ sin config | ❌ dinámico | Encuentra página, video vía JS |
+| **SoloLatino** | ✅ | ❌ sin config | ❌ dinámico | Encuentra página, video vía JS |
+| **TVAnime (MonosChinos)** | ✅ | ❌ sin config | ❌ dinámico | Nuevo dominio vww.monoschinos2.net |
+| **AnimeJL** | ❌ timeout | — | — | No responde — marcado `active: false` |
+| **LatAnime** | ❌ timeout | — | — | No responde — marcado `active: false` |
+| **PelisPanda** | ❌ React SPA | — | — | Renderizado cliente — marcado `active: false` |
+| **HackTorrent** | ❌ React SPA | — | — | Renderizado cliente — marcado `active: false` |
+| **PelisPlus** | ❌ dominio cambiado | — | — | Antes tioplus.app — marcado `active: false` |
+| **MundoDonghua** | ❌ búsqueda client-side | — | — | Donghua, no anime |
+| **TioDonghua** | ✅ | ❌ sin config | ❌ | Donghua (capítulos lectura) |
 
 **Idiomas:** Castellano, Latino, VOSE, English, Japanese, Korean, Hindi, Portuguese.
 
-**Servidores:** streamwish, filemoon, doodstream, streamtape, fembed, okru, mixdrop, upstream, vidhide, voe, mystream, netutv, yourupload, jawcloud, streampe, gvideo, torrent/magnet.
+**Servidores:** streamwish, filemoon, doodstream, streamtape, fembed, okru, mixdrop, upstream, vidhide, voe, mystream, netutv, yourupload, jawcloud, streampe, gvideo, torrent/magnet, jkplayer.
 
 ## Backend Scrapers (4 activos)
 
@@ -82,6 +100,39 @@ node build.js    # Build de scrapers desde src/
 - **Render.com** — auto-deploy desde `main`
 - **URL:** https://ovnivers.onrender.com
 
+## Changelog
+
+### v1.4.13 — HackTorrent reactivado, PelisPanda dominio actualizado
+
+- **Anime**: HackTorrent reactivado (`active: true`) — WordPress funcional vía `/?s=`
+- **Anime**: PelisPanda baseUrl actualizado a `pelispanda.org` (`.com` caído)
+- **Anime**: 10/22 providers activos (+1 vs v1.4.12)
+- **Bundle**: `alfa-providers.js` regenerado
+- **Docs**: Versiones sincronizadas a 1.4.13
+
+### v1.4.12 — Catálogos deshabilitados, documentación sincronizada
+- **Catálogos**: Ruta `/catalog/*` ahora devuelve `{ metas: [] }` (addon como stream provider puro)
+- **Docs**: Versiones sincronizadas a 1.4.12 en todos los archivos
+- **Docs**: Conteo de scrapers corregido (61→62)
+- **Docs**: Conteo de Alfa providers actualizado al estado real (51/85 activos)
+- **Anime**: `resolveTitles()` ahora obtiene título japonés desde TMDB + corrige bug `firstYear` + añade `original_name`
+- **Anime**: Buscador multi-idioma mejorado (EN, ES, JA, título original, romaji)
+- **Anime**: 5 providers marcados `active: false` por no responder (AnimeJL, LatAnime, PelisPanda, HackTorrent, PelisPlus)
+- **Engine**: Timeout aumentado 8s→12s en fetchHTML; searchProvider con retry parcial
+
+### v1.4.10 — Provider fixes & anime restoration
+- **JKAnime**: Fixed selectors (`.anime-item` → `.anime__item`, `.title` → `h5 a`)
+- **JKAnime**: Added `episodes.type: 'url'` support in engine (`/{slug}/{episode}/`)
+- **JKAnime**: Added `videos.type: 'jslist'` para extraer `video[N] = '<iframe>'`
+- **HenaoJara**: Fixed selectors (`article` → `article.TPost`, `h2` → `h3`)
+- **AnimeJL**: Fixed selectors (`article` → `article.Anime`, `h2` → `h3.Title`)
+- **EstrenosAnime**: Fixed URL (`/?s=` → `/search?keyword=`), selector (`a.film-poster-ahref` con `titleAttr`)
+- **SoloLatino**: Fixed URL (`/?s=` → `/buscar?q=`), selector (`.card` / `.card__title`)
+- **TVAnime (MonosChinos)**: New domain `vww.monoschinos2.net`, fixed URL + selectors
+- **TioAnime**: Selectors verified working (no changes needed)
+- **MundoDonghua**: Set inactive — búsqueda solo client-side
+- **Result**: JKAnime returns 5 streams for One Piece, 2 for Shingeki no Kyojin
+
 ## Stream Format (v1.3+)
 
 Todos los streams se normalizan al mismo formato:
@@ -98,6 +149,6 @@ title: "1080p | ProviderName\nServerName\nSerieEpisodio"
 
 ## Creditos
 
-- 61 scrapers originales: Yoruix, Phisher98, Wooodyhood, Piratezoro9, Abinanthankv, KennethJYS, Real-Morpheus, Xyr0nX, Yatin-Code, RaymondNoodles, D3adlyRocket
+- 62 scrapers originales: Yoruix, Phisher98, Wooodyhood, Piratezoro9, Abinanthankv, KennethJYS, Real-Morpheus, Xyr0nX, Yatin-Code, RaymondNoodles, D3adlyRocket
 - Anime proxy: [Pigamer37/animeflv-stremio-addon](https://github.com/Pigamer37/animeflv-stremio-addon)
 - Alfa providers: [alfa-addon/addon](https://github.com/alfa-addon/addon) (Kodi, GPL-3.0)

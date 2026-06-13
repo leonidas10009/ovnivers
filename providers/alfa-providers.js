@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-12T17:13:49.943Z
+ * Generated: 2026-06-13T05:59:49.168Z
  */
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -566,7 +566,7 @@ var require_providers = __commonJS({
         videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
       },
       // ═══════════════════════════════════════════
-      // ANIME — 20 active providers
+      // ANIME — 10 active, 12 inactive
       // ═══════════════════════════════════════════
       {
         name: "animeflv",
@@ -596,9 +596,9 @@ var require_providers = __commonJS({
         baseUrl: "https://www.anime-jl.net",
         categories: ["anime"],
         language: ["cast", "lat", "vose"],
-        active: true,
+        active: false,
         adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        search: { url: "/?s={query}", itemSelector: "article.Anime", titleSelector: "h3.Title", linkSelector: "a" },
         videos: { type: "jsvar", varPattern: /var videos = (\[.*?\]);/, defaultQuality: "HD" }
       },
       {
@@ -609,7 +609,7 @@ var require_providers = __commonJS({
         language: ["*"],
         active: true,
         adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        search: { url: "/search?keyword={query}", itemSelector: "a.film-poster-ahref", titleSelector: "&", titleAttr: "title", linkSelector: "&" },
         videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
       },
       {
@@ -631,7 +631,7 @@ var require_providers = __commonJS({
         language: ["cast", "lat", "vose"],
         active: true,
         adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        search: { url: "/?s={query}", itemSelector: "article.TPost", titleSelector: "h3", linkSelector: "a" },
         videos: { type: "jsvar", varPattern: /var videos = (\[.*?\]);/, defaultQuality: "HD" }
       },
       {
@@ -642,8 +642,9 @@ var require_providers = __commonJS({
         language: ["cast", "lat"],
         active: true,
         adult: false,
-        search: { url: "/buscar/{query}", itemSelector: ".anime-item", titleSelector: ".title", linkSelector: "a" },
-        videos: { type: "jsvar", varPattern: /var videos = (\[.*?\]);/, defaultQuality: "HD" }
+        search: { url: "/buscar/{query}", itemSelector: ".anime__item", titleSelector: "h5 a", linkSelector: "a" },
+        episodes: { type: "url", pattern: "/{slug}/{episode}/" },
+        videos: { type: "jslist", varPattern: /video\[\d+\] = '(.*?)';/g, defaultQuality: "HD" }
       },
       {
         name: "lamovie",
@@ -662,7 +663,7 @@ var require_providers = __commonJS({
         baseUrl: "https://latanime.org",
         categories: ["anime"],
         language: ["cast", "lat", "vose"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "jsvar", varPattern: /var videos = (\[.*?\]);/, defaultQuality: "HD" }
@@ -673,18 +674,18 @@ var require_providers = __commonJS({
         baseUrl: "https://www.mundodonghua.com",
         categories: ["anime", "vos"],
         language: ["*"],
-        active: true,
+        active: false,
         adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        search: { url: "/busquedas/?donghua={query}", itemSelector: ".md-card", titleSelector: ".md-card-title", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
       },
       {
         name: "pelispanda",
         title: "PelisPanda",
-        baseUrl: "https://pelispanda.com",
+        baseUrl: "https://pelispanda.org",
         categories: ["anime", "vos", "torrent"],
         language: ["lat"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "torrent", linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: "HD" }
@@ -695,7 +696,7 @@ var require_providers = __commonJS({
         baseUrl: "https://ww3.pelisplus.to",
         categories: ["anime", "documentary", "direct"],
         language: ["lat"],
-        active: true,
+        active: false,
         adult: false,
         search: { url: "/search?q={query}", itemSelector: 'a[href*="/pelicula/"]', titleSelector: ".title", linkSelector: "&" },
         videos: { type: "nextjs", dataPath: "props.pageProps.post.players", defaultQuality: "HD" }
@@ -719,7 +720,7 @@ var require_providers = __commonJS({
         language: ["lat"],
         active: true,
         adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        search: { url: "/buscar?q={query}", itemSelector: ".card", titleSelector: ".card__title", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
       },
       {
@@ -741,18 +742,18 @@ var require_providers = __commonJS({
         language: ["vose"],
         active: true,
         adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: ".title a", linkSelector: ".title a" },
         videos: { type: "jsvar", varPattern: /var videos = (\[.*?\]);/, defaultQuality: "HD" }
       },
       {
         name: "tvanime",
         title: "TVAnime",
-        baseUrl: "https://ww3.monoschinos3.com",
+        baseUrl: "https://vww.monoschinos2.net",
         categories: ["anime", "vos"],
         language: ["lat", "cast"],
         active: true,
         adult: false,
-        search: { url: "/buscar?q={query}", itemSelector: ".anime-card", titleSelector: ".title", linkSelector: "a" },
+        search: { url: "/animes?buscar={query}", itemSelector: 'a[href*="/anime/"]', titleSelector: "img", titleAttr: "alt", linkSelector: "&" },
         videos: { type: "jsvar", varPattern: /var videos = (\[.*?\]);/, defaultQuality: "HD" }
       },
       {
@@ -930,7 +931,7 @@ var require_engine = __commonJS({
       return __async(this, arguments, function* (url, opts = {}) {
         try {
           const ctrl = new AbortController();
-          const t = setTimeout(() => ctrl.abort(), opts.timeout || 8e3);
+          const t = setTimeout(() => ctrl.abort(), opts.timeout || 12e3);
           const res = yield fetch(url, {
             headers: __spreadValues({ "User-Agent": UA2, "Accept": "text/html,application/xhtml+xml,*/*" }, opts.headers),
             signal: ctrl.signal
@@ -1013,13 +1014,23 @@ var require_engine = __commonJS({
       return __async(this, null, function* () {
         const cfg = provider.search;
         if (!cfg) return null;
-        let searchUrl;
-        if (typeof cfg.url === "function") {
-          searchUrl = cfg.url(provider.baseUrl, title);
-        } else {
-          searchUrl = provider.baseUrl + cfg.url.replace("{query}", encodeURIComponent(title));
+        const titleClean = title.replace(/[_-]/g, " ").replace(/\s+/g, " ").trim();
+        function trySearch(query) {
+          return __async(this, null, function* () {
+            let searchUrl;
+            if (typeof cfg.url === "function") {
+              searchUrl = cfg.url(provider.baseUrl, query);
+            } else {
+              searchUrl = provider.baseUrl + cfg.url.replace("{query}", encodeURIComponent(query));
+            }
+            return yield fetchHTML2(searchUrl, { headers: cfg.headers, timeout: 1e4 });
+          });
         }
-        const html = yield fetchHTML2(searchUrl, { headers: cfg.headers, timeout: 8e3 });
+        let html = yield trySearch(titleClean);
+        if (!html && titleClean.includes(" ")) {
+          const short = titleClean.split(" ").slice(0, 2).join(" ");
+          if (short.length > 3) html = yield trySearch(short);
+        }
         if (!html) return null;
         const $ = cheerio.load(html);
         const items = $(cfg.itemSelector).toArray();
@@ -1047,11 +1058,17 @@ var require_engine = __commonJS({
           }
           if (!itemTitle || !itemLink) continue;
           let score = similarity2(itemTitle, title);
+          const titleClean2 = titleClean.replace(/[^a-z0-9]/g, "");
+          const itemClean = itemTitle.toLowerCase().replace(/[^a-z0-9]/g, "");
+          if (itemClean === titleClean2) score = Math.max(score, 0.9);
+          if (itemClean.includes(titleClean2) || titleClean2.includes(itemClean)) {
+            score = Math.max(score, 0.75);
+          }
           if (year) {
             const itemYear = el.text().match(/\b(19|20)\d{2}\b/);
             if (itemYear && itemYear[0] === year) score += 0.2;
           }
-          if (score > bestScore && score > 0.4) {
+          if (score > bestScore && score > 0.35) {
             bestScore = score;
             bestMatch = itemLink;
           }
@@ -1064,6 +1081,15 @@ var require_engine = __commonJS({
         var _a, _b, _c;
         const cfg = provider.episodes;
         if (!cfg) return seriesUrl;
+        if (cfg.type === "url") {
+          const slug = seriesUrl.replace(/\/+$/, "").split("/").pop();
+          const url = cfg.pattern.replace("{slug}", slug).replace("{episode}", episode);
+          try {
+            return new URL(url, provider.baseUrl).href;
+          } catch (e) {
+            return seriesUrl;
+          }
+        }
         const html = yield fetchHTML2(seriesUrl);
         if (!html) return null;
         const $ = cheerio.load(html);
@@ -1236,6 +1262,16 @@ var require_engine = __commonJS({
             }
           }
         }
+        if (cfg.type === "jslist") {
+          const re = cfg.varPattern instanceof RegExp ? cfg.varPattern : new RegExp(cfg.varPattern, "g");
+          let m;
+          while ((m = re.exec(html)) !== null) {
+            const src = (m[1] || "").match(/src=["']([^"']+)["']/);
+            if (src) {
+              results.push({ url: src[1], server: detectServer2(src[1]), quality: cfg.defaultQuality || "HD" });
+            }
+          }
+        }
         if (cfg.type === "api") {
           const apiUrl = typeof cfg.apiUrl === "function" ? cfg.apiUrl(provider.baseUrl, pageUrl, html) : provider.baseUrl + cfg.apiUrl;
           const data = yield fetchJSON2(apiUrl, { headers: cfg.headers });
@@ -1376,18 +1412,28 @@ function resolveTitles(id, mediaType) {
           }
         });
       }
-      const [enData, esData] = yield Promise.all([tmdbFetch("en"), tmdbFetch("es")]);
+      const [enData, esData, jaData] = yield Promise.all([tmdbFetch("en"), tmdbFetch("es"), tmdbFetch("ja")]);
+      let firstYear = "";
       if (enData) {
-        const year = (enData.release_date || enData.first_air_date || "").substring(0, 4);
-        addVariant(enData.title || enData.name || "", year);
-        if (enData.original_language === "ja" && enData.original_title && enData.original_title !== (enData.title || enData.name)) {
-          addVariant(enData.original_title, year);
+        firstYear = (enData.release_date || enData.first_air_date || "").substring(0, 4);
+        addVariant(enData.title || enData.name || "", firstYear);
+        if (enData.original_title && enData.original_title !== (enData.title || enData.name)) {
+          addVariant(enData.original_title, firstYear);
+        }
+        if (enData.original_name && enData.original_name !== (enData.name || enData.title)) {
+          addVariant(enData.original_name, firstYear);
         }
       }
       if (esData) {
-        addVariant(esData.title || esData.name || "", "");
+        addVariant(esData.title || esData.name || "", firstYear);
       }
-      if (firstYear && variants.length > 0) {
+      if (jaData) {
+        const jaTitle = jaData.title || jaData.name || "";
+        if (jaTitle && !seen.has(jaTitle.toLowerCase())) {
+          addVariant(jaTitle, firstYear);
+        }
+      }
+      if (firstYear) {
         for (const v of variants) {
           if (!v.year) v.year = firstYear;
         }
