@@ -283,6 +283,28 @@ async function extractVideos(provider, pageUrl) {
     }
   }
 
+  if (cfg.type === 'iframe-chain') {
+    const container = cfg.containerSelector ? $(cfg.containerSelector) : $;
+    const iframes = container.find(cfg.iframeSelector || 'iframe').toArray();
+    const chainUrls = [];
+    for (const iframe of iframes) {
+      const src = $(iframe).attr(cfg.srcAttr || 'src') || $(iframe).attr('data-src');
+      if (src) chainUrls.push(src.startsWith('//') ? 'https:' + src : src);
+    }
+    for (const embedUrl of chainUrls) {
+      try {
+        const body = await fetchHTML(embedUrl, { headers: { Referer: pageUrl }, timeout: 10000 });
+        if (!body) continue;
+        const $e = cheerio.load(body);
+        const realSrc = $e('div.Video iframe, .Video iframe, iframe').first().attr('src');
+        if (realSrc) {
+          const finalUrl = realSrc.startsWith('//') ? 'https:' + realSrc : realSrc;
+          results.push({ url: finalUrl, server: detectServer(finalUrl), quality: cfg.defaultQuality || 'HD' });
+        }
+      } catch {}
+    }
+  }
+
   if (cfg.type === 'nextjs') {
     const match = html.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/)
       || html.match(/<script type="application\/json"[^>]*>(.*?)<\/script>/);
