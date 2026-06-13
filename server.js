@@ -92,10 +92,6 @@ for (const scraper of manifestScrapers) {
   }
 }
 console.log(`Loaded ${localProviders.length} local provider modules`);
-localProviders.forEach(p => initProviderStats(p));
-initProviderStats({ id: 'alfa-providers', name: 'Alfa Providers' });
-initProviderStats({ id: 'backend-scrapers', name: 'Backend (2embed/VidSrc/Poseidon)' });
-initProviderStats({ id: 'pigamer37', name: 'Pigamer37 (Anime Proxy)' });
 
 // ─── Health Check / Provider Stats ─────────
 const CONSECUTIVE_FAIL_LIMIT = 5;
@@ -135,11 +131,8 @@ function getProviderReport() {
   const report = [];
   for (const [id, stat] of providerStats) {
     report.push({
-      id,
-      name: stat.name,
-      total: stat.total,
-      ok: stat.ok,
-      fail: stat.fail,
+      id, name: stat.name,
+      total: stat.total, ok: stat.ok, fail: stat.fail,
       failStreak: stat.failStreak,
       avgMs: stat.total > 0 ? Math.round(stat.totalMs / stat.total) : 0,
       healthy: stat.failStreak < CONSECUTIVE_FAIL_LIMIT,
@@ -149,6 +142,11 @@ function getProviderReport() {
   }
   return report;
 }
+
+localProviders.forEach(p => initProviderStats(p));
+initProviderStats({ id: 'alfa-providers', name: 'Alfa Providers' });
+initProviderStats({ id: 'backend-scrapers', name: 'Backend (2embed/VidSrc/Poseidon)' });
+initProviderStats({ id: 'pigamer37', name: 'Pigamer37 (Anime Proxy)' });
 
 const streamCache = new Map();
 const CACHE_TTL = 10 * 60 * 1000;
