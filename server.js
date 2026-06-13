@@ -280,10 +280,9 @@ async function getTMDbMeta(tmdbId, mediaType) {
   return await fetchAPI(url);
 }
 
-async function getTMDbEpisodes(tmdbId) {
-  const series = await getTMDbMeta(tmdbId, 'tv');
-  if (!series?.seasons) return [];
-  const seasonNumbers = series.seasons
+async function getTMDbEpisodes(tmdbId, seasons) {
+  if (!seasons?.length) return [];
+  const seasonNumbers = seasons
     .filter(s => s.season_number > 0 && s.episode_count > 0)
     .map(s => s.season_number)
     .slice(0, 10);
@@ -1359,7 +1358,7 @@ async function handleMeta(req, res, type, id) {
       genres: (data.genres || []).map(g => g.name),
     };
     if (mediaType === 'tv' && data.seasons?.length) {
-      const episodes = await getTMDbEpisodes(data.id);
+      const episodes = await getTMDbEpisodes(data.id, data.seasons);
       if (episodes.length) meta.videos = episodes;
     }
     cacheSet(metaCache, ck, { data: meta, time: Date.now() }, MAX_CACHE);
