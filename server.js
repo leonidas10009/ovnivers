@@ -767,6 +767,11 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
   const inlineFlags = inlineFlagLine ? (inlineFlagLine.match(/[\u{1F1E6}-\u{1F1FF}]{2,}/ug) || []).join('') : '';
   const flags = contentFlags || audioFlags || descriptionFlags || inlineFlags;
 
+  // Type emoji
+  const isTorrent = stream.infoHash || (serverName === 'torrent') || (url && /^magnet:/i.test(url));
+  const isTorrentFile = !isTorrent && url && /\.torrent$/i.test(url);
+  const typeEmoji = isTorrent ? '\u{1F9F2}' : isTorrentFile ? '\u{1F517}' : '\u{1F4FA}';
+
   // Provider label
   const isPigamer = providerId === 'pigamer37';
   const isAlfa = providerId === 'alfa-providers';
@@ -784,11 +789,11 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
   }
 
   // Unified name (short, 2 lines)
-  const name = `${providerLabel}\n${quality}${flags ? ' ' + flags : ''}`;
+  const name = `${typeEmoji} ${providerLabel}\n${quality}${flags ? ' ' + flags : ''}`;
 
   // ── Title (detailed) ──
   // Line 1: unified header
-  const titleParts = [`${quality} | ${providerLabel}`];
+  const titleParts = [`${typeEmoji} ${quality} | ${providerLabel}`];
 
   // Collect all meaningful content from original name (lines 2+) and title
   const seen = new Set();
