@@ -9,8 +9,8 @@ module.exports = [
     language: ['lat'],
     active: true,
     adult: false,
-    search: { url: '/search?s={query}', itemSelector: 'article.movie-item', titleSelector: 'h3.title', linkSelector: 'a' }, // <-- NOTE: uses HTML search, not API
-    videos: { type: 'iframe', containerSelector: '.players', iframeSelector: 'iframe', srcAttr: 'data-src', defaultQuality: 'HD' }
+    search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
+    videos: { type: 'iframe', containerSelector: 'body', iframeSelector: 'iframe', srcAttr: 'data-src', defaultQuality: 'HD' }
   },
   {
     name: 'allpeliculas',
@@ -64,8 +64,8 @@ module.exports = [
     language: ['cast', 'lat'],
     active: true,
     adult: false,
-    search: { url: '/?s={query}', itemSelector: 'div.grid', titleSelector: 'a[href]', linkSelector: 'a' }, // <-- fixed
-    videos: { type: 'iframe', containerSelector: '.players', iframeSelector: 'iframe', srcAttr: 'data-src', defaultQuality: 'HD' }
+    search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
+    videos: { type: 'iframe', containerSelector: 'body', iframeSelector: 'iframe', srcAttr: 'data-src', defaultQuality: 'HD' }
   },
   {
     name: 'cinelibreonline',
@@ -128,7 +128,7 @@ module.exports = [
     baseUrl: 'https://dontorrent.support',
     categories: ['movie', 'tvshow', 'vos', 'torrent'],
     language: ['cast'],
-    active: true,
+    active: false,
     adult: false,
     search: { url: '/buscar/{query}', itemSelector: '.movie-card, article', titleSelector: 'h2, h3', linkSelector: 'a' },
     videos: { type: 'torrent', linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: 'HD' }
@@ -227,7 +227,7 @@ module.exports = [
     baseUrl: 'https://hdfull.today',
     categories: ['movie', 'tvshow', 'vos'],
     language: ['cast', 'lat'],
-    active: true,
+    active: false,
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     episodes: { type: 'post', url: null, seasonParam: 'season', episodeParam: 'episode', extraParams: { action: 'season', show: null }, episodeSelector: 'a' },

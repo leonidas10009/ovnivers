@@ -271,14 +271,32 @@ async function extractVideos(provider, pageUrl) {
   const $ = cheerio.load(html);
   const results = [];
 
+  function resolveUrl(val) {
+    if (!val) return null;
+    if (typeof val === 'string' && /^[A-Za-z0-9+/=]{20,}$/.test(val) && !val.startsWith('http')) {
+      try {
+        const decoded = Buffer.from(val, 'base64').toString('utf-8').trim();
+        if (decoded.startsWith('http://') || decoded.startsWith('https://')) return decoded;
+      } catch {}
+    }
+    return val.startsWith('//') ? 'https:' + val : val;
+  }
+
   if (cfg.type === 'iframe') {
     const container = cfg.containerSelector ? $(cfg.containerSelector) : $;
-    const iframes = container.find(cfg.iframeSelector || 'iframe').toArray();
-    for (const iframe of iframes) {
-      const src = $(iframe).attr(cfg.srcAttr || 'src') || $(iframe).attr('data-src');
-      if (src) {
-        const url = src.startsWith('//') ? 'https:' + src : src;
-        results.push({ url, server: detectServer(url), quality: cfg.defaultQuality || 'HD' });
+    const targets = container.find(cfg.iframeSelector || 'iframe').toArray();
+    for (const el of targets) {
+      const val = $(el).attr(cfg.srcAttr || 'src') || $(el).attr('data-src');
+      const url = resolveUrl(val);
+      if (url) results.push({ url, server: detectServer(url), quality: cfg.defaultQuality || 'HD' });
+    }
+    if (!results.length) {
+      const attr = cfg.srcAttr || 'data-src';
+      const altTargets = container.find('a[' + attr + ']').toArray();
+      for (const el of altTargets) {
+        const val = $(el).attr(attr);
+        const url = resolveUrl(val);
+        if (url) results.push({ url, server: detectServer(url), quality: cfg.defaultQuality || 'HD' });
       }
     }
   }

@@ -64,8 +64,14 @@ let scrapeAlfaProviders = null;
 const localProviders = [];
 
 try {
-  scrapeAlfaProviders = require('./providers/alfa-providers').default;
-  console.log('Loaded Alfa provider bridge');
+  const alfaModule = require('./providers/alfa-providers');
+  scrapeAlfaProviders = alfaModule.default || alfaModule;
+  if (typeof scrapeAlfaProviders === 'function') {
+    console.log('Loaded Alfa provider bridge');
+  } else {
+    scrapeAlfaProviders = null;
+    console.warn('Alfa provider bridge loaded but is not a function');
+  }
 } catch (e) {
   console.warn('Could not load Alfa provider bridge:', e.message);
 }
