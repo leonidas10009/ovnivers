@@ -867,7 +867,7 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
     ...(stream.externalUrl ? { externalUrl: stream.externalUrl } : {}),
     ...(stream.file ? { file: stream.file } : {}),
     behaviorHints: {
-      notWebReady: true,
+      notWebReady: !hasInfoHash,
       bingeGroup: `provider|${providerId}`,
       ...(stream.behaviorHints || {})
     }

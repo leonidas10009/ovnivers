@@ -50948,11 +50948,11 @@ ${v.server || detectServer(v.url)}`,
 \u2699\uFE0F ${v.server || detectServer(v.url)}
 \u{1F517} ${provider.title}`,
             description: v.lang || (category === "anime" && !(Array.isArray(provider.language) && provider.language.includes("*")) ? [.../* @__PURE__ */ new Set([...Array.isArray(provider.language) ? provider.language : [], "ja"])].join(",") : Array.isArray(provider.language) ? provider.language.join(",") : ""),
-            ...v.url ? { url: v.url } : {},
+            ...v.url && !v.infoHash ? { url: v.url } : {},
             ...v.infoHash ? { infoHash: v.infoHash } : {},
             ...v.sources ? { sources: v.sources } : {},
             behaviorHints: {
-              notWebReady: true,
+              notWebReady: !v.infoHash,
               bingeGroup: `alfa|${provider.name}|${v.server || detectServer(v.url)}`,
               ...v.filename ? { filename: v.filename } : {}
             }
