@@ -1027,6 +1027,7 @@ app.get('/manifest.json', async (req, res) => {
   const enabledTypes = [];
   if (config.enableMovies) enabledTypes.push('movie');
   if (config.enableSeries || config.enableAnime) enabledTypes.push('series');
+  if (config.enableAnime) enabledTypes.push('anime');
   if (!enabledTypes.includes('other')) enabledTypes.push('other');
 
   const streamPrefixes = ['ovn', 'tt'];
@@ -1038,9 +1039,11 @@ app.get('/manifest.json', async (req, res) => {
 
   const allPrefixes = [...new Set([...streamPrefixes, ...metaPrefixes])];
 
+  const catalogTypes = [...new Set(catalogDefs.map(c => c.type))];
   const resources = [
     { name: 'stream', types: enabledTypes, idPrefixes: streamPrefixes },
-    { name: 'meta', types: enabledTypes, idPrefixes: metaPrefixes }
+    { name: 'meta', types: enabledTypes, idPrefixes: metaPrefixes },
+    { name: 'catalog', types: catalogTypes, idPrefixes: ['ovn', 'tmdb', 'tt', 'tmdb-genre:', ...ANIME_PREFIXES] }
   ];
 
   const catalogDefs = catalog.CATEGORIES.map(c => ({
