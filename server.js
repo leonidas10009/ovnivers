@@ -57,7 +57,7 @@ try {
   console.warn('Could not load scrapers from manifest.json:', e.message);
 }
 
-const LOCAL_PROVIDER_TIMEOUT = Number(process.env.LOCAL_PROVIDER_TIMEOUT || 12000);
+const LOCAL_PROVIDER_TIMEOUT = Number(process.env.LOCAL_PROVIDER_TIMEOUT || 60000);
 const LOCAL_PROVIDER_CONCURRENCY = Number(process.env.LOCAL_PROVIDER_CONCURRENCY || 8);
 const MAX_STREAM_RESULTS = Number(process.env.MAX_STREAM_RESULTS || 80);
 let scrapeAlfaProviders = null;

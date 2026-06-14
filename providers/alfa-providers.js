@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-14T11:24:26.052Z
+ * Generated: 2026-06-14T11:34:02.833Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -959,7 +959,7 @@ var require_engine = __commonJS({
       return __async(this, arguments, function* (url, opts = {}) {
         try {
           const ctrl = new AbortController();
-          const t = setTimeout(() => ctrl.abort(), opts.timeout || 12e3);
+          const t = setTimeout(() => ctrl.abort(), opts.timeout || 2e4);
           const res = yield fetch(url, {
             headers: __spreadValues({ "User-Agent": UA2, "Accept": "text/html,application/xhtml+xml,*/*" }, opts.headers),
             signal: ctrl.signal
@@ -976,7 +976,7 @@ var require_engine = __commonJS({
       return __async(this, arguments, function* (url, opts = {}) {
         try {
           const ctrl = new AbortController();
-          const t = setTimeout(() => ctrl.abort(), opts.timeout || 1e4);
+          const t = setTimeout(() => ctrl.abort(), opts.timeout || 15e3);
           const res = yield fetch(url, {
             headers: __spreadValues({ "User-Agent": UA2, "Accept": "application/json" }, opts.headers),
             signal: ctrl.signal

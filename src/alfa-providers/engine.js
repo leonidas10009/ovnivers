@@ -6,7 +6,7 @@ const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 async function fetchHTML(url, opts = {}) {
   try {
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), opts.timeout || 12000);
+    const t = setTimeout(() => ctrl.abort(), opts.timeout || 20000);
     const res = await fetch(url, {
       headers: { 'User-Agent': UA, 'Accept': 'text/html,application/xhtml+xml,*/*', ...opts.headers },
       signal: ctrl.signal
@@ -20,7 +20,7 @@ async function fetchHTML(url, opts = {}) {
 async function fetchJSON(url, opts = {}) {
   try {
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), opts.timeout || 10000);
+    const t = setTimeout(() => ctrl.abort(), opts.timeout || 15000);
     const res = await fetch(url, {
       headers: { 'User-Agent': UA, 'Accept': 'application/json', ...opts.headers },
       signal: ctrl.signal
