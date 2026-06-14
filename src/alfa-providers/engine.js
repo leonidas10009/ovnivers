@@ -688,7 +688,60 @@ async function extractVideos(provider, pageUrl) {
     });
   }
 
+  for (const r of results) {
+    if (r.infoHash || !r.url || r.server === 'direct' || r.server === 'torrent') continue;
+    const resolved = await tryResolveEmbedToDirect(r.url, pageUrl);
+    if (resolved) {
+      r.url = resolved;
+      r.server = 'direct';
+    }
+  }
+
   return results;
+}
+
+const embedCache = new Map();
+
+async function tryResolveEmbedToDirect(embedUrl, referer) {
+  if (!embedUrl || embedCache.has(embedUrl)) return embedCache.get(embedUrl) || null;
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 5000);
+    const res = await fetch(embedUrl, {
+      headers: { 'User-Agent': UA, 'Referer': referer || embedUrl, 'Accept': 'text/html,*/*' },
+      signal: ctrl.signal
+    });
+    clearTimeout(t);
+    if (!res.ok) { embedCache.set(embedUrl, null); return null; }
+    const html = await res.text();
+    let directUrl = null;
+
+    const m3u8 = html.match(/https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*/i);
+    if (m3u8) directUrl = m3u8[0];
+
+    if (!directUrl) {
+      const mp4 = html.match(/https?:\/\/[^"'\s<>]+\.mp4[^"'\s<>]*/i);
+      if (mp4) directUrl = mp4[0];
+    }
+
+    if (!directUrl) {
+      const srcKey = html.match(/["'](?:src|file)["']\s*:\s*["']([^"']+\.(?:m3u8|mp4)[^"']*)["']/i);
+      if (srcKey) directUrl = srcKey[1];
+    }
+
+    if (!directUrl) {
+      const hlsKey = html.match(/["'](?:url|src)["']\s*:\s*["']([^"']+)["'][\s\S]{0,200}["'](?:application\/x-mpegURL|hls)["']/i);
+      if (hlsKey) directUrl = hlsKey[1];
+    }
+
+    if (directUrl) {
+      if (directUrl.startsWith('//')) directUrl = 'https:' + directUrl;
+      embedCache.set(embedUrl, directUrl);
+      return directUrl;
+    }
+    embedCache.set(embedUrl, null);
+    return null;
+  } catch { embedCache.set(embedUrl, null); return null; }
 }
 
 function detectServer(url) {
@@ -789,5 +842,6 @@ async function downloadDontorrentTorrent(baseUrl, contentId, tabla) {
 
 module.exports = {
   fetchHTML, fetchJSON, similarity, resolveTMDB,
-  searchProvider, getEpisodeUrl, extractVideos, detectServer
+  searchProvider, getEpisodeUrl, extractVideos, detectServer,
+  tryResolveEmbedToDirect
 };

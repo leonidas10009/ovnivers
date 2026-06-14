@@ -18,9 +18,9 @@ Addon para **Stremio** con catálogo en español y streams de múltiples fuentes
 |---|---|---|
 | **Backend scrapers** | 2embed (Vesy + Vsrc), VidSrc, PoseidonHD |
 | **Pigamer37** (proxy anime) | AnimeFLV, AnimeAV1, TioAnime, Henaojara — siempre activo para series |
-| **Alfa Providers** (server) | 80+ canales: peliculas, series, anime, documentales, torrents |
+| **Alfa Providers** (server) | 11 providers torrent: peliculas, series, anime, documentales |
 | **Alfa multi-título** | Busca por título EN + ES + JA + slug en paralelo para máximo match |
-| **Alfa episodes** | Soporte de URL pattern (`/{slug}/{episode}/`) y asignaciones JS (`video[N] = '...'`) |
+| **Alfa episodes** | Soporte de URL pattern, season-list, POST, dontorrent (PoW) |
 | **Local scrapers** | 62 providers Hermes ejecutados server-side |
 | **Config panel** | `/configure` — tipos, calidad, idiomas, scrapers on/off |
 | **Separación por categoría** | Pigamer37 solo para anime detectado; Alfa anime siempre para TV; Alfa principal + Backend + Hermes para todo |
@@ -29,48 +29,26 @@ Addon para **Stremio** con catálogo en español y streams de múltiples fuentes
 
 > **Nota:** Los catálogos están deshabilitados en el servidor (ruta `/catalog/*` devuelve vacío). El addon funciona como **proveedor de streams puro** — usa addons de catálogo externos (ej. TMDB Community Addon) para navegar contenido. Los catálogos están definidos en `manifest.json` (18) pero el servidor no los sirve.
 
-## Alfa Providers (86 registrados, 53 activos)
+## Alfa Providers (86 registrados, 11 torrent activos v1.5.4+)
 
 Scraper unificado del addon **Alfa** de Kodi. Corre server-side en Node.js.
 Busca con multiples variantes del título (EN/ES/JA/slug) en paralelo.
 
-| Categoria | Activos | Inactivos | Providers destacados |
-|---|---|---|---|
-| **Peliculas** | ~29 | ~13 | AllCalidad, PelisPedia, PoseidonHD, HDFull, Gnula, WolfMax4K, CineCalidad, DivXTotal, TubePelis, Cine24H, CineLibreOnline, DeTodoPeliculas, GranTorrent, HomeCine, MiraPeliculas, PelisForte, SeriesKao, TubeOnline, Yandispoiler, eCarteleraTrailers (+9 más) |
-| **Series** | ~17 | ~5 | EZTV, DoramasYT, FullSerieHD, SeriesRetro, LaCartoons, PelisPedia, PoseidonHD, DivXTotal, DonTorrent, GranTorrent, HDFull, WolfMax4K, MejorTorrent (+4 más) |
-| **Anime** | 10 | 12 | AnimeFLV, JKAnime, TioAnime, TVAnime (MonosChinos), HenaoJara, EstrenosAnime, SoloLatino, TioDonghua, DoramasQueen, HackTorrent |
-| **Documentales** | 3 | 1 | AreaDocumental, DocumentalesOnline, EliteTorrent |
+> 🔧 **v1.5.4:** Solo providers **torrent** activos para compatibilidad con NuvioTV/ExoPlayer. Los 37 providers de streaming (iframe/jsvar/nextjs) devolvían URLs de páginas HTML embed no reproducibles directamente — desactivados. Los 11 torrent providers restantes devuelven `infoHash` → reproducibles vía TorrServer.
 
-> ⚠️ **Nota:** JKAnime extrae videos server-side (HLS directo vía resolución de `jkplayer/um`). AnimeFLV y TioAnime ahora extraen videos server-side vía `var videos` (objeto/array). HenaoJara carga videos dinámicamente (requieren JS en cliente). Ver [Estado por provider](#estado-por-provider) abajo.
-
-### Estado por provider
-
-| Provider | Búsqueda | Episodios | Videos | Notas |
-|---|---|---|---|---|---|
-| **CineCalidad** | ✅ | — | ✅ (iframe) | 5 streams directos (vimeos, goodstream, hlswish, voe, filemoon) |
-| **PelisPedia** | ✅ | ✅ (POST) | ✅ (iframe-chain) | 2 streams reales vía fastream.to |
-| **HomeCine** | ✅ | — | ✅ (iframe) | 2 streams reales vía fastream.to |
-| **JKAnime** | ✅ | ✅ (`{slug}/{episode}/`) | ✅ (HLS directo) | Resuelve `jkplayer/um` → `.m3u8` real |
-| **AnimeFLV** | ✅ | ✅ (URL pattern) | ✅ (jsvar) | 15 streams por episodio: SW, Mega, YourUpload, Okru, Streamtape |
-| **TioAnime** | ✅ | ✅ (URL pattern) | ✅ (jsvar) | 12 streams por episodio: Mega, YourUpload, Okru, HQQ, StreamSB |
-| **HenaoJara** | ✅ | ❌ sin config | ❌ dinámico | Encuentra página, video vía JS |
-| **EstrenosAnime** | ✅ | ❌ sin config | ❌ dinámico | Encuentra página, video vía JS |
-| **SoloLatino** | ✅ | ❌ sin config | ❌ dinámico | Encuentra página, video vía JS |
-| **TVAnime (MonosChinos)** | ✅ | ❌ sin config | ❌ dinámico | Nuevo dominio vww.monoschinos2.net |
-| **AnimeJL** | ❌ timeout | — | — | No responde — marcado `active: false` |
-| **LatAnime** | ❌ timeout | — | — | No responde — marcado `active: false` |
-| **PelisPanda** | ❌ React SPA | — | — | Renderizado cliente — marcado `active: false` |
-| **HackTorrent** | ✅ | — | ✅ (torrent) | WordPress reactivado, streams torrent con infoHash |
-| **PelisPlus** | ❌ dominio cambiado | — | — | Antes tioplus.app — marcado `active: false` |
-| **MundoDonghua** | ❌ búsqueda client-side | — | — | Donghua, no anime |
-| **TioDonghua** | ✅ | ❌ sin config | ❌ | Donghua (capítulos lectura) |
-| **DonTorrent** | ✅ | ✅ (dontorrent) | ✅ (PoW torrent) | Anubis + PoW interno resuelto server-side. Pelis y series con infoHash |
-| **MejorTorrent** | ✅ | — | ✅ (torrent) | Dominio www43 reactivado, categorías movie/tvshow/torrent |
-| **PelisPanda** | ✅ | — | ✅ (torrent) | Dominio pelispanda.org reactivado, streams torrent con infoHash |
+| Categoria | Torrent providers activos |
+|---|---|
+| **Películas+Series** | divxtotal, dontorrent, grantorrent, mejortorrent, mitorrent, wolfmax4k |
+| **Solo películas** | bloghorror |
+| **Solo series** | eztv |
+| **Anime** | hacktorrent, pelispanda |
+| **Documentales** | elitetorrent |
 
 **Idiomas:** Castellano, Latino, VOSE, English, Japanese, Korean, Hindi, Portuguese.
 
-**Servidores:** streamwish, filemoon, doodstream, streamtape, fembed, okru, mixdrop, upstream, vidhide, voe, mystream, netutv, yourupload, jawcloud, streampe, gvideo, torrent/magnet, jkplayer.
+**Servidores:** torrent/magnet.
+
+> ⚠️ **Nota v1.5.4:** Los providers de streaming (iframe/jsvar/nextjs/jkplayer) se desactivaron porque devuelven URLs de páginas HTML embed que ExoPlayer no puede reproducir. Solo los providers **torrent** (`type: 'torrent'` o `type: 'dontorrent'`) son funcionales en NuvioTV, pues NuvioTV los reconoce por `infoHash` y los reproduce vía TorrServer local.
 
 ## Backend Scrapers (4 activos)
 
@@ -108,6 +86,15 @@ node build.js    # Build de scrapers desde src/
 - **URL:** https://ovnivers.onrender.com
 
 ## Changelog
+
+### v1.5.4 — Solo torrent providers activos para NuvioTV
+
+- **37 providers no-torrent desactivados**: Todos los providers iframe/jsvar/nextjs/jkplayer devolvían URLs de páginas HTML embed (streamwish, filemoon, etc.) que ExoPlayer no puede reproducir. Se marcan `active: false`.
+- **11 torrent providers permanecen activos**: Únicamente providers con `type: 'torrent'` o `type: 'dontorrent'` que devuelven `infoHash` → reproducibles vía TorrServer en NuvioTV.
+- **Fix build**: `crypto` añadido a `EXTERNAL_MODULES` en `build.js` — el bundle ya no incluye polyfill de crypto (50KB menos).
+- **Bundle**: `alfa-providers.js` regenerado con esbuild (crypto externalizado).
+- **Docs**: README actualizado con lista de providers activos v1.5.4.
+- **Version**: 1.5.4
 
 ### v1.5.2 — DonTorrent reactivado + PoW solver + universal catalogs
 

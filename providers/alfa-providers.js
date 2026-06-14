@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-14T14:37:52.790Z
+ * Generated: 2026-06-14T14:43:34.015Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -56,7 +56,7 @@ var require_providers = __commonJS({
         baseUrl: "https://allcalidad.re",
         categories: ["movie", "direct"],
         language: ["lat"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", srcAttr: "data-src", defaultQuality: "HD" }
@@ -101,7 +101,7 @@ var require_providers = __commonJS({
         baseUrl: "https://cine24h.online",
         categories: ["movie"],
         language: ["lat", "cast", "vose"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
@@ -112,7 +112,7 @@ var require_providers = __commonJS({
         baseUrl: "https://www.cinecalidad.vg",
         categories: ["movie", "direct", "torrent"],
         language: ["cast", "lat"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", srcAttr: "data-src", defaultQuality: "HD" }
@@ -123,7 +123,7 @@ var require_providers = __commonJS({
         baseUrl: "https://www.cinelibreonline.com",
         categories: ["movie", "direct"],
         language: ["lat"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
         // <-- fixed
@@ -158,7 +158,7 @@ var require_providers = __commonJS({
         baseUrl: "https://detodopeliculas.nu",
         categories: ["movie"],
         language: ["lat", "cast", "vose"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
         // <-- fixed
@@ -194,7 +194,7 @@ var require_providers = __commonJS({
         baseUrl: "https://doramasflix.co",
         categories: ["movie", "tvshow"],
         language: ["cast", "lat", "vose"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "div.embla__slide_carousel", titleSelector: "img[alt]", linkSelector: "a", titleAttr: "alt" },
         // <-- fixed
@@ -206,7 +206,7 @@ var require_providers = __commonJS({
         baseUrl: "https://doramedplay.net",
         categories: ["movie", "tvshow"],
         language: ["lat"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "li", titleSelector: "h2", linkSelector: "a" },
         // <-- fixed
@@ -218,7 +218,7 @@ var require_providers = __commonJS({
         baseUrl: "https://entrepeliculasyseries.nz",
         categories: ["movie", "tvshow", "vos"],
         language: ["lat", "cast"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
@@ -229,7 +229,7 @@ var require_providers = __commonJS({
         baseUrl: "https://www.estrenoscinesaa.com",
         categories: ["movie", "tvshow"],
         language: ["cast"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h3", linkSelector: "a" },
         // <-- fixed
@@ -253,7 +253,7 @@ var require_providers = __commonJS({
         baseUrl: "https://www.genteclic.com",
         categories: ["movie", "direct"],
         language: ["lat"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "div.jeg_content", titleSelector: "img[alt]", linkSelector: "a", titleAttr: "alt" },
         // <-- fixed
@@ -265,7 +265,7 @@ var require_providers = __commonJS({
         baseUrl: "https://gnulahd.nu",
         categories: ["movie", "vos"],
         language: ["cast", "lat"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
@@ -300,7 +300,7 @@ var require_providers = __commonJS({
         baseUrl: "https://www3.homecine.to",
         categories: ["movie", "tvshow", "direct"],
         language: ["lat", "cast"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "div.ml-item", titleSelector: "h2", linkSelector: "a" },
         // <-- fixed
@@ -313,7 +313,7 @@ var require_providers = __commonJS({
         baseUrl: "https://legalmentegratis.com",
         categories: ["movie", "vos"],
         language: ["cast"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[title]", linkSelector: "a", titleAttr: "title" },
         // <-- fixed
@@ -325,7 +325,7 @@ var require_providers = __commonJS({
         baseUrl: "https://ww2.dipelis.com",
         categories: ["movie"],
         language: ["lat", "cast", "vose"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "a[title]", linkSelector: "a", titleAttr: "title" },
         // <-- fixed
@@ -404,7 +404,7 @@ var require_providers = __commonJS({
         baseUrl: "https://www1.pelisforte.se",
         categories: ["movie"],
         language: ["lat", "cast"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
@@ -415,7 +415,7 @@ var require_providers = __commonJS({
         baseUrl: "https://pelispedia.is",
         categories: ["movie", "tvshow", "vos"],
         language: ["lat", "cast"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         episodes: { type: "post", url: null, seasonParam: "season", episodeParam: "episode", extraParams: { action: "action_select_season" }, episodeSelector: "a" },
@@ -427,7 +427,7 @@ var require_providers = __commonJS({
         baseUrl: "https://www.poseidonhd2.co",
         categories: ["movie", "tvshow", "vos", "direct"],
         language: ["lat"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/search?q={query}", itemSelector: 'a[href*="/pelicula/"], a[href*="/serie/"]', titleSelector: ".Title", linkSelector: "&" },
         // <-- fixed
@@ -450,7 +450,7 @@ var require_providers = __commonJS({
         baseUrl: "https://serieskao.top",
         categories: ["movie", "tvshow", "vos"],
         language: ["lat", "cast"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h3", linkSelector: "a" },
         // <-- fixed
@@ -463,7 +463,7 @@ var require_providers = __commonJS({
         baseUrl: "https://www.tubeonline.net",
         categories: ["movie", "tvshow"],
         language: ["lat", "cast", "vose"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
         // <-- fixed
@@ -475,7 +475,7 @@ var require_providers = __commonJS({
         baseUrl: "https://www.tubepelis.com",
         categories: ["movie"],
         language: ["lat"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "li.peli_bx", titleSelector: "h2", linkSelector: "a" },
         // <-- fixed
@@ -500,7 +500,7 @@ var require_providers = __commonJS({
         baseUrl: "https://yandispoiler.net",
         categories: ["movie", "tvshow"],
         language: ["lat", "cast", "vose"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
         // <-- fixed
@@ -535,7 +535,7 @@ var require_providers = __commonJS({
         baseUrl: "https://www.doramasyt.com",
         categories: ["tvshow", "vos"],
         language: ["cast", "lat"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h3", linkSelector: "a" },
         // <-- fixed
@@ -559,7 +559,7 @@ var require_providers = __commonJS({
         baseUrl: "https://seriesmega.org",
         categories: ["tvshow", "vos"],
         language: ["cast"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         episodes: { type: "season-list", seasonSelector: ".season-list a", episodeSelector: ".episode-list a" },
@@ -571,7 +571,7 @@ var require_providers = __commonJS({
         baseUrl: "https://www.lacartoons.com",
         categories: ["tvshow"],
         language: ["lat"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/search/{query}", itemSelector: ".serie-item", titleSelector: ".title", linkSelector: "a" },
         episodes: { type: "season-list", seasonSelector: ".temporadas a", episodeSelector: ".episodios a" },
@@ -583,7 +583,7 @@ var require_providers = __commonJS({
         baseUrl: "https://seriesretro.com",
         categories: ["tvshow"],
         language: ["lat"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
         // <-- fixed
@@ -596,7 +596,7 @@ var require_providers = __commonJS({
         baseUrl: "https://www3.animeflv.net",
         categories: ["anime"],
         language: ["cast", "lat"],
-        active: false,
+        active: true,
         adult: false,
         episodes: { type: "url", pattern: "/ver/{slug}-{episode}" },
         search: { url: "/browse?q={query}", itemSelector: "ul.ListAnimes li", titleSelector: "h3.Title", linkSelector: "a" },
@@ -630,7 +630,7 @@ var require_providers = __commonJS({
         baseUrl: "https://estrenosanime.net",
         categories: ["anime"],
         language: ["*"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/search?keyword={query}", itemSelector: "a.film-poster-ahref", titleSelector: "a[title]", titleAttr: "title", linkSelector: "&" },
         // <-- fixed
@@ -654,7 +654,7 @@ var require_providers = __commonJS({
         baseUrl: "https://henaojara.com",
         categories: ["anime"],
         language: ["cast", "lat", "vose"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h3.Title", linkSelector: "a" },
         // <-- fixed
@@ -666,7 +666,7 @@ var require_providers = __commonJS({
         baseUrl: "https://jkanime.net",
         categories: ["anime"],
         language: ["cast", "lat"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/buscar/{query}", itemSelector: ".anime__item", titleSelector: "h5 a", linkSelector: "a" },
         episodes: { type: "url", pattern: "/{slug}/{episode}/" },
@@ -744,7 +744,7 @@ var require_providers = __commonJS({
         baseUrl: "https://sololatino.net",
         categories: ["anime", "vos"],
         language: ["lat"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/buscar?q={query}", itemSelector: ".card", titleSelector: ".card__title", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", defaultQuality: "HD", srcAttr: "src" }
@@ -756,7 +756,7 @@ var require_providers = __commonJS({
         baseUrl: "https://tioanime.com",
         categories: ["anime", "vos"],
         language: ["*"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/directorio?q={query}", itemSelector: "ul.animes li", titleSelector: "h3.title", linkSelector: "a" },
         // <-- fixed
@@ -769,7 +769,7 @@ var require_providers = __commonJS({
         baseUrl: "https://tiodonghua.com",
         categories: ["anime", "vos"],
         language: ["vose"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h3", linkSelector: "a" },
         // <-- fixed
@@ -781,7 +781,7 @@ var require_providers = __commonJS({
         baseUrl: "https://vww.monoschinos2.net",
         categories: ["anime", "vos"],
         language: ["lat", "cast"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/animes?buscar={query}", itemSelector: "div.accordion-item", titleSelector: "h2", titleAttr: "alt", linkSelector: "a" },
         // <-- fixed
@@ -826,7 +826,7 @@ var require_providers = __commonJS({
         baseUrl: "https://www.area-documental.com",
         categories: ["documentary"],
         language: ["cast", "lat"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/search/{query}", itemSelector: "div.col-md-2", titleSelector: "img[alt]", linkSelector: "a", titleAttr: "alt" },
         // <-- fixed
@@ -838,7 +838,7 @@ var require_providers = __commonJS({
         baseUrl: "https://www.documentales-online.com",
         categories: ["documentary"],
         language: ["cast", "lat"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
         // <-- fixed
@@ -873,7 +873,7 @@ var require_providers = __commonJS({
         baseUrl: "https://www.ecartelera.com",
         categories: ["movie"],
         language: ["cast", "lat"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/buscar/{query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
         // <-- fixed
@@ -908,7 +908,7 @@ var require_providers = __commonJS({
         baseUrl: "https://www.doramasqueen.com",
         categories: ["anime"],
         language: ["cast", "lat"],
-        active: false,
+        active: true,
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
@@ -1654,7 +1654,60 @@ var require_engine = __commonJS({
             sources: ["dht:" + torrentInfo.infoHash]
           });
         }
+        for (const r of results) {
+          if (r.infoHash || !r.url || r.server === "direct" || r.server === "torrent") continue;
+          const resolved = yield tryResolveEmbedToDirect(r.url, pageUrl);
+          if (resolved) {
+            r.url = resolved;
+            r.server = "direct";
+          }
+        }
         return results;
+      });
+    }
+    var embedCache = /* @__PURE__ */ new Map();
+    function tryResolveEmbedToDirect(embedUrl, referer) {
+      return __async(this, null, function* () {
+        if (!embedUrl || embedCache.has(embedUrl)) return embedCache.get(embedUrl) || null;
+        try {
+          const ctrl = new AbortController();
+          const t = setTimeout(() => ctrl.abort(), 5e3);
+          const res = yield fetch(embedUrl, {
+            headers: { "User-Agent": UA2, "Referer": referer || embedUrl, "Accept": "text/html,*/*" },
+            signal: ctrl.signal
+          });
+          clearTimeout(t);
+          if (!res.ok) {
+            embedCache.set(embedUrl, null);
+            return null;
+          }
+          const html = yield res.text();
+          let directUrl = null;
+          const m3u8 = html.match(/https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*/i);
+          if (m3u8) directUrl = m3u8[0];
+          if (!directUrl) {
+            const mp4 = html.match(/https?:\/\/[^"'\s<>]+\.mp4[^"'\s<>]*/i);
+            if (mp4) directUrl = mp4[0];
+          }
+          if (!directUrl) {
+            const srcKey = html.match(/["'](?:src|file)["']\s*:\s*["']([^"']+\.(?:m3u8|mp4)[^"']*)["']/i);
+            if (srcKey) directUrl = srcKey[1];
+          }
+          if (!directUrl) {
+            const hlsKey = html.match(/["'](?:url|src)["']\s*:\s*["']([^"']+)["'][\s\S]{0,200}["'](?:application\/x-mpegURL|hls)["']/i);
+            if (hlsKey) directUrl = hlsKey[1];
+          }
+          if (directUrl) {
+            if (directUrl.startsWith("//")) directUrl = "https:" + directUrl;
+            embedCache.set(embedUrl, directUrl);
+            return directUrl;
+          }
+          embedCache.set(embedUrl, null);
+          return null;
+        } catch (e) {
+          embedCache.set(embedUrl, null);
+          return null;
+        }
       });
     }
     function detectServer2(url) {
@@ -1779,7 +1832,8 @@ var require_engine = __commonJS({
       searchProvider: searchProvider2,
       getEpisodeUrl: getEpisodeUrl2,
       extractVideos: extractVideos2,
-      detectServer: detectServer2
+      detectServer: detectServer2,
+      tryResolveEmbedToDirect
     };
   }
 });
