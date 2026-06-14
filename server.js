@@ -1039,13 +1039,6 @@ app.get('/manifest.json', async (req, res) => {
 
   const allPrefixes = [...new Set([...streamPrefixes, ...metaPrefixes])];
 
-  const catalogTypes = [...new Set(catalogDefs.map(c => c.type))];
-  const resources = [
-    { name: 'stream', types: enabledTypes, idPrefixes: streamPrefixes },
-    { name: 'meta', types: enabledTypes, idPrefixes: metaPrefixes },
-    { name: 'catalog', types: catalogTypes, idPrefixes: ['ovn', 'tmdb', 'tt', 'tmdb-genre:', ...ANIME_PREFIXES] }
-  ];
-
   const catalogDefs = catalog.CATEGORIES.map(c => ({
     id: c.id,
     name: c.name,
@@ -1077,6 +1070,13 @@ app.get('/manifest.json', async (req, res) => {
     type: 'movie',
     extra: [{ name: 'search', isRequired: true }]
   });
+
+  const catalogTypes = [...new Set(catalogDefs.map(c => c.type))];
+  const resources = [
+    { name: 'stream', types: enabledTypes, idPrefixes: streamPrefixes },
+    { name: 'meta', types: enabledTypes, idPrefixes: metaPrefixes },
+    { name: 'catalog', types: catalogTypes, idPrefixes: ['ovn', 'tmdb', 'tt', 'tmdb-genre:', ...ANIME_PREFIXES] }
+  ];
 
   const manifest = {
     id: ADDON_ID,
