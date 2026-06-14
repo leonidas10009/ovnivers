@@ -912,7 +912,7 @@ async function resolveTMDbIdForProviders(rawId, mediaType) {
   return await getTMDbId(rawId, mediaType);
 }
 
-async function scrapeLocalProviders(rawId, mediaType, type, season, episode, config) {
+async function scrapeLocalProviders(rawId, mediaType, type, season, episode, config, isAnime) {
   if (!config.enableLocal) return [];
   let tmdbId;
   const isIdAnime = type === 'anime' || ANIME_PREFIXES.some(p => rawId.startsWith(p.replace(':', '|')) || rawId.startsWith(p));
@@ -928,9 +928,11 @@ async function scrapeLocalProviders(rawId, mediaType, type, season, episode, con
   }
   if (!tmdbId) return [];
 
-  const providers = localProviders.filter(provider =>
-    providerSupportsType(provider, mediaType, type) && providerMatchesLang(provider, config) && isProviderHealthy(provider.id)
-  );
+  const ANIME_PROVIDER_IDS = new Set(['allanime','animekai','animepahe','animesalt','animetsu','animeworld','anime-sama','hianime','allwish','anikototv']);
+  const providers = localProviders.filter(provider => {
+    if (!isAnime && ANIME_PROVIDER_IDS.has(provider.id)) return false;
+    return providerSupportsType(provider, mediaType, type) && providerMatchesLang(provider, config) && isProviderHealthy(provider.id);
+  });
   if (!providers.length) return [];
 
   const streams = await runInChunks(
@@ -1185,9 +1187,9 @@ async function handleStream(req, res, type, id) {
   // ── Local providers: Alfa (categoría principal) + Hermes ──
   if (config.enableLocal) {
     streamTasks.push(scrapeAlfa(rawId, mediaType, type, season, episode, config));
-    streamTasks.push(scrapeLocalProviders(rawId, mediaType, type, season, episode, config));
-    // Alfa anime: siempre para TV (scraper, no contamina si no encuentra)
-    if (config.enableAnime && mediaType === 'tv') {
+    streamTasks.push(scrapeLocalProviders(rawId, mediaType, type, season, episode, config, isAnime));
+    // Alfa anime: solo para contenido detectado como anime
+    if (isAnime && config.enableAnime && mediaType === 'tv') {
       streamTasks.push(scrapeAlfa(rawId, 'tv', 'anime', season, episode, config));
     }
   }
