@@ -688,12 +688,13 @@ async function extractVideos(provider, pageUrl) {
     });
   }
 
-  for (const r of results) {
-    if (r.infoHash || !r.url || r.server === 'direct' || r.server === 'torrent') continue;
-    const resolved = await tryResolveEmbedToDirect(r.url, pageUrl);
-    if (resolved) {
-      r.url = resolved;
-      r.server = 'direct';
+  const embeds = results.filter(r => !r.infoHash && r.url && r.server !== 'direct' && r.server !== 'torrent');
+  const resolvedList = await Promise.allSettled(embeds.map(r => tryResolveEmbedToDirect(r.url, pageUrl)));
+  for (let i = 0; i < embeds.length; i++) {
+    const res = resolvedList[i];
+    if (res.status === 'fulfilled' && res.value) {
+      embeds[i].url = res.value;
+      embeds[i].server = 'direct';
     }
   }
 
@@ -706,7 +707,7 @@ async function tryResolveEmbedToDirect(embedUrl, referer) {
   if (!embedUrl || embedCache.has(embedUrl)) return embedCache.get(embedUrl) || null;
   try {
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 5000);
+    const t = setTimeout(() => ctrl.abort(), 3000);
     const res = await fetch(embedUrl, {
       headers: { 'User-Agent': UA, 'Referer': referer || embedUrl, 'Accept': 'text/html,*/*' },
       signal: ctrl.signal

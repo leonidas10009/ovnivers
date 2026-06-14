@@ -161,7 +161,7 @@ async function scrapeAlfaProviders(type, id, season, episode) {
   if (!activeProviders.length) return [];
 
   const results = [];
-  const chunks = chunkArray(activeProviders, 4);
+  const chunks = chunkArray(activeProviders, 8);
 
   for (const chunk of chunks) {
     const chunkResults = await Promise.allSettled(
@@ -211,10 +211,9 @@ async function scrapeAlfaProviders(type, id, season, episode) {
     for (const r of chunkResults) {
       if (r.status === 'fulfilled') results.push(...r.value);
     }
-    if (results.length >= 30) break;
   }
 
-  return results.slice(0, 50);
+  return results.slice(0, 60);
 }
 
 function chunkArray(arr, size) {

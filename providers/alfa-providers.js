@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-14T14:48:29.375Z
+ * Generated: 2026-06-14T14:51:30.315Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -1654,12 +1654,13 @@ var require_engine = __commonJS({
             sources: ["dht:" + torrentInfo.infoHash]
           });
         }
-        for (const r of results) {
-          if (r.infoHash || !r.url || r.server === "direct" || r.server === "torrent") continue;
-          const resolved = yield tryResolveEmbedToDirect(r.url, pageUrl);
-          if (resolved) {
-            r.url = resolved;
-            r.server = "direct";
+        const embeds = results.filter((r) => !r.infoHash && r.url && r.server !== "direct" && r.server !== "torrent");
+        const resolvedList = yield Promise.allSettled(embeds.map((r) => tryResolveEmbedToDirect(r.url, pageUrl)));
+        for (let i = 0; i < embeds.length; i++) {
+          const res = resolvedList[i];
+          if (res.status === "fulfilled" && res.value) {
+            embeds[i].url = res.value;
+            embeds[i].server = "direct";
           }
         }
         return results;
@@ -1671,7 +1672,7 @@ var require_engine = __commonJS({
         if (!embedUrl || embedCache.has(embedUrl)) return embedCache.get(embedUrl) || null;
         try {
           const ctrl = new AbortController();
-          const t = setTimeout(() => ctrl.abort(), 5e3);
+          const t = setTimeout(() => ctrl.abort(), 3e3);
           const res = yield fetch(embedUrl, {
             headers: { "User-Agent": UA2, "Referer": referer || embedUrl, "Accept": "text/html,*/*" },
             signal: ctrl.signal
@@ -1988,7 +1989,7 @@ function scrapeAlfaProviders(type, id, season, episode) {
     });
     if (!activeProviders.length) return [];
     const results = [];
-    const chunks = chunkArray(activeProviders, 4);
+    const chunks = chunkArray(activeProviders, 8);
     for (const chunk of chunks) {
       const chunkResults = yield Promise.allSettled(
         chunk.map((provider) => __async(null, null, function* () {
@@ -2037,9 +2038,8 @@ ${v.server || detectServer(v.url)}`,
       for (const r of chunkResults) {
         if (r.status === "fulfilled") results.push(...r.value);
       }
-      if (results.length >= 30) break;
     }
-    return results.slice(0, 50);
+    return results.slice(0, 60);
   });
 }
 function chunkArray(arr, size) {
