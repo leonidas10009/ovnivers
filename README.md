@@ -1,58 +1,60 @@
-# Ovnivers — Stream Provider v1.5.5
+# Ovnivers — Stream Provider v1.5.7
 
-Addon para **Stremio** con catálogo en español y streams de múltiples fuentes.
+Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fuentes.
 
 ## Instalacion
 
-1. Abri **Stremio** > **Settings** > **Addons**
-2. Ve al panel de configuracion para personalizar:
-   ```
-   https://ovnivers.onrender.com/configure
-   ```
-3. Genera la URL e instalala en Stremio
-4. Usa un catalogo externo para navegar peliculas/series
+1. Abri **Stremio** (Desktop o NuvioTV) > **Settings** > **Addons**
+2. Ve al panel de configuracion: [https://ovnivers.onrender.com/configure](https://ovnivers.onrender.com/configure)
+3. Configura preferencias (idiomas, calidad, scrapers) → **Generate Install URL**
+4. Click **Copy URL** y pégalo en Stremio (Install from URL); o usa el botón **Open in Stremio**
+5. Navega películas/series desde cualquier catálogo (TMDB Community, Torrentio, o los catálogos propios del addon)
+6. Los streams aparecen en **Streaming sources** al abrir el detalle de un título
 
 ## Features
 
 | Funcionalidad | Detalle |
-|---|---|---|
+|---|---|
 | **Backend scrapers** | 2embed (Vesy + Vsrc), VidSrc, PoseidonHD |
-| **Pigamer37** (proxy anime) | AnimeFLV, AnimeAV1, TioAnime, Henaojara — siempre activo para series |
-| **Alfa Providers** (server) | 48 providers: peliculas, series, anime, documentales + torrents |
-| **Alfa multi-título** | Busca por título EN + ES + JA + slug en paralelo para máximo match |
-| **Alfa episodes** | Soporte de URL pattern, season-list, POST, dontorrent (PoW) |
-| **Local scrapers** | 62 providers Hermes ejecutados server-side |
+| **Pigamer37** (proxy anime) | AnimeFLV, AnimeAV1, TioAnime, Henaojara — solo para anime detectado |
+| **Alfa Providers** (server-side) | 48 providers: peliculas, series, anime, documentales + torrents |
+| **Alfa multi-título** | Busca por título EN + ES + JA + slug en paralelo |
+| **Embed-to-direct resolver** | Fetch automático de páginas embed → extracción `.m3u8`/`.mp4` |
+| **notWebReady automático** | Streams directos (`.m3u8`/`.mp4`) marcados como reproducibles en ExoPlayer |
 | **Config panel** | `/configure` — tipos, calidad, idiomas, scrapers on/off |
-| **Separación por categoría** | Pigamer37 solo para anime detectado; Alfa anime siempre para TV; Alfa principal + Backend + Hermes para todo |
+| **Separación por categoría** | Pigamer37 solo para anime detectado; Alfa anime para TV animado; Backend + Alfa + Hermes para todo |
 
 ## Catalogs
 
-> **Nota:** Los catálogos están deshabilitados en el servidor (ruta `/catalog/*` devuelve vacío). El addon funciona como **proveedor de streams puro** — usa addons de catálogo externos (ej. TMDB Community Addon) para navegar contenido. Los catálogos están definidos en `manifest.json` (18) pero el servidor no los sirve.
+18 catálogos TMDB activos: popular, trending, top-rated, search para movie/series/anime.
+IDs con prefijo `ovn:` para los catálogos propios y `tt:`/`tmdb:` para compatibilidad cross-addon (Torrentio, AnimeFLV, TMDB Community).
 
-## Alfa Providers (86 registrados, 48 activos, v1.5.4+)
+## Alfa Providers (86 registrados, 48 activos)
 
 Scraper unificado del addon **Alfa** de Kodi. Corre server-side en Node.js.
 Busca con multiples variantes del título (EN/ES/JA/slug) en paralelo.
 
-> 🔧 **v1.5.4:** Embed-to-direct resolver activado. Los providers de streaming ahora intentan resolver URLs embed a URLs directas (`.mp4`/`.m3u8`) server-side. Si la resolución falla, el stream se muestra como `notWebReady: true`.
+Tras cada fetch de embed, se ejecuta el resolvedor `tryResolveEmbedToDirect()` que extrae URLs directas (`.m3u8`/`.mp4`) del HTML. Si tiene éxito, el stream se marca `notWebReady: false` (reproducible en ExoPlayer). Si falla, se conserva la URL embed con `notWebReady: true`.
 
 | Categoria | Activos | Providers destacados |
 |---|---|---|
-| **Películas** | ~29 | CineCalidad, PelisPedia, PoseidonHD, WolfMax4K, DivXTotal, GranTorrent, DonTorrent, MejorTorrent, Mitorrent + iframe providers |
-| **Series** | ~17 | EZTV, DoramasYT, FullSerieHD, PelisPedia, PoseidonHD, DivXTotal, DonTorrent, GranTorrent, WolfMax4K, MejorTorrent |
-| **Anime** | 10 | AnimeFLV, JKAnime, TioAnime, HackTorrent, PelisPanda + iframe/jsvar providers |
+| **Películas** | ~29 | CineCalidad, PelisPedia, PoseidonHD, WolfMax4K + iframe providers |
+| **Series** | ~17 | DoramasYT, FullSerieHD, PelisPedia, PoseidonHD, WolfMax4K + iframe |
+| **Anime** | 10 | AnimeFLV, JKAnime, TioAnime + iframe/jsvar providers |
 | **Documentales** | 3 | AreaDocumental, DocumentalesOnline, EliteTorrent |
 
 **Idiomas:** Castellano, Latino, VOSE, English, Japanese, Korean, Hindi, Portuguese.
 
-**Servidores:** streamwish, filemoon, doodstream, streamtape, fembed, okru, mixdrop, torrent/magnet.
+**Servidores:** streamwish, filemoon, doodstream, streamtape, fembed, okru, mixdrop.
 
-| Provider | Tipo | Reproducible en |
+**Estado real (~80 streams por película):**
+| Tipo | Funcional | Reproducible en |
 |---|---|---|
-| **Torrent** (bloghorror, divxtotal, dontorrent, grantorrent, mejortorrent, mitorrent, wolfmax4k, eztv, hacktorrent, pelispanda, elitetorrent) | infoHash → TorrServer | NuvioTV ✅ |
-| **Iframe/jsvar/nextjs/jkplayer** (cinecalidad, pelispedia, animeflv, etc.) | Embed URL → resolución directa si posible | NuvioTV ⚠️ (solo si se resuelve a `.mp4`/`.m3u8`) |
+| Torrent (bloghorror, divxtotal, dontorrent, grantorrent, mejortorrent, mitorrent, wolfmax4k, eztv, hacktorrent, pelispanda, elitetorrent) | ❌ Sitios caídos/cambiados/requieren login | Ninguno |
+| Embed directo (`.m3u8`/`.mp4` resuelto) | ✅ ~36/80 streams | Stremio Desktop ✅ / NuvioTV ✅ |
+| Embed sin resolver (página HTML) | ⚠️ ~44/80 streams | Stremio Desktop ✅ (Chromium WebView) / NuvioTV ❌ (ExoPlayer) |
 
-> ⚠️ **Nota v1.5.4:** Los providers de streaming (iframe/jsvar/nextjs/jkplayer) devuelven URLs de páginas HTML embed. En v1.5.4 se añadió un resolvedor genérico que intenta extraer URLs directas (`.mp4`/`.m3u8`) del HTML de cada embed. Si la extracción falla, ExoPlayer no podrá reproducirlas — estos streams funcionan nativamente en **Stremio Desktop** (Chromium WebView) y **Stremio Web** (iframe).
+> ⚠️ Los 11 providers torrent están marcados como activos pero sus sitios ya no devuelven infoHash/magnet. El addon funciona exclusivamente con providers iframe/jsvar/nextjs cuyos embeds se resuelven a URLs directas o se abren en WebView.
 
 ## Backend Scrapers (4 activos)
 
@@ -69,9 +71,10 @@ Busca con multiples variantes del título (EN/ES/JA/slug) en paralelo.
 
 | Endpoint | Descripcion |
 |---|---|
-| `/manifest.json` | Stremio manifest (respeta `?configured=`) |
+| `/manifest.json` | Stremio manifest (respeta `?l=es,lat,ja` y otros params de config) |
 | `/stream/:type/:id.json` | Streams (backend + anime proxy + alfa + locals) |
 | `/meta/:type/:id.json` | Metadata (TMDb + anime) |
+| `/catalog/:type/:id.json` | Catálogos TMDB (popular, trending, top-rated, search) |
 | `/health` | Estado de todos los providers (stats, fallos, salud) |
 | `/configure` | Panel de configuracion |
 | `/` | Health check |
@@ -91,14 +94,19 @@ node build.js    # Build de scrapers desde src/
 
 ## Changelog
 
-### v1.5.5 — Manifest fix + notWebReady + torrent priority
+### v1.5.7 — Fix stremio URL + documentación
 
-- **Manifest arreglado**: `catalog` añadido a resources, `anime` añadido a types — ahora el addon aparece correctamente en Stremio Desktop
-- **notWebReady corregido**: streams con URL directa (`.m3u8`/`.mp4`) ya no se marcan como `notWebReady` — son reproducibles por ExoPlayer
-- **Torrent priority**: providers torrent se ejecutan primero en los chunks
-- **Embed resolver paralelo**: timeouts reducidos a 3s, resolución en paralelo con `Promise.allSettled`
-- **Fix ReferenceError**: `catalogDefs` usado antes de definirse — servidor caído (503)
-- **Version**: 1.5.5
+- **Fix `stremio://` URL**: `stremio://https://...` → `stremio://host/...` (doble protocolo rompía "Open in Stremio")
+- **Docs**: README actualizado con estado real de providers y compatibilidad
+
+### v1.5.5 — Manifest fix + notWebReady + embed resolver
+
+- **Manifest**: `catalog` añadido a resources, `anime` añadido a types
+- **notWebReady**: streams con URL directa (`.m3u8`/`.mp4`) ya no se marcan como `notWebReady` — reproducibles por ExoPlayer
+- **Embed resolver**: timeouts reducidos a 3s, resolución en paralelo con `Promise.allSettled`
+- **Torrent priority**: providers torrent se ejecutan primero (aunque ya no producen infoHash)
+- **Fix ReferenceError**: `catalogDefs` usado antes de definirse — causaba 503 hibernate-wake-error
+- **Cache-Control**: Manifest con `no-cache, no-store, must-revalidate` para que version updates se propaguen inmediatamente
 
 ### v1.5.4 — Embed resolver + build fix
 
@@ -221,19 +229,23 @@ node build.js    # Build de scrapers desde src/
 - **MundoDonghua**: Set inactive — búsqueda solo client-side
 - **Result**: JKAnime returns 5 streams for One Piece, 2 for Shingeki no Kyojin
 
-## Stream Format (v1.3+)
+## Stream Format
 
-Todos los streams se normalizan al mismo formato:
-
+```json
+{
+  "name": "ProviderName\n1080p 🇯🇵🇪🇸",
+  "title": "1080p | ProviderName\nServerName\nDetalle",
+  "url": "https://.../video.m3u8",
+  "notWebReady": false
+}
 ```
-name:  "ProviderName\n1080p 🇯🇵🇪🇸"
-title: "1080p | ProviderName\nServerName\nSerieEpisodio"
-```
 
-- **ProviderName** — etiqueta del provider (ej. `AnimeFLV`, `Alfa: Cuevana2`, `2embed`, `321MoviesFree`, `Mega`)
-- **ServerName** — nombre detectado desde la URL (Mega, Streamtape, Mp4Upload, Okru, StreamSB...)
-- **Línea extra** — episodio, HDR, Dual Audio, etc. (preservado del title original)
-- **Flags** — banderas de idioma en `name` junto a la calidad (no se repiten en `title`)
+| Campo | Descripción |
+|---|---|
+| `url` | URL directa `.mp4`/`.m3u8` o URL de embed HTML |
+| `notWebReady` | `false` = directo (ExoPlayer). `true` = embed (solo Chromium WebView) |
+| `name` | Provider + calidad + flags de idioma |
+| `title` | Provider + servidor + detalle (episodio, HDR, dual audio) |
 
 ## TODO / Próximas mejoras
 
@@ -244,10 +256,12 @@ title: "1080p | ProviderName\nServerName\nSerieEpisodio"
 - [x] **Paginación real en catálogos** — `skip`→ página, campo `next` en respuesta
 - [x] **Config vía `.env`** — `dotenv` + `.env.example` + `TMDB_KEY`/`PORT` desde entorno
 - [x] **Limpiar raíz** — `test_*.js` movidos a `tests/`
+- [x] **Embed resolver** — `tryResolveEmbedToDirect()` con fetch y extracción de `.m3u8`/`.mp4`
+- [x] **notWebReady automático** — streams directos marcados como ExoPlayer-compatibles
 - [ ] **Tests automatizados** — Suite de tests que verifique que cada scraper responde estructura válida
-- [ ] **Soporte Docker** — Dockerfile + docker-compose.yml para deploy sencillo
+- [ ] **Proxy endpoint** — Endpoint propio como WebStreamrMBG para servir streams embed resueltos sin depender de URLs externas
+- [ ] **Reemplazar providers torrent** — Buscar fuentes funcionales (infoHash real) o eliminarlos del manifiesto
 - [ ] **Priorizar providers por velocidad** — Ordenar streams: más rápidos primero
-- [ ] **Idioma configurable en TMDB** — Opción en el panel de configuración para elegir idioma del catálogo/meta
 
 ## Créditos
 
