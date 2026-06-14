@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.4.22
+ * Ovnivers — Stremio Addon Backend v1.5.2
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
