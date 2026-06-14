@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.5.3
+# Ovnivers — Stream Provider v1.5.4
 
 Addon para **Stremio** con catálogo en español y streams de múltiples fuentes.
 
