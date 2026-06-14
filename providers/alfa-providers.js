@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-14T14:43:34.015Z
+ * Generated: 2026-06-14T14:48:29.375Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -1979,6 +1979,12 @@ function scrapeAlfaProviders(type, id, season, episode) {
     const activeProviders = providers.filter((p) => {
       if (!p.active || p.adult) return false;
       return p.categories.includes(category);
+    }).sort((a, b) => {
+      const ta = a.videos.type === "torrent" || a.videos.type === "dontorrent";
+      const tb = b.videos.type === "torrent" || b.videos.type === "dontorrent";
+      if (ta && !tb) return -1;
+      if (!ta && tb) return 1;
+      return 0;
     });
     if (!activeProviders.length) return [];
     const results = [];
