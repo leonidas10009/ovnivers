@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.4.19
+# Ovnivers — Stream Provider v1.5.0
 
 Addon para **Stremio** con catálogo en español y streams de múltiples fuentes.
 
@@ -41,15 +41,18 @@ Busca con multiples variantes del título (EN/ES/JA/slug) en paralelo.
 | **Anime** | 10 | 12 | AnimeFLV, JKAnime, TioAnime, TVAnime (MonosChinos), HenaoJara, EstrenosAnime, SoloLatino, TioDonghua, DoramasQueen, HackTorrent |
 | **Documentales** | 3 | 1 | AreaDocumental, DocumentalesOnline, EliteTorrent |
 
-> ⚠️ **Nota:** JKAnime extrae videos server-side (HLS directo vía resolución de `jkplayer/um`). AnimeFLV, TioAnime, HenaoJara y otros encuentran las páginas pero cargan videos dinámicamente (requieren JS en cliente). Ver [Estado por provider](#estado-por-provider) abajo.
+> ⚠️ **Nota:** JKAnime extrae videos server-side (HLS directo vía resolución de `jkplayer/um`). AnimeFLV y TioAnime ahora extraen videos server-side vía `var videos` (objeto/array). HenaoJara carga videos dinámicamente (requieren JS en cliente). Ver [Estado por provider](#estado-por-provider) abajo.
 
 ### Estado por provider
 
 | Provider | Búsqueda | Episodios | Videos | Notas |
-|---|---|---|---|---|
+|---|---|---|---|---|---|
+| **CineCalidad** | ✅ | — | ✅ (iframe) | 5 streams directos (vimeos, goodstream, hlswish, voe, filemoon) |
+| **PelisPedia** | ✅ | ✅ (POST) | ✅ (iframe-chain) | 2 streams reales vía fastream.to |
+| **HomeCine** | ✅ | — | ✅ (iframe) | 2 streams reales vía fastream.to |
 | **JKAnime** | ✅ | ✅ (`{slug}/{episode}/`) | ✅ (HLS directo) | Resuelve `jkplayer/um` → `.m3u8` real |
-| **AnimeFLV** | ✅ | 🔄 (`var episodes`) | ❌ dinámico | Encuentra serie, video vía JS |
-| **TioAnime** | ✅ | 🔄 (`var episodes`) | ❌ dinámico | Encuentra serie, video vía JS |
+| **AnimeFLV** | ✅ | ✅ (URL pattern) | ✅ (jsvar) | 15 streams por episodio: SW, Mega, YourUpload, Okru, Streamtape |
+| **TioAnime** | ✅ | ✅ (URL pattern) | ✅ (jsvar) | 12 streams por episodio: Mega, YourUpload, Okru, HQQ, StreamSB |
 | **HenaoJara** | ✅ | ❌ sin config | ❌ dinámico | Encuentra página, video vía JS |
 | **EstrenosAnime** | ✅ | ❌ sin config | ❌ dinámico | Encuentra página, video vía JS |
 | **SoloLatino** | ✅ | ❌ sin config | ❌ dinámico | Encuentra página, video vía JS |
@@ -102,6 +105,22 @@ node build.js    # Build de scrapers desde src/
 - **URL:** https://ovnivers.onrender.com
 
 ## Changelog
+
+### v1.5.0 — Alfa providers fix: Español, Anime y torrents funcionales en producción
+
+- **Fix crítico**: `require('./providers/alfa-providers')` devolvía función directa, pero `server.js` hacía `.default` → siempre `undefined`. Fix: `alfaModule.default || alfaModule`.
+- **Selectores actualizados**: CineCalidad (`div.grid`→`article`, `a[href]`→`h2`), AllCalidad (`/search?s=`→`/?s=`, `article.movie-item`→`article`).
+- **Base64 data-src**: Nueva `resolveUrl()` que decodifica base64 en atributos `data-src` (CineCalidad usa esto para URLs de video).
+- **Fallback `<a data-src>`**: Si no hay iframes, busca `<a data-src="base64">` y decodifica.
+- **AnimeFLV**: `var videos` ahora es objeto `{"SUB":[...],"LAT":[...]}` (no array). Engine.js maneja ambos formatos. + URL pattern para episodios.
+- **TioAnime**: Selectores `ul.animes li`, `h3.title`. `var episodes` → `var videos`. + URL pattern para episodios.
+- **HenaoJara**: Selectores `article`, `h3.Title` (antes `li`, `a[href]` que daban title vacío).
+- **Search fallback**: Prueba title completo → primeras 2 palabras → primera palabra. Último recurso: primer resultado si nada pasa threshold.
+- **Timeout**: `LOCAL_PROVIDER_TIMEOUT` 12s→60s, fetchHTML 12s→20s, fetchJSON 10s→15s (Render free tier).
+- **Fix torrents**: `notWebReady: !hasInfoHash` → `true` — Stremio ya no intenta reproducir magnets directo, evita "error de descarga".
+- **Resultado local**: The Matrix → 23 streams 🇪🇸 (antes 0). Naruto ep 1 → 33 streams 🇯🇵 (antes 0).
+- **Bundle**: `alfa-providers.js` regenerado con esbuild.
+- **Docs**: Versiones sincronizadas a 1.5.0.
 
 ### v1.4.14 — JKAnime HLS resolution nativa
 
