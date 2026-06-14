@@ -1,6 +1,6 @@
 {
     "name": "ovnivers-all-in-one",
-    "version": "1.5.4",
+    "version": "1.5.5",
     "description": "Ovnivers All-in-One addon — 62 local scrapers + backend streaming for Stremio",
     "scripts": {
         "build": "node -e \"console.log('build ok')\"",

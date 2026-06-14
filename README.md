@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.5.4
+# Ovnivers — Stream Provider v1.5.5
 
 Addon para **Stremio** con catálogo en español y streams de múltiples fuentes.
 
@@ -90,6 +90,15 @@ node build.js    # Build de scrapers desde src/
 - **URL:** https://ovnivers.onrender.com
 
 ## Changelog
+
+### v1.5.5 — Manifest fix + notWebReady + torrent priority
+
+- **Manifest arreglado**: `catalog` añadido a resources, `anime` añadido a types — ahora el addon aparece correctamente en Stremio Desktop
+- **notWebReady corregido**: streams con URL directa (`.m3u8`/`.mp4`) ya no se marcan como `notWebReady` — son reproducibles por ExoPlayer
+- **Torrent priority**: providers torrent se ejecutan primero en los chunks
+- **Embed resolver paralelo**: timeouts reducidos a 3s, resolución en paralelo con `Promise.allSettled`
+- **Fix ReferenceError**: `catalogDefs` usado antes de definirse — servidor caído (503)
+- **Version**: 1.5.5
 
 ### v1.5.4 — Embed resolver + build fix
 
