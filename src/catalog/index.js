@@ -33,6 +33,12 @@ const CATEGORIES = [
   // ── Anime Movies ──
   { id: 'tmdb-popular-anime-movie', name: 'Películas Anime Populares', type: 'movie', tmdb: '/discover/movie?with_genres=16&with_origin_country=JP&language=es&sort_by=popularity.desc&vote_count.gte=20&page={page}' },
   { id: 'tmdb-top-anime-movie',     name: 'Películas Anime Mejor Valoradas', type: 'movie', tmdb: '/discover/movie?with_genres=16&with_origin_country=JP&language=es&sort_by=vote_average.desc&vote_count.gte=100&page={page}' },
+
+  // ── Universal (IDs tt<imdb> para compatibilidad con otros addons) ──
+  { id: 'tt-popular-movie',       name: 'Todas las Películas',         type: 'movie', tmdb: '/movie/popular?language=es&page={page}' },
+  { id: 'tt-popular-series',      name: 'Todas las Series',            type: 'series', tmdb: '/tv/popular?language=es&page={page}' },
+  { id: 'tt-popular-anime',       name: 'Todo Anime',                  type: 'series', tmdb: '/discover/tv?with_genres=16&with_origin_country=JP&language=es&sort_by=popularity.desc&vote_count.gte=50&page={page}' },
+  { id: 'tt-popular-anime-movie', name: 'Películas Anime (Universal)', type: 'movie', tmdb: '/discover/movie?with_genres=16&with_origin_country=JP&language=es&sort_by=popularity.desc&vote_count.gte=20&page={page}' },
 ];
 
 async function loadGenres() {
@@ -262,8 +268,54 @@ async function searchAnilist(query) {
   } catch { return []; }
 }
 
+async function fetchIMDbId(tmdbId, mediaType) {
+  try {
+    if (mediaType === 'tv') {
+      const data = await tmdbFetch(`/tv/${tmdbId}/external_ids`);
+      return data?.imdb_id || null;
+    }
+    const data = await tmdbFetch(`/movie/${tmdbId}?language=en`);
+    return data?.imdb_id || null;
+  } catch { return null; }
+}
+
+async function getUniversalCatalog(catalogId, page = 1) {
+  const cat = catDef(catalogId);
+  if (!cat) return { metas: [] };
+
+  const ck = `univ:${catalogId}:${page}`;
+  const cached = catCache.get(ck);
+  if (cached && Date.now() - cached.time < CACHE_TTL) return cached.data;
+
+  await loadGenres();
+  const path = cat.tmdb.replace('{page}', page);
+  const data = await tmdbFetch(path);
+  if (!data?.results?.length) return { metas: [] };
+
+  const mediaType = cat.type === 'movie' ? 'movie' : 'tv';
+  const imdbIds = await Promise.all(data.results.map(r => fetchIMDbId(r.id, mediaType)));
+
+  const metas = data.results.map((r, idx) => {
+    const base = toMetaItem(r, cat.type);
+    const imdbId = imdbIds[idx];
+    return { ...base, id: imdbId || base.id };
+  });
+
+  const totalPages = data.total_pages || 1;
+  const result = { metas };
+  if (page < totalPages && page < 500) {
+    result.next = page + 1;
+  }
+  catCache.set(ck, { data: result, time: Date.now() });
+  if (catCache.size > MAX_CACHE) {
+    const first = catCache.keys().next().value;
+    catCache.delete(first);
+  }
+  return result;
+}
+
 module.exports = {
   CATEGORIES, catDef, getCatalog, searchCatalog,
-  getFilmaffinityMeta,
+  getFilmaffinityMeta, getUniversalCatalog,
   getAmatsuMeta, getAmatsuCatalog, searchAnilist
 };

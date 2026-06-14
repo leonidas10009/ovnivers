@@ -1013,12 +1013,11 @@ app.get('/manifest.json', async (req, res) => {
   if (config.enableSeries || config.enableAnime) enabledTypes.push('series');
   if (!enabledTypes.includes('other')) enabledTypes.push('other');
 
-  const streamPrefixes = ['ovn'];
-  if (config.enableBackend) streamPrefixes.push('tt', 'tmdb');
+  const streamPrefixes = ['ovn', 'tt'];
+  if (config.enableBackend) streamPrefixes.push('tmdb');
   if (config.enableAnime) streamPrefixes.push(...ANIME_PREFIXES);
 
-  const metaPrefixes = ['ovn', 'tmdb'];
-  if (config.enableBackend) metaPrefixes.push('tt');
+  const metaPrefixes = ['ovn', 'tmdb', 'tt'];
   if (config.enableAnime) metaPrefixes.push(...ANIME_PREFIXES);
 
   const allPrefixes = [...new Set([...streamPrefixes, ...metaPrefixes])];
@@ -1040,6 +1039,17 @@ app.get('/manifest.json', async (req, res) => {
       { id: 'amatsu_airing_series', name: 'Anime Emitiéndose (Amatsu)', type: 'anime', extra: [{ name: 'search', isRequired: false }] },
       { id: 'amatsu_trending_series', name: 'Anime Tendencias (Amatsu)', type: 'anime', extra: [{ name: 'search', isRequired: false }] },
       { id: 'amatsu_top_series', name: 'Anime Mejor Valorado (Amatsu)', type: 'anime', extra: [{ name: 'search', isRequired: false }] }
+    );
+  }
+  // Universal catalogs (IDs tt<imdb> para compatibilidad con otros addons)
+  catalogDefs.push(
+    { id: 'tt-popular-movie', name: 'Todas las Películas (Universal)', type: 'movie', extra: [{ name: 'search', isRequired: false }] },
+    { id: 'tt-popular-series', name: 'Todas las Series (Universal)', type: 'series', extra: [{ name: 'search', isRequired: false }] }
+  );
+  if (config.enableAnime) {
+    catalogDefs.push(
+      { id: 'tt-popular-anime', name: 'Todo Anime (Universal)', type: 'series', extra: [{ name: 'search', isRequired: false }] },
+      { id: 'tt-popular-anime-movie', name: 'Películas Anime (Universal)', type: 'movie', extra: [{ name: 'search', isRequired: false }] }
     );
   }
   catalogDefs.push({
@@ -1264,6 +1274,11 @@ async function handleCatalog(req, res, type, id) {
       if (result.next) result.next = `/catalog/${type}/${id}/skip=${rawSkip + ITEMS_PER_PAGE}.json`;
       return res.json(result);
     }
+    if (id.startsWith('tt-popular-')) {
+      const result = await catalog.getUniversalCatalog(id, page);
+      if (result.next) result.next = `/catalog/${type}/${id}/skip=${rawSkip + ITEMS_PER_PAGE}.json`;
+      return res.json(result);
+    }
     const result = await catalog.getCatalog(id, page);
     if (result.next) {
       result.next = `/catalog/${type}/${id}/skip=${rawSkip + ITEMS_PER_PAGE}.json`;
@@ -1356,9 +1371,8 @@ async function handleMeta(req, res, type, id) {
       data = await getTMDbMeta(contentId, mediaType);
     }
     if (!data) { res.setHeader('Access-Control-Allow-Origin', '*'); return res.json({ meta: null }); }
-    const metaIdPrefix = id.startsWith('ovn:') ? 'ovn:' : 'tmdb:';
     const meta = {
-      id: `${metaIdPrefix}${data.id}`, type: mediaType === 'tv' ? 'series' : 'movie',
+      id: id.startsWith('tt') ? id : `${id.startsWith('ovn:') ? 'ovn:' : 'tmdb:'}${data.id}`, type: mediaType === 'tv' ? 'series' : 'movie',
       name: data.title || data.name || 'Unknown',
       poster: data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : null,
       background: data.backdrop_path ? `https://image.tmdb.org/t/p/w1280${data.backdrop_path}` : null,

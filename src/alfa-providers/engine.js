@@ -1,4 +1,55 @@
 const cheerio = require('cheerio-without-node-native') || require('cheerio');
+const crypto = require('crypto');
+
+const anubisCookieCache = new Map();
+
+function parseSetCookie(sc) {
+  if (!sc) return '';
+  const semi = sc.indexOf(';');
+  return semi > 0 ? sc.substring(0, semi).trim() : sc.trim();
+}
+
+async function solveAnubisPoW(randomData, difficulty) {
+  const prefix = '0'.repeat(difficulty);
+  let nonce = 0;
+  while (true) {
+    const hash = crypto.createHash('sha256').update(randomData + nonce).digest('hex');
+    if (hash.startsWith(prefix)) return { nonce, hash };
+    nonce++;
+  }
+}
+
+async function bypassAnubisChallenge(html, url, verificationCookie) {
+  const chMatch = html.match(/<script id="anubis_challenge"[^>]*>([\s\S]*?)<\/script>/);
+  const baseMatch = html.match(/<script id="anubis_base_prefix"[^>]*>([\s\S]*?)<\/script>/);
+  if (!chMatch) return null;
+
+  const parsed = JSON.parse(chMatch[1].trim());
+  const challenge = parsed.challenge;
+  const basePrefix = baseMatch ? JSON.parse(baseMatch[1].trim()) : '';
+  const baseUrl = new URL(url).origin;
+
+  const solution = await solveAnubisPoW(challenge.randomData, challenge.difficulty || 5);
+
+  const params = new URLSearchParams({
+    id: challenge.id,
+    response: solution.hash,
+    nonce: String(solution.nonce),
+    redir: '/',
+    elapsedTime: String(Math.floor(Math.random() * 3000 + 1000))
+  });
+  const passUrl = `${baseUrl}${basePrefix}/.within.website/x/cmd/anubis/api/pass-challenge?${params}`;
+
+  const passHeaders = { 'User-Agent': UA };
+  if (verificationCookie) passHeaders['Cookie'] = parseSetCookie(verificationCookie);
+
+  const passRes = await fetch(passUrl, { headers: passHeaders, redirect: 'manual' });
+
+  const cookies = passRes.headers.getSetCookie ? passRes.headers.getSetCookie() : [passRes.headers.get('set-cookie')].filter(Boolean);
+  const authCookie = cookies.find(c => !c.includes('Max-Age=0'));
+  if (authCookie) return parseSetCookie(authCookie);
+  return null;
+}
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
@@ -7,13 +58,35 @@ async function fetchHTML(url, opts = {}) {
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), opts.timeout || 20000);
-    const res = await fetch(url, {
-      headers: { 'User-Agent': UA, 'Accept': 'text/html,application/xhtml+xml,*/*', ...opts.headers },
-      signal: ctrl.signal
-    });
+    const domain = typeof url === 'string' ? new URL(url).hostname : '';
+    const cached = anubisCookieCache.get(domain);
+    const headers = { 'User-Agent': UA, 'Accept': 'text/html,application/xhtml+xml,*/*', ...opts.headers };
+    if (cached) headers['Cookie'] = cached;
+
+    const res = await fetch(url, { headers, signal: ctrl.signal });
     clearTimeout(t);
     if (!res.ok) return null;
-    return await res.text();
+    let html = await res.text();
+
+    if (html.includes('anubis_challenge')) {
+      const initialCookies = res.headers.getSetCookie ? res.headers.getSetCookie() : [];
+      const verificationCookie = initialCookies.find(c => c.includes('cookie-verification')) || '';
+      const authCookie = await bypassAnubisChallenge(html, url, verificationCookie);
+      if (authCookie) {
+        anubisCookieCache.set(domain, authCookie);
+        const ctrl2 = new AbortController();
+        const t2 = setTimeout(() => ctrl2.abort(), opts.timeout || 20000);
+        const res2 = await fetch(url, {
+          headers: { ...headers, 'Cookie': authCookie },
+          signal: ctrl2.signal
+        });
+        clearTimeout(t2);
+        if (!res2.ok) return null;
+        html = await res2.text();
+      }
+    }
+
+    return html;
   } catch { return null; }
 }
 
@@ -87,6 +160,25 @@ async function searchProvider(provider, title, year, mediaType) {
       searchUrl = cfg.url(provider.baseUrl, query);
     } else {
       searchUrl = provider.baseUrl + cfg.url.replace('{query}', encodeURIComponent(query));
+    }
+    if (cfg.method === 'POST') {
+      const domain = new URL(searchUrl).hostname;
+      const initHtml = await fetchHTML(searchUrl, { timeout: 10000 });
+      if (!initHtml) return null;
+      const anubisCookie = anubisCookieCache.get(domain);
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 12000);
+        const res = await fetch(searchUrl, {
+          method: 'POST',
+          headers: { 'User-Agent': UA, 'Content-Type': 'application/x-www-form-urlencoded', ...(anubisCookie ? { 'Cookie': anubisCookie } : {}), ...(cfg.headers || {}) },
+          body: (cfg.body || 'query={query}').replace('{query}', encodeURIComponent(query)),
+          signal: ctrl.signal
+        });
+        clearTimeout(t);
+        if (!res.ok) return null;
+        return await res.text();
+      } catch { return null; }
     }
     return await fetchHTML(searchUrl, { headers: cfg.headers, timeout: 10000 });
   }
@@ -303,6 +395,72 @@ async function getEpisodeUrl(provider, seriesUrl, season, episode) {
     }
   }
 
+  if (cfg.type === 'dontorrent') {
+    const rows = $('table.table tbody tr').toArray();
+    for (const row of rows) {
+      const cells = $(row).find('td');
+      const epText = $(cells[0]).text().trim();
+      const epMatch = epText.match(/(\d+)x(\d+)/);
+      if (epMatch && parseInt(epMatch[1]) === season && parseInt(epMatch[2]) === episode) {
+        const btn = $(cells[1]).find('.protected-download');
+        const contentId = btn.attr('data-content-id');
+        const tabla = btn.attr('data-tabla');
+        if (contentId && tabla) {
+          try { return seriesUrl + '?dt_contentId=' + contentId + '&dt_tabla=' + tabla; } catch {}
+        }
+      }
+    }
+    // Episode not found — search for show and find correct season
+    try {
+      const domain = new URL(seriesUrl).hostname;
+      const showBase = seriesUrl.split('/').pop().replace(/-\d+-Temporada.*/i, '').replace(/-/g, ' ').trim();
+      const searchUrl = provider.baseUrl + '/buscar';
+      const init = await fetchHTML(searchUrl, { timeout: 10000 });
+      if (!init) return null;
+      const cookie = anubisCookieCache.get(domain);
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 12000);
+      const sRes = await fetch(searchUrl, {
+        method: 'POST',
+        headers: { 'User-Agent': UA, 'Content-Type': 'application/x-www-form-urlencoded', ...(cookie ? { 'Cookie': cookie } : {}) },
+        body: 'valor=' + encodeURIComponent(showBase),
+        signal: ctrl.signal
+      });
+      clearTimeout(t);
+      if (!sRes.ok) return null;
+      const sHtml = await sRes.text();
+      const $$ = cheerio.load(sHtml);
+      const seasonLinks = $$('a[href*="/serie/"]').toArray();
+      if (!seasonLinks.length) return null;
+      for (const sl of seasonLinks) {
+        const seasonText = $$(sl).text().trim();
+        if (seasonText.includes(season + 'ª Temporada') || seasonText.includes(season + ' Temporada') || new RegExp('\\b' + season + '\\b').test(seasonText)) {
+          let seasonUrl = $$(sl).attr('href');
+          if (!seasonUrl) continue;
+          if (!seasonUrl.startsWith('http')) seasonUrl = provider.baseUrl + seasonUrl;
+          const sHtml2 = await fetchHTML(seasonUrl, { timeout: 10000 });
+          if (!sHtml2) continue;
+          const $$$ = cheerio.load(sHtml2);
+          const sRows = $$$('table.table tbody tr').toArray();
+          for (const row of sRows) {
+            const cells = $$$(row).find('td');
+            const epText = $$$(cells[0]).text().trim();
+            const epMatch = epText.match(/(\d+)x(\d+)/);
+            if (epMatch && parseInt(epMatch[1]) === season && parseInt(epMatch[2]) === episode) {
+              const btn = $$$(cells[1]).find('.protected-download');
+              const contentId = btn.attr('data-content-id');
+              const tabla = btn.attr('data-tabla');
+              if (contentId && tabla) {
+                try { return seasonUrl + '?dt_contentId=' + contentId + '&dt_tabla=' + tabla; } catch {}
+              }
+            }
+          }
+        }
+      }
+    } catch {}
+    return null;
+  }
+
   return seriesUrl;
 }
 
@@ -497,6 +655,40 @@ async function extractVideos(provider, pageUrl) {
     }
   }
 
+  if (cfg.type === 'dontorrent') {
+    let contentId, tabla, episodeLabel;
+    try {
+      const parsed = new URL(pageUrl);
+      contentId = parsed.searchParams.get('dt_contentId');
+      tabla = parsed.searchParams.get('dt_tabla');
+    } catch {}
+    if (contentId && tabla) {
+      episodeLabel = $('table.table tbody tr').first().find('td').first().text().trim().match(/x(\d+)/)?.[1];
+    }
+    if (!contentId || !tabla) {
+      const btn = $('.protected-download').first();
+      contentId = btn.attr('data-content-id');
+      tabla = btn.attr('data-tabla');
+      episodeLabel = '';
+    }
+    if (!contentId || !tabla) return [];
+    const torrentInfo = await downloadDontorrentTorrent(provider.baseUrl, contentId, tabla);
+    if (!torrentInfo) return [];
+    let quality = cfg.defaultQuality || 'HD';
+    const fmtMatch = html.match(/Formato:<\/b>\s*([^<]+)/i);
+    if (fmtMatch) quality = fmtMatch[1].trim();
+    const fnameMatch = torrentInfo.filename.match(/\b(4K|2160p?|1080p?|720p?|480p?|HDTV|HD)\b/i);
+    if (fnameMatch) quality = fnameMatch[1];
+    results.push({
+      url: torrentInfo.url,
+      infoHash: torrentInfo.infoHash,
+      server: 'torrent',
+      quality,
+      filename: torrentInfo.filename || (episodeLabel ? 'Episode ' + episodeLabel : ''),
+      sources: ['dht:' + torrentInfo.infoHash]
+    });
+  }
+
   return results;
 }
 
@@ -517,6 +709,83 @@ function detectServer(url) {
     if (re.test(url)) return name;
   }
   return 'embed';
+}
+
+function solveSha256PoW(challenge, difficulty) {
+  let nonce = 0;
+  const target = '0'.repeat(difficulty);
+  while (true) {
+    const hash = crypto.createHash('sha256').update(challenge + nonce).digest('hex');
+    if (hash.startsWith(target)) return nonce;
+    nonce++;
+  }
+}
+
+function parseTorrentInfoHash(buf) {
+  try {
+    const str = buf.toString('latin1');
+    const infoStart = str.indexOf('4:info');
+    if (infoStart < 0) return null;
+    let i = infoStart + 5;
+    const start = i;
+    while (i < buf.length) {
+      const c = String.fromCharCode(buf[i]);
+      if (c === 'd') i++;
+      else if (c === 'l') i++;
+      else if (c === 'e') break;
+      else if (c === 'i') { i = buf.indexOf('e'.charCodeAt(0), i); if (i < 0) return null; i++; }
+      else if (c >= '0' && c <= '9') {
+        const colon = buf.indexOf(':'.charCodeAt(0), i);
+        if (colon < 0) return null;
+        const len = parseInt(buf.toString('ascii', i, colon), 10);
+        i = colon + 1 + len;
+      } else i++;
+    }
+    const infoRaw = buf.slice(start, i);
+    return crypto.createHash('sha1').update(infoRaw).digest('hex').toLowerCase();
+  } catch { return null; }
+}
+
+async function downloadDontorrentTorrent(baseUrl, contentId, tabla) {
+  try {
+    const origin = new URL(baseUrl).origin;
+    const domain = new URL(baseUrl).hostname;
+    const cookie = anubisCookieCache.get(domain);
+    async function powPost(action, body) {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 15000);
+      const res = await fetch(origin + '/api_validate_pow.php', {
+        method: 'POST',
+        headers: { 'User-Agent': UA, 'Content-Type': 'application/json', ...(cookie ? { 'Cookie': cookie } : {}) },
+        body: JSON.stringify(body),
+        signal: ctrl.signal
+      });
+      clearTimeout(t);
+      if (!res.ok) return null;
+      return await res.json();
+    }
+    const gen = await powPost('generate', { action: 'generate', content_id: parseInt(contentId), tabla });
+    if (!gen || !gen.success || !gen.challenge) return null;
+    const nonce = solveSha256PoW(gen.challenge, 3);
+    const val = await powPost('validate', { action: 'validate', challenge: gen.challenge, nonce });
+    if (!val || !val.success || !val.download_url) return null;
+    const dlUrl = val.download_url.startsWith('//') ? 'https:' + val.download_url
+      : val.download_url.startsWith('/') ? origin + val.download_url
+      : val.download_url;
+    const ctrl3 = new AbortController();
+    const t3 = setTimeout(() => ctrl3.abort(), 20000);
+    const dlRes = await fetch(dlUrl, {
+      headers: { 'User-Agent': UA, ...(cookie ? { 'Cookie': cookie } : {}) },
+      signal: ctrl3.signal
+    });
+    clearTimeout(t3);
+    if (!dlRes.ok) return null;
+    const buf = Buffer.from(await dlRes.arrayBuffer());
+    const infoHash = parseTorrentInfoHash(buf);
+    if (!infoHash) return null;
+    const filename = decodeURIComponent(dlUrl.split('/').pop()).replace(/\.torrent$/i, '');
+    return { url: dlUrl, infoHash, filename };
+  } catch { return null; }
 }
 
 module.exports = {

@@ -128,10 +128,11 @@ module.exports = [
     baseUrl: 'https://dontorrent.support',
     categories: ['movie', 'tvshow', 'vos', 'torrent'],
     language: ['cast'],
-    active: false,
+    active: true,
     adult: false,
-    search: { url: '/buscar/{query}', itemSelector: '.movie-card, article', titleSelector: 'h2, h3', linkSelector: 'a' },
-    videos: { type: 'torrent', linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: 'HD' }
+    search: { method: 'POST', url: '/buscar', body: 'valor={query}', contentType: 'application/x-www-form-urlencoded', itemSelector: 'a[href*="/pelicula/"], a[href*="/serie/"]', titleSelector: '&', linkSelector: '&' },
+    episodes: { type: 'dontorrent' },
+    videos: { type: 'dontorrent', defaultQuality: 'HD' }
   },
   {
     name: 'doramasflix',
@@ -631,7 +632,7 @@ module.exports = [
     baseUrl: 'https://pelispanda.org',
     categories: ['anime', 'vos', 'torrent'],
     language: ['lat'],
-    active: false,
+    active: true,
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'torrent', linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: 'HD' }
@@ -772,10 +773,10 @@ module.exports = [
   {
     name: 'mejortorrent',
     title: 'MejorTorrent',
-    baseUrl: 'https://www38.mejortorrent.eu',
-    categories: ['documentary', 'torrent'],
+    baseUrl: 'https://www43.mejortorrent.eu',
+    categories: ['movie', 'tvshow', 'torrent'],
     language: ['cast'],
-    active: false,
+    active: true,
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'torrent', linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: 'HD' }

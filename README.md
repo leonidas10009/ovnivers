@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.5.0
+# Ovnivers — Stream Provider v1.5.2
 
 Addon para **Stremio** con catálogo en español y streams de múltiples fuentes.
 
@@ -29,7 +29,7 @@ Addon para **Stremio** con catálogo en español y streams de múltiples fuentes
 
 > **Nota:** Los catálogos están deshabilitados en el servidor (ruta `/catalog/*` devuelve vacío). El addon funciona como **proveedor de streams puro** — usa addons de catálogo externos (ej. TMDB Community Addon) para navegar contenido. Los catálogos están definidos en `manifest.json` (18) pero el servidor no los sirve.
 
-## Alfa Providers (85 registrados, 52 activos)
+## Alfa Providers (86 registrados, 53 activos)
 
 Scraper unificado del addon **Alfa** de Kodi. Corre server-side en Node.js.
 Busca con multiples variantes del título (EN/ES/JA/slug) en paralelo.
@@ -37,7 +37,7 @@ Busca con multiples variantes del título (EN/ES/JA/slug) en paralelo.
 | Categoria | Activos | Inactivos | Providers destacados |
 |---|---|---|---|
 | **Peliculas** | ~29 | ~13 | AllCalidad, PelisPedia, PoseidonHD, HDFull, Gnula, WolfMax4K, CineCalidad, DivXTotal, TubePelis, Cine24H, CineLibreOnline, DeTodoPeliculas, GranTorrent, HomeCine, MiraPeliculas, PelisForte, SeriesKao, TubeOnline, Yandispoiler, eCarteleraTrailers (+9 más) |
-| **Series** | ~16 | ~6 | EZTV, DoramasYT, FullSerieHD, SeriesRetro, LaCartoons, PelisPedia, PoseidonHD, DivXTotal, DonTorrent, GranTorrent, HDFull, WolfMax4K (+4 más) |
+| **Series** | ~17 | ~5 | EZTV, DoramasYT, FullSerieHD, SeriesRetro, LaCartoons, PelisPedia, PoseidonHD, DivXTotal, DonTorrent, GranTorrent, HDFull, WolfMax4K, MejorTorrent (+4 más) |
 | **Anime** | 10 | 12 | AnimeFLV, JKAnime, TioAnime, TVAnime (MonosChinos), HenaoJara, EstrenosAnime, SoloLatino, TioDonghua, DoramasQueen, HackTorrent |
 | **Documentales** | 3 | 1 | AreaDocumental, DocumentalesOnline, EliteTorrent |
 
@@ -60,10 +60,13 @@ Busca con multiples variantes del título (EN/ES/JA/slug) en paralelo.
 | **AnimeJL** | ❌ timeout | — | — | No responde — marcado `active: false` |
 | **LatAnime** | ❌ timeout | — | — | No responde — marcado `active: false` |
 | **PelisPanda** | ❌ React SPA | — | — | Renderizado cliente — marcado `active: false` |
-| **HackTorrent** | ❌ React SPA | — | — | Renderizado cliente — marcado `active: false` |
+| **HackTorrent** | ✅ | — | ✅ (torrent) | WordPress reactivado, streams torrent con infoHash |
 | **PelisPlus** | ❌ dominio cambiado | — | — | Antes tioplus.app — marcado `active: false` |
 | **MundoDonghua** | ❌ búsqueda client-side | — | — | Donghua, no anime |
 | **TioDonghua** | ✅ | ❌ sin config | ❌ | Donghua (capítulos lectura) |
+| **DonTorrent** | ✅ | ✅ (dontorrent) | ✅ (PoW torrent) | Anubis + PoW interno resuelto server-side. Pelis y series con infoHash |
+| **MejorTorrent** | ✅ | — | ✅ (torrent) | Dominio www43 reactivado, categorías movie/tvshow/torrent |
+| **PelisPanda** | ✅ | — | ✅ (torrent) | Dominio pelispanda.org reactivado, streams torrent con infoHash |
 
 **Idiomas:** Castellano, Latino, VOSE, English, Japanese, Korean, Hindi, Portuguese.
 
@@ -105,6 +108,19 @@ node build.js    # Build de scrapers desde src/
 - **URL:** https://ovnivers.onrender.com
 
 ## Changelog
+
+### v1.5.2 — DonTorrent reactivado + PoW solver + universal catalogs
+
+- **DonTorrent reactivado**: Supera Cloudflare Anubis (PoW SHA256) + PoW interno (`/api_validate_pow.php`). Descarga .torrent real y extrae infoHash. 3 proveedores torrent más (DonTorrent, MejorTorrent, PelisPanda reactivados) = **11 activos**.
+- **Nuevo `type: 'dontorrent'` en engine.js**: Flujo completo — POST a generar challenge → resolver SHA256 PoW (dificultad 3) → validar y obtener download_url → descargar .torrent → parsear infoHash. Cacheo de cookie Anubis por dominio.
+- **POST search en `searchProvider`**: Soporte para `method: 'POST'` en config de búsqueda (DonTorrent usa POST, no GET).
+- **Season fallback en `getEpisodeUrl`**: Si el episodio no está en la temporada actual, busca automáticamente la temporada correcta vía POST search y navega a ella.
+- **MejorTorrent reactivado**: Dominio `www43.mejortorrent.eu`, categorías `movie/tvshow/torrent`.
+- **PelisPanda reactivado**: Dominio `pelispanda.org`, streams torrent funcionales.
+- **HackTorrent**: Marcado `active: true` (WordPress funcional, torrents con infoHash).
+- **Catálogos universales**: 4 nuevos catálogos (`tt-popular-movie`, `tt-popular-series`, `tt-popular-anime`, `tt-popular-anime-movie`) con IDs `tt:<imdb_id>` para compatibilidad cross-addon (Torrentio, AnimeFLV). IDs `ovn:<tmdb_id>` originales intactos.
+- **Bundle**: `alfa-providers.js` regenerado con esbuild.
+- **Docs**: Versiones sincronizadas a 1.5.2.
 
 ### v1.5.0 — Alfa providers fix: Español, Anime y torrents funcionales en producción
 
