@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-14T14:51:30.315Z
+ * Generated: 2026-06-14T15:00:02.511Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -2026,7 +2026,7 @@ ${v.server || detectServer(v.url)}`,
               description: v.lang || (category === "anime" && !(Array.isArray(provider.language) && provider.language.includes("*")) ? [.../* @__PURE__ */ new Set([...Array.isArray(provider.language) ? provider.language : [], "ja"])].join(",") : Array.isArray(provider.language) ? provider.language.join(",") : "")
             }, v.url && !v.infoHash ? { url: v.url } : {}), v.infoHash ? { infoHash: v.infoHash } : {}), v.sources ? { sources: v.sources } : {}), {
               behaviorHints: __spreadValues({
-                notWebReady: !v.infoHash,
+                notWebReady: !v.infoHash && v.server !== "direct",
                 bingeGroup: `alfa|${provider.name}|${v.server || detectServer(v.url)}`
               }, v.filename ? { filename: v.filename } : {})
             }));

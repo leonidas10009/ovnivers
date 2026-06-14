@@ -857,6 +857,7 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
   const title = titleParts.join('\n');
 
   const hasInfoHash = !!stream.infoHash;
+  const isDirectMedia = !hasInfoHash && url && /\.(mp4|m3u8|mkv|webm|avi)(\?|$)/i.test(url);
   return {
     name,
     title,
@@ -867,7 +868,7 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
     ...(stream.externalUrl ? { externalUrl: stream.externalUrl } : {}),
     ...(stream.file ? { file: stream.file } : {}),
     behaviorHints: {
-      notWebReady: !hasInfoHash,
+      notWebReady: !hasInfoHash && !isDirectMedia,
       bingeGroup: `provider|${providerId}`,
       ...(stream.behaviorHints || {})
     }

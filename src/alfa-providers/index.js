@@ -200,7 +200,7 @@ async function scrapeAlfaProviders(type, id, season, episode) {
             ...(v.infoHash ? { infoHash: v.infoHash } : {}),
             ...(v.sources ? { sources: v.sources } : {}),
             behaviorHints: {
-              notWebReady: !v.infoHash,
+              notWebReady: !v.infoHash && v.server !== 'direct',
               bingeGroup: `alfa|${provider.name}|${v.server || detectServer(v.url)}`,
               ...(v.filename ? { filename: v.filename } : {})
             }
