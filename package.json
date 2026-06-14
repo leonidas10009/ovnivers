@@ -4,7 +4,8 @@
     "description": "Ovnivers All-in-One addon — 62 local scrapers + backend streaming for Stremio",
     "scripts": {
         "build": "node -e \"console.log('build ok')\"",
-        "start": "node server.js"
+        "start": "node server.js",
+        "version:bump": "node scripts/bump-version.js"
     },
     "dependencies": {
         "cheerio": "^1.2.0",
