@@ -94,219 +94,30 @@
     "anidb:"
   ],
   "catalogs": [
-    {
-      "type": "movie",
-      "id": "tmdb-popular",
-      "name": "Popular Movies"
-    },
-    {
-      "type": "movie",
-      "id": "tmdb-trending",
-      "name": "Trending Movies"
-    },
-    {
-      "type": "movie",
-      "id": "tmdb-top",
-      "name": "Top Rated Movies"
-    },
-    {
-      "type": "movie",
-      "id": "tmdb-genres",
-      "name": "Movies by Genre",
-      "extra": [
-        {
-          "name": "genre",
-          "options": [
-            "Action",
-            "Adventure",
-            "Animation",
-            "Comedy",
-            "Crime",
-            "Documentary",
-            "Drama",
-            "Family",
-            "Fantasy",
-            "History",
-            "Horror",
-            "Music",
-            "Mystery",
-            "Romance",
-            "Science Fiction",
-            "TV Movie",
-            "Thriller",
-            "War",
-            "Western"
-          ],
-          "optionsLimit": 1
-        }
-      ]
-    },
-    {
-      "type": "movie",
-      "id": "tmdb-year",
-      "name": "Movies by Year",
-      "extra": [
-        {
-          "name": "search",
-          "isRequired": true
-        }
-      ]
-    },
-    {
-      "type": "series",
-      "id": "tmdb-popular",
-      "name": "Popular Series"
-    },
-    {
-      "type": "series",
-      "id": "tmdb-trending",
-      "name": "Trending Series"
-    },
-    {
-      "type": "series",
-      "id": "tmdb-top",
-      "name": "Top Rated Series"
-    },
-    {
-      "type": "series",
-      "id": "tmdb-genres",
-      "name": "Series by Genre",
-      "extra": [
-        {
-          "name": "genre",
-          "options": [
-            "Action & Adventure",
-            "Animation",
-            "Comedy",
-            "Crime",
-            "Documentary",
-            "Drama",
-            "Family",
-            "Kids",
-            "Mystery",
-            "News",
-            "Reality",
-            "Sci-Fi & Fantasy",
-            "Soap",
-            "Talk",
-            "War & Politics",
-            "Western"
-          ],
-          "optionsLimit": 1
-        }
-      ]
-    },
-    {
-      "type": "series",
-      "id": "tmdb-year",
-      "name": "Series by Year",
-      "extra": [
-        {
-          "name": "search",
-          "isRequired": true
-        }
-      ]
-    },
-    {
-      "type": "series",
-      "id": "animeflv|onair",
-      "name": "AnimeFLV On Air"
-    },
-    {
-      "type": "series",
-      "id": "animeav1|onair",
-      "name": "AnimeAV1 On Air"
-    },
-    {
-      "type": "series",
-      "id": "tioanime|onair",
-      "name": "TioAnime On Air"
-    },
-    {
-      "type": "series",
-      "id": "henaojara|onair",
-      "name": "Henaojara On Air"
-    },
-    {
-      "type": "series",
-      "id": "animeflv|search",
-      "name": "AnimeFLV Search",
-      "extra": [
-        {
-          "name": "search",
-          "isRequired": true
-        },
-        {
-          "name": "skip",
-          "isRequired": false
-        }
-      ]
-    },
-    {
-      "type": "series",
-      "id": "animeav1|search",
-      "name": "AnimeAV1 Search",
-      "extra": [
-        {
-          "name": "search",
-          "isRequired": true
-        },
-        {
-          "name": "skip",
-          "isRequired": false
-        }
-      ]
-    },
-    {
-      "type": "series",
-      "id": "tioanime|search",
-      "name": "TioAnime Search",
-      "extra": [
-        {
-          "name": "search",
-          "isRequired": true
-        },
-        {
-          "name": "skip",
-          "isRequired": false
-        }
-      ]
-    },
-    {
-      "type": "series",
-      "id": "henaojara|search",
-      "name": "Henaojara Search",
-      "extra": [
-        {
-          "name": "search",
-          "isRequired": true
-        },
-        {
-          "name": "skip",
-          "isRequired": false
-        }
-      ]
-    },
-    {
-      "type": "movie",
-      "id": "tt-popular-movie",
-      "name": "Todas las Películas (Universal)"
-    },
-    {
-      "type": "series",
-      "id": "tt-popular-series",
-      "name": "Todas las Series (Universal)"
-    },
-    {
-      "type": "series",
-      "id": "tt-popular-anime",
-      "name": "Todo Anime (Universal)"
-    },
-    {
-      "type": "movie",
-      "id": "tt-popular-anime-movie",
-      "name": "Películas Anime (Universal)"
-    }
+    { "type": "movie", "id": "tmdb-popular-movie", "name": "Películas Populares" },
+    { "type": "movie", "id": "tmdb-top-movie", "name": "Películas Mejor Valoradas" },
+    { "type": "movie", "id": "tmdb-trending-movie", "name": "Películas en Tendencia" },
+    { "type": "movie", "id": "tmdb-action-movie", "name": "Acción" },
+    { "type": "movie", "id": "tmdb-comedy-movie", "name": "Comedia" },
+    { "type": "movie", "id": "tmdb-drama-movie", "name": "Drama" },
+    { "type": "movie", "id": "tmdb-horror-movie", "name": "Terror" },
+    { "type": "movie", "id": "tmdb-scifi-movie", "name": "Ciencia Ficción" },
+    { "type": "movie", "id": "tmdb-thriller-movie", "name": "Suspenso" },
+    { "type": "movie", "id": "tmdb-romance-movie", "name": "Romance" },
+    { "type": "movie", "id": "tmdb-animation-movie", "name": "Animación" },
+    { "type": "series", "id": "tmdb-popular-series", "name": "Series Populares" },
+    { "type": "series", "id": "tmdb-top-series", "name": "Series Mejor Valoradas" },
+    { "type": "series", "id": "tmdb-trending-series", "name": "Series en Tendencia" },
+    { "type": "series", "id": "tmdb-popular-anime", "name": "Anime Popular" },
+    { "type": "series", "id": "tmdb-top-anime", "name": "Anime Mejor Valorado" },
+    { "type": "series", "id": "tmdb-trending-anime", "name": "Anime en Tendencia" },
+    { "type": "movie", "id": "tmdb-popular-anime-movie", "name": "Películas Anime Populares" },
+    { "type": "movie", "id": "tmdb-top-anime-movie", "name": "Películas Anime Mejor Valoradas" },
+    { "type": "movie", "id": "tt-popular-movie", "name": "Todas las Películas (Universal)" },
+    { "type": "series", "id": "tt-popular-series", "name": "Todas las Series (Universal)" },
+    { "type": "series", "id": "tt-popular-anime", "name": "Todo Anime (Universal)" },
+    { "type": "movie", "id": "tt-popular-anime-movie", "name": "Películas Anime (Universal)" },
+    { "type": "movie", "id": "tmdb-search", "name": "Búsqueda", "extra": [{ "name": "search", "isRequired": true }] }
   ],
   "behaviorHints": {
     "adult": false,

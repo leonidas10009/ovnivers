@@ -26,10 +26,10 @@ Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fue
 
 ## Catalogs
 
-18 catálogos TMDB activos: popular, trending, top-rated, search para movie/series/anime.
+19 catálogos TMDB activos + 4 universales + 4 Amatsu anime: popular, trending, top-rated, search para movie/series/anime.
 IDs con prefijo `ovn:` para los catálogos propios y `tt:`/`tmdb:` para compatibilidad cross-addon (Torrentio, AnimeFLV, TMDB Community).
 
-## Alfa Providers (86 registrados, 48 activos)
+## Alfa Providers (77 registrados, 48 activos)
 
 Scraper unificado del addon **Alfa** de Kodi. Corre server-side en Node.js.
 Busca con multiples variantes del título (EN/ES/JA/slug) en paralelo.
