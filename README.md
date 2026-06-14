@@ -18,7 +18,7 @@ Addon para **Stremio** con catálogo en español y streams de múltiples fuentes
 |---|---|---|
 | **Backend scrapers** | 2embed (Vesy + Vsrc), VidSrc, PoseidonHD |
 | **Pigamer37** (proxy anime) | AnimeFLV, AnimeAV1, TioAnime, Henaojara — siempre activo para series |
-| **Alfa Providers** (server) | 11 providers torrent: peliculas, series, anime, documentales |
+| **Alfa Providers** (server) | 48 providers: peliculas, series, anime, documentales + torrents |
 | **Alfa multi-título** | Busca por título EN + ES + JA + slug en paralelo para máximo match |
 | **Alfa episodes** | Soporte de URL pattern, season-list, POST, dontorrent (PoW) |
 | **Local scrapers** | 62 providers Hermes ejecutados server-side |
@@ -29,26 +29,30 @@ Addon para **Stremio** con catálogo en español y streams de múltiples fuentes
 
 > **Nota:** Los catálogos están deshabilitados en el servidor (ruta `/catalog/*` devuelve vacío). El addon funciona como **proveedor de streams puro** — usa addons de catálogo externos (ej. TMDB Community Addon) para navegar contenido. Los catálogos están definidos en `manifest.json` (18) pero el servidor no los sirve.
 
-## Alfa Providers (86 registrados, 11 torrent activos v1.5.4+)
+## Alfa Providers (86 registrados, 48 activos, v1.5.4+)
 
 Scraper unificado del addon **Alfa** de Kodi. Corre server-side en Node.js.
 Busca con multiples variantes del título (EN/ES/JA/slug) en paralelo.
 
-> 🔧 **v1.5.4:** Solo providers **torrent** activos para compatibilidad con NuvioTV/ExoPlayer. Los 37 providers de streaming (iframe/jsvar/nextjs) devolvían URLs de páginas HTML embed no reproducibles directamente — desactivados. Los 11 torrent providers restantes devuelven `infoHash` → reproducibles vía TorrServer.
+> 🔧 **v1.5.4:** Embed-to-direct resolver activado. Los providers de streaming ahora intentan resolver URLs embed a URLs directas (`.mp4`/`.m3u8`) server-side. Si la resolución falla, el stream se muestra como `notWebReady: true`.
 
-| Categoria | Torrent providers activos |
-|---|---|
-| **Películas+Series** | divxtotal, dontorrent, grantorrent, mejortorrent, mitorrent, wolfmax4k |
-| **Solo películas** | bloghorror |
-| **Solo series** | eztv |
-| **Anime** | hacktorrent, pelispanda |
-| **Documentales** | elitetorrent |
+| Categoria | Activos | Providers destacados |
+|---|---|---|
+| **Películas** | ~29 | CineCalidad, PelisPedia, PoseidonHD, WolfMax4K, DivXTotal, GranTorrent, DonTorrent, MejorTorrent, Mitorrent + iframe providers |
+| **Series** | ~17 | EZTV, DoramasYT, FullSerieHD, PelisPedia, PoseidonHD, DivXTotal, DonTorrent, GranTorrent, WolfMax4K, MejorTorrent |
+| **Anime** | 10 | AnimeFLV, JKAnime, TioAnime, HackTorrent, PelisPanda + iframe/jsvar providers |
+| **Documentales** | 3 | AreaDocumental, DocumentalesOnline, EliteTorrent |
 
 **Idiomas:** Castellano, Latino, VOSE, English, Japanese, Korean, Hindi, Portuguese.
 
-**Servidores:** torrent/magnet.
+**Servidores:** streamwish, filemoon, doodstream, streamtape, fembed, okru, mixdrop, torrent/magnet.
 
-> ⚠️ **Nota v1.5.4:** Los providers de streaming (iframe/jsvar/nextjs/jkplayer) se desactivaron porque devuelven URLs de páginas HTML embed que ExoPlayer no puede reproducir. Solo los providers **torrent** (`type: 'torrent'` o `type: 'dontorrent'`) son funcionales en NuvioTV, pues NuvioTV los reconoce por `infoHash` y los reproduce vía TorrServer local.
+| Provider | Tipo | Reproducible en |
+|---|---|---|
+| **Torrent** (bloghorror, divxtotal, dontorrent, grantorrent, mejortorrent, mitorrent, wolfmax4k, eztv, hacktorrent, pelispanda, elitetorrent) | infoHash → TorrServer | NuvioTV ✅ |
+| **Iframe/jsvar/nextjs/jkplayer** (cinecalidad, pelispedia, animeflv, etc.) | Embed URL → resolución directa si posible | NuvioTV ⚠️ (solo si se resuelve a `.mp4`/`.m3u8`) |
+
+> ⚠️ **Nota v1.5.4:** Los providers de streaming (iframe/jsvar/nextjs/jkplayer) devuelven URLs de páginas HTML embed. En v1.5.4 se añadió un resolvedor genérico que intenta extraer URLs directas (`.mp4`/`.m3u8`) del HTML de cada embed. Si la extracción falla, ExoPlayer no podrá reproducirlas — estos streams funcionan nativamente en **Stremio Desktop** (Chromium WebView) y **Stremio Web** (iframe).
 
 ## Backend Scrapers (4 activos)
 
@@ -87,13 +91,13 @@ node build.js    # Build de scrapers desde src/
 
 ## Changelog
 
-### v1.5.4 — Solo torrent providers activos para NuvioTV
+### v1.5.4 — Embed resolver + build fix
 
-- **37 providers no-torrent desactivados**: Todos los providers iframe/jsvar/nextjs/jkplayer devolvían URLs de páginas HTML embed (streamwish, filemoon, etc.) que ExoPlayer no puede reproducir. Se marcan `active: false`.
-- **11 torrent providers permanecen activos**: Únicamente providers con `type: 'torrent'` o `type: 'dontorrent'` que devuelven `infoHash` → reproducibles vía TorrServer en NuvioTV.
-- **Fix build**: `crypto` añadido a `EXTERNAL_MODULES` en `build.js` — el bundle ya no incluye polyfill de crypto (50KB menos).
-- **Bundle**: `alfa-providers.js` regenerado con esbuild (crypto externalizado).
-- **Docs**: README actualizado con lista de providers activos v1.5.4.
+- **Embed-to-direct resolver**: Nueva `tryResolveEmbedToDirect(url)` en engine.js que fetchea páginas HTML embed y extrae URLs directas (`.m3u8`/`.mp4`) mediante patrones genéricos (src/file keys, video sources, regex). Cache de resultados por URL.
+- **Post-processing en extractVideos**: Todos los streams no-torrent se resuelven automáticamente. Si el embed contiene una URL directa, se usa; si no, se conserva la URL embed con `notWebReady: true`.
+- **Fix build**: `crypto` añadido a `EXTERNAL_MODULES` en `build.js` — el bundle ya no incluye polyfill de crypto (50KB menos, 85KB total).
+- **Bundle**: `alfa-providers.js` regenerado con esbuild (incluye embed resolver).
+- **Docs**: README actualizado con tabla de proveedores y notas de compatibilidad.
 - **Version**: 1.5.4
 
 ### v1.5.2 — DonTorrent reactivado + PoW solver + universal catalogs
