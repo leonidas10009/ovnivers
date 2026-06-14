@@ -1097,7 +1097,7 @@ app.get('/manifest.json', async (req, res) => {
   if (config.exposeLocalScrapers) manifest.scrapers = manifestScrapers;
 
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.json(manifest);
 });
 
