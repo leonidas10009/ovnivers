@@ -252,6 +252,19 @@ function parseConfig(req) {
       return { ...DEFAULT_CONFIG, ...cfg };
     }
   } catch {}
+  const q = req.query;
+  if (q.m !== undefined) { q.c = '1'; }
+  if (q.c === '1' || q.c === 'true') {
+    const cfg = {};
+    if (q.m !== undefined) cfg.enableMovies = q.m === '1' || q.m === 'true';
+    if (q.s !== undefined) cfg.enableSeries = q.s === '1' || q.s === 'true';
+    if (q.a !== undefined) cfg.enableAnime = q.a === '1' || q.a === 'true';
+    if (q.q !== undefined) cfg.quality = q.q;
+    if (q.l !== undefined) cfg.langs = q.l.split(',').filter(Boolean);
+    if (q.b !== undefined) cfg.enableBackend = q.b === '1' || q.b === 'true';
+    if (q.L !== undefined) cfg.enableLocal = q.L === '1' || q.L === 'true';
+    return { ...DEFAULT_CONFIG, ...cfg };
+  }
   return DEFAULT_CONFIG;
 }
 
@@ -1582,12 +1595,26 @@ function getConfig() {
   };
 }
 
+function params(cfg) {
+  const p = [];
+  if (cfg.enableMovies !== true) p.push('m=' + (cfg.enableMovies ? '1' : '0'));
+  if (cfg.enableSeries !== true) p.push('s=' + (cfg.enableSeries ? '1' : '0'));
+  if (cfg.enableAnime !== true) p.push('a=' + (cfg.enableAnime ? '1' : '0'));
+  if (cfg.quality !== 'all') p.push('q=' + cfg.quality);
+  const allLangs = ${JSON.stringify(Object.keys(ALL_LANGS))};
+  const enabledLangs = cfg.langs.filter(l => allLangs.includes(l));
+  if (enabledLangs.length < allLangs.length) p.push('l=' + enabledLangs.join(','));
+  if (cfg.enableBackend !== true) p.push('b=' + (cfg.enableBackend ? '1' : '0'));
+  if (cfg.enableLocal !== true) p.push('L=' + (cfg.enableLocal ? '1' : '0'));
+  if (!p.length) return '';
+  return 'c=1&' + p.join('&');
+}
+
 function generateUrl() {
   const cfg = getConfig();
-  const json = JSON.stringify(cfg);
-  const b64 = btoa(unescape(encodeURIComponent(json)));
-  const url = '${BASE_URL}/manifest.json?configured=' + b64;
-  const stremioUrl = 'stremio://${BASE_URL}/manifest.json?configured=' + b64;
+  const qs = params(cfg);
+  const url = '${BASE_URL}/manifest.json' + (qs ? '?' + qs : '');
+  const stremioUrl = 'stremio://${BASE_URL}/manifest.json' + (qs ? '?' + qs : '');
 
   document.getElementById('status').className = 'status ok';
   document.getElementById('status').textContent = 'Install URL ready!';
@@ -1598,7 +1625,7 @@ function generateUrl() {
   window.__stremioUrl = stremioUrl;
 
   if (window.parent && window.parent !== window) {
-    window.parent.postMessage({ type: 'configure', version: '${VERSION}', configured: b64 }, '*');
+    window.parent.postMessage({ type: 'configure', version: '${VERSION}', configured: btoa(unescape(encodeURIComponent(JSON.stringify(cfg)))) }, '*');
   }
 }
 
