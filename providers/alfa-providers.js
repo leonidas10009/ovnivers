@@ -3,6 +3,910 @@ var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
 
+// src/alfa-providers/providers.js
+var require_providers = __commonJS({
+  "src/alfa-providers/providers.js"(exports2, module2) {
+    module2.exports = [
+      {
+        name: "allcalidad",
+        title: "AllCalidad",
+        baseUrl: "https://allcalidad.re",
+        categories: ["movie", "direct"],
+        language: ["lat"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", srcAttr: "data-src", defaultQuality: "HD" }
+      },
+      {
+        name: "allpeliculas",
+        title: "AllPeliculas",
+        baseUrl: "https://allpeliculas.se",
+        categories: ["movie", "vos"],
+        language: ["lat"],
+        active: false,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "ul.cc-list > article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".players", iframeSelector: "iframe", srcAttr: "data-src", defaultQuality: "HD" }
+      },
+      {
+        name: "asialiveaction",
+        title: "AsiaLiveAction",
+        baseUrl: "https://asialiveaction.com",
+        categories: ["movie", "tvshow", "vos"],
+        language: ["cast", "lat"],
+        active: false,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2.entry-title", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "bloghorror",
+        title: "BlogHorror",
+        baseUrl: "https://bloghorror.com",
+        categories: ["movie", "vos", "torrent"],
+        language: ["*"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
+        // <-- fixed
+        videos: { type: "torrent", linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: "HD" }
+      },
+      {
+        name: "cine24h",
+        title: "Cine24H",
+        baseUrl: "https://cine24h.online",
+        categories: ["movie"],
+        language: ["lat", "cast", "vose"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "cinecalidad",
+        title: "CineCalidad",
+        baseUrl: "https://www.cinecalidad.vg",
+        categories: ["movie", "direct", "torrent"],
+        language: ["cast", "lat"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", srcAttr: "data-src", defaultQuality: "HD" }
+      },
+      {
+        name: "cinelibreonline",
+        title: "CineLibreOnline",
+        baseUrl: "https://www.cinelibreonline.com",
+        categories: ["movie", "direct"],
+        language: ["lat"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
+        // <-- fixed
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD", srcAttr: "src" }
+        // <-- fixed
+      },
+      {
+        name: "cinemundo",
+        title: "StreamGratis",
+        baseUrl: "https://ww3.cinemundo.online",
+        categories: ["movie"],
+        language: ["cast", "lat", "vose"],
+        active: false,
+        adult: false,
+        search: { url: "/search/{query}", itemSelector: ".movie-card", titleSelector: ".title", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".player-container", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "cuevana2espanol",
+        title: "Cuevana2Espanol",
+        baseUrl: "https://www.cuevana2espanol.net",
+        categories: ["movie"],
+        language: ["lat", "cast"],
+        active: false,
+        adult: false,
+        search: { url: "/search?q={query}", itemSelector: 'a[href*="/pelicula/"]', titleSelector: "h2, .title", linkSelector: "&" },
+        videos: { type: "nextjs", dataPath: "props.pageProps.post.players", defaultQuality: "HD" }
+      },
+      {
+        name: "detodopeliculas",
+        title: "DeTodoPeliculas",
+        baseUrl: "https://detodopeliculas.nu",
+        categories: ["movie"],
+        language: ["lat", "cast", "vose"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
+        // <-- fixed
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "divxtotal",
+        title: "DivXTotal",
+        baseUrl: "https://divxtotal.foo",
+        categories: ["movie", "tvshow", "torrent"],
+        language: ["cast"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
+        // <-- fixed
+        videos: { type: "torrent", linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: "HD" }
+      },
+      {
+        name: "dontorrent",
+        title: "DonTorrent",
+        baseUrl: "https://dontorrent.support",
+        categories: ["movie", "tvshow", "vos", "torrent"],
+        language: ["cast"],
+        active: true,
+        adult: false,
+        search: { method: "POST", url: "/buscar", body: "valor={query}", contentType: "application/x-www-form-urlencoded", itemSelector: 'a[href*="/pelicula/"], a[href*="/serie/"]', titleSelector: "&", linkSelector: "&" },
+        episodes: { type: "dontorrent" },
+        videos: { type: "dontorrent", defaultQuality: "HD" }
+      },
+      {
+        name: "doramasflix",
+        title: "DoramasFlix",
+        baseUrl: "https://doramasflix.co",
+        categories: ["movie", "tvshow"],
+        language: ["cast", "lat", "vose"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "div.embla__slide_carousel", titleSelector: "img[alt]", linkSelector: "a", titleAttr: "alt" },
+        // <-- fixed
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "doramedplay",
+        title: "DoramedPlay",
+        baseUrl: "https://doramedplay.net",
+        categories: ["movie", "tvshow"],
+        language: ["lat"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "li", titleSelector: "h2", linkSelector: "a" },
+        // <-- fixed
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "entrepeliculasyseries",
+        title: "EntrePeliculasYSeries",
+        baseUrl: "https://entrepeliculasyseries.nz",
+        categories: ["movie", "tvshow", "vos"],
+        language: ["lat", "cast"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "estrenoscinesaa",
+        title: "EstrenosCinesaa",
+        baseUrl: "https://www.estrenoscinesaa.com",
+        categories: ["movie", "tvshow"],
+        language: ["cast"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h3", linkSelector: "a" },
+        // <-- fixed
+        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", defaultQuality: "HD", srcAttr: "src" }
+        // <-- fixed
+      },
+      {
+        name: "flizzmovies",
+        title: "FlizzMovies",
+        baseUrl: "https://flizzmovies.com",
+        categories: ["movie"],
+        language: ["cast", "lat", "vose"],
+        active: false,
+        adult: false,
+        search: { url: "/search/{query}", itemSelector: ".movie-card", titleSelector: ".title", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".player", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "genteclic",
+        title: "GenteClic",
+        baseUrl: "https://www.genteclic.com",
+        categories: ["movie", "direct"],
+        language: ["lat"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "div.jeg_content", titleSelector: "img[alt]", linkSelector: "a", titleAttr: "alt" },
+        // <-- fixed
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "gnula",
+        title: "Gnula",
+        baseUrl: "https://gnulahd.nu",
+        categories: ["movie", "vos"],
+        language: ["cast", "lat"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "grantorrent",
+        title: "GranTorrent",
+        baseUrl: "https://grantorrent.zip",
+        categories: ["movie", "tvshow", "vos", "torrent"],
+        language: ["cast", "lat"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "li.flex", titleSelector: "a[href]", linkSelector: "a" },
+        // <-- fixed
+        videos: { type: "torrent", linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: "HD" }
+      },
+      {
+        name: "hdfull",
+        title: "HDFull",
+        baseUrl: "https://hdfull.today",
+        categories: ["movie", "tvshow", "vos"],
+        language: ["cast", "lat"],
+        active: false,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        episodes: { type: "post", url: null, seasonParam: "season", episodeParam: "episode", extraParams: { action: "season", show: null }, episodeSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".player-container", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "homecine",
+        title: "HomeCine",
+        baseUrl: "https://www3.homecine.to",
+        categories: ["movie", "tvshow", "direct"],
+        language: ["lat", "cast"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "div.ml-item", titleSelector: "h2", linkSelector: "a" },
+        // <-- fixed
+        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", defaultQuality: "HD", srcAttr: "src" }
+        // <-- fixed
+      },
+      {
+        name: "legalmentegratis",
+        title: "LegalmenteGratis",
+        baseUrl: "https://legalmentegratis.com",
+        categories: ["movie", "vos"],
+        language: ["cast"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[title]", linkSelector: "a", titleAttr: "title" },
+        // <-- fixed
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "mirapeliculas",
+        title: "MiraPeliculas",
+        baseUrl: "https://ww2.dipelis.com",
+        categories: ["movie"],
+        language: ["lat", "cast", "vose"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "a[title]", linkSelector: "a", titleAttr: "title" },
+        // <-- fixed
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "mitorrent",
+        title: "MiTorrent",
+        baseUrl: "https://mitorrent.mx",
+        categories: ["movie", "tvshow", "torrent"],
+        language: ["lat"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
+        // <-- fixed
+        videos: { type: "torrent", linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: "HD" }
+      },
+      {
+        name: "osjonosu",
+        title: "OsjoNosu",
+        baseUrl: "https://osjonosu.xyz",
+        categories: ["movie", "tvshow"],
+        language: ["cast"],
+        active: false,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "pelicinehd",
+        title: "PeliCineHD",
+        baseUrl: "https://pelicinehd.com",
+        categories: ["movie"],
+        language: ["lat", "cast", "vose"],
+        active: false,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "peliculasflix",
+        title: "PeliculasFlix",
+        baseUrl: "https://peliculasflix.co",
+        categories: ["movie"],
+        language: ["cast", "lat", "vose"],
+        active: false,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "pelis182",
+        title: "Pelis182",
+        baseUrl: "https://pelis182.com",
+        categories: ["movie", "tvshow"],
+        language: ["lat"],
+        active: false,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "pelisflix",
+        title: "PelisFlix",
+        baseUrl: "https://pelisflix2.bond",
+        categories: ["movie", "vos"],
+        language: ["lat", "cast"],
+        active: false,
+        adult: false,
+        search: { url: "/search/{query}", itemSelector: ".movie-card", titleSelector: ".title", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".player", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "pelisforte",
+        title: "PelisForte",
+        baseUrl: "https://www1.pelisforte.se",
+        categories: ["movie"],
+        language: ["lat", "cast"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "pelispedia",
+        title: "PelisPedia",
+        baseUrl: "https://pelispedia.is",
+        categories: ["movie", "tvshow", "vos"],
+        language: ["lat", "cast"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        episodes: { type: "post", url: null, seasonParam: "season", episodeParam: "episode", extraParams: { action: "action_select_season" }, episodeSelector: "a" },
+        videos: { type: "iframe-chain", containerSelector: "section.player", iframeSelector: "iframe[data-src]", srcAttr: "data-src", defaultQuality: "HD" }
+      },
+      {
+        name: "poseidonhd",
+        title: "PoseidonHD",
+        baseUrl: "https://www.poseidonhd2.co",
+        categories: ["movie", "tvshow", "vos", "direct"],
+        language: ["lat"],
+        active: true,
+        adult: false,
+        search: { url: "/search?q={query}", itemSelector: 'a[href*="/pelicula/"], a[href*="/serie/"]', titleSelector: ".Title", linkSelector: "&" },
+        // <-- fixed
+        videos: { type: "nextjs", dataPath: "props.pageProps.post.players", defaultQuality: "HD" }
+      },
+      {
+        name: "retrotv",
+        title: "RetroTV",
+        baseUrl: "https://retrotv.org",
+        categories: ["movie", "tvshow"],
+        language: ["lat"],
+        active: false,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "serieskao",
+        title: "SeriesKao",
+        baseUrl: "https://serieskao.top",
+        categories: ["movie", "tvshow", "vos"],
+        language: ["lat", "cast"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h3", linkSelector: "a" },
+        // <-- fixed
+        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", defaultQuality: "HD", srcAttr: "src" }
+        // <-- fixed
+      },
+      {
+        name: "tubeonline",
+        title: "TubeOnline",
+        baseUrl: "https://www.tubeonline.net",
+        categories: ["movie", "tvshow"],
+        language: ["lat", "cast", "vose"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
+        // <-- fixed
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "tubepelis",
+        title: "TubePelis",
+        baseUrl: "https://www.tubepelis.com",
+        categories: ["movie"],
+        language: ["lat"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "li.peli_bx", titleSelector: "h2", linkSelector: "a" },
+        // <-- fixed
+        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", defaultQuality: "HD", srcAttr: "data-src" }
+        // <-- fixed
+      },
+      {
+        name: "wolfmax4k",
+        title: "WolfMax4K",
+        baseUrl: "https://wolfmax4k.com",
+        categories: ["movie", "tvshow", "torrent"],
+        language: ["cast"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "div.mb-4", titleSelector: "h3", linkSelector: "a" },
+        // <-- fixed
+        videos: { type: "torrent", linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: "4K" }
+      },
+      {
+        name: "yandispoiler",
+        title: "Yandispoiler",
+        baseUrl: "https://yandispoiler.net",
+        categories: ["movie", "tvshow"],
+        language: ["lat", "cast", "vose"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
+        // <-- fixed
+        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", defaultQuality: "HD", srcAttr: "src" }
+        // <-- fixed
+      },
+      {
+        name: "zonaleros",
+        title: "ZonaLeros",
+        baseUrl: "https://www.zona-leros.com",
+        categories: ["movie", "tvshow"],
+        language: ["lat"],
+        active: false,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "zoowomaniacos",
+        title: "Zoowomaniacos",
+        baseUrl: "https://zoowomaniacos.org",
+        categories: ["movie", "vos"],
+        language: ["lat", "cast"],
+        active: false,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "doramasyt",
+        title: "DoramasYT",
+        baseUrl: "https://www.doramasyt.com",
+        categories: ["tvshow", "vos"],
+        language: ["cast", "lat"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h3", linkSelector: "a" },
+        // <-- fixed
+        episodes: { type: "season-list", seasonSelector: ".season-list a", episodeSelector: ".episode-list a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "eztv",
+        title: "EZTV",
+        baseUrl: "https://eztvx.to",
+        categories: ["tvshow", "vos", "torrent"],
+        language: ["*"],
+        active: true,
+        adult: false,
+        search: { url: "/search/{query}", itemSelector: "tr.forum_header_border", titleSelector: "a.epinfo", linkSelector: 'a.magnet, a[href*=".torrent"]' },
+        videos: { type: "torrent", linkSelector: 'a.magnet, a[href*=".torrent"]', defaultQuality: "HD" }
+      },
+      {
+        name: "fullseriehd",
+        title: "FullSerieHD",
+        baseUrl: "https://seriesmega.org",
+        categories: ["tvshow", "vos"],
+        language: ["cast"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        episodes: { type: "season-list", seasonSelector: ".season-list a", episodeSelector: ".episode-list a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "lacartoons",
+        title: "LaCartoons",
+        baseUrl: "https://www.lacartoons.com",
+        categories: ["tvshow"],
+        language: ["lat"],
+        active: true,
+        adult: false,
+        search: { url: "/search/{query}", itemSelector: ".serie-item", titleSelector: ".title", linkSelector: "a" },
+        episodes: { type: "season-list", seasonSelector: ".temporadas a", episodeSelector: ".episodios a" },
+        videos: { type: "iframe", containerSelector: ".player", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "seriesretro",
+        title: "SeriesRetro",
+        baseUrl: "https://seriesretro.com",
+        categories: ["tvshow"],
+        language: ["lat"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
+        // <-- fixed
+        episodes: { type: "season-list", seasonSelector: ".season-list a", episodeSelector: ".episode-list a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "animeflv",
+        title: "AnimeFLV",
+        baseUrl: "https://www3.animeflv.net",
+        categories: ["anime"],
+        language: ["cast", "lat"],
+        active: true,
+        adult: false,
+        episodes: { type: "url", pattern: "/ver/{slug}-{episode}" },
+        search: { url: "/browse?q={query}", itemSelector: "ul.ListAnimes li", titleSelector: "h3.Title", linkSelector: "a" },
+        videos: { type: "jsvar", varPattern: /var videos = ([^;]+);/, defaultQuality: "HD" }
+      },
+      {
+        name: "animejara",
+        title: "AnimeJara",
+        baseUrl: "https://animejara.net",
+        categories: ["anime"],
+        language: ["cast", "lat", "vose"],
+        active: false,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "jsvar", varPattern: /var videos = (\[.*?\]);/, defaultQuality: "HD" }
+      },
+      {
+        name: "animejl",
+        title: "AnimeJL",
+        baseUrl: "https://www.anime-jl.net",
+        categories: ["anime"],
+        language: ["cast", "lat", "vose"],
+        active: false,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article.Anime", titleSelector: "h3.Title", linkSelector: "a" },
+        videos: { type: "jsvar", varPattern: /var videos = (\[.*?\]);/, defaultQuality: "HD" }
+      },
+      {
+        name: "estrenosanime",
+        title: "EstrenosAnime",
+        baseUrl: "https://estrenosanime.net",
+        categories: ["anime"],
+        language: ["*"],
+        active: true,
+        adult: false,
+        search: { url: "/search?keyword={query}", itemSelector: "a.film-poster-ahref", titleSelector: "a[title]", titleAttr: "title", linkSelector: "&" },
+        // <-- fixed
+        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", defaultQuality: "HD", srcAttr: "src" }
+        // <-- fixed
+      },
+      {
+        name: "hacktorrent",
+        title: "HackTorrent",
+        baseUrl: "https://hacktorrent.to",
+        categories: ["anime", "vos", "torrent"],
+        language: ["lat", "cast"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "torrent", linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: "HD" }
+      },
+      {
+        name: "henaojara",
+        title: "HenaoJara",
+        baseUrl: "https://henaojara.com",
+        categories: ["anime"],
+        language: ["cast", "lat", "vose"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h3.Title", linkSelector: "a" },
+        // <-- fixed
+        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "jkanime",
+        title: "JKAnime",
+        baseUrl: "https://jkanime.net",
+        categories: ["anime"],
+        language: ["cast", "lat"],
+        active: true,
+        adult: false,
+        search: { url: "/buscar/{query}", itemSelector: ".anime__item", titleSelector: "h5 a", linkSelector: "a" },
+        episodes: { type: "url", pattern: "/{slug}/{episode}/" },
+        videos: { type: "jkplayer", varPattern: /video\[\d+\] = '(.*?)';/g, defaultQuality: "HD" }
+      },
+      {
+        name: "lamovie",
+        title: "LaMovie",
+        baseUrl: "https://la.movie",
+        categories: ["anime"],
+        language: ["lat", "cast", "vose"],
+        active: false,
+        adult: false,
+        search: { url: "/search/{query}", itemSelector: ".movie-card", titleSelector: ".title", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".player", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "latanime",
+        title: "LatAnime",
+        baseUrl: "https://latanime.org",
+        categories: ["anime"],
+        language: ["cast", "lat", "vose"],
+        active: false,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "jsvar", varPattern: /var videos = (\[.*?\]);/, defaultQuality: "HD" }
+      },
+      {
+        name: "mundodonghua",
+        title: "MundoDonghua",
+        baseUrl: "https://www.mundodonghua.com",
+        categories: ["anime", "vos"],
+        language: ["*"],
+        active: false,
+        adult: false,
+        search: { url: "/busquedas/?donghua={query}", itemSelector: ".md-card", titleSelector: ".md-card-title", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "pelispanda",
+        title: "PelisPanda",
+        baseUrl: "https://pelispanda.org",
+        categories: ["anime", "vos", "torrent"],
+        language: ["lat"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "torrent", linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: "HD" }
+      },
+      {
+        name: "pelisplus",
+        title: "PelisPlus",
+        baseUrl: "https://ww3.pelisplus.to",
+        categories: ["anime", "documentary", "direct"],
+        language: ["lat"],
+        active: false,
+        adult: false,
+        search: { url: "/search?q={query}", itemSelector: 'a[href*="/pelicula/"]', titleSelector: ".title", linkSelector: "&" },
+        videos: { type: "nextjs", dataPath: "props.pageProps.post.players", defaultQuality: "HD" }
+      },
+      {
+        name: "repelishd",
+        title: "RepelisHD",
+        baseUrl: "https://cinehdplus.gratis",
+        categories: ["anime", "vos"],
+        language: ["lat", "cast", "vose"],
+        active: false,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "sololatino",
+        title: "SoloLatino",
+        baseUrl: "https://sololatino.net",
+        categories: ["anime", "vos"],
+        language: ["lat"],
+        active: true,
+        adult: false,
+        search: { url: "/buscar?q={query}", itemSelector: ".card", titleSelector: ".card__title", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", defaultQuality: "HD", srcAttr: "src" }
+        // <-- fixed
+      },
+      {
+        name: "tioanime",
+        title: "TioAnime",
+        baseUrl: "https://tioanime.com",
+        categories: ["anime", "vos"],
+        language: ["*"],
+        active: true,
+        adult: false,
+        search: { url: "/directorio?q={query}", itemSelector: "ul.animes li", titleSelector: "h3.title", linkSelector: "a" },
+        // <-- fixed
+        episodes: { type: "url", pattern: "/ver/{slug}-{episode}" },
+        videos: { type: "jsvar", varPattern: /var videos = ([^;]+);/, defaultQuality: "HD" }
+      },
+      {
+        name: "tiodonghua",
+        title: "TioDonghua",
+        baseUrl: "https://tiodonghua.com",
+        categories: ["anime", "vos"],
+        language: ["vose"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h3", linkSelector: "a" },
+        // <-- fixed
+        videos: { type: "jsvar", varPattern: /var videos = (\[.*?\]);/, defaultQuality: "HD" }
+      },
+      {
+        name: "tvanime",
+        title: "TVAnime",
+        baseUrl: "https://vww.monoschinos2.net",
+        categories: ["anime", "vos"],
+        language: ["lat", "cast"],
+        active: true,
+        adult: false,
+        search: { url: "/animes?buscar={query}", itemSelector: "div.accordion-item", titleSelector: "h2", titleAttr: "alt", linkSelector: "a" },
+        // <-- fixed
+        videos: { type: "jsvar", varPattern: /var videos = (\[.*?\]);/, defaultQuality: "HD" }
+      },
+      {
+        name: "veranime",
+        title: "VerAnime",
+        baseUrl: "https://ww3.animeonline.ninja",
+        categories: ["anime"],
+        language: ["cast", "lat", "vose"],
+        active: false,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "jsvar", varPattern: /var videos = (\[.*?\]);/, defaultQuality: "HD" }
+      },
+      {
+        name: "veranimeassistant",
+        title: "VerAnimeAssistant",
+        baseUrl: "https://veranimeassistant.com",
+        categories: ["anime"],
+        language: ["cast", "lat", "vose"],
+        active: false,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "veronline",
+        title: "VerOnline",
+        baseUrl: "https://veronline.tv",
+        categories: ["anime"],
+        language: ["cast", "lat", "vose"],
+        active: false,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "areadocumental",
+        title: "AreaDocumental",
+        baseUrl: "https://www.area-documental.com",
+        categories: ["documentary"],
+        language: ["cast", "lat"],
+        active: true,
+        adult: false,
+        search: { url: "/search/{query}", itemSelector: "div.col-md-2", titleSelector: "img[alt]", linkSelector: "a", titleAttr: "alt" },
+        // <-- fixed
+        videos: { type: "iframe", containerSelector: ".player", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "documentalesonline",
+        title: "DocumentalesOnline",
+        baseUrl: "https://www.documentales-online.com",
+        categories: ["documentary"],
+        language: ["cast", "lat"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
+        // <-- fixed
+        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", defaultQuality: "HD", srcAttr: "src" }
+        // <-- fixed
+      },
+      {
+        name: "elitetorrent",
+        title: "EliteTorrent",
+        baseUrl: "https://elitetorrent.biz",
+        categories: ["documentary", "vos", "torrent"],
+        language: ["cast", "lat"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "torrent", linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: "HD" }
+      },
+      {
+        name: "mejortorrent",
+        title: "MejorTorrent",
+        baseUrl: "https://www43.mejortorrent.eu",
+        categories: ["movie", "tvshow", "torrent"],
+        language: ["cast"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "torrent", linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: "HD" }
+      },
+      {
+        name: "ecarteleratrailers",
+        title: "eCarteleraTrailers",
+        baseUrl: "https://www.ecartelera.com",
+        categories: ["movie"],
+        language: ["cast", "lat"],
+        active: true,
+        adult: false,
+        search: { url: "/buscar/{query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
+        // <-- fixed
+        videos: { type: "iframe", containerSelector: ".player", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "hdfulls",
+        title: "HDFullS",
+        baseUrl: "https://www.hdfull.it",
+        categories: ["movie", "tvshow"],
+        language: ["cast", "lat"],
+        active: false,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "estrenosdoramas",
+        title: "EstrenoDoramas",
+        baseUrl: "https://www26.estrenosdoramas.net",
+        categories: ["tvshow", "vos"],
+        language: ["lat", "vose"],
+        active: false,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        episodes: { type: "season-list", seasonSelector: ".season-list a", episodeSelector: ".episode-list a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "doramasqueen",
+        title: "DoramasQueen",
+        baseUrl: "https://www.doramasqueen.com",
+        categories: ["anime"],
+        language: ["cast", "lat"],
+        active: true,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "ennovelas",
+        title: "Ennovelas",
+        baseUrl: "https://ennovelas.site",
+        categories: ["anime", "vos"],
+        language: ["lat"],
+        active: false,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      },
+      {
+        name: "cuevana2",
+        title: "Cuevana2",
+        baseUrl: "https://www.cuevana2.run",
+        categories: ["movie", "tvshow", "vos"],
+        language: ["*"],
+        active: false,
+        adult: false,
+        search: { url: "/search?q={query}", itemSelector: 'a[href*="/pelicula/"]', titleSelector: ".title", linkSelector: "&" },
+        videos: { type: "nextjs", dataPath: "props.pageProps.post.players", defaultQuality: "HD" }
+      },
+      {
+        name: "sinpeli",
+        title: "SinPeli",
+        baseUrl: "https://www.sinpeli.com",
+        categories: ["movie", "vos"],
+        language: ["lat", "cast"],
+        active: false,
+        adult: false,
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+      }
+    ];
+  }
+});
+
 // node_modules/cheerio-without-node-native/dist/commonjs/options.js
 var require_options = __commonJS({
   "node_modules/cheerio-without-node-native/dist/commonjs/options.js"(exports2) {
@@ -8127,9 +9031,9 @@ var require_load = __commonJS({
         const initialRoot = parse(content, internalOpts, isDocument, null);
         class LoadedCheerio extends cheerio_js_1.Cheerio {
           _make(selector, context) {
-            const cheerio2 = initialize(selector, context);
-            cheerio2.prevObject = this;
-            return cheerio2;
+            const cheerio = initialize(selector, context);
+            cheerio.prevObject = this;
+            return cheerio;
           }
           _parse(content2, options2, isDocument2, context) {
             return parse(content2, options2, isDocument2, context);
@@ -35224,8 +36128,8 @@ var require_snapshot_utils = __commonJS({
         match: new Set(matchHeaders.map((header) => caseSensitive ? header : header.toLowerCase()))
       };
     }
-    var crypto2 = runtimeFeatures.has("crypto") ? require("node:crypto") : null;
-    var hashId = crypto2?.hash ? (value) => crypto2.hash("sha256", value, "base64url") : (value) => Buffer.from(value).toString("base64url");
+    var crypto = runtimeFeatures.has("crypto") ? require("node:crypto") : null;
+    var hashId = crypto?.hash ? (value) => crypto.hash("sha256", value, "base64url") : (value) => Buffer.from(value).toString("base64url");
     function isUndiciHeaders(headers) {
       return Array.isArray(headers) && (headers.length & 1) === 0;
     }
@@ -41289,10 +42193,10 @@ var require_subresource_integrity = __commonJS({
     var assert = require("node:assert");
     var { runtimeFeatures } = require_runtime_features();
     var validSRIHashAlgorithmTokenSet = /* @__PURE__ */ new Map([["sha256", 0], ["sha384", 1], ["sha512", 2]]);
-    var crypto2;
+    var crypto;
     if (runtimeFeatures.has("crypto")) {
-      crypto2 = require("node:crypto");
-      const cryptoHashes = crypto2.getHashes();
+      crypto = require("node:crypto");
+      const cryptoHashes = crypto.getHashes();
       if (cryptoHashes.length === 0) {
         validSRIHashAlgorithmTokenSet.clear();
       }
@@ -41382,7 +42286,7 @@ var require_subresource_integrity = __commonJS({
       return result;
     }
     var applyAlgorithmToBytes = (algorithm, bytes) => {
-      return crypto2.hash(algorithm, bytes, "base64");
+      return crypto.hash(algorithm, bytes, "base64");
     };
     function caseSensitiveMatch(actualValue, expectedValue) {
       let actualValueLength = actualValue.length;
@@ -43446,7 +44350,7 @@ var require_parse4 = __commonJS({
     var { isCTLExcludingHtab } = require_util4();
     var assert = require("node:assert");
     var { unescape: qsUnescape } = require("node:querystring");
-    function parseSetCookie2(header) {
+    function parseSetCookie(header) {
       if (isCTLExcludingHtab(header)) {
         return null;
       }
@@ -43572,7 +44476,7 @@ var require_parse4 = __commonJS({
       return parseUnparsedAttributes(unparsedAttributes, cookieAttributeList);
     }
     module2.exports = {
-      parseSetCookie: parseSetCookie2,
+      parseSetCookie,
       parseUnparsedAttributes
     };
   }
@@ -43582,7 +44486,7 @@ var require_parse4 = __commonJS({
 var require_cookies = __commonJS({
   "node_modules/undici/lib/web/cookies/index.js"(exports2, module2) {
     "use strict";
-    var { parseSetCookie: parseSetCookie2 } = require_parse4();
+    var { parseSetCookie } = require_parse4();
     var { stringify } = require_util4();
     var { webidl } = require_webidl();
     var { Headers } = require_headers();
@@ -43621,11 +44525,11 @@ var require_cookies = __commonJS({
       if (!cookies) {
         return [];
       }
-      return cookies.map((pair) => parseSetCookie2(pair));
+      return cookies.map((pair) => parseSetCookie(pair));
     }
     function parseCookie(cookie) {
       cookie = webidl.converters.DOMString(cookie);
-      return parseSetCookie2(cookie);
+      return parseSetCookie(cookie);
     }
     function setCookie(headers, cookie) {
       webidl.argumentLengthCheck(arguments, 2, "setCookie");
@@ -44332,7 +45236,7 @@ var require_connection = __commonJS({
     var { WebsocketFrameSend } = require_frame();
     var assert = require("node:assert");
     var { runtimeFeatures } = require_runtime_features();
-    var crypto2 = runtimeFeatures.has("crypto") ? require("node:crypto") : null;
+    var crypto = runtimeFeatures.has("crypto") ? require("node:crypto") : null;
     var warningEmitted = false;
     function establishWebSocketConnection(url, protocols, client, handler, options) {
       const requestURL = url;
@@ -44352,7 +45256,7 @@ var require_connection = __commonJS({
         const headersList = getHeadersList(new Headers(options.headers));
         request.headersList = headersList;
       }
-      const keyValue = crypto2.randomBytes(16).toString("base64");
+      const keyValue = crypto.randomBytes(16).toString("base64");
       request.headersList.append("sec-websocket-key", keyValue, true);
       request.headersList.append("sec-websocket-version", "13", true);
       for (const protocol of protocols) {
@@ -44392,7 +45296,7 @@ var require_connection = __commonJS({
             return;
           }
           const secWSAccept = response.headersList.get("Sec-WebSocket-Accept");
-          const digest = crypto2.hash("sha1", keyValue + uid, "base64");
+          const digest = crypto.hash("sha1", keyValue + uid, "base64");
           if (secWSAccept !== digest) {
             failWebsocketConnection(handler, 1002, "Incorrect hash received in Sec-WebSocket-Accept header.");
             return;
@@ -48749,9 +49653,9 @@ var require_load2 = __commonJS({
         const initialRoot = parse(content, internalOpts, isDocument, null);
         class LoadedCheerio extends cheerio_js_1.Cheerio {
           _make(selector, context) {
-            const cheerio2 = initialize(selector, context);
-            cheerio2.prevObject = this;
-            return cheerio2;
+            const cheerio = initialize(selector, context);
+            cheerio.prevObject = this;
+            return cheerio;
           }
           _parse(content2, options2, isDocument2, context) {
             return parse(content2, options2, isDocument2, context);
@@ -49057,350 +49961,354 @@ var require_commonjs5 = __commonJS({
 });
 
 // src/alfa-providers/engine.js
-var cheerio = require_commonjs4() || require_commonjs5();
-var crypto = require("crypto");
-var anubisCookieCache = /* @__PURE__ */ new Map();
-function parseSetCookie(sc) {
-  if (!sc) return "";
-  const semi = sc.indexOf(";");
-  return semi > 0 ? sc.substring(0, semi).trim() : sc.trim();
-}
-async function solveAnubisPoW(randomData, difficulty) {
-  const prefix = "0".repeat(difficulty);
-  let nonce = 0;
-  while (true) {
-    const hash = crypto.createHash("sha256").update(randomData + nonce).digest("hex");
-    if (hash.startsWith(prefix)) return { nonce, hash };
-    nonce++;
-  }
-}
-async function bypassAnubisChallenge(html, url, verificationCookie) {
-  const chMatch = html.match(/<script id="anubis_challenge"[^>]*>([\s\S]*?)<\/script>/);
-  const baseMatch = html.match(/<script id="anubis_base_prefix"[^>]*>([\s\S]*?)<\/script>/);
-  if (!chMatch) return null;
-  const parsed = JSON.parse(chMatch[1].trim());
-  const challenge = parsed.challenge;
-  const basePrefix = baseMatch ? JSON.parse(baseMatch[1].trim()) : "";
-  const baseUrl = new URL(url).origin;
-  const solution = await solveAnubisPoW(challenge.randomData, challenge.difficulty || 5);
-  const params = new URLSearchParams({
-    id: challenge.id,
-    response: solution.hash,
-    nonce: String(solution.nonce),
-    redir: "/",
-    elapsedTime: String(Math.floor(Math.random() * 3e3 + 1e3))
-  });
-  const passUrl = `${baseUrl}${basePrefix}/.within.website/x/cmd/anubis/api/pass-challenge?${params}`;
-  const passHeaders = { "User-Agent": UA };
-  if (verificationCookie) passHeaders["Cookie"] = parseSetCookie(verificationCookie);
-  const passRes = await fetch(passUrl, { headers: passHeaders, redirect: "manual" });
-  const cookies = passRes.headers.getSetCookie ? passRes.headers.getSetCookie() : [passRes.headers.get("set-cookie")].filter(Boolean);
-  const authCookie = cookies.find((c) => !c.includes("Max-Age=0"));
-  if (authCookie) return parseSetCookie(authCookie);
-  return null;
-}
-var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
-var TMDB_KEY = process.env.TMDB_KEY || "d80ba92bc7cefe3359668d30d06f3305";
-async function fetchHTML(url, opts = {}) {
-  try {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), opts.timeout || 2e4);
-    const domain = typeof url === "string" ? new URL(url).hostname : "";
-    const cached = anubisCookieCache.get(domain);
-    const headers = { "User-Agent": UA, "Accept": "text/html,application/xhtml+xml,*/*", ...opts.headers };
-    if (cached) headers["Cookie"] = cached;
-    const res = await fetch(url, { headers, signal: ctrl.signal });
-    clearTimeout(t);
-    if (!res.ok) return null;
-    let html = await res.text();
-    if (html.includes("anubis_challenge")) {
-      const initialCookies = res.headers.getSetCookie ? res.headers.getSetCookie() : [];
-      const verificationCookie = initialCookies.find((c) => c.includes("cookie-verification")) || "";
-      const authCookie = await bypassAnubisChallenge(html, url, verificationCookie);
-      if (authCookie) {
-        anubisCookieCache.set(domain, authCookie);
-        const ctrl2 = new AbortController();
-        const t2 = setTimeout(() => ctrl2.abort(), opts.timeout || 2e4);
-        const res2 = await fetch(url, {
-          headers: { ...headers, "Cookie": authCookie },
-          signal: ctrl2.signal
-        });
-        clearTimeout(t2);
-        if (!res2.ok) return null;
-        html = await res2.text();
+var require_engine = __commonJS({
+  "src/alfa-providers/engine.js"(exports2, module2) {
+    var cheerio = require_commonjs4() || require_commonjs5();
+    var crypto = require("crypto");
+    var anubisCookieCache = /* @__PURE__ */ new Map();
+    function parseSetCookie(sc) {
+      if (!sc) return "";
+      const semi = sc.indexOf(";");
+      return semi > 0 ? sc.substring(0, semi).trim() : sc.trim();
+    }
+    async function solveAnubisPoW(randomData, difficulty) {
+      const prefix = "0".repeat(difficulty);
+      let nonce = 0;
+      while (true) {
+        const hash = crypto.createHash("sha256").update(randomData + nonce).digest("hex");
+        if (hash.startsWith(prefix)) return { nonce, hash };
+        nonce++;
       }
     }
-    return html;
-  } catch {
-    return null;
-  }
-}
-async function fetchJSON(url, opts = {}) {
-  try {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), opts.timeout || 15e3);
-    const res = await fetch(url, {
-      headers: { "User-Agent": UA, "Accept": "application/json", ...opts.headers },
-      signal: ctrl.signal
-    });
-    clearTimeout(t);
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
-  }
-}
-function similarity(a, b) {
-  if (!a || !b) return 0;
-  const sa = a.toLowerCase().replace(/[^a-z0-9]/g, "");
-  const sb = b.toLowerCase().replace(/[^a-z0-9]/g, "");
-  if (sa === sb) return 1;
-  if (sa.length < 2 || sb.length < 2) return 0;
-  const longer = sa.length > sb.length ? sa : sb;
-  const shorter = sa.length > sb.length ? sb : sa;
-  if (longer.length === 0) return 1;
-  const bigrams = /* @__PURE__ */ new Map();
-  for (let i = 0; i < shorter.length - 1; i++) {
-    const bg = shorter.substring(i, i + 2);
-    bigrams.set(bg, (bigrams.get(bg) || 0) + 1);
-  }
-  let common = 0;
-  for (let i = 0; i < longer.length - 1; i++) {
-    const bg = longer.substring(i, i + 2);
-    const count = bigrams.get(bg) || 0;
-    if (count > 0) {
-      common++;
-      bigrams.set(bg, count - 1);
+    async function bypassAnubisChallenge(html, url, verificationCookie) {
+      const chMatch = html.match(/<script id="anubis_challenge"[^>]*>([\s\S]*?)<\/script>/);
+      const baseMatch = html.match(/<script id="anubis_base_prefix"[^>]*>([\s\S]*?)<\/script>/);
+      if (!chMatch) return null;
+      const parsed = JSON.parse(chMatch[1].trim());
+      const challenge = parsed.challenge;
+      const basePrefix = baseMatch ? JSON.parse(baseMatch[1].trim()) : "";
+      const baseUrl = new URL(url).origin;
+      const solution = await solveAnubisPoW(challenge.randomData, challenge.difficulty || 5);
+      const params = new URLSearchParams({
+        id: challenge.id,
+        response: solution.hash,
+        nonce: String(solution.nonce),
+        redir: "/",
+        elapsedTime: String(Math.floor(Math.random() * 3e3 + 1e3))
+      });
+      const passUrl = `${baseUrl}${basePrefix}/.within.website/x/cmd/anubis/api/pass-challenge?${params}`;
+      const passHeaders = { "User-Agent": UA2 };
+      if (verificationCookie) passHeaders["Cookie"] = parseSetCookie(verificationCookie);
+      const passRes = await fetch(passUrl, { headers: passHeaders, redirect: "manual" });
+      const cookies = passRes.headers.getSetCookie ? passRes.headers.getSetCookie() : [passRes.headers.get("set-cookie")].filter(Boolean);
+      const authCookie = cookies.find((c) => !c.includes("Max-Age=0"));
+      if (authCookie) return parseSetCookie(authCookie);
+      return null;
     }
-  }
-  return 2 * common / (longer.length + shorter.length - 2);
-}
-async function resolveTMDB(id, mediaType) {
-  try {
-    let tmdbId = id;
-    if (id.startsWith("tt")) {
-      const r = await fetchJSON(`https://api.themoviedb.org/3/find/${id}?api_key=${TMDB_KEY}&external_source=imdb_id`);
-      const results = r?.[mediaType === "tv" ? "tv_results" : "movie_results"];
-      if (results?.[0]) tmdbId = results[0].id;
-      else return null;
-    }
-    const typeStr = mediaType === "tv" ? "tv" : "movie";
-    const data = await fetchJSON(`https://api.themoviedb.org/3/${typeStr}/${tmdbId}?api_key=${TMDB_KEY}&language=en`);
-    if (!data) return null;
-    return {
-      title: data.title || data.name || "",
-      year: (data.release_date || data.first_air_date || "").substring(0, 4),
-      imdbId: data.imdb_id || "",
-      tmdbId: String(data.id)
-    };
-  } catch {
-    return null;
-  }
-}
-async function searchProvider(provider, title, year, mediaType) {
-  const cfg = provider.search;
-  if (!cfg) return null;
-  const titleClean = title.replace(/[_-]/g, " ").replace(/\s+/g, " ").trim();
-  async function trySearch(query) {
-    let searchUrl;
-    if (typeof cfg.url === "function") {
-      searchUrl = cfg.url(provider.baseUrl, query);
-    } else {
-      searchUrl = provider.baseUrl + cfg.url.replace("{query}", encodeURIComponent(query));
-    }
-    if (cfg.method === "POST") {
-      const domain = new URL(searchUrl).hostname;
-      const initHtml = await fetchHTML(searchUrl, { timeout: 1e4 });
-      if (!initHtml) return null;
-      const anubisCookie = anubisCookieCache.get(domain);
+    var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+    var TMDB_KEY2 = process.env.TMDB_KEY || "d80ba92bc7cefe3359668d30d06f3305";
+    async function fetchHTML2(url, opts = {}) {
       try {
         const ctrl = new AbortController();
-        const t = setTimeout(() => ctrl.abort(), 12e3);
-        const res = await fetch(searchUrl, {
-          method: "POST",
-          headers: { "User-Agent": UA, "Content-Type": "application/x-www-form-urlencoded", ...anubisCookie ? { "Cookie": anubisCookie } : {}, ...cfg.headers || {} },
-          body: (cfg.body || "query={query}").replace("{query}", encodeURIComponent(query)),
+        const t = setTimeout(() => ctrl.abort(), opts.timeout || 2e4);
+        const domain = typeof url === "string" ? new URL(url).hostname : "";
+        const cached = anubisCookieCache.get(domain);
+        const headers = { "User-Agent": UA2, "Accept": "text/html,application/xhtml+xml,*/*", ...opts.headers };
+        if (cached) headers["Cookie"] = cached;
+        const res = await fetch(url, { headers, signal: ctrl.signal });
+        clearTimeout(t);
+        if (!res.ok) return null;
+        let html = await res.text();
+        if (html.includes("anubis_challenge")) {
+          const initialCookies = res.headers.getSetCookie ? res.headers.getSetCookie() : [];
+          const verificationCookie = initialCookies.find((c) => c.includes("cookie-verification")) || "";
+          const authCookie = await bypassAnubisChallenge(html, url, verificationCookie);
+          if (authCookie) {
+            anubisCookieCache.set(domain, authCookie);
+            const ctrl2 = new AbortController();
+            const t2 = setTimeout(() => ctrl2.abort(), opts.timeout || 2e4);
+            const res2 = await fetch(url, {
+              headers: { ...headers, "Cookie": authCookie },
+              signal: ctrl2.signal
+            });
+            clearTimeout(t2);
+            if (!res2.ok) return null;
+            html = await res2.text();
+          }
+        }
+        return html;
+      } catch {
+        return null;
+      }
+    }
+    async function fetchJSON2(url, opts = {}) {
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), opts.timeout || 15e3);
+        const res = await fetch(url, {
+          headers: { "User-Agent": UA2, "Accept": "application/json", ...opts.headers },
           signal: ctrl.signal
         });
         clearTimeout(t);
         if (!res.ok) return null;
-        return await res.text();
+        return await res.json();
       } catch {
         return null;
       }
     }
-    return await fetchHTML(searchUrl, { headers: cfg.headers, timeout: 1e4 });
-  }
-  let html = await trySearch(titleClean);
-  if (!html && titleClean.includes(" ")) {
-    const words = titleClean.split(" ");
-    const first2 = words.slice(0, 2).join(" ");
-    if (first2.length > 3) html = await trySearch(first2);
-  }
-  if (!html && titleClean.includes(" ")) {
-    const first = titleClean.split(" ")[0];
-    if (first.length > 3) html = await trySearch(first);
-  }
-  if (!html) return null;
-  const $ = cheerio.load(html);
-  const items = $(cfg.itemSelector).toArray();
-  if (!items.length) return null;
-  let bestMatch = null;
-  let bestScore = 0;
-  for (const item of items) {
-    const el = $(item);
-    let itemTitle = "";
-    let itemLink = "";
-    if (cfg.titleSelector) {
-      const titleEl = cfg.titleSelector === "&" ? el : el.find(cfg.titleSelector).first();
-      itemTitle = cfg.titleAttr ? titleEl.attr(cfg.titleAttr) || "" : titleEl.text().trim();
-    }
-    if (cfg.linkSelector) {
-      const linkEl = cfg.linkSelector === "&" ? el : el.find(cfg.linkSelector).first();
-      itemLink = (linkEl.attr("href") || "").trim();
-      if (itemLink && !itemLink.startsWith("http")) {
-        try {
-          itemLink = new URL(itemLink, provider.baseUrl).href;
-        } catch {
-          continue;
+    function similarity2(a, b) {
+      if (!a || !b) return 0;
+      const sa = a.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const sb = b.toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (sa === sb) return 1;
+      if (sa.length < 2 || sb.length < 2) return 0;
+      const longer = sa.length > sb.length ? sa : sb;
+      const shorter = sa.length > sb.length ? sb : sa;
+      if (longer.length === 0) return 1;
+      const bigrams = /* @__PURE__ */ new Map();
+      for (let i = 0; i < shorter.length - 1; i++) {
+        const bg = shorter.substring(i, i + 2);
+        bigrams.set(bg, (bigrams.get(bg) || 0) + 1);
+      }
+      let common = 0;
+      for (let i = 0; i < longer.length - 1; i++) {
+        const bg = longer.substring(i, i + 2);
+        const count = bigrams.get(bg) || 0;
+        if (count > 0) {
+          common++;
+          bigrams.set(bg, count - 1);
         }
       }
+      return 2 * common / (longer.length + shorter.length - 2);
     }
-    if (!itemTitle || !itemLink) continue;
-    let score = similarity(itemTitle, title);
-    const titleClean2 = titleClean.replace(/[^a-z0-9]/g, "");
-    const itemClean = itemTitle.toLowerCase().replace(/[^a-z0-9]/g, "");
-    if (itemClean === titleClean2) score = Math.max(score, 0.9);
-    if (titleClean2.length >= 5 && (itemClean.includes(titleClean2) || titleClean2.includes(itemClean))) {
-      score = Math.max(score, 0.75);
-    }
-    if (year) {
-      const itemYear = el.text().match(/\b(19|20)\d{2}\b/);
-      if (itemYear && itemYear[0] === year) score += 0.25;
-    }
-    let wordMatch = true;
-    const queryWords = titleClean.split(" ").filter((w) => w.length >= 4);
-    if (queryWords.length > 0) {
-      const itemLower = " " + itemTitle.toLowerCase().replace(/[^a-z0-9]/g, " ") + " ";
-      wordMatch = queryWords.some((qw) => itemLower.includes(" " + qw.toLowerCase() + " "));
-    }
-    if (score > bestScore && score > 0.5 && wordMatch) {
-      bestScore = score;
-      bestMatch = itemLink;
-    }
-  }
-  if (!bestMatch && items.length > 0) {
-    const queryWords = titleClean.toLowerCase().split(" ").filter((w) => w.length >= 3);
-    for (const item of items) {
-      const el = $(item);
-      let itemTitle = "";
-      if (cfg.titleSelector) {
-        const titleEl = cfg.titleSelector === "&" ? el : el.find(cfg.titleSelector).first();
-        itemTitle = cfg.titleAttr ? titleEl.attr(cfg.titleAttr) || "" : titleEl.text().trim();
+    async function resolveTMDB(id, mediaType) {
+      try {
+        let tmdbId = id;
+        if (id.startsWith("tt")) {
+          const r = await fetchJSON2(`https://api.themoviedb.org/3/find/${id}?api_key=${TMDB_KEY2}&external_source=imdb_id`);
+          const results = r?.[mediaType === "tv" ? "tv_results" : "movie_results"];
+          if (results?.[0]) tmdbId = results[0].id;
+          else return null;
+        }
+        const typeStr = mediaType === "tv" ? "tv" : "movie";
+        const data = await fetchJSON2(`https://api.themoviedb.org/3/${typeStr}/${tmdbId}?api_key=${TMDB_KEY2}&language=en`);
+        if (!data) return null;
+        return {
+          title: data.title || data.name || "",
+          year: (data.release_date || data.first_air_date || "").substring(0, 4),
+          imdbId: data.imdb_id || "",
+          tmdbId: String(data.id)
+        };
+      } catch {
+        return null;
       }
-      let itemLink = "";
-      if (cfg.linkSelector) {
-        const linkEl = cfg.linkSelector === "&" ? el : el.find(cfg.linkSelector).first();
-        itemLink = (linkEl.attr("href") || "").trim();
-        if (itemLink && !itemLink.startsWith("http")) {
+    }
+    async function searchProvider2(provider, title, year, mediaType) {
+      const cfg = provider.search;
+      if (!cfg) return null;
+      const titleClean = title.replace(/[_-]/g, " ").replace(/\s+/g, " ").trim();
+      async function trySearch(query) {
+        let searchUrl;
+        if (typeof cfg.url === "function") {
+          searchUrl = cfg.url(provider.baseUrl, query);
+        } else {
+          searchUrl = provider.baseUrl + cfg.url.replace("{query}", encodeURIComponent(query));
+        }
+        if (cfg.method === "POST") {
+          const domain = new URL(searchUrl).hostname;
+          const initHtml = await fetchHTML2(searchUrl, { timeout: 1e4 });
+          if (!initHtml) return null;
+          const anubisCookie = anubisCookieCache.get(domain);
           try {
-            itemLink = new URL(itemLink, provider.baseUrl).href;
+            const ctrl = new AbortController();
+            const t = setTimeout(() => ctrl.abort(), 12e3);
+            const res = await fetch(searchUrl, {
+              method: "POST",
+              headers: { "User-Agent": UA2, "Content-Type": "application/x-www-form-urlencoded", ...anubisCookie ? { "Cookie": anubisCookie } : {}, ...cfg.headers || {} },
+              body: (cfg.body || "query={query}").replace("{query}", encodeURIComponent(query)),
+              signal: ctrl.signal
+            });
+            clearTimeout(t);
+            if (!res.ok) return null;
+            return await res.text();
           } catch {
-            continue;
+            return null;
+          }
+        }
+        return await fetchHTML2(searchUrl, { headers: cfg.headers, timeout: 1e4 });
+      }
+      let html = await trySearch(titleClean);
+      if (!html && titleClean.includes(" ")) {
+        const words = titleClean.split(" ");
+        const first2 = words.slice(0, 2).join(" ");
+        if (first2.length > 3) html = await trySearch(first2);
+      }
+      if (!html && titleClean.includes(" ")) {
+        const first = titleClean.split(" ")[0];
+        if (first.length > 3) html = await trySearch(first);
+      }
+      if (!html) return null;
+      const $ = cheerio.load(html);
+      const items = $(cfg.itemSelector).toArray();
+      if (!items.length) return null;
+      let bestMatch = null;
+      let bestScore = 0;
+      for (const item of items) {
+        const el = $(item);
+        let itemTitle = "";
+        let itemLink = "";
+        if (cfg.titleSelector) {
+          const titleEl = cfg.titleSelector === "&" ? el : el.find(cfg.titleSelector).first();
+          itemTitle = cfg.titleAttr ? titleEl.attr(cfg.titleAttr) || "" : titleEl.text().trim();
+        }
+        if (cfg.linkSelector) {
+          const linkEl = cfg.linkSelector === "&" ? el : el.find(cfg.linkSelector).first();
+          itemLink = (linkEl.attr("href") || "").trim();
+          if (itemLink && !itemLink.startsWith("http")) {
+            try {
+              itemLink = new URL(itemLink, provider.baseUrl).href;
+            } catch {
+              continue;
+            }
+          }
+        }
+        if (!itemTitle || !itemLink) continue;
+        let score = similarity2(itemTitle, title);
+        const titleClean2 = titleClean.replace(/[^a-z0-9]/g, "");
+        const itemClean = itemTitle.toLowerCase().replace(/[^a-z0-9]/g, "");
+        if (itemClean === titleClean2) score = Math.max(score, 0.9);
+        if (titleClean2.length >= 5 && (itemClean.includes(titleClean2) || titleClean2.includes(itemClean))) {
+          score = Math.max(score, 0.75);
+        }
+        if (year) {
+          const itemYear = el.text().match(/\b(19|20)\d{2}\b/);
+          if (itemYear && itemYear[0] === year) score += 0.25;
+        }
+        let wordMatch = true;
+        const queryWords = titleClean.split(" ").filter((w) => w.length >= 4);
+        if (queryWords.length > 0) {
+          const itemLower = " " + itemTitle.toLowerCase().replace(/[^a-z0-9]/g, " ") + " ";
+          wordMatch = queryWords.some((qw) => itemLower.includes(" " + qw.toLowerCase() + " "));
+        }
+        if (score > bestScore && score > 0.5 && wordMatch) {
+          bestScore = score;
+          bestMatch = itemLink;
+        }
+      }
+      if (!bestMatch && items.length > 0) {
+        const queryWords = titleClean.toLowerCase().split(" ").filter((w) => w.length >= 3);
+        for (const item of items) {
+          const el = $(item);
+          let itemTitle = "";
+          if (cfg.titleSelector) {
+            const titleEl = cfg.titleSelector === "&" ? el : el.find(cfg.titleSelector).first();
+            itemTitle = cfg.titleAttr ? titleEl.attr(cfg.titleAttr) || "" : titleEl.text().trim();
+          }
+          let itemLink = "";
+          if (cfg.linkSelector) {
+            const linkEl = cfg.linkSelector === "&" ? el : el.find(cfg.linkSelector).first();
+            itemLink = (linkEl.attr("href") || "").trim();
+            if (itemLink && !itemLink.startsWith("http")) {
+              try {
+                itemLink = new URL(itemLink, provider.baseUrl).href;
+              } catch {
+                continue;
+              }
+            }
+          }
+          if (!itemTitle || !itemLink) continue;
+          const itemLower = itemTitle.toLowerCase();
+          const allMatch = queryWords.length > 0 && queryWords.every((qw) => itemLower.includes(qw));
+          if (allMatch) {
+            bestMatch = itemLink;
+            break;
           }
         }
       }
-      if (!itemTitle || !itemLink) continue;
-      const itemLower = itemTitle.toLowerCase();
-      const allMatch = queryWords.length > 0 && queryWords.every((qw) => itemLower.includes(qw));
-      if (allMatch) {
-        bestMatch = itemLink;
-        break;
+      if (!bestMatch && items.length > 0) {
+        const el = $(items[0]);
+        let itemLink = "";
+        if (cfg.linkSelector) {
+          const linkEl = cfg.linkSelector === "&" ? el : el.find(cfg.linkSelector).first();
+          itemLink = (linkEl.attr("href") || "").trim();
+          if (itemLink && !itemLink.startsWith("http")) {
+            try {
+              itemLink = new URL(itemLink, provider.baseUrl).href;
+            } catch {
+              itemLink = "";
+            }
+          }
+        }
+        if (itemLink) bestMatch = itemLink;
       }
+      return bestMatch;
     }
-  }
-  if (!bestMatch && items.length > 0) {
-    const el = $(items[0]);
-    let itemLink = "";
-    if (cfg.linkSelector) {
-      const linkEl = cfg.linkSelector === "&" ? el : el.find(cfg.linkSelector).first();
-      itemLink = (linkEl.attr("href") || "").trim();
-      if (itemLink && !itemLink.startsWith("http")) {
+    async function getEpisodeUrl2(provider, seriesUrl, season, episode) {
+      const cfg = provider.episodes;
+      if (!cfg) return seriesUrl;
+      if (cfg.type === "url") {
+        const slug = seriesUrl.replace(/\/+$/, "").split("/").pop();
+        const url = cfg.pattern.replace("{slug}", slug).replace("{episode}", episode);
         try {
-          itemLink = new URL(itemLink, provider.baseUrl).href;
+          return new URL(url, provider.baseUrl).href;
         } catch {
-          itemLink = "";
+          return seriesUrl;
         }
       }
-    }
-    if (itemLink) bestMatch = itemLink;
-  }
-  return bestMatch;
-}
-async function getEpisodeUrl(provider, seriesUrl, season, episode) {
-  const cfg = provider.episodes;
-  if (!cfg) return seriesUrl;
-  if (cfg.type === "url") {
-    const slug = seriesUrl.replace(/\/+$/, "").split("/").pop();
-    const url = cfg.pattern.replace("{slug}", slug).replace("{episode}", episode);
-    try {
-      return new URL(url, provider.baseUrl).href;
-    } catch {
-      return seriesUrl;
-    }
-  }
-  const html = await fetchHTML(seriesUrl);
-  if (!html) return null;
-  const $ = cheerio.load(html);
-  if (cfg.type === "post") {
-    const fd = new URLSearchParams();
-    fd.append(cfg.seasonParam || "season", String(season));
-    fd.append(cfg.episodeParam || "episode", String(episode));
-    if (cfg.extraParams) {
-      for (const [k, v] of Object.entries(cfg.extraParams)) {
-        fd.append(k, typeof v === "function" ? v($, html) : v);
-      }
-    }
-    const postUrl = cfg.url || seriesUrl;
-    const res = await fetch(postUrl, {
-      method: "POST",
-      headers: { "User-Agent": UA, "Content-Type": "application/x-www-form-urlencoded", ...cfg.headers },
-      body: fd.toString(),
-      signal: AbortSignal.timeout(12e3)
-    });
-    if (!res.ok) return null;
-    const data = await res.text();
-    const $$ = cheerio.load(data);
-    const epLink = $$(cfg.episodeSelector).first().attr("href");
-    if (epLink) {
-      try {
-        return new URL(epLink, provider.baseUrl).href;
-      } catch {
+      const html = await fetchHTML2(seriesUrl);
+      if (!html) return null;
+      const $ = cheerio.load(html);
+      if (cfg.type === "post") {
+        const fd = new URLSearchParams();
+        fd.append(cfg.seasonParam || "season", String(season));
+        fd.append(cfg.episodeParam || "episode", String(episode));
+        if (cfg.extraParams) {
+          for (const [k, v] of Object.entries(cfg.extraParams)) {
+            fd.append(k, typeof v === "function" ? v($, html) : v);
+          }
+        }
+        const postUrl = cfg.url || seriesUrl;
+        const res = await fetch(postUrl, {
+          method: "POST",
+          headers: { "User-Agent": UA2, "Content-Type": "application/x-www-form-urlencoded", ...cfg.headers },
+          body: fd.toString(),
+          signal: AbortSignal.timeout(12e3)
+        });
+        if (!res.ok) return null;
+        const data = await res.text();
+        const $$ = cheerio.load(data);
+        const epLink = $$(cfg.episodeSelector).first().attr("href");
+        if (epLink) {
+          try {
+            return new URL(epLink, provider.baseUrl).href;
+          } catch {
+            return null;
+          }
+        }
         return null;
       }
-    }
-    return null;
-  }
-  if (cfg.type === "season-list") {
-    const seasonEls = $(cfg.seasonSelector).toArray();
-    for (const sel of seasonEls) {
-      const sNum = parseInt($(sel).text().match(/\d+/)?.[0] || "0");
-      if (sNum === season) {
-        const sUrl = $(sel).attr("href");
-        if (sUrl) {
-          const sHtml = await fetchHTML(new URL(sUrl, provider.baseUrl).href);
-          if (sHtml) {
-            const $$ = cheerio.load(sHtml);
-            const epEls = $$(cfg.episodeSelector).toArray();
-            for (const eel of epEls) {
-              const eNum = parseInt($$(eel).text().match(/\d+/)?.[0] || "0");
-              if (eNum === episode) {
-                const epUrl = $$(eel).attr("href");
-                if (epUrl) {
-                  try {
-                    return new URL(epUrl, provider.baseUrl).href;
-                  } catch {
-                    return null;
+      if (cfg.type === "season-list") {
+        const seasonEls = $(cfg.seasonSelector).toArray();
+        for (const sel of seasonEls) {
+          const sNum = parseInt($(sel).text().match(/\d+/)?.[0] || "0");
+          if (sNum === season) {
+            const sUrl = $(sel).attr("href");
+            if (sUrl) {
+              const sHtml = await fetchHTML2(new URL(sUrl, provider.baseUrl).href);
+              if (sHtml) {
+                const $$ = cheerio.load(sHtml);
+                const epEls = $$(cfg.episodeSelector).toArray();
+                for (const eel of epEls) {
+                  const eNum = parseInt($$(eel).text().match(/\d+/)?.[0] || "0");
+                  if (eNum === episode) {
+                    const epUrl = $$(eel).attr("href");
+                    if (epUrl) {
+                      try {
+                        return new URL(epUrl, provider.baseUrl).href;
+                      } catch {
+                        return null;
+                      }
+                    }
                   }
                 }
               }
@@ -49408,463 +50316,665 @@ async function getEpisodeUrl(provider, seriesUrl, season, episode) {
           }
         }
       }
-    }
-  }
-  if (cfg.type === "jsvar") {
-    const match = html.match(cfg.varPattern);
-    if (match) {
-      try {
-        const episodes = JSON.parse(match[1]);
-        const ep = episodes.find(
-          (e) => (e.season || e.temporada) == season && (e.episode || e.capitulo) == episode
-        );
-        if (ep?.url || ep?.link) {
+      if (cfg.type === "jsvar") {
+        const match = html.match(cfg.varPattern);
+        if (match) {
           try {
-            return new URL(ep.url || ep.link, provider.baseUrl).href;
-          } catch {
-            return null;
-          }
-        }
-      } catch {
-      }
-    }
-  }
-  if (cfg.type === "nextjs") {
-    const match = html.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/);
-    if (match) {
-      try {
-        const data = JSON.parse(match[1]);
-        let obj = data;
-        for (const key of cfg.dataPath.split(".")) obj = obj?.[key];
-        if (obj?.seasons) {
-          for (const s of obj.seasons) {
-            if (s.number == season) {
-              const ep = s.episodes?.find((e) => e.number == episode);
-              if (ep?.url) {
-                try {
-                  return new URL(ep.url, provider.baseUrl).href;
-                } catch {
-                  return null;
-                }
+            const episodes = JSON.parse(match[1]);
+            const ep = episodes.find(
+              (e) => (e.season || e.temporada) == season && (e.episode || e.capitulo) == episode
+            );
+            if (ep?.url || ep?.link) {
+              try {
+                return new URL(ep.url || ep.link, provider.baseUrl).href;
+              } catch {
+                return null;
               }
             }
-          }
-        }
-      } catch {
-      }
-    }
-  }
-  if (cfg.type === "dontorrent") {
-    const rows = $("table.table tbody tr").toArray();
-    for (const row of rows) {
-      const cells = $(row).find("td");
-      const epText = $(cells[0]).text().trim();
-      const epMatch = epText.match(/(\d+)x(\d+)/);
-      if (epMatch && parseInt(epMatch[1]) === season && parseInt(epMatch[2]) === episode) {
-        const btn = $(cells[1]).find(".protected-download");
-        const contentId = btn.attr("data-content-id");
-        const tabla = btn.attr("data-tabla");
-        if (contentId && tabla) {
-          try {
-            return seriesUrl + "?dt_contentId=" + contentId + "&dt_tabla=" + tabla;
           } catch {
           }
         }
       }
-    }
-    try {
-      const domain = new URL(seriesUrl).hostname;
-      const showBase = seriesUrl.split("/").pop().replace(/-\d+-Temporada.*/i, "").replace(/-/g, " ").trim();
-      const searchUrl = provider.baseUrl + "/buscar";
-      const init = await fetchHTML(searchUrl, { timeout: 1e4 });
-      if (!init) return null;
-      const cookie = anubisCookieCache.get(domain);
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 12e3);
-      const sRes = await fetch(searchUrl, {
-        method: "POST",
-        headers: { "User-Agent": UA, "Content-Type": "application/x-www-form-urlencoded", ...cookie ? { "Cookie": cookie } : {} },
-        body: "valor=" + encodeURIComponent(showBase),
-        signal: ctrl.signal
-      });
-      clearTimeout(t);
-      if (!sRes.ok) return null;
-      const sHtml = await sRes.text();
-      const $$ = cheerio.load(sHtml);
-      const seasonLinks = $$('a[href*="/serie/"]').toArray();
-      if (!seasonLinks.length) return null;
-      for (const sl of seasonLinks) {
-        const seasonText = $$(sl).text().trim();
-        if (seasonText.includes(season + "\xAA Temporada") || seasonText.includes(season + " Temporada") || new RegExp("\\b" + season + "\\b").test(seasonText)) {
-          let seasonUrl = $$(sl).attr("href");
-          if (!seasonUrl) continue;
-          if (!seasonUrl.startsWith("http")) seasonUrl = provider.baseUrl + seasonUrl;
-          const sHtml2 = await fetchHTML(seasonUrl, { timeout: 1e4 });
-          if (!sHtml2) continue;
-          const $$$ = cheerio.load(sHtml2);
-          const sRows = $$$("table.table tbody tr").toArray();
-          for (const row of sRows) {
-            const cells = $$$(row).find("td");
-            const epText = $$$(cells[0]).text().trim();
-            const epMatch = epText.match(/(\d+)x(\d+)/);
-            if (epMatch && parseInt(epMatch[1]) === season && parseInt(epMatch[2]) === episode) {
-              const btn = $$$(cells[1]).find(".protected-download");
-              const contentId = btn.attr("data-content-id");
-              const tabla = btn.attr("data-tabla");
-              if (contentId && tabla) {
-                try {
-                  return seasonUrl + "?dt_contentId=" + contentId + "&dt_tabla=" + tabla;
-                } catch {
+      if (cfg.type === "nextjs") {
+        const match = html.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/);
+        if (match) {
+          try {
+            const data = JSON.parse(match[1]);
+            let obj = data;
+            for (const key of cfg.dataPath.split(".")) obj = obj?.[key];
+            if (obj?.seasons) {
+              for (const s of obj.seasons) {
+                if (s.number == season) {
+                  const ep = s.episodes?.find((e) => e.number == episode);
+                  if (ep?.url) {
+                    try {
+                      return new URL(ep.url, provider.baseUrl).href;
+                    } catch {
+                      return null;
+                    }
+                  }
                 }
               }
             }
+          } catch {
           }
         }
       }
-    } catch {
-    }
-    return null;
-  }
-  return seriesUrl;
-}
-async function extractVideos(provider, pageUrl) {
-  const cfg = provider.videos;
-  if (!cfg) return [];
-  const html = await fetchHTML(pageUrl);
-  if (!html) return [];
-  const $ = cheerio.load(html);
-  const results = [];
-  function resolveUrl(val) {
-    if (!val) return null;
-    if (typeof val === "string" && /^[A-Za-z0-9+/=]{20,}$/.test(val) && !val.startsWith("http")) {
-      try {
-        const decoded = Buffer.from(val, "base64").toString("utf-8").trim();
-        if (decoded.startsWith("http://") || decoded.startsWith("https://")) return decoded;
-      } catch {
-      }
-    }
-    return val.startsWith("//") ? "https:" + val : val;
-  }
-  if (cfg.type === "iframe") {
-    const container = cfg.containerSelector ? $(cfg.containerSelector) : $;
-    const targets = container.find(cfg.iframeSelector || "iframe").toArray();
-    for (const el of targets) {
-      const val = $(el).attr(cfg.srcAttr || "src") || $(el).attr("data-src");
-      const url = resolveUrl(val);
-      if (url) results.push({ url, server: detectServer(url), quality: cfg.defaultQuality || "HD" });
-    }
-    if (!results.length) {
-      const attr = cfg.srcAttr || "data-src";
-      const altTargets = container.find("a[" + attr + "]").toArray();
-      for (const el of altTargets) {
-        const val = $(el).attr(attr);
-        const url = resolveUrl(val);
-        if (url) results.push({ url, server: detectServer(url), quality: cfg.defaultQuality || "HD" });
-      }
-    }
-  }
-  if (cfg.type === "iframe-chain") {
-    const container = cfg.containerSelector ? $(cfg.containerSelector) : $;
-    const iframes = container.find(cfg.iframeSelector || "iframe").toArray();
-    const chainUrls = [];
-    for (const iframe of iframes) {
-      const src = $(iframe).attr(cfg.srcAttr || "src") || $(iframe).attr("data-src");
-      if (src) chainUrls.push(src.startsWith("//") ? "https:" + src : src);
-    }
-    for (const embedUrl of chainUrls) {
-      try {
-        const body = await fetchHTML(embedUrl, { headers: { Referer: pageUrl }, timeout: 1e4 });
-        if (!body) continue;
-        const $e = cheerio.load(body);
-        const realSrc = $e("div.Video iframe, .Video iframe, iframe").first().attr("src");
-        if (realSrc) {
-          const finalUrl = realSrc.startsWith("//") ? "https:" + realSrc : realSrc;
-          results.push({ url: finalUrl, server: detectServer(finalUrl), quality: cfg.defaultQuality || "HD" });
-        }
-      } catch {
-      }
-    }
-  }
-  if (cfg.type === "nextjs") {
-    const match = html.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/) || html.match(/<script type="application\/json"[^>]*>(.*?)<\/script>/);
-    if (match) {
-      try {
-        const data = JSON.parse(match[1]);
-        let obj = data;
-        for (const key of cfg.dataPath.split(".")) obj = obj?.[key];
-        if (obj && typeof obj === "object") {
-          for (const [lang, players] of Object.entries(obj)) {
-            if (Array.isArray(players)) {
-              for (const p of players) {
-                const pUrl = p.result || p.url || p.link;
-                if (pUrl) results.push({
-                  url: pUrl,
-                  server: p.cyberlocker || p.server || detectServer(pUrl),
-                  quality: p.quality || cfg.defaultQuality || "HD",
-                  lang
-                });
+      if (cfg.type === "dontorrent") {
+        const rows = $("table.table tbody tr").toArray();
+        for (const row of rows) {
+          const cells = $(row).find("td");
+          const epText = $(cells[0]).text().trim();
+          const epMatch = epText.match(/(\d+)x(\d+)/);
+          if (epMatch && parseInt(epMatch[1]) === season && parseInt(epMatch[2]) === episode) {
+            const btn = $(cells[1]).find(".protected-download");
+            const contentId = btn.attr("data-content-id");
+            const tabla = btn.attr("data-tabla");
+            if (contentId && tabla) {
+              try {
+                return seriesUrl + "?dt_contentId=" + contentId + "&dt_tabla=" + tabla;
+              } catch {
               }
             }
           }
         }
-      } catch {
-      }
-    }
-  }
-  if (cfg.type === "jsvar") {
-    const match = html.match(cfg.varPattern);
-    if (match) {
-      try {
-        const data = JSON.parse(match[1]);
-        const entries = Array.isArray(data) ? data : Object.values(data).flat();
-        for (const v of entries) {
-          const server = Array.isArray(v) ? v[0] : v.server || v.name;
-          const vUrl = Array.isArray(v) ? v[1] : v.url || v.link || v.code;
-          if (vUrl) results.push({
-            url: vUrl,
-            server: server || detectServer(vUrl),
-            quality: v.quality || cfg.defaultQuality || "HD",
-            lang: v.lang || v.idioma || v.audio || ""
+        try {
+          const domain = new URL(seriesUrl).hostname;
+          const showBase = seriesUrl.split("/").pop().replace(/-\d+-Temporada.*/i, "").replace(/-/g, " ").trim();
+          const searchUrl = provider.baseUrl + "/buscar";
+          const init = await fetchHTML2(searchUrl, { timeout: 1e4 });
+          if (!init) return null;
+          const cookie = anubisCookieCache.get(domain);
+          const ctrl = new AbortController();
+          const t = setTimeout(() => ctrl.abort(), 12e3);
+          const sRes = await fetch(searchUrl, {
+            method: "POST",
+            headers: { "User-Agent": UA2, "Content-Type": "application/x-www-form-urlencoded", ...cookie ? { "Cookie": cookie } : {} },
+            body: "valor=" + encodeURIComponent(showBase),
+            signal: ctrl.signal
           });
+          clearTimeout(t);
+          if (!sRes.ok) return null;
+          const sHtml = await sRes.text();
+          const $$ = cheerio.load(sHtml);
+          const seasonLinks = $$('a[href*="/serie/"]').toArray();
+          if (!seasonLinks.length) return null;
+          for (const sl of seasonLinks) {
+            const seasonText = $$(sl).text().trim();
+            if (seasonText.includes(season + "\xAA Temporada") || seasonText.includes(season + " Temporada") || new RegExp("\\b" + season + "\\b").test(seasonText)) {
+              let seasonUrl = $$(sl).attr("href");
+              if (!seasonUrl) continue;
+              if (!seasonUrl.startsWith("http")) seasonUrl = provider.baseUrl + seasonUrl;
+              const sHtml2 = await fetchHTML2(seasonUrl, { timeout: 1e4 });
+              if (!sHtml2) continue;
+              const $$$ = cheerio.load(sHtml2);
+              const sRows = $$$("table.table tbody tr").toArray();
+              for (const row of sRows) {
+                const cells = $$$(row).find("td");
+                const epText = $$$(cells[0]).text().trim();
+                const epMatch = epText.match(/(\d+)x(\d+)/);
+                if (epMatch && parseInt(epMatch[1]) === season && parseInt(epMatch[2]) === episode) {
+                  const btn = $$$(cells[1]).find(".protected-download");
+                  const contentId = btn.attr("data-content-id");
+                  const tabla = btn.attr("data-tabla");
+                  if (contentId && tabla) {
+                    try {
+                      return seasonUrl + "?dt_contentId=" + contentId + "&dt_tabla=" + tabla;
+                    } catch {
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } catch {
         }
-      } catch {
+        return null;
       }
+      return seriesUrl;
     }
-  }
-  if (cfg.type === "jslist") {
-    const re = cfg.varPattern instanceof RegExp ? cfg.varPattern : new RegExp(cfg.varPattern, "g");
-    let m;
-    while ((m = re.exec(html)) !== null) {
-      const src = (m[1] || "").match(/src=["']([^"']+)["']/);
-      if (src) {
-        results.push({ url: src[1], server: detectServer(src[1]), quality: cfg.defaultQuality || "HD" });
-      }
-    }
-  }
-  if (cfg.type === "jkplayer") {
-    const re = cfg.varPattern instanceof RegExp ? cfg.varPattern : new RegExp(cfg.varPattern, "g");
-    let m;
-    while ((m = re.exec(html)) !== null) {
-      const src = (m[1] || "").match(/src=["']([^"']+)["']/);
-      if (src) results.push({ url: src[1], server: detectServer(src[1]), quality: cfg.defaultQuality || "HD" });
-    }
-    for (const r of results) {
-      if (!r.url || !r.url.includes("/jkplayer/")) continue;
-      try {
-        const body = await fetchHTML(r.url);
-        let vm = body.match(/url:\s*'([^']+\.m3u8[^']*)'/);
-        if (!vm) {
-          const b64 = body.match(/atob\('([^']+)'\)/);
-          if (b64) vm = [null, Buffer.from(b64[1], "base64").toString()];
-        }
-        if (vm) {
-          r.url = vm[1];
-          r.server = detectServer(vm[1]);
-        }
-      } catch {
-      }
-    }
-  }
-  if (cfg.type === "api") {
-    const apiUrl = typeof cfg.apiUrl === "function" ? cfg.apiUrl(provider.baseUrl, pageUrl, html) : provider.baseUrl + cfg.apiUrl;
-    const data = await fetchJSON(apiUrl, { headers: cfg.headers });
-    if (data) {
-      const sources = data.sources || data.data || data;
-      for (const s of Array.isArray(sources) ? sources : []) {
-        const sUrl = s.url || s.file || s.link || s.src;
-        if (sUrl) results.push({
-          url: sUrl,
-          server: s.server || detectServer(sUrl),
-          quality: s.quality || s.label || cfg.defaultQuality || "HD"
-        });
-      }
-    }
-  }
-  if (cfg.type === "torrent") {
-    const links = $(cfg.linkSelector || 'a[href*="magnet:"], a[href$=".torrent"]').toArray();
-    for (const link of links) {
-      const href = $(link).attr("href");
-      if (href && (href.startsWith("magnet:") || href.endsWith(".torrent"))) {
-        const label = $(link).text().trim() || "";
-        const infoHashMatch = href.match(/urn:btih:([a-fA-F0-9]{40})/i);
-        const qualityMatch = label.match(/\b(4K|2160p?|1080p?|720p?|480p?)\b/i);
-        const sources = [];
-        const trRe = /tr=([^&]+)/g;
-        let m;
-        while ((m = trRe.exec(href)) !== null) {
-          const trackerUrl = decodeURIComponent(m[1]);
-          if (trackerUrl.startsWith("udp://") || trackerUrl.startsWith("http://") || trackerUrl.startsWith("https://") || trackerUrl.startsWith("ws://")) {
-            sources.push(trackerUrl);
+    async function extractVideos2(provider, pageUrl) {
+      const cfg = provider.videos;
+      if (!cfg) return [];
+      const html = await fetchHTML2(pageUrl);
+      if (!html) return [];
+      const $ = cheerio.load(html);
+      const results = [];
+      function resolveUrl(val) {
+        if (!val) return null;
+        if (typeof val === "string" && /^[A-Za-z0-9+/=]{20,}$/.test(val) && !val.startsWith("http")) {
+          try {
+            const decoded = Buffer.from(val, "base64").toString("utf-8").trim();
+            if (decoded.startsWith("http://") || decoded.startsWith("https://")) return decoded;
+          } catch {
           }
         }
-        if (infoHashMatch) sources.push("dht:" + infoHashMatch[1].toLowerCase());
+        return val.startsWith("//") ? "https:" + val : val;
+      }
+      if (cfg.type === "iframe") {
+        const container = cfg.containerSelector ? $(cfg.containerSelector) : $;
+        const targets = container.find(cfg.iframeSelector || "iframe").toArray();
+        for (const el of targets) {
+          const val = $(el).attr(cfg.srcAttr || "src") || $(el).attr("data-src");
+          const url = resolveUrl(val);
+          if (url) results.push({ url, server: detectServer2(url), quality: cfg.defaultQuality || "HD" });
+        }
+        if (!results.length) {
+          const attr = cfg.srcAttr || "data-src";
+          const altTargets = container.find("a[" + attr + "]").toArray();
+          for (const el of altTargets) {
+            const val = $(el).attr(attr);
+            const url = resolveUrl(val);
+            if (url) results.push({ url, server: detectServer2(url), quality: cfg.defaultQuality || "HD" });
+          }
+        }
+      }
+      if (cfg.type === "iframe-chain") {
+        const container = cfg.containerSelector ? $(cfg.containerSelector) : $;
+        const iframes = container.find(cfg.iframeSelector || "iframe").toArray();
+        const chainUrls = [];
+        for (const iframe of iframes) {
+          const src = $(iframe).attr(cfg.srcAttr || "src") || $(iframe).attr("data-src");
+          if (src) chainUrls.push(src.startsWith("//") ? "https:" + src : src);
+        }
+        for (const embedUrl of chainUrls) {
+          try {
+            const body = await fetchHTML2(embedUrl, { headers: { Referer: pageUrl }, timeout: 1e4 });
+            if (!body) continue;
+            const $e = cheerio.load(body);
+            const realSrc = $e("div.Video iframe, .Video iframe, iframe").first().attr("src");
+            if (realSrc) {
+              const finalUrl = realSrc.startsWith("//") ? "https:" + realSrc : realSrc;
+              results.push({ url: finalUrl, server: detectServer2(finalUrl), quality: cfg.defaultQuality || "HD" });
+            }
+          } catch {
+          }
+        }
+      }
+      if (cfg.type === "nextjs") {
+        const match = html.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/) || html.match(/<script type="application\/json"[^>]*>(.*?)<\/script>/);
+        if (match) {
+          try {
+            const data = JSON.parse(match[1]);
+            let obj = data;
+            for (const key of cfg.dataPath.split(".")) obj = obj?.[key];
+            if (obj && typeof obj === "object") {
+              for (const [lang, players] of Object.entries(obj)) {
+                if (Array.isArray(players)) {
+                  for (const p of players) {
+                    const pUrl = p.result || p.url || p.link;
+                    if (pUrl) results.push({
+                      url: pUrl,
+                      server: p.cyberlocker || p.server || detectServer2(pUrl),
+                      quality: p.quality || cfg.defaultQuality || "HD",
+                      lang
+                    });
+                  }
+                }
+              }
+            }
+          } catch {
+          }
+        }
+      }
+      if (cfg.type === "jsvar") {
+        const match = html.match(cfg.varPattern);
+        if (match) {
+          try {
+            const data = JSON.parse(match[1]);
+            const entries = Array.isArray(data) ? data : Object.values(data).flat();
+            for (const v of entries) {
+              const server = Array.isArray(v) ? v[0] : v.server || v.name;
+              const vUrl = Array.isArray(v) ? v[1] : v.url || v.link || v.code;
+              if (vUrl) results.push({
+                url: vUrl,
+                server: server || detectServer2(vUrl),
+                quality: v.quality || cfg.defaultQuality || "HD",
+                lang: v.lang || v.idioma || v.audio || ""
+              });
+            }
+          } catch {
+          }
+        }
+      }
+      if (cfg.type === "jslist") {
+        const re = cfg.varPattern instanceof RegExp ? cfg.varPattern : new RegExp(cfg.varPattern, "g");
+        let m;
+        while ((m = re.exec(html)) !== null) {
+          const src = (m[1] || "").match(/src=["']([^"']+)["']/);
+          if (src) {
+            results.push({ url: src[1], server: detectServer2(src[1]), quality: cfg.defaultQuality || "HD" });
+          }
+        }
+      }
+      if (cfg.type === "jkplayer") {
+        const re = cfg.varPattern instanceof RegExp ? cfg.varPattern : new RegExp(cfg.varPattern, "g");
+        let m;
+        while ((m = re.exec(html)) !== null) {
+          const src = (m[1] || "").match(/src=["']([^"']+)["']/);
+          if (src) results.push({ url: src[1], server: detectServer2(src[1]), quality: cfg.defaultQuality || "HD" });
+        }
+        for (const r of results) {
+          if (!r.url || !r.url.includes("/jkplayer/")) continue;
+          try {
+            const body = await fetchHTML2(r.url);
+            let vm = body.match(/url:\s*'([^']+\.m3u8[^']*)'/);
+            if (!vm) {
+              const b64 = body.match(/atob\('([^']+)'\)/);
+              if (b64) vm = [null, Buffer.from(b64[1], "base64").toString()];
+            }
+            if (vm) {
+              r.url = vm[1];
+              r.server = detectServer2(vm[1]);
+            }
+          } catch {
+          }
+        }
+      }
+      if (cfg.type === "api") {
+        const apiUrl = typeof cfg.apiUrl === "function" ? cfg.apiUrl(provider.baseUrl, pageUrl, html) : provider.baseUrl + cfg.apiUrl;
+        const data = await fetchJSON2(apiUrl, { headers: cfg.headers });
+        if (data) {
+          const sources = data.sources || data.data || data;
+          for (const s of Array.isArray(sources) ? sources : []) {
+            const sUrl = s.url || s.file || s.link || s.src;
+            if (sUrl) results.push({
+              url: sUrl,
+              server: s.server || detectServer2(sUrl),
+              quality: s.quality || s.label || cfg.defaultQuality || "HD"
+            });
+          }
+        }
+      }
+      if (cfg.type === "torrent") {
+        const links = $(cfg.linkSelector || 'a[href*="magnet:"], a[href$=".torrent"]').toArray();
+        for (const link of links) {
+          const href = $(link).attr("href");
+          if (href && (href.startsWith("magnet:") || href.endsWith(".torrent"))) {
+            const label = $(link).text().trim() || "";
+            const infoHashMatch = href.match(/urn:btih:([a-fA-F0-9]{40})/i);
+            const qualityMatch = label.match(/\b(4K|2160p?|1080p?|720p?|480p?)\b/i);
+            const sources = [];
+            const trRe = /tr=([^&]+)/g;
+            let m;
+            while ((m = trRe.exec(href)) !== null) {
+              const trackerUrl = decodeURIComponent(m[1]);
+              if (trackerUrl.startsWith("udp://") || trackerUrl.startsWith("http://") || trackerUrl.startsWith("https://") || trackerUrl.startsWith("ws://")) {
+                sources.push(trackerUrl);
+              }
+            }
+            if (infoHashMatch) sources.push("dht:" + infoHashMatch[1].toLowerCase());
+            results.push({
+              url: href,
+              server: "torrent",
+              quality: (qualityMatch ? qualityMatch[1] : "") || cfg.defaultQuality || "HD",
+              ...infoHashMatch ? { infoHash: infoHashMatch[1].toLowerCase() } : {},
+              ...sources.length ? { sources } : {},
+              ...label ? { filename: label } : {}
+            });
+          }
+        }
+      }
+      if (cfg.type === "dontorrent") {
+        let contentId, tabla, episodeLabel;
+        try {
+          const parsed = new URL(pageUrl);
+          contentId = parsed.searchParams.get("dt_contentId");
+          tabla = parsed.searchParams.get("dt_tabla");
+        } catch {
+        }
+        if (contentId && tabla) {
+          episodeLabel = $("table.table tbody tr").first().find("td").first().text().trim().match(/x(\d+)/)?.[1];
+        }
+        if (!contentId || !tabla) {
+          const btn = $(".protected-download").first();
+          contentId = btn.attr("data-content-id");
+          tabla = btn.attr("data-tabla");
+          episodeLabel = "";
+        }
+        if (!contentId || !tabla) return [];
+        const torrentInfo = await downloadDontorrentTorrent(provider.baseUrl, contentId, tabla);
+        if (!torrentInfo) return [];
+        let quality = cfg.defaultQuality || "HD";
+        const fmtMatch = html.match(/Formato:<\/b>\s*([^<]+)/i);
+        if (fmtMatch) quality = fmtMatch[1].trim();
+        const fnameMatch = torrentInfo.filename.match(/\b(4K|2160p?|1080p?|720p?|480p?|HDTV|HD)\b/i);
+        if (fnameMatch) quality = fnameMatch[1];
         results.push({
-          url: href,
+          url: torrentInfo.url,
+          infoHash: torrentInfo.infoHash,
           server: "torrent",
-          quality: (qualityMatch ? qualityMatch[1] : "") || cfg.defaultQuality || "HD",
-          ...infoHashMatch ? { infoHash: infoHashMatch[1].toLowerCase() } : {},
-          ...sources.length ? { sources } : {},
-          ...label ? { filename: label } : {}
+          quality,
+          filename: torrentInfo.filename || (episodeLabel ? "Episode " + episodeLabel : ""),
+          sources: ["dht:" + torrentInfo.infoHash]
         });
+      }
+      return results;
+    }
+    function detectServer2(url) {
+      if (!url) return "direct";
+      if (/\.(mp4|m3u8|mkv|webm|avi)(\?|$)/i.test(url)) return "direct";
+      if (/magnet:/i.test(url)) return "torrent";
+      const patterns = [
+        ["streamwish", /streamwish/i],
+        ["filemoon", /filemoon/i],
+        ["voes", /voes\./i],
+        ["doodstream", /dood/i],
+        ["streamtape", /streamtape/i],
+        ["fembed", /fembed/i],
+        ["okru", /ok\.ru|odnoklassniki/i],
+        ["mixdrop", /mixdrop/i],
+        ["upstream", /upstream/i],
+        ["vidhide", /vidhide|vidpro/i],
+        ["voe", /voe\.sx/i],
+        ["mystream", /mystream/i],
+        ["netutv", /netu\.tv/i],
+        ["yourupload", /yourupload/i],
+        ["jawcloud", /jawcloud/i],
+        ["streampe", /streampe/i],
+        ["gvideo", /drive\.google|googlevideo/i],
+        ["mega", /mega\.nz/i],
+        ["wolfmax", /wolfmax/i],
+        ["youtube", /youtube|youtu\.be/i]
+      ];
+      for (const [name, re] of patterns) {
+        if (re.test(url)) return name;
+      }
+      return "embed";
+    }
+    function solveSha256PoW(challenge, difficulty) {
+      let nonce = 0;
+      const target = "0".repeat(difficulty);
+      while (true) {
+        const hash = crypto.createHash("sha256").update(challenge + nonce).digest("hex");
+        if (hash.startsWith(target)) return nonce;
+        nonce++;
+      }
+    }
+    function parseTorrentInfoHash(buf) {
+      try {
+        const str = buf.toString("latin1");
+        const infoStart = str.indexOf("4:info");
+        if (infoStart < 0) return null;
+        let i = infoStart + 5;
+        const start = i;
+        while (i < buf.length) {
+          const c = String.fromCharCode(buf[i]);
+          if (c === "d") i++;
+          else if (c === "l") i++;
+          else if (c === "e") break;
+          else if (c === "i") {
+            i = buf.indexOf("e".charCodeAt(0), i);
+            if (i < 0) return null;
+            i++;
+          } else if (c >= "0" && c <= "9") {
+            const colon = buf.indexOf(":".charCodeAt(0), i);
+            if (colon < 0) return null;
+            const len = parseInt(buf.toString("ascii", i, colon), 10);
+            i = colon + 1 + len;
+          } else i++;
+        }
+        const infoRaw = buf.slice(start, i);
+        return crypto.createHash("sha1").update(infoRaw).digest("hex").toLowerCase();
+      } catch {
+        return null;
+      }
+    }
+    async function downloadDontorrentTorrent(baseUrl, contentId, tabla) {
+      try {
+        const origin = new URL(baseUrl).origin;
+        const domain = new URL(baseUrl).hostname;
+        const cookie = anubisCookieCache.get(domain);
+        async function powPost(action, body) {
+          const ctrl = new AbortController();
+          const t = setTimeout(() => ctrl.abort(), 15e3);
+          const res = await fetch(origin + "/api_validate_pow.php", {
+            method: "POST",
+            headers: { "User-Agent": UA2, "Content-Type": "application/json", ...cookie ? { "Cookie": cookie } : {} },
+            body: JSON.stringify(body),
+            signal: ctrl.signal
+          });
+          clearTimeout(t);
+          if (!res.ok) return null;
+          return await res.json();
+        }
+        const gen = await powPost("generate", { action: "generate", content_id: parseInt(contentId), tabla });
+        if (!gen || !gen.success || !gen.challenge) return null;
+        const nonce = solveSha256PoW(gen.challenge, 3);
+        const val = await powPost("validate", { action: "validate", challenge: gen.challenge, nonce });
+        if (!val || !val.success || !val.download_url) return null;
+        const dlUrl = val.download_url.startsWith("//") ? "https:" + val.download_url : val.download_url.startsWith("/") ? origin + val.download_url : val.download_url;
+        const ctrl3 = new AbortController();
+        const t3 = setTimeout(() => ctrl3.abort(), 2e4);
+        const dlRes = await fetch(dlUrl, {
+          headers: { "User-Agent": UA2, ...cookie ? { "Cookie": cookie } : {} },
+          signal: ctrl3.signal
+        });
+        clearTimeout(t3);
+        if (!dlRes.ok) return null;
+        const buf = Buffer.from(await dlRes.arrayBuffer());
+        const infoHash = parseTorrentInfoHash(buf);
+        if (!infoHash) return null;
+        const filename = decodeURIComponent(dlUrl.split("/").pop()).replace(/\.torrent$/i, "");
+        return { url: dlUrl, infoHash, filename };
+      } catch {
+        return null;
+      }
+    }
+    module2.exports = {
+      fetchHTML: fetchHTML2,
+      fetchJSON: fetchJSON2,
+      similarity: similarity2,
+      resolveTMDB,
+      searchProvider: searchProvider2,
+      getEpisodeUrl: getEpisodeUrl2,
+      extractVideos: extractVideos2,
+      detectServer: detectServer2
+    };
+  }
+});
+
+// src/alfa-providers/index.js
+var providers = require_providers();
+var { fetchHTML, fetchJSON, similarity, searchProvider, getEpisodeUrl, extractVideos, detectServer } = require_engine();
+var TMDB_KEY = process.env.TMDB_KEY || "d80ba92bc7cefe3359668d30d06f3305";
+var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+var ANIME_PREFIXES = ["animeflv:", "animeav1:", "henaojara:", "tioanime:", "anilist:", "kitsu:", "mal:", "anidb:"];
+var titleCache = /* @__PURE__ */ new Map();
+var MAX_CACHE = 500;
+function cacheSet(key, value) {
+  if (titleCache.size >= MAX_CACHE) {
+    const firstKey = titleCache.keys().next().value;
+    titleCache.delete(firstKey);
+  }
+  titleCache.set(key, value);
+}
+function isAnimeId(id) {
+  return ANIME_PREFIXES.some((p) => id.startsWith(p));
+}
+function extractSlug(id) {
+  const parts = id.split(":");
+  return parts.length >= 2 ? parts[1] : id;
+}
+async function resolveTitles(id, mediaType) {
+  const cacheKey = `titles:${mediaType}:${id}`;
+  if (titleCache.has(cacheKey)) return titleCache.get(cacheKey);
+  const variants = [];
+  const seen = /* @__PURE__ */ new Set();
+  function addVariant(title, year) {
+    const t = (title || "").trim();
+    if (t && !seen.has(t.toLowerCase())) {
+      variants.push({ title: t, year: year || "" });
+      seen.add(t.toLowerCase());
+    }
+  }
+  if (isAnimeId(id)) {
+    const slug = extractSlug(id);
+    addVariant(slug.replace(/-/g, " "), "");
+    if (slug.includes("-")) addVariant(slug, "");
+    if (id.startsWith("anilist:")) {
+      try {
+        const ac = new AbortController();
+        setTimeout(() => ac.abort(), 4e3);
+        const r = await fetch(`https://amatsu.ruka.pw/meta/anime/${id}.json`, { headers: { "User-Agent": UA }, signal: ac.signal });
+        if (r.ok) {
+          const data = await r.json();
+          if (data?.meta) {
+            if (data.meta.name) addVariant(data.meta.name, "");
+            if (data.meta.englishName && data.meta.englishName !== data.meta.name) addVariant(data.meta.englishName, "");
+            if (data.meta.altName && data.meta.altName !== data.meta.name) addVariant(data.meta.altName, "");
+            if (Array.isArray(data.meta.synonyms)) {
+              for (const syn of data.meta.synonyms) addVariant(syn, "");
+            }
+          }
+        }
+      } catch {
       }
     }
   }
-  if (cfg.type === "dontorrent") {
-    let contentId, tabla, episodeLabel;
-    try {
-      const parsed = new URL(pageUrl);
-      contentId = parsed.searchParams.get("dt_contentId");
-      tabla = parsed.searchParams.get("dt_tabla");
-    } catch {
-    }
-    if (contentId && tabla) {
-      episodeLabel = $("table.table tbody tr").first().find("td").first().text().trim().match(/x(\d+)/)?.[1];
-    }
-    if (!contentId || !tabla) {
-      const btn = $(".protected-download").first();
-      contentId = btn.attr("data-content-id");
-      tabla = btn.attr("data-tabla");
-      episodeLabel = "";
-    }
-    if (!contentId || !tabla) return [];
-    const torrentInfo = await downloadDontorrentTorrent(provider.baseUrl, contentId, tabla);
-    if (!torrentInfo) return [];
-    let quality = cfg.defaultQuality || "HD";
-    const fmtMatch = html.match(/Formato:<\/b>\s*([^<]+)/i);
-    if (fmtMatch) quality = fmtMatch[1].trim();
-    const fnameMatch = torrentInfo.filename.match(/\b(4K|2160p?|1080p?|720p?|480p?|HDTV|HD)\b/i);
-    if (fnameMatch) quality = fnameMatch[1];
-    results.push({
-      url: torrentInfo.url,
-      infoHash: torrentInfo.infoHash,
-      server: "torrent",
-      quality,
-      filename: torrentInfo.filename || (episodeLabel ? "Episode " + episodeLabel : ""),
-      sources: ["dht:" + torrentInfo.infoHash]
-    });
-  }
-  return results;
-}
-function detectServer(url) {
-  if (!url) return "direct";
-  if (/\.(mp4|m3u8|mkv|webm|avi)(\?|$)/i.test(url)) return "direct";
-  if (/magnet:/i.test(url)) return "torrent";
-  const patterns = [
-    ["streamwish", /streamwish/i],
-    ["filemoon", /filemoon/i],
-    ["voes", /voes\./i],
-    ["doodstream", /dood/i],
-    ["streamtape", /streamtape/i],
-    ["fembed", /fembed/i],
-    ["okru", /ok\.ru|odnoklassniki/i],
-    ["mixdrop", /mixdrop/i],
-    ["upstream", /upstream/i],
-    ["vidhide", /vidhide|vidpro/i],
-    ["voe", /voe\.sx/i],
-    ["mystream", /mystream/i],
-    ["netutv", /netu\.tv/i],
-    ["yourupload", /yourupload/i],
-    ["jawcloud", /jawcloud/i],
-    ["streampe", /streampe/i],
-    ["gvideo", /drive\.google|googlevideo/i],
-    ["mega", /mega\.nz/i],
-    ["wolfmax", /wolfmax/i],
-    ["youtube", /youtube|youtu\.be/i]
-  ];
-  for (const [name, re] of patterns) {
-    if (re.test(url)) return name;
-  }
-  return "embed";
-}
-function solveSha256PoW(challenge, difficulty) {
-  let nonce = 0;
-  const target = "0".repeat(difficulty);
-  while (true) {
-    const hash = crypto.createHash("sha256").update(challenge + nonce).digest("hex");
-    if (hash.startsWith(target)) return nonce;
-    nonce++;
-  }
-}
-function parseTorrentInfoHash(buf) {
   try {
-    const str = buf.toString("latin1");
-    const infoStart = str.indexOf("4:info");
-    if (infoStart < 0) return null;
-    let i = infoStart + 5;
-    const start = i;
-    while (i < buf.length) {
-      const c = String.fromCharCode(buf[i]);
-      if (c === "d") i++;
-      else if (c === "l") i++;
-      else if (c === "e") break;
-      else if (c === "i") {
-        i = buf.indexOf("e".charCodeAt(0), i);
-        if (i < 0) return null;
-        i++;
-      } else if (c >= "0" && c <= "9") {
-        const colon = buf.indexOf(":".charCodeAt(0), i);
-        if (colon < 0) return null;
-        const len = parseInt(buf.toString("ascii", i, colon), 10);
-        i = colon + 1 + len;
-      } else i++;
-    }
-    const infoRaw = buf.slice(start, i);
-    return crypto.createHash("sha1").update(infoRaw).digest("hex").toLowerCase();
-  } catch {
-    return null;
-  }
-}
-async function downloadDontorrentTorrent(baseUrl, contentId, tabla) {
-  try {
-    const origin = new URL(baseUrl).origin;
-    const domain = new URL(baseUrl).hostname;
-    const cookie = anubisCookieCache.get(domain);
-    async function powPost(action, body) {
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 15e3);
-      const res = await fetch(origin + "/api_validate_pow.php", {
-        method: "POST",
-        headers: { "User-Agent": UA, "Content-Type": "application/json", ...cookie ? { "Cookie": cookie } : {} },
-        body: JSON.stringify(body),
-        signal: ctrl.signal
+    let tmdbId = id;
+    if (id.startsWith("tt")) {
+      const findRes = await fetch(`https://api.themoviedb.org/3/find/${id}?api_key=${TMDB_KEY}&external_source=imdb_id`, {
+        headers: { "User-Agent": UA }
       });
-      clearTimeout(t);
-      if (!res.ok) return null;
-      return await res.json();
+      if (findRes.ok) {
+        const data = await findRes.json();
+        const results = data?.[mediaType === "tv" ? "tv_results" : "movie_results"];
+        if (results?.[0]) tmdbId = String(results[0].id);
+      }
     }
-    const gen = await powPost("generate", { action: "generate", content_id: parseInt(contentId), tabla });
-    if (!gen || !gen.success || !gen.challenge) return null;
-    const nonce = solveSha256PoW(gen.challenge, 3);
-    const val = await powPost("validate", { action: "validate", challenge: gen.challenge, nonce });
-    if (!val || !val.success || !val.download_url) return null;
-    const dlUrl = val.download_url.startsWith("//") ? "https:" + val.download_url : val.download_url.startsWith("/") ? origin + val.download_url : val.download_url;
-    const ctrl3 = new AbortController();
-    const t3 = setTimeout(() => ctrl3.abort(), 2e4);
-    const dlRes = await fetch(dlUrl, {
-      headers: { "User-Agent": UA, ...cookie ? { "Cookie": cookie } : {} },
-      signal: ctrl3.signal
-    });
-    clearTimeout(t3);
-    if (!dlRes.ok) return null;
-    const buf = Buffer.from(await dlRes.arrayBuffer());
-    const infoHash = parseTorrentInfoHash(buf);
-    if (!infoHash) return null;
-    const filename = decodeURIComponent(dlUrl.split("/").pop()).replace(/\.torrent$/i, "");
-    return { url: dlUrl, infoHash, filename };
+    if (!tmdbId.match(/^\d+$/)) {
+      cacheSet(cacheKey, variants);
+      return variants;
+    }
+    async function tmdbFetch(lang) {
+      try {
+        const ac = new AbortController();
+        setTimeout(() => ac.abort(), 6e3);
+        const r = await fetch(`https://api.themoviedb.org/3/${mediaType === "tv" ? "tv" : "movie"}/${tmdbId}?api_key=${TMDB_KEY}&language=${lang}`, { headers: { "User-Agent": UA }, signal: ac.signal });
+        return r.ok ? r.json() : null;
+      } catch {
+        return null;
+      }
+    }
+    const [enData, esData, jaData] = await Promise.all([tmdbFetch("en"), tmdbFetch("es"), tmdbFetch("ja")]);
+    let firstYear = "";
+    if (enData) {
+      firstYear = (enData.release_date || enData.first_air_date || "").substring(0, 4);
+      addVariant(enData.title || enData.name || "", firstYear);
+      if (enData.original_title && enData.original_title !== (enData.title || enData.name)) {
+        addVariant(enData.original_title, firstYear);
+      }
+      if (enData.original_name && enData.original_name !== (enData.name || enData.title)) {
+        addVariant(enData.original_name, firstYear);
+      }
+    }
+    if (esData) {
+      addVariant(esData.title || esData.name || "", firstYear);
+    }
+    if (jaData) {
+      const jaTitle = jaData.title || jaData.name || "";
+      if (jaTitle && !seen.has(jaTitle.toLowerCase())) {
+        addVariant(jaTitle, firstYear);
+      }
+    }
+    if (firstYear) {
+      for (const v of variants) {
+        if (!v.year) v.year = firstYear;
+      }
+    }
   } catch {
-    return null;
   }
+  if (variants.length === 0 && !id.match(/^\d+$/)) {
+    variants.push({ title: id, year: "" });
+  }
+  cacheSet(cacheKey, variants);
+  return variants;
 }
-module.exports = {
-  fetchHTML,
-  fetchJSON,
-  similarity,
-  resolveTMDB,
-  searchProvider,
-  getEpisodeUrl,
-  extractVideos,
-  detectServer
-};
+function mapTypeToCategory(type) {
+  if (type === "movie") return "movie";
+  if (type === "series" || type === "tv") return "tvshow";
+  if (type === "anime") return "anime";
+  return "movie";
+}
+function mapTypeToTMDB(type) {
+  if (type === "series" || type === "tv" || type === "anime") return "tv";
+  return "movie";
+}
+async function scrapeAlfaProviders(type, id, season, episode) {
+  const category = mapTypeToCategory(type);
+  const mediaType = mapTypeToTMDB(type);
+  const titleVariants = await resolveTitles(id, mediaType);
+  if (!titleVariants.length || !titleVariants[0].title) return [];
+  const activeProviders = providers.filter((p) => {
+    if (!p.active || p.adult) return false;
+    return p.categories.includes(category);
+  });
+  if (!activeProviders.length) return [];
+  const results = [];
+  const chunks = chunkArray(activeProviders, 4);
+  for (const chunk of chunks) {
+    const chunkResults = await Promise.allSettled(
+      chunk.map(async (provider) => {
+        try {
+          let pageUrl = null;
+          const validVariants = titleVariants.filter((tv) => tv.title);
+          if (validVariants.length === 1) {
+            pageUrl = await searchProvider(provider, validVariants[0].title, validVariants[0].year, mediaType);
+          } else if (validVariants.length > 1) {
+            const searchResults = await Promise.allSettled(
+              validVariants.map((tv) => searchProvider(provider, tv.title, tv.year, mediaType))
+            );
+            for (const r of searchResults) {
+              if (r.status === "fulfilled" && r.value) {
+                pageUrl = r.value;
+                break;
+              }
+            }
+          }
+          if (!pageUrl) return [];
+          let targetUrl = pageUrl;
+          if ((category === "tvshow" || category === "anime") && season && episode) {
+            const epUrl = await getEpisodeUrl(provider, pageUrl, season, episode);
+            if (epUrl) targetUrl = epUrl;
+          }
+          const videos = await extractVideos(provider, targetUrl);
+          if (!videos.length) return [];
+          return videos.map((v) => ({
+            name: `${provider.title}
+${v.server || detectServer(v.url)}`,
+            title: `${v.quality || "HD"}
+\u2699\uFE0F ${v.server || detectServer(v.url)}
+\u{1F517} ${provider.title}`,
+            description: v.lang || (category === "anime" && !(Array.isArray(provider.language) && provider.language.includes("*")) ? [.../* @__PURE__ */ new Set([...Array.isArray(provider.language) ? provider.language : [], "ja"])].join(",") : Array.isArray(provider.language) ? provider.language.join(",") : ""),
+            ...v.url ? { url: v.url } : {},
+            ...v.infoHash ? { infoHash: v.infoHash } : {},
+            ...v.sources ? { sources: v.sources } : {},
+            behaviorHints: {
+              notWebReady: true,
+              bingeGroup: `alfa|${provider.name}|${v.server || detectServer(v.url)}`,
+              ...v.filename ? { filename: v.filename } : {}
+            }
+          }));
+        } catch {
+          return [];
+        }
+      })
+    );
+    for (const r of chunkResults) {
+      if (r.status === "fulfilled") results.push(...r.value);
+    }
+    if (results.length >= 30) break;
+  }
+  return results.slice(0, 50);
+}
+function chunkArray(arr, size) {
+  const chunks = [];
+  for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
+  return chunks;
+}
+module.exports = scrapeAlfaProviders;
 /*! Bundled license information:
 
 undici/lib/web/fetch/body.js:

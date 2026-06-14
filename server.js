@@ -1427,7 +1427,7 @@ app.get('/configure', (req, res) => {
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
 .container{width:100%;max-width:640px}
 header{text-align:center;margin-bottom:28px}
-header .logo{width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,var(--accent),#e84393);display:inline-flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;margin-bottom:12px}
+header .logo{width:64px;height:64px;border-radius:16px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;overflow:hidden}header .logo img{width:100%;height:100%;object-fit:cover}
 header h1{font-size:24px;font-weight:700;color:var(--text)}
 header p{font-size:13px;color:var(--text2);margin-top:4px}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:14px}
@@ -1477,7 +1477,7 @@ footer a{color:var(--accent2);text-decoration:none}
 <body>
 <div class="container">
 <header>
-  <div class="logo">O</div>
+  <div class="logo"><img src="/logo.png" alt="Ovnivers"></div>
   <h1>Ovnivers</h1>
   <p>Stream provider for external catalogs</p>
 </header>
