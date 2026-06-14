@@ -165,13 +165,12 @@ async function searchProvider(provider, title, year, mediaType) {
       const domain = new URL(searchUrl).hostname;
       const initHtml = await fetchHTML(searchUrl, { timeout: 10000 });
       if (!initHtml) return null;
-      const anubisCookie = anubisCookieCache.get(domain);
       try {
         const ctrl = new AbortController();
         const t = setTimeout(() => ctrl.abort(), 12000);
         const res = await fetch(searchUrl, {
           method: 'POST',
-          headers: { 'User-Agent': UA, 'Content-Type': 'application/x-www-form-urlencoded', ...(anubisCookie ? { 'Cookie': anubisCookie } : {}), ...(cfg.headers || {}) },
+          headers: { 'User-Agent': UA, 'Content-Type': 'application/x-www-form-urlencoded', ...(cfg.headers || {}) },
           body: (cfg.body || 'query={query}').replace('{query}', encodeURIComponent(query)),
           signal: ctrl.signal
         });

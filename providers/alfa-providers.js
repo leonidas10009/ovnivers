@@ -50118,13 +50118,12 @@ var require_engine = __commonJS({
           const domain = new URL(searchUrl).hostname;
           const initHtml = await fetchHTML2(searchUrl, { timeout: 1e4 });
           if (!initHtml) return null;
-          const anubisCookie = anubisCookieCache.get(domain);
           try {
             const ctrl = new AbortController();
             const t = setTimeout(() => ctrl.abort(), 12e3);
             const res = await fetch(searchUrl, {
               method: "POST",
-              headers: { "User-Agent": UA2, "Content-Type": "application/x-www-form-urlencoded", ...anubisCookie ? { "Cookie": anubisCookie } : {}, ...cfg.headers || {} },
+              headers: { "User-Agent": UA2, "Content-Type": "application/x-www-form-urlencoded", ...cfg.headers || {} },
               body: (cfg.body || "query={query}").replace("{query}", encodeURIComponent(query)),
               signal: ctrl.signal
             });
