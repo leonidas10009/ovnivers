@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-14T10:56:48.009Z
+ * Generated: 2026-06-14T11:24:26.052Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -597,8 +597,9 @@ var require_providers = __commonJS({
         language: ["cast", "lat"],
         active: true,
         adult: false,
+        episodes: { type: "url", pattern: "/ver/{slug}-{episode}" },
         search: { url: "/browse?q={query}", itemSelector: "ul.ListAnimes li", titleSelector: "h3.Title", linkSelector: "a" },
-        videos: { type: "jsvar", varPattern: /var videos = (\[.*?\]);/, defaultQuality: "HD" }
+        videos: { type: "jsvar", varPattern: /var videos = ([^;]+);/, defaultQuality: "HD" }
       },
       {
         name: "animejara",
@@ -654,9 +655,9 @@ var require_providers = __commonJS({
         language: ["cast", "lat", "vose"],
         active: true,
         adult: false,
-        search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h3.Title", linkSelector: "a" },
         // <-- fixed
-        videos: { type: "jsvar", varPattern: /var videos = (\[.*?\]);/, defaultQuality: "HD" }
+        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", defaultQuality: "HD" }
       },
       {
         name: "jkanime",
@@ -756,9 +757,10 @@ var require_providers = __commonJS({
         language: ["*"],
         active: true,
         adult: false,
-        search: { url: "/directorio?q={query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
+        search: { url: "/directorio?q={query}", itemSelector: "ul.animes li", titleSelector: "h3.title", linkSelector: "a" },
         // <-- fixed
-        videos: { type: "jsvar", varPattern: /var episodes = (\[.*?\]);/, defaultQuality: "HD" }
+        episodes: { type: "url", pattern: "/ver/{slug}-{episode}" },
+        videos: { type: "jsvar", varPattern: /var videos = ([^;]+);/, defaultQuality: "HD" }
       },
       {
         name: "tiodonghua",
@@ -1054,8 +1056,13 @@ var require_engine = __commonJS({
         }
         let html = yield trySearch(titleClean);
         if (!html && titleClean.includes(" ")) {
-          const short = titleClean.split(" ").slice(0, 2).join(" ");
-          if (short.length > 3) html = yield trySearch(short);
+          const words = titleClean.split(" ");
+          const first2 = words.slice(0, 2).join(" ");
+          if (first2.length > 3) html = yield trySearch(first2);
+        }
+        if (!html && titleClean.includes(" ")) {
+          const first = titleClean.split(" ")[0];
+          if (first.length > 3) html = yield trySearch(first);
         }
         if (!html) return null;
         const $ = cheerio.load(html);
@@ -1104,6 +1111,52 @@ var require_engine = __commonJS({
             bestScore = score;
             bestMatch = itemLink;
           }
+        }
+        if (!bestMatch && items.length > 0) {
+          const queryWords = titleClean.toLowerCase().split(" ").filter((w) => w.length >= 3);
+          for (const item of items) {
+            const el = $(item);
+            let itemTitle = "";
+            if (cfg.titleSelector) {
+              const titleEl = cfg.titleSelector === "&" ? el : el.find(cfg.titleSelector).first();
+              itemTitle = cfg.titleAttr ? titleEl.attr(cfg.titleAttr) || "" : titleEl.text().trim();
+            }
+            let itemLink = "";
+            if (cfg.linkSelector) {
+              const linkEl = cfg.linkSelector === "&" ? el : el.find(cfg.linkSelector).first();
+              itemLink = (linkEl.attr("href") || "").trim();
+              if (itemLink && !itemLink.startsWith("http")) {
+                try {
+                  itemLink = new URL(itemLink, provider.baseUrl).href;
+                } catch (e) {
+                  continue;
+                }
+              }
+            }
+            if (!itemTitle || !itemLink) continue;
+            const itemLower = itemTitle.toLowerCase();
+            const allMatch = queryWords.length > 0 && queryWords.every((qw) => itemLower.includes(qw));
+            if (allMatch) {
+              bestMatch = itemLink;
+              break;
+            }
+          }
+        }
+        if (!bestMatch && items.length > 0) {
+          const el = $(items[0]);
+          let itemLink = "";
+          if (cfg.linkSelector) {
+            const linkEl = cfg.linkSelector === "&" ? el : el.find(cfg.linkSelector).first();
+            itemLink = (linkEl.attr("href") || "").trim();
+            if (itemLink && !itemLink.startsWith("http")) {
+              try {
+                itemLink = new URL(itemLink, provider.baseUrl).href;
+              } catch (e) {
+                itemLink = "";
+              }
+            }
+          }
+          if (itemLink) bestMatch = itemLink;
         }
         return bestMatch;
       });
@@ -1319,8 +1372,9 @@ var require_engine = __commonJS({
           const match = html.match(cfg.varPattern);
           if (match) {
             try {
-              const videos = JSON.parse(match[1]);
-              for (const v of videos) {
+              const data = JSON.parse(match[1]);
+              const entries = Array.isArray(data) ? data : Object.values(data).flat();
+              for (const v of entries) {
                 const server = Array.isArray(v) ? v[0] : v.server || v.name;
                 const vUrl = Array.isArray(v) ? v[1] : v.url || v.link || v.code;
                 if (vUrl) results.push({

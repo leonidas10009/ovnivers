@@ -521,8 +521,9 @@ module.exports = [
     language: ['cast', 'lat'],
     active: true,
     adult: false,
+    episodes: { type: 'url', pattern: '/ver/{slug}-{episode}' },
     search: { url: '/browse?q={query}', itemSelector: 'ul.ListAnimes li', titleSelector: 'h3.Title', linkSelector: 'a' },
-    videos: { type: 'jsvar', varPattern: /var videos = (\[.*?\]);/, defaultQuality: 'HD' }
+    videos: { type: 'jsvar', varPattern: /var videos = ([^;]+);/, defaultQuality: 'HD' }
   },
   {
     name: 'animejara',
@@ -576,8 +577,8 @@ module.exports = [
     language: ['cast', 'lat', 'vose'],
     active: true,
     adult: false,
-    search: { url: '/?s={query}', itemSelector: 'li', titleSelector: 'a[href]', linkSelector: 'a' }, // <-- fixed
-    videos: { type: 'jsvar', varPattern: /var videos = (\[.*?\]);/, defaultQuality: 'HD' }
+    search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h3.Title', linkSelector: 'a' }, // <-- fixed
+    videos: { type: 'iframe', containerSelector: 'body', iframeSelector: 'iframe', defaultQuality: 'HD' }
   },
   {
     name: 'jkanime',
@@ -676,8 +677,9 @@ module.exports = [
     language: ['*'],
     active: true,
     adult: false,
-    search: { url: '/directorio?q={query}', itemSelector: 'li', titleSelector: 'a[href]', linkSelector: 'a' }, // <-- fixed
-    videos: { type: 'jsvar', varPattern: /var episodes = (\[.*?\]);/, defaultQuality: 'HD' }
+    search: { url: '/directorio?q={query}', itemSelector: 'ul.animes li', titleSelector: 'h3.title', linkSelector: 'a' }, // <-- fixed
+    episodes: { type: 'url', pattern: '/ver/{slug}-{episode}' },
+    videos: { type: 'jsvar', varPattern: /var videos = ([^;]+);/, defaultQuality: 'HD' }
   },
   {
     name: 'tiodonghua',

@@ -91,11 +91,16 @@ async function searchProvider(provider, title, year, mediaType) {
     return await fetchHTML(searchUrl, { headers: cfg.headers, timeout: 10000 });
   }
 
-  // Try full title first, then fallback to first significant word(s)
+  // Try full title, first 2 words, first 1 word
   let html = await trySearch(titleClean);
   if (!html && titleClean.includes(' ')) {
-    const short = titleClean.split(' ').slice(0, 2).join(' ');
-    if (short.length > 3) html = await trySearch(short);
+    const words = titleClean.split(' ');
+    const first2 = words.slice(0, 2).join(' ');
+    if (first2.length > 3) html = await trySearch(first2);
+  }
+  if (!html && titleClean.includes(' ')) {
+    const first = titleClean.split(' ')[0];
+    if (first.length > 3) html = await trySearch(first);
   }
   if (!html) return null;
 
@@ -152,6 +157,45 @@ async function searchProvider(provider, title, year, mediaType) {
       bestScore = score;
       bestMatch = itemLink;
     }
+  }
+
+  // Fallback: no strong match, try exact word containment
+  if (!bestMatch && items.length > 0) {
+    const queryWords = titleClean.toLowerCase().split(' ').filter(w => w.length >= 3);
+    for (const item of items) {
+      const el = $(item);
+      let itemTitle = '';
+      if (cfg.titleSelector) {
+        const titleEl = cfg.titleSelector === '&' ? el : el.find(cfg.titleSelector).first();
+        itemTitle = cfg.titleAttr ? titleEl.attr(cfg.titleAttr) || '' : titleEl.text().trim();
+      }
+      let itemLink = '';
+      if (cfg.linkSelector) {
+        const linkEl = cfg.linkSelector === '&' ? el : el.find(cfg.linkSelector).first();
+        itemLink = (linkEl.attr('href') || '').trim();
+        if (itemLink && !itemLink.startsWith('http')) {
+          try { itemLink = new URL(itemLink, provider.baseUrl).href; } catch { continue; }
+        }
+      }
+      if (!itemTitle || !itemLink) continue;
+      const itemLower = itemTitle.toLowerCase();
+      const allMatch = queryWords.length > 0 && queryWords.every(qw => itemLower.includes(qw));
+      if (allMatch) { bestMatch = itemLink; break; }
+    }
+  }
+
+  // Last resort: return first result
+  if (!bestMatch && items.length > 0) {
+    const el = $(items[0]);
+    let itemLink = '';
+    if (cfg.linkSelector) {
+      const linkEl = cfg.linkSelector === '&' ? el : el.find(cfg.linkSelector).first();
+      itemLink = (linkEl.attr('href') || '').trim();
+      if (itemLink && !itemLink.startsWith('http')) {
+        try { itemLink = new URL(itemLink, provider.baseUrl).href; } catch { itemLink = ''; }
+      }
+    }
+    if (itemLink) bestMatch = itemLink;
   }
 
   return bestMatch;
@@ -354,8 +398,9 @@ async function extractVideos(provider, pageUrl) {
     const match = html.match(cfg.varPattern);
     if (match) {
       try {
-        const videos = JSON.parse(match[1]);
-        for (const v of videos) {
+        const data = JSON.parse(match[1]);
+        const entries = Array.isArray(data) ? data : Object.values(data).flat();
+        for (const v of entries) {
           const server = Array.isArray(v) ? v[0] : v.server || v.name;
           const vUrl = Array.isArray(v) ? v[1] : v.url || v.link || v.code;
           if (vUrl) results.push({
