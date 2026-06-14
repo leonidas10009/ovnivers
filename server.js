@@ -1620,7 +1620,8 @@ function generateUrl() {
   const cfg = getConfig();
   const qs = params(cfg);
   const url = '${BASE_URL}/manifest.json' + (qs ? '?' + qs : '');
-  const stremioUrl = 'stremio://${BASE_URL}/manifest.json' + (qs ? '?' + qs : '');
+  const baseHost = '${BASE_URL}'.replace(/^https?:\/\//, '');
+  const stremioUrl = 'stremio://' + baseHost + '/manifest.json' + (qs ? '?' + qs : '');
 
   document.getElementById('status').className = 'status ok';
   document.getElementById('status').textContent = 'Install URL ready!';
