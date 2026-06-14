@@ -1227,7 +1227,7 @@ function filterStreams(streams, config) {
     if (!matchesQuality(s.name, config.quality)) return false;
     if (enabledLangs.size === 0 || enabledLangs.has('*')) return true;
     const nameFlags = (s.name || '').match(/[\u{1F1E6}-\u{1F1FF}]{2}/ug) || [];
-    if (nameFlags.length === 0) return false;
+    if (nameFlags.length === 0) return true;
     return nameFlags.some(f => {
       for (const [code, flag] of Object.entries(LANG_TO_FLAG)) {
         if (flag === f && enabledLangs.has(code.replace(/['"]/g, ''))) return true;
