@@ -5,6 +5,15 @@
  */
 try { require('dotenv').config(); } catch {}
 
+// Polyfill fetch for older Node versions (Render free tier may use Node 16/18)
+if (typeof fetch === 'undefined') {
+  try { global.fetch = require('node-fetch'); } catch (e) {
+    try { const { fetch: f } = require('undici'); global.fetch = f; } catch (e2) {
+      console.error('CRITICAL: No fetch implementation available. Install node-fetch or undici.');
+    }
+  }
+}
+
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
@@ -1310,7 +1319,7 @@ async function handleStream(req, res, type, id) {
   unique = unique.slice(0, MAX_STREAM_RESULTS);
   console.log(`[stream] ${type}/${id} → ${unique.length} unique (${rawStreams.length} raw)`);
 
-  if (!isAnime) cacheSet(streamCache, ck, { data: unique, time: Date.now() }, MAX_CACHE);
+  if (!isAnime && unique.length > 0) cacheSet(streamCache, ck, { data: unique, time: Date.now() }, MAX_CACHE);
 
   const filtered = filterStreams(unique, config);
 
