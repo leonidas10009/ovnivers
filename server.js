@@ -229,40 +229,43 @@ function parse2embedHTML(html, mirrorName) {
   const seen = new Set();
   const label = mirrorName || '2embed';
 
-  const urlRe = /https?:\/\/[^"'\s<>(){}[\]]+/gi;
-  const iframeRe = /<iframe[^>]+src=["']([^"']+)["']/gi;
-  const jsUrlRe = /(?:file|src|url|source|videoSrc|streamUrl|playlist)\s*[:=]\s*["']([^"']+)["']/gi;
-
   const isVideoExt = (u) => /\.(m3u8|mp4|mkv|webm|avi)(\?|$)/i.test(u);
-  const isEmbedPage = (u) => /\/(embed|e|player|play|watch)\b/i.test(u);
-  const shouldKeep = (urlStr) => {
-    if (!isValidEmbedUrl(urlStr)) return false;
-    return isVideoExt(urlStr) || (isEmbedPage(urlStr) && !urlStr.includes('.js'));
+  const addVideo = (url, q) => {
+    if (!url || seen.has(url)) return;
+    const cleanUrl = url.replace(/[)'"}>[\]]+$/, '');
+    if (!isValidEmbedUrl(cleanUrl)) return;
+    seen.add(cleanUrl);
+    const quality = q || (isVideoExt(cleanUrl) ? (cleanUrl.includes('m3u8') ? 'Adaptive' : 'HD') : 'Embed');
+    streams.push({ name: `${label}\n${quality}`, url: cleanUrl, behaviorHints: { notWebReady: !isVideoExt(cleanUrl) } });
   };
 
-  let m;
-  while ((m = urlRe.exec(html)) !== null) {
-    const url = m[0].replace(/[)'"}>[\]]+$/, '');
-    if (!shouldKeep(url) || seen.has(url)) continue;
-    seen.add(url);
-    const quality = isVideoExt(url) ? (url.includes('m3u8') ? 'Adaptive' : 'HD') : 'Embed';
-    streams.push({ name: `${label}\n${quality}`, url, behaviorHints: { notWebReady: !isVideoExt(url) } });
-  }
+  const m3u8Re = /https?:\/\/[^"'\s<>(){}[\]]+\.m3u8[^"'\s<>(){}[\]]*/gi;
+  const mp4Re = /https?:\/\/[^"'\s<>(){}[\]]+\.mp4[^"'\s<>(){}[\]]*/gi;
+  const mkvRe = /https?:\/\/[^"'\s<>(){}[\]]+\.mkv[^"'\s<>(){}[\]]*/gi;
+  const iframeRe = /<iframe[^>]+src=["']([^"']+)["']/gi;
+  const jsUrlRe = /(?:file|src|url|source|videoSrc|streamUrl|playlist)\s*[:=]\s*["']([^"']+)["']/gi;
+  const dataSrcRe = /data-(?:src|file|url|video)=["']([^"']+)["']/gi;
+  const jsonBlockRe = /"((?:https?:)?\/\/[^"]+\.(?:m3u8|mp4|mkv)[^"]*)"/gi;
 
+  let m;
+  while ((m = m3u8Re.exec(html)) !== null) addVideo(m[0], 'Adaptive');
+  while ((m = mp4Re.exec(html)) !== null) addVideo(m[0], 'HD');
+  while ((m = mkvRe.exec(html)) !== null) addVideo(m[0], 'HD');
   while ((m = iframeRe.exec(html)) !== null) {
     const src = m[1];
-    if (src && !seen.has(src) && (src.includes('embed') || src.includes('player') || src.includes('stream') || isVideoExt(src))) {
-      seen.add(src);
-      streams.push({ name: `${label} (iframe)\nEmbed`, url: src, behaviorHints: { notWebReady: true } });
+    if (src && (src.includes('embed') || src.includes('player') || src.includes('stream'))) {
+      addVideo(src, 'Embed');
     }
   }
-
   while ((m = jsUrlRe.exec(html)) !== null) {
     const url = m[1];
-    if (url && !seen.has(url) && shouldKeep(url) && !url.includes('.js')) {
-      seen.add(url);
-      streams.push({ name: `${label}\n${url.includes('m3u8') ? 'Adaptive' : 'HD'}`, url, behaviorHints: { notWebReady: !isVideoExt(url) } });
-    }
+    if (url && !url.includes('.js') && isVideoExt(url)) addVideo(url, url.includes('m3u8') ? 'Adaptive' : 'HD');
+  }
+  while ((m = dataSrcRe.exec(html)) !== null) addVideo(m[1], 'HD');
+  while ((m = jsonBlockRe.exec(html)) !== null) {
+    const url = m[1];
+    const fullUrl = url.startsWith('//') ? 'https:' + url : url;
+    if (isVideoExt(fullUrl)) addVideo(fullUrl, url.includes('m3u8') ? 'Adaptive' : 'HD');
   }
 
   return streams;
