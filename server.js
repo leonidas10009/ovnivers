@@ -24,6 +24,7 @@ const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 const catalog = require('./src/catalog/index');
 const torrentIndex = require('./src/torrent-providers/index');
 const { resolveEmbed } = require('./src/alfa-providers/embed-resolver');
+const { StreamPipeline } = require('./src/stream-pipeline/index');
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
@@ -1140,7 +1141,6 @@ async function handleStream(req, res, type, id) {
   const mediaType = mapType(type);
   const rawId = extractId(parsed.contentId);
 
-  // Detect anime: ID prefix or TMDB genre 16 (Animation)
   let isAnime = isAnimeId(id);
   if (!isAnime && config.enableAnime && mediaType === 'tv' && rawId.match(/^\d+$/)) {
     try {
@@ -1148,7 +1148,6 @@ async function handleStream(req, res, type, id) {
         `https://api.themoviedb.org/3/tv/${rawId}?api_key=${TMDB_KEY}&language=en`
       ), 5000);
       isAnime = !!tmdb?.genres?.some(g => g.id === 16);
-      if (isAnime) console.log(`  [anime] detected from TMDB genre (id=${rawId})`);
     } catch {}
   }
 
@@ -1163,158 +1162,134 @@ async function handleStream(req, res, type, id) {
 
   console.log(`[stream] ${type}/${id} media=${mediaType} rawId=${rawId} isAnime=${isAnime} s${season}e${episode}`);
 
-  const streams = [];
   const streamTasks = [];
 
-  // ── Pigamer37: solo para anime (FLV/AV1/TioAnime/Henaojara) ──
   if (isAnime && config.enableAnime) {
     streamTasks.push((async () => {
-      const start = Date.now();
       try {
         const resolvedId = await resolveAnimeId(id);
         const proxyId = resolvedId || (rawId.match(/^\d+$/) ? `tmdb:${rawId}` : rawId);
         const data = await proxyPigamer(`/stream/series/${encodeURIComponent(proxyId)}.json?season=${season}&episode=${episode}`);
-        const pigStreams = parseSources(data);
-        trackProviderResult('pigamer37', pigStreams.length > 0, Date.now() - start);
-        if (pigStreams.length) console.log(`  [Pigamer37] ${pigStreams.length} streams (s${season}e${episode})`);
-        return pigStreams.map(s => normalizeStream(s, 'pigamer37', 'Pigamer37')).filter(Boolean);
-      } catch (e) {
-        trackProviderResult('pigamer37', false, Date.now() - start);
-        console.warn(`  [Pigamer37] ${e.message}`);
-        return [];
-      }
+        return parseSources(data).map(s => normalizeStream(s, 'pigamer37', 'Pigamer37')).filter(Boolean);
+      } catch { return []; }
     })());
   }
 
-  // ── Backend scrapers: para todo contenido ──
   if (config.enableBackend) {
     streamTasks.push(...BACKEND_SCRAPERS.map(async (scraper) => {
-      const start = Date.now();
       try {
         const results = await scraper.fn(rawId, mediaType, season, episode);
-        trackProviderResult('backend-scrapers', results.length > 0, Date.now() - start);
-        if (results.length > 0) console.log(`  [${scraper.name}] ${results.length} streams (${Date.now() - start}ms)`);
         return results.map(s => normalizeStream(s, scraper.name, scraper.name)).filter(Boolean);
-      } catch {
-        trackProviderResult('backend-scrapers', false, Date.now() - start);
-        return [];
-      }
+      } catch { return []; }
     }));
   }
 
-  // ── Local providers: Alfa (categoría principal) + Hermes ──
   if (config.enableLocal) {
     streamTasks.push(scrapeAlfa(rawId, mediaType, type, season, episode, config));
     streamTasks.push(scrapeLocalProviders(rawId, mediaType, type, season, episode, config, isAnime));
-    // Alfa anime: solo para contenido detectado como anime
     if (isAnime && config.enableAnime && mediaType === 'tv') {
       streamTasks.push(scrapeAlfa(rawId, 'tv', 'anime', season, episode, config));
     }
   }
 
-  // ── Torrent indexers: 6 fuentes + scoring + metadata enriquecida ──
   streamTasks.push((async () => {
     const results = [];
-    let searchTitle = '';
-    let imdbId = null;
-    let year = null;
+    let searchTitle = ''; let imdbId = null; let year = null;
     try {
       if (rawId.match(/^\d+$/)) {
-        // Buscar con titulo EN ENGLISH (indexers no tienen titulos en espanol)
-        const [metaEN] = await Promise.allSettled([
-          withTimeout(fetchAPI(`https://api.themoviedb.org/3/${mediaType==='tv'?'tv':'movie'}/${rawId}?api_key=${TMDB_KEY}&language=en`), 4000),
-        ]);
-        if (metaEN.status === 'fulfilled' && metaEN.value) {
-          searchTitle = metaEN.value.title || metaEN.value.name || '';
-          year = parseInt((metaEN.value.release_date || metaEN.value.first_air_date || '').substring(0, 4)) || null;
-          imdbId = metaEN.value.imdb_id || null;
+        const metaEN = await withTimeout(
+          fetchAPI(`https://api.themoviedb.org/3/${mediaType==='tv'?'tv':'movie'}/${rawId}?api_key=${TMDB_KEY}&language=en`),
+          4000
+        );
+        if (metaEN) {
+          searchTitle = metaEN.title || metaEN.name || '';
+          year = parseInt((metaEN.release_date || metaEN.first_air_date || '').substring(0, 4)) || null;
+          imdbId = metaEN.imdb_id || null;
         }
       } else if (rawId.startsWith('tt')) {
-        imdbId = rawId;
-        searchTitle = rawId.replace(/^tt0*/, '');
+        imdbId = rawId; searchTitle = rawId.replace(/^tt0*/, '');
       }
     } catch {}
     if (searchTitle.length < 2) return results;
-
     try {
       const torrents = await torrentIndex.search(searchTitle, mediaType, imdbId, year, season, episode);
       for (const t of torrents.slice(0, 12)) {
-        const quality = `${t.quality || 'HD'}${t.isHDR ? ' HDR' : ''}${t.isDV ? ' DV' : ''}`;
-        const metaLine = [
-          t.seeds ? `${t.seeds} seeds` : '',
-          t.leechers ? `${t.leechers} peers` : '',
-          t.sizeFormatted || '',
-          t.source || '',
-          t.codec || '',
-          t.audio || '',
-          t.isRemux ? 'Remux' : '',
-        ].filter(Boolean).join(' \u2022 ');
-
         const s = normalizeStream({
-          url: t.magnet,
-          infoHash: t.infoHash,
-          name: `${t.indexer}\n${quality}`,
-          title: `${t.title}\n${metaLine}`,
-          quality,
+          url: t.magnet, infoHash: t.infoHash,
+          name: `${t.indexer}\n${t.quality || 'HD'}${t.isHDR ? ' HDR' : ''}`,
+          title: t.title, quality: t.quality || 'HD',
           sources: ['dht:' + t.infoHash],
           behaviorHints: { notWebReady: false },
         }, t.indexer.toLowerCase().replace(/[^a-z0-9]/g, ''), t.indexer);
         if (s) results.push(s);
       }
-      if (torrents.length) console.log(`  [Torrents] ${torrents.length} raw → ${results.length} streams from ${[...new Set(torrents.map(t=>t.indexer))].join(', ')}`);
     } catch {}
     return results;
   })());
 
   const settled = await Promise.allSettled(streamTasks);
+  const rawStreams = [];
   for (const item of settled) {
-    if (item.status === 'fulfilled' && Array.isArray(item.value)) streams.push(...item.value);
+    if (item.status === 'fulfilled' && Array.isArray(item.value)) rawStreams.push(...item.value);
   }
 
-  // Retry backend with alt ID if empty
-  if (streams.length === 0 && config.enableBackend) {
-    const altId = !rawId.startsWith('tt') ? await getIMDbId(rawId, mediaType) : await getTMDbId(rawId, mediaType);
-    if (altId) {
-      console.log(`[stream] retry with alt ID: ${altId}`);
-      await Promise.allSettled(BACKEND_SCRAPERS.map(async (scraper) => {
-        try {
-          const results = await scraper.fn(altId, mediaType, season, episode);
-          if (results.length > 0) streams.push(...results.map(s => normalizeStream(s, scraper.name, scraper.name)).filter(Boolean));
-        } catch {}
-      }));
-    }
+  const seen = new Set();
+  let unique = [];
+  for (const s of rawStreams) {
+    const key = (s.infoHash || s.url || '') + '|' + (s.name || '').toLowerCase().substring(0, 40);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(s);
   }
 
-  const uniqueStreams = dedupeStreams(streams).slice(0, MAX_STREAM_RESULTS);
-  console.log(`[stream] ${type}/${id} → ${uniqueStreams.length} unique (${streams.length} raw)`);
-
-  // ── Post-pipeline: resolver embeds pendientes a URLs directas ──
-  const unresolved = uniqueStreams.filter(s => s.url && !s.infoHash && s.behaviorHints?.notWebReady);
+  // Resolver embeds a directo
+  const unresolved = unique.filter(s => s.url && !s.infoHash && s.behaviorHints?.notWebReady);
   if (unresolved.length > 0) {
     const toResolve = unresolved.slice(0, 12);
-    const resolved = await Promise.allSettled(
-      toResolve.map(s => resolveEmbed(s.url, BASE_URL))
-    );
+    const resolved = await Promise.allSettled(toResolve.map(s => resolveEmbed(s.url, BASE_URL)));
     let count = 0;
     for (let i = 0; i < toResolve.length; i++) {
-      if (resolved[i].status === 'fulfilled' && resolved[i].value) {
-        const directUrl = resolved[i].value;
-        if (/\.(m3u8|mp4)/i.test(directUrl)) {
-          toResolve[i].url = directUrl;
-          toResolve[i].behaviorHints = { ...toResolve[i].behaviorHints, notWebReady: false };
-          count++;
-        }
+      if (resolved[i].status === 'fulfilled' && resolved[i].value && /\.(m3u8|mp4)/i.test(resolved[i].value)) {
+        toResolve[i].url = resolved[i].value;
+        toResolve[i].behaviorHints = { ...toResolve[i].behaviorHints, notWebReady: false };
+        count++;
       }
     }
-    if (count > 0) console.log(`[stream] resolved ${count} embeds → direct ExoPlayer`);
+    if (count > 0) console.log(`[stream] resolved ${count} embeds → ExoPlayer`);
   }
 
-  if (!isAnime) cacheSet(streamCache, ck, { data: uniqueStreams, time: Date.now() }, MAX_CACHE);
+  unique = unique.slice(0, MAX_STREAM_RESULTS);
+  console.log(`[stream] ${type}/${id} → ${unique.length} unique (${rawStreams.length} raw)`);
 
-  const filtered = filterStreams(uniqueStreams, config);
+  if (!isAnime) cacheSet(streamCache, ck, { data: unique, time: Date.now() }, MAX_CACHE);
+
+  const filtered = filterStreams(unique, config);
+
+  // ── Ordenar: castellano primero, luego calidad ──
+  filtered.sort((a, b) => {
+    const la = computeLangScore(a);
+    const lb = computeLangScore(b);
+    if (la !== lb) return lb - la;
+    const qo = { '4K': 4, '1080p': 3, '720p': 2, '480p': 1, 'HD': 2, 'CAM': 0 };
+    const qa = qo[(a.name || '').match(/\b(4K|1080p|720p|480p|HD)\b/)?.[1]] || 0;
+    const qb = qo[(b.name || '').match(/\b(4K|1080p|720p|480p|HD)\b/)?.[1]] || 0;
+    return qb - qa;
+  });
+
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', `public, max-age=${CACHE_TTL / 1000}`);
   res.json({ streams: filtered });
+}
+
+function computeLangScore(stream) {
+  const text = `${stream.name || ''}\n${stream.title || ''}\n${stream.description || ''}`.toLowerCase();
+  let score = 0;
+  if (/\b(castellano|español|espanol|castellano latino)\b/i.test(text)) score += 3;
+  if (/\b(latino|audio latino)\b/i.test(text)) score += 2;
+  if (/\b(vose|subtitulado)\b/i.test(text)) score += 1.5;
+  if (/\b(dual|multi).*?(audio|idioma)/i.test(text)) score += 1.5;
+  if (/[\u{1F1EA}\u{1F1F8}]/u.test(stream.name || '')) score += 1;
+  return score;
 }
 
 function filterStreams(streams, config) {
