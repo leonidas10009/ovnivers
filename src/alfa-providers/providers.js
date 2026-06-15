@@ -7,7 +7,7 @@ module.exports = [
     baseUrl: 'https://allcalidad.re',
     categories: ['movie', 'direct'],
     language: ['lat'],
-    active: false,
+    active: true,
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: 'body', iframeSelector: 'iframe', srcAttr: 'data-src', defaultQuality: 'HD' }

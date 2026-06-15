@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.6.6
+ * Ovnivers — Stremio Addon Backend v1.6.7
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
@@ -34,10 +34,17 @@ const catalog = require('./src/catalog/index');
 const torrentIndex = require('./src/torrent-providers/index');
 const { resolveEmbed } = require('./src/alfa-providers/embed-resolver');
 const { StreamPipeline } = require('./src/stream-pipeline/index');
+const scrapeless = require('./src/scrapeless-proxy');
+
+// Configure Scrapeless if API key is set
+if (process.env.SCRAPELESS_API_KEY) {
+  scrapeless.configure(process.env.SCRAPELESS_API_KEY);
+  console.log('[scrapeless] Universal Scraping API enabled');
+}
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.6.6';
+const VERSION = '1.6.7';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 const PIGAMER = 'https://pigamer37.alwaysdata.net';

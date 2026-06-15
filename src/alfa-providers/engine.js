@@ -1,6 +1,7 @@
 const cheerio = require('cheerio-without-node-native') || require('cheerio');
 const crypto = require('crypto');
 const { resolveEmbed } = require('./embed-resolver');
+const scrapeless = require('../scrapeless-proxy');
 
 const anubisCookieCache = new Map();
 
@@ -66,8 +67,24 @@ async function fetchHTML(url, opts = {}) {
 
     const res = await fetch(url, { headers, signal: ctrl.signal });
     clearTimeout(t);
-    if (!res.ok) return null;
+    if (!res.ok) {
+      // Fallback to Scrapeless if direct fetch fails
+      if (scrapeless.isEnabled()) {
+        const scraped = await scrapeless.scrape(url, { timeout: opts.timeout || 30000 });
+        if (scraped) return scraped;
+      }
+      return null;
+    }
     let html = await res.text();
+
+    // Cloudflare challenge detected — fallback to Scrapeless
+    if ((html.includes('challenge-platform') || html.includes('turnstile') || html.includes('Just a moment')) && html.length < 10000) {
+      if (scrapeless.isEnabled()) {
+        console.log(`[engine] Cloudflare detected on ${domain}, trying Scrapeless...`);
+        const scraped = await scrapeless.scrape(url, { timeout: opts.timeout || 30000 });
+        if (scraped) return scraped;
+      }
+    }
 
     if (html.includes('anubis_challenge')) {
       const initialCookies = res.headers.getSetCookie ? res.headers.getSetCookie() : [];
@@ -88,7 +105,16 @@ async function fetchHTML(url, opts = {}) {
     }
 
     return html;
-  } catch { return null; }
+  } catch {
+    // Network error — fallback to Scrapeless
+    if (scrapeless.isEnabled()) {
+      try {
+        const scraped = await scrapeless.scrape(url, { timeout: opts.timeout || 30000 });
+        if (scraped) return scraped;
+      } catch {}
+    }
+    return null;
+  }
 }
 
 async function fetchJSON(url, opts = {}) {
