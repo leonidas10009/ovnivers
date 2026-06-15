@@ -740,7 +740,7 @@ module.exports = [
   {
     name: 'elitetorrent',
     title: 'EliteTorrent',
-    baseUrl: 'https://elitetorrent.biz',
+    baseUrl: 'https://elitetorrent.com',
     categories: ['documentary', 'vos', 'torrent'],
     language: ['cast', 'lat'],
     active: true,
@@ -751,24 +751,13 @@ module.exports = [
   {
     name: 'mejortorrent',
     title: 'MejorTorrent',
-    baseUrl: 'https://www43.mejortorrent.eu',
+    baseUrl: 'https://www.mejortorrent.net',
     categories: ['movie', 'tvshow', 'torrent'],
     language: ['cast'],
     active: true,
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'torrent', linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: 'HD' }
-  },
-  {
-    name: 'ecarteleratrailers',
-    title: 'eCarteleraTrailers',
-    baseUrl: 'https://www.ecartelera.com',
-    categories: ['movie'],
-    language: ['cast', 'lat'],
-    active: true,
-    adult: false,
-    search: { url: '/buscar/{query}', itemSelector: 'li', titleSelector: 'a[href]', linkSelector: 'a' }, // <-- fixed
-    videos: { type: 'iframe', containerSelector: '.player', iframeSelector: 'iframe', defaultQuality: 'HD' }
   },
   {
     name: 'hdfulls',
@@ -799,7 +788,7 @@ module.exports = [
     baseUrl: 'https://www.doramasqueen.com',
     categories: ['anime'],
     language: ['cast', 'lat'],
-    active: true,
+    active: false,
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }

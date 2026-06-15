@@ -481,7 +481,7 @@
         "tv"
       ],
       "filename": "providers/allmovieland.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "m3u8"
       ],
@@ -504,7 +504,7 @@
         "tv"
       ],
       "filename": "providers/castle.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "mp4",
         "m3u8"
@@ -589,7 +589,7 @@
         "tv"
       ],
       "filename": "providers/cinemacity.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "mp4",
         "m3u8"
@@ -612,7 +612,7 @@
         "tv"
       ],
       "filename": "providers/cinetv.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "mp4",
         "m3u8"
@@ -706,7 +706,7 @@
         "tv"
       ],
       "filename": "providers/dooflix.js",
-      "enabled": false,
+      "enabled": true,
       "formats": [
         "mp4",
         "m3u8"
@@ -749,7 +749,7 @@
         "movie"
       ],
       "filename": "providers/goatapi.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "mp4",
         "mkv",
@@ -771,7 +771,7 @@
         "tv"
       ],
       "filename": "providers/hdhub4u.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "mp4",
         "m3u8"
@@ -856,7 +856,7 @@
         "movie"
       ],
       "filename": "providers/isaidub.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "m3u8"
       ],
@@ -876,7 +876,7 @@
         "tv"
       ],
       "filename": "providers/lamovie.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "mp4",
         "m3u8"
@@ -919,7 +919,7 @@
         "tv"
       ],
       "filename": "providers/moviebox.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "mp4",
         "m3u8"
@@ -1012,7 +1012,7 @@
         "movie"
       ],
       "filename": "providers/movies4u.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "mp4",
         "m3u8"
@@ -1174,7 +1174,7 @@
         "tv"
       ],
       "filename": "providers/purstream.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "mp4",
         "m3u8"
@@ -1196,7 +1196,7 @@
         "tv"
       ],
       "filename": "providers/showbox.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "mp4",
         "mkv",
@@ -1241,7 +1241,7 @@
         "tv"
       ],
       "filename": "providers/toflix.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "mp4",
         "m3u8"
@@ -1327,7 +1327,7 @@
         "tv"
       ],
       "filename": "providers/uhdmovies.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "mp4",
         "m3u8"
@@ -1348,7 +1348,7 @@
         "tv"
       ],
       "filename": "providers/vegamovies.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "mp4",
         "mkv"
@@ -1412,7 +1412,7 @@
         "tv"
       ],
       "filename": "providers/vidsrc.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "mp4",
         "m3u8"
@@ -1433,7 +1433,7 @@
         "tv"
       ],
       "filename": "providers/vixsrc.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "mp4",
         "m3u8"
@@ -1524,7 +1524,7 @@
         "tv"
       ],
       "filename": "providers/onlykdrama.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "mp4",
         "mkv",
@@ -1571,7 +1571,7 @@
         "tv"
       ],
       "filename": "providers/kisskh.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "mp4",
         "m3u8"
