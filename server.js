@@ -1684,87 +1684,113 @@ footer a{color:var(--accent2);text-decoration:none}
 </div>
 
 <script>
-function getConfig() {
-  const f = document.getElementById('cfgForm');
-  const langs = [];
-  ${JSON.stringify(Object.keys(ALL_LANGS))}.forEach(code => {
-    const cb = f['lang_' + code];
-    if (cb && cb.checked) langs.push(code);
-  });
-  return {
-    enableMovies: f.enableMovies.checked,
-    enableSeries: f.enableSeries.checked,
-    enableAnime: f.enableAnime.checked,
-    quality: f.quality.value,
-    langs: langs,
-    enableBackend: f.enableBackend.checked,
-    enableLocal: f.enableLocal.checked
-  };
-}
+(function() {
+  var ALL_LANGS = ${JSON.stringify(Object.keys(ALL_LANGS))};
+  var BASE_URL = '${BASE_URL}';
+  var VERSION = '${VERSION}';
 
-function params(cfg) {
-  const p = [];
-  if (cfg.enableMovies !== true) p.push('m=' + (cfg.enableMovies ? '1' : '0'));
-  if (cfg.enableSeries !== true) p.push('s=' + (cfg.enableSeries ? '1' : '0'));
-  if (cfg.enableAnime !== true) p.push('a=' + (cfg.enableAnime ? '1' : '0'));
-  if (cfg.quality !== 'all') p.push('q=' + cfg.quality);
-  const allLangs = ${JSON.stringify(Object.keys(ALL_LANGS))};
-  const enabledLangs = cfg.langs.filter(l => allLangs.includes(l));
-  if (enabledLangs.length < allLangs.length) p.push('l=' + enabledLangs.join(','));
-  if (cfg.enableBackend !== true) p.push('b=' + (cfg.enableBackend ? '1' : '0'));
-  if (cfg.enableLocal !== true) p.push('L=' + (cfg.enableLocal ? '1' : '0'));
-  if (!p.length) return '';
-  return 'c=1&' + p.join('&');
-}
+  function gid(id) { return document.getElementById(id); }
 
-function generateUrl() {
-  const cfg = getConfig();
-  const qs = params(cfg);
-  const url = '${BASE_URL}/manifest.json' + (qs ? '?' + qs : '');
-  const baseHost = '${BASE_URL}'.replace(/^https?:\/\//, '');
-  const stremioUrl = 'stremio://' + baseHost + '/manifest.json' + (qs ? '?' + qs : '');
-
-  document.getElementById('status').className = 'status ok';
-  document.getElementById('status').textContent = 'Install URL ready!';
-  document.getElementById('urlText').textContent = url;
-  document.getElementById('result').classList.add('show');
-
-  window.__installUrl = url;
-  window.__stremioUrl = stremioUrl;
-
-  if (window.parent && window.parent !== window) {
-    window.parent.postMessage({ type: 'configure', version: '${VERSION}', configured: btoa(unescape(encodeURIComponent(JSON.stringify(cfg)))) }, '*');
+  function getConfig() {
+    var f = gid('cfgForm');
+    if (!f) throw new Error('Form not found');
+    var langs = [];
+    ALL_LANGS.forEach(function(code) {
+      var cb = f['lang_' + code];
+      if (cb && cb.checked) langs.push(code);
+    });
+    return {
+      enableMovies: !!f.enableMovies && !!f.enableMovies.checked,
+      enableSeries: !!f.enableSeries && !!f.enableSeries.checked,
+      enableAnime: !!f.enableAnime && !!f.enableAnime.checked,
+      quality: (f.quality && f.quality.value) || 'all',
+      langs: langs,
+      enableBackend: !!f.enableBackend && !!f.enableBackend.checked,
+      enableLocal: !!f.enableLocal && !!f.enableLocal.checked
+    };
   }
-}
 
-function copyUrl() {
-  navigator.clipboard.writeText(window.__installUrl).then(() => {
-    document.getElementById('status').textContent = 'Copied to clipboard!';
-  }).catch(() => {
-    document.getElementById('status').textContent = 'Select and copy the URL above';
-  });
-}
+  function params(cfg) {
+    var p = [];
+    if (cfg.enableMovies !== true) p.push('m=' + (cfg.enableMovies ? '1' : '0'));
+    if (cfg.enableSeries !== true) p.push('s=' + (cfg.enableSeries ? '1' : '0'));
+    if (cfg.enableAnime !== true) p.push('a=' + (cfg.enableAnime ? '1' : '0'));
+    if (cfg.quality !== 'all') p.push('q=' + cfg.quality);
+    var enabledLangs = cfg.langs.filter(function(l) { return ALL_LANGS.indexOf(l) !== -1; });
+    if (enabledLangs.length < ALL_LANGS.length) p.push('l=' + enabledLangs.join(','));
+    if (cfg.enableBackend !== true) p.push('b=' + (cfg.enableBackend ? '1' : '0'));
+    if (cfg.enableLocal !== true) p.push('L=' + (cfg.enableLocal ? '1' : '0'));
+    if (!p.length) return '';
+    return 'c=1&' + p.join('&');
+  }
 
-function installStremio() {
-  window.open(window.__stremioUrl, '_blank');
-}
+  window.generateUrl = function() {
+    try {
+      var status = gid('status');
+      var urlText = gid('urlText');
+      var result = gid('result');
+      if (!status || !urlText || !result) throw new Error('DOM elements missing');
 
-function resetConfig() {
-  const f = document.getElementById('cfgForm');
-  f.enableMovies.checked = true;
-  f.enableSeries.checked = true;
-  f.enableAnime.checked = true;
-  f.quality.value = 'all';
-  f.enableBackend.checked = true;
-  f.enableLocal.checked = true;
-  ${JSON.stringify(Object.keys(ALL_LANGS))}.forEach(code => {
-    const cb = f['lang_' + code];
-    if (cb) cb.checked = true;
-  });
-  document.getElementById('status').className = 'status ok';
-  document.getElementById('status').textContent = 'Reset to defaults. Generate URL to apply.';
-  document.getElementById('result').classList.remove('show');
-}
+      var cfg = getConfig();
+      var qs = params(cfg);
+      var url = BASE_URL + '/manifest.json' + (qs ? '?' + qs : '');
+      var baseHost = BASE_URL.replace(/^https?:\/\//, '');
+      var stremioUrl = 'stremio://' + baseHost + '/manifest.json' + (qs ? '?' + qs : '');
+
+      status.className = 'status ok';
+      status.textContent = 'Install URL ready!';
+      urlText.textContent = url;
+      result.classList.add('show');
+
+      window.__installUrl = url;
+      window.__stremioUrl = stremioUrl;
+
+      if (window.parent && window.parent !== window) {
+        try {
+          var b64 = btoa(unescape(encodeURIComponent(JSON.stringify(cfg))));
+          window.parent.postMessage({ type: 'configure', version: VERSION, configured: b64 }, '*');
+        } catch(e) {}
+      }
+    } catch(e) {
+      var s = gid('status');
+      if (s) { s.className = 'status err'; s.textContent = 'Error: ' + e.message; }
+    }
+  };
+
+  window.copyUrl = function() {
+    var u = window.__installUrl;
+    if (!u) return;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(u).catch(function() {
+        var s = gid('status');
+        if (s) s.textContent = 'Select and copy the URL above';
+      });
+    }
+  };
+
+  window.installStremio = function() {
+    window.open(window.__stremioUrl, '_blank');
+  };
+
+  window.resetConfig = function() {
+    var f = gid('cfgForm');
+    if (!f) return;
+    if (f.enableMovies) f.enableMovies.checked = true;
+    if (f.enableSeries) f.enableSeries.checked = true;
+    if (f.enableAnime) f.enableAnime.checked = true;
+    if (f.quality) f.quality.value = 'all';
+    if (f.enableBackend) f.enableBackend.checked = true;
+    if (f.enableLocal) f.enableLocal.checked = true;
+    ALL_LANGS.forEach(function(code) {
+      var cb = f['lang_' + code];
+      if (cb) cb.checked = true;
+    });
+    var s = gid('status');
+    if (s) { s.className = 'status ok'; s.textContent = 'Reset to defaults. Generate URL to apply.'; }
+    var r = gid('result');
+    if (r) r.classList.remove('show');
+  };
+})();
 </script>
 </body>
 </html>`);
