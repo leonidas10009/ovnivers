@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.6.1
+ * Ovnivers — Stremio Addon Backend v1.6.3
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
@@ -28,7 +28,7 @@ const { StreamPipeline } = require('./src/stream-pipeline/index');
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.6.2';
+const VERSION = '1.6.3';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 const PIGAMER = 'https://pigamer37.alwaysdata.net';
@@ -230,42 +230,57 @@ function parse2embedHTML(html, mirrorName) {
   const label = mirrorName || '2embed';
 
   const isVideoExt = (u) => /\.(m3u8|mp4|mkv|webm|avi)(\?|$)/i.test(u);
-  const addVideo = (url, q) => {
-    if (!url || seen.has(url)) return;
-    const cleanUrl = url.replace(/[)'"}>[\]]+$/, '');
-    if (!isValidEmbedUrl(cleanUrl)) return;
-    seen.add(cleanUrl);
-    const quality = q || (isVideoExt(cleanUrl) ? (cleanUrl.includes('m3u8') ? 'Adaptive' : 'HD') : 'Embed');
-    streams.push({ name: `${label}\n${quality}`, url: cleanUrl, behaviorHints: { notWebReady: !isVideoExt(cleanUrl) } });
-  };
+  const isEmbedPage = (u) => /\/(embed|e|player|play|watch)\b/i.test(u);
 
-  const m3u8Re = /https?:\/\/[^"'\s<>(){}[\]]+\.m3u8[^"'\s<>(){}[\]]*/gi;
-  const mp4Re = /https?:\/\/[^"'\s<>(){}[\]]+\.mp4[^"'\s<>(){}[\]]*/gi;
-  const mkvRe = /https?:\/\/[^"'\s<>(){}[\]]+\.mkv[^"'\s<>(){}[\]]*/gi;
+  const urlRe = /https?:\/\/[^"'\s<>(){}[\]]+/gi;
   const iframeRe = /<iframe[^>]+src=["']([^"']+)["']/gi;
   const jsUrlRe = /(?:file|src|url|source|videoSrc|streamUrl|playlist)\s*[:=]\s*["']([^"']+)["']/gi;
   const dataSrcRe = /data-(?:src|file|url|video)=["']([^"']+)["']/gi;
-  const jsonBlockRe = /"((?:https?:)?\/\/[^"]+\.(?:m3u8|mp4|mkv)[^"]*)"/gi;
+  const jsonBlockRe = /"((?:https?:)?\/\/[^"]+(?:m3u8|mp4|mkv|embed|hls)[^"]*)"/gi;
 
   let m;
-  while ((m = m3u8Re.exec(html)) !== null) addVideo(m[0], 'Adaptive');
-  while ((m = mp4Re.exec(html)) !== null) addVideo(m[0], 'HD');
-  while ((m = mkvRe.exec(html)) !== null) addVideo(m[0], 'HD');
+  while ((m = urlRe.exec(html)) !== null) {
+    const url = m[0].replace(/[)'"}>[\]]+$/, '');
+    if (!url || seen.has(url) || !isValidEmbedUrl(url)) continue;
+    const keep = isVideoExt(url) || (isEmbedPage(url) && !url.includes('.js'));
+    if (!keep) continue;
+    seen.add(url);
+    const quality = isVideoExt(url) ? (url.includes('m3u8') ? 'Adaptive' : 'HD') : 'Embed';
+    streams.push({ name: `${label}\n${quality}`, url, behaviorHints: { notWebReady: !isVideoExt(url) } });
+  }
   while ((m = iframeRe.exec(html)) !== null) {
     const src = m[1];
-    if (src && (src.includes('embed') || src.includes('player') || src.includes('stream'))) {
-      addVideo(src, 'Embed');
+    if (src && !seen.has(src) && isValidEmbedUrl(src) && (src.includes('embed') || src.includes('player') || src.includes('stream') || isVideoExt(src))) {
+      seen.add(src);
+      streams.push({ name: `${label} (iframe)\nEmbed`, url: src, behaviorHints: { notWebReady: true } });
     }
   }
   while ((m = jsUrlRe.exec(html)) !== null) {
     const url = m[1];
-    if (url && !url.includes('.js') && isVideoExt(url)) addVideo(url, url.includes('m3u8') ? 'Adaptive' : 'HD');
+    if (url && !seen.has(url) && isValidEmbedUrl(url) && !url.includes('.js') && isVideoExt(url)) {
+      seen.add(url);
+      const quality = url.includes('m3u8') ? 'Adaptive' : 'HD';
+      streams.push({ name: `${label}\n${quality}`, url, behaviorHints: { notWebReady: true } });
+    }
   }
-  while ((m = dataSrcRe.exec(html)) !== null) addVideo(m[1], 'HD');
-  while ((m = jsonBlockRe.exec(html)) !== null) {
+  while ((m = dataSrcRe.exec(html)) !== null) {
     const url = m[1];
-    const fullUrl = url.startsWith('//') ? 'https:' + url : url;
-    if (isVideoExt(fullUrl)) addVideo(fullUrl, url.includes('m3u8') ? 'Adaptive' : 'HD');
+    if (url && !seen.has(url) && isValidEmbedUrl(url)) {
+      seen.add(url);
+      streams.push({ name: `${label}\nHD`, url, behaviorHints: { notWebReady: true } });
+    }
+  }
+  while ((m = jsonBlockRe.exec(html)) !== null) {
+    const val = m[1];
+    const fullUrl = val.startsWith('//') ? 'https:' + val : val;
+    if (fullUrl && !seen.has(fullUrl) && isValidEmbedUrl(fullUrl)) {
+      const isVideo = isVideoExt(fullUrl);
+      if (isVideo || fullUrl.includes('embed') || fullUrl.includes('player')) {
+        seen.add(fullUrl);
+        const quality = isVideo ? (fullUrl.includes('m3u8') ? 'Adaptive' : 'HD') : 'Embed';
+        streams.push({ name: `${label}\n${quality}`, url: fullUrl, behaviorHints: { notWebReady: !isVideo } });
+      }
+    }
   }
 
   return streams;
