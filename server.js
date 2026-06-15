@@ -66,9 +66,9 @@ try {
 } catch (e) {
   console.warn('Could not load scrapers from manifest.json:', e.message);
 }
-
-const LOCAL_PROVIDER_TIMEOUT = Number(process.env.LOCAL_PROVIDER_TIMEOUT || 60000);
-const LOCAL_PROVIDER_CONCURRENCY = Number(process.env.LOCAL_PROVIDER_CONCURRENCY || 8);
+const LOCAL_PROVIDER_TIMEOUT = Number(process.env.LOCAL_PROVIDER_TIMEOUT || 10000);
+const LOCAL_PROVIDER_CONCURRENCY = Number(process.env.LOCAL_PROVIDER_CONCURRENCY || 6);
+const STREAM_GLOBAL_TIMEOUT = Number(process.env.STREAM_GLOBAL_TIMEOUT || 18000);
 const MAX_STREAM_RESULTS = Number(process.env.MAX_STREAM_RESULTS || 80);
 let scrapeAlfaProviders = null;
 const localProviders = [];
@@ -1263,10 +1263,17 @@ async function handleStream(req, res, type, id) {
     return results;
   })());
 
-  const settled = await Promise.allSettled(streamTasks);
+  const settled = await Promise.race([
+    Promise.allSettled(streamTasks),
+    new Promise(r => setTimeout(() => r('__TIMEOUT__'), STREAM_GLOBAL_TIMEOUT))
+  ]);
   const rawStreams = [];
-  for (const item of settled) {
-    if (item.status === 'fulfilled' && Array.isArray(item.value)) rawStreams.push(...item.value);
+  if (settled !== '__TIMEOUT__') {
+    for (const item of settled) {
+      if (item.status === 'fulfilled' && Array.isArray(item.value)) rawStreams.push(...item.value);
+    }
+  } else {
+    console.log(`[stream] ${type}/${id} global timeout (${STREAM_GLOBAL_TIMEOUT}ms), returning partial results`);
   }
 
   const seen = new Set();
@@ -1278,20 +1285,26 @@ async function handleStream(req, res, type, id) {
     unique.push(s);
   }
 
-  // Resolver embeds a directo
+  // Resolver embeds a directo (max 8, con timeout)
   const unresolved = unique.filter(s => s.url && !s.infoHash && s.behaviorHints?.notWebReady);
   if (unresolved.length > 0) {
-    const toResolve = unresolved.slice(0, 12);
-    const resolved = await Promise.allSettled(toResolve.map(s => resolveEmbed(s.url, BASE_URL)));
+    const toResolve = unresolved.slice(0, 8);
+    const resolved = await Promise.race([
+      Promise.allSettled(toResolve.map(s => resolveEmbed(s.url, BASE_URL))),
+      new Promise(r => setTimeout(() => r('__EMBED_TIMEOUT__'), 6000))
+    ]);
     let count = 0;
-    for (let i = 0; i < toResolve.length; i++) {
-      if (resolved[i].status === 'fulfilled' && resolved[i].value && /\.(m3u8|mp4)/i.test(resolved[i].value)) {
-        toResolve[i].url = resolved[i].value;
-        toResolve[i].behaviorHints = { ...toResolve[i].behaviorHints, notWebReady: false };
-        count++;
+    if (resolved !== '__EMBED_TIMEOUT__' && Array.isArray(resolved)) {
+      for (let i = 0; i < toResolve.length; i++) {
+        if (resolved[i]?.status === 'fulfilled' && resolved[i].value && /\.(m3u8|mp4)/i.test(resolved[i].value)) {
+          toResolve[i].url = resolved[i].value;
+          toResolve[i].behaviorHints = { ...toResolve[i].behaviorHints, notWebReady: false };
+          count++;
+        }
       }
     }
     if (count > 0) console.log(`[stream] resolved ${count} embeds → ExoPlayer`);
+    else if (resolved === '__EMBED_TIMEOUT__') console.log(`[stream] embed resolution timed out`);
   }
 
   unique = unique.slice(0, MAX_STREAM_RESULTS);
