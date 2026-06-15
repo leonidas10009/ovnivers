@@ -7,7 +7,7 @@ module.exports = [
     baseUrl: 'https://allcalidad.re',
     categories: ['movie', 'direct'],
     language: ['lat'],
-    active: true,
+    active: false,
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: 'body', iframeSelector: 'iframe', srcAttr: 'data-src', defaultQuality: 'HD' }
@@ -119,8 +119,8 @@ module.exports = [
     language: ['cast'],
     active: true,
     adult: false,
-    search: { url: '/?s={query}', itemSelector: 'li', titleSelector: 'a[href]', linkSelector: 'a' }, // <-- fixed
-    videos: { type: 'torrent', linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: 'HD' }
+    search: { url: '/?s={query}', itemSelector: 'table tr:has(td a[href*="/peliculas"])', titleSelector: 'td a[href*="/peliculas"]', linkSelector: 'td a[href*="/peliculas"]' },
+    videos: { type: 'torrent', linkSelector: 'a[href*="download_tt.php"], a[href*="s.php"], a[class*="linktorrent"], a[class*="opcion"]', defaultQuality: 'HD' }
   },
   {
     name: 'dontorrent',
@@ -206,10 +206,10 @@ module.exports = [
     baseUrl: 'https://grantorrent.zip',
     categories: ['movie', 'tvshow', 'vos', 'torrent'],
     language: ['cast', 'lat'],
-    active: true,
+    active: false,
     adult: false,
-    search: { url: '/?s={query}', itemSelector: 'li.flex', titleSelector: 'a[href]', linkSelector: 'a' }, // <-- fixed
-    videos: { type: 'torrent', linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: 'HD' }
+    search: { url: '/?s={query}', itemSelector: 'div.relative a[href*="/"][href*="-"]:not([href*="categoria"]):not([href*="genero"])', titleSelector: '&', linkSelector: '&' },
+    videos: { type: 'torrent', linkSelector: 'a[href*="s.php"], a[class*="linktorrent"], a[class*="descargar"]', defaultQuality: 'HD' }
   },
   {
     name: 'hdfull',
@@ -251,10 +251,10 @@ module.exports = [
     baseUrl: 'https://mitorrent.mx',
     categories: ['movie', 'tvshow', 'torrent'],
     language: ['lat'],
-    active: true,
+    active: false,
     adult: false,
-    search: { url: '/?s={query}', itemSelector: 'li', titleSelector: 'a[href]', linkSelector: 'a' }, // <-- fixed
-    videos: { type: 'torrent', linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: 'HD' }
+    search: { url: '/?s={query}', itemSelector: 'div.browse-movie-wrap', titleSelector: 'div.browse-movie-bottom a', linkSelector: 'div.browse-movie-bottom a' },
+    videos: { type: 'torrent', linkSelector: 'a[href*="s.php"], a[class*="torrent-modal-download"], a[class*="quality-download"]', defaultQuality: 'HD' }
   },
   {
     name: 'osjonosu',

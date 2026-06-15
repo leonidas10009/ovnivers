@@ -626,13 +626,17 @@ async function extractVideos(provider, pageUrl) {
   }
 
   if (cfg.type === 'torrent') {
-    const links = $(cfg.linkSelector || 'a[href*="magnet:"], a[href$=".torrent"]').toArray();
+    const selector = cfg.linkSelector || 'a[href*="magnet:"], a[href$=".torrent"], a[href*="s.php"], a[href*="download_tt.php"], a[class*="torrent"], a[class*="download"], a[class*="descargar"]';
+    const links = $(selector).toArray();
     for (const link of links) {
       const href = $(link).attr('href');
-      if (href && (href.startsWith('magnet:') || href.endsWith('.torrent'))) {
-        const label = $(link).text().trim() || '';
+      if (!href) continue;
+      const label = $(link).text().trim() || '';
+      const qualityMatch = label.match(/\b(4K|2160p?|1080p?|720p?|480p?)\b/i);
+
+      // Direct magnet
+      if (href.startsWith('magnet:')) {
         const infoHashMatch = href.match(/urn:btih:([a-fA-F0-9]{40})/i);
-        const qualityMatch = label.match(/\b(4K|2160p?|1080p?|720p?|480p?)\b/i);
         const sources = [];
         const trRe = /tr=([^&]+)/g;
         let m;
@@ -644,13 +648,81 @@ async function extractVideos(provider, pageUrl) {
         }
         if (infoHashMatch) sources.push('dht:' + infoHashMatch[1].toLowerCase());
         results.push({
-          url: href,
-          server: 'torrent',
+          url: href, server: 'torrent',
           quality: (qualityMatch ? qualityMatch[1] : '') || cfg.defaultQuality || 'HD',
           ...(infoHashMatch ? { infoHash: infoHashMatch[1].toLowerCase() } : {}),
           ...(sources.length ? { sources } : {}),
           ...(label ? { filename: label } : {})
         });
+        continue;
+      }
+
+      // Direct .torrent link
+      if (href.endsWith('.torrent')) {
+        results.push({
+          url: href, server: 'torrent',
+          quality: (qualityMatch ? qualityMatch[1] : '') || cfg.defaultQuality || 'HD',
+          ...(label ? { filename: label } : {})
+        });
+        continue;
+      }
+
+      // URL shortener (super-enlace.com, acortalink.net, short-info.link)
+      if (/\/s\.php\?i=/.test(href) || /\/s\.php\?u=/.test(href)) {
+        try {
+          const ctrl = new AbortController();
+          const t = setTimeout(() => ctrl.abort(), 10000);
+          const redirRes = await fetch(href, {
+            headers: { 'User-Agent': UA, 'Referer': pageUrl },
+            redirect: 'follow',
+            signal: ctrl.signal
+          });
+          clearTimeout(t);
+          if (redirRes.ok) {
+            const finalUrl = redirRes.url;
+            if (finalUrl.endsWith('.torrent')) {
+              const buf = Buffer.from(await redirRes.arrayBuffer());
+              const infoHash = parseTorrentInfoHash(buf);
+              results.push({
+                url: finalUrl, server: 'torrent',
+                quality: (qualityMatch ? qualityMatch[1] : '') || cfg.defaultQuality || 'HD',
+                ...(infoHash ? { infoHash } : {}),
+                ...(infoHash ? { sources: ['dht:' + infoHash] } : {}),
+                ...(label ? { filename: label } : {})
+              });
+            }
+          }
+        } catch {}
+        continue;
+      }
+
+      // Base64 download link (download_tt.php?u=<base64>)
+      const b64Match = href.match(/[?&]u=([A-Za-z0-9+/=]{20,})/);
+      if (b64Match) {
+        try {
+          const decoded = Buffer.from(b64Match[1], 'base64').toString('utf-8').trim();
+          if (decoded.startsWith('http') && decoded.endsWith('.torrent')) {
+            const ctrl = new AbortController();
+            const t = setTimeout(() => ctrl.abort(), 10000);
+            const dlRes = await fetch(decoded, {
+              headers: { 'User-Agent': UA, 'Referer': pageUrl },
+              signal: ctrl.signal
+            });
+            clearTimeout(t);
+            if (dlRes.ok) {
+              const buf = Buffer.from(await dlRes.arrayBuffer());
+              const infoHash = parseTorrentInfoHash(buf);
+              results.push({
+                url: decoded, server: 'torrent',
+                quality: (qualityMatch ? qualityMatch[1] : '') || cfg.defaultQuality || 'HD',
+                ...(infoHash ? { infoHash } : {}),
+                ...(infoHash ? { sources: ['dht:' + infoHash] } : {}),
+                ...(label ? { filename: label } : {})
+              });
+            }
+          }
+        } catch {}
+        continue;
       }
     }
   }
