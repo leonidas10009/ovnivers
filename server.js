@@ -1288,18 +1288,17 @@ async function handleStream(req, res, type, id) {
     return results;
   })());
 
-  const settled = await Promise.race([
-    Promise.allSettled(streamTasks),
-    new Promise(r => setTimeout(() => r('__TIMEOUT__'), STREAM_GLOBAL_TIMEOUT))
-  ]);
   const rawStreams = [];
-  if (settled !== '__TIMEOUT__') {
-    for (const item of settled) {
-      if (item.status === 'fulfilled' && Array.isArray(item.value)) rawStreams.push(...item.value);
-    }
-  } else {
-    console.log(`[stream] ${type}/${id} global timeout (${STREAM_GLOBAL_TIMEOUT}ms), returning partial results`);
-  }
+  const collectPromises = streamTasks.map(t =>
+    t.then(r => { if (Array.isArray(r)) rawStreams.push(...r); }).catch(() => {})
+  );
+  await Promise.race([
+    Promise.allSettled(collectPromises),
+    new Promise(r => setTimeout(() => {
+      console.log(`[stream] ${type}/${id} global timeout (${STREAM_GLOBAL_TIMEOUT}ms), collected ${rawStreams.length} partial results`);
+      r();
+    }, STREAM_GLOBAL_TIMEOUT))
+  ]);
 
   const seen = new Set();
   let unique = [];
