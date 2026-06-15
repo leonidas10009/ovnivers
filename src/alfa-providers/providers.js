@@ -206,7 +206,7 @@ module.exports = [
     baseUrl: 'https://grantorrent.zip',
     categories: ['movie', 'tvshow', 'vos', 'torrent'],
     language: ['cast', 'lat'],
-    active: false,
+    active: true,
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'div.relative a[href*="/"][href*="-"]:not([href*="categoria"]):not([href*="genero"])', titleSelector: '&', linkSelector: '&' },
     videos: { type: 'torrent', linkSelector: 'a[href*="s.php"], a[class*="linktorrent"], a[class*="descargar"]', defaultQuality: 'HD' }
@@ -251,7 +251,7 @@ module.exports = [
     baseUrl: 'https://mitorrent.mx',
     categories: ['movie', 'tvshow', 'torrent'],
     language: ['lat'],
-    active: false,
+    active: true,
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'div.browse-movie-wrap', titleSelector: 'div.browse-movie-bottom a', linkSelector: 'div.browse-movie-bottom a' },
     videos: { type: 'torrent', linkSelector: 'a[href*="s.php"], a[class*="torrent-modal-download"], a[class*="quality-download"]', defaultQuality: 'HD' }
@@ -273,7 +273,7 @@ module.exports = [
     baseUrl: 'https://pelicinehd.com',
     categories: ['movie'],
     language: ['lat', 'cast', 'vose'],
-    active: false,
+    active: true,
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
@@ -588,7 +588,7 @@ module.exports = [
     baseUrl: 'https://latanime.org',
     categories: ['anime'],
     language: ['cast', 'lat', 'vose'],
-    active: false,
+    active: true,
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'jsvar', varPattern: /var videos = (\[.*?\]);/, defaultQuality: 'HD' }
@@ -599,7 +599,7 @@ module.exports = [
     baseUrl: 'https://www.mundodonghua.com',
     categories: ['anime', 'vos'],
     language: ['*'],
-    active: false,
+    active: true,
     adult: false,
     search: { url: '/busquedas/?donghua={query}', itemSelector: '.md-card', titleSelector: '.md-card-title', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
@@ -621,7 +621,7 @@ module.exports = [
     baseUrl: 'https://ww3.pelisplus.to',
     categories: ['anime', 'documentary', 'direct'],
     language: ['lat'],
-    active: false,
+    active: true,
     adult: false,
     search: { url: '/search?q={query}', itemSelector: 'a[href*="/pelicula/"]', titleSelector: '.title', linkSelector: '&' },
     videos: { type: 'nextjs', dataPath: 'props.pageProps.post.players', defaultQuality: 'HD' }
@@ -632,7 +632,7 @@ module.exports = [
     baseUrl: 'https://cinehdplus.gratis',
     categories: ['anime', 'vos'],
     language: ['lat', 'cast', 'vose'],
-    active: false,
+    active: true,
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
