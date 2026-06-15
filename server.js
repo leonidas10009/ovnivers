@@ -22,8 +22,7 @@ const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
 const catalog = require('./src/catalog/index');
-const nyaasi = require('./src/torrent-providers/nyaasi');
-const glodls = require('./src/torrent-providers/glodls');
+const torrentIndex = require('./src/torrent-providers/index');
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
@@ -1212,47 +1211,53 @@ async function handleStream(req, res, type, id) {
     }
   }
 
-  // ── Torrent indexers: GloDLS (movies/TV) + Nyaa (anime) ──
+  // ── Torrent indexers: 6 fuentes + scoring + metadata enriquecida ──
   streamTasks.push((async () => {
     const results = [];
     let searchTitle = '';
+    let imdbId = null;
+    let year = null;
     try {
       if (rawId.match(/^\d+$/)) {
         const meta = await withTimeout(getTMDbMeta(rawId, mediaType), 4000);
-        if (meta) searchTitle = meta.title || meta.name || '';
-      } else {
+        if (meta) {
+          searchTitle = meta.title || meta.name || '';
+          year = parseInt((meta.release_date || meta.first_air_date || '').substring(0, 4)) || null;
+          imdbId = meta.imdb_id || null;
+        }
+      } else if (rawId.startsWith('tt')) {
+        imdbId = rawId;
         searchTitle = rawId.replace(/^tt0*/, '');
       }
     } catch {}
-    if (mediaType === 'tv' && season && episode) {
-      searchTitle += ` S${String(season).padStart(2, '0')}E${String(episode).padStart(2, '0')}`;
-    }
-    if (searchTitle.length < 3) return results;
+    if (searchTitle.length < 2) return results;
+
     try {
-      const glodlsResults = await glodls.search(searchTitle);
-      for (const r of glodlsResults.slice(0, 8)) {
+      const torrents = await torrentIndex.search(searchTitle, mediaType, imdbId, year, season, episode);
+      for (const t of torrents.slice(0, 12)) {
+        const quality = `${t.quality || 'HD'}${t.isHDR ? ' HDR' : ''}${t.isDV ? ' DV' : ''}`;
+        const metaLine = [
+          t.seeds ? `${t.seeds} seeds` : '',
+          t.leechers ? `${t.leechers} peers` : '',
+          t.sizeFormatted || '',
+          t.source || '',
+          t.codec || '',
+          t.audio || '',
+          t.isRemux ? 'Remux' : '',
+        ].filter(Boolean).join(' \u2022 ');
+
         const s = normalizeStream({
-          url: r.magnet,
-          infoHash: r.infoHash,
-          name: r.name,
-          quality: r.quality
-        }, 'glodls', 'GloDLS');
+          url: t.magnet,
+          infoHash: t.infoHash,
+          name: `${t.indexer}\n${quality}`,
+          title: `${t.title}\n${metaLine}`,
+          quality,
+          sources: ['dht:' + t.infoHash],
+          behaviorHints: { notWebReady: false },
+        }, t.indexer.toLowerCase().replace(/[^a-z0-9]/g, ''), t.indexer);
         if (s) results.push(s);
       }
-    } catch {}
-    try {
-      if (isAnime) {
-        const nyaaResults = await nyaasi.search(searchTitle, 'anime');
-        for (const r of nyaaResults.slice(0, 8)) {
-          const s = normalizeStream({
-            url: r.magnet,
-            infoHash: r.infoHash,
-            name: r.name,
-            quality: r.quality
-          }, 'nyaasi', 'Nyaa.si');
-          if (s) results.push(s);
-        }
-      }
+      if (torrents.length) console.log(`  [Torrents] ${torrents.length} raw → ${results.length} streams from ${[...new Set(torrents.map(t=>t.indexer))].join(', ')}`);
     } catch {}
     return results;
   })());
