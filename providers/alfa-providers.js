@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-14T15:00:02.511Z
+ * Generated: 2026-06-15T09:17:14.383Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -950,11 +950,397 @@ var require_providers = __commonJS({
   }
 });
 
+// src/alfa-providers/embed-resolver.js
+var require_embed_resolver = __commonJS({
+  "src/alfa-providers/embed-resolver.js"(exports2, module2) {
+    var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+    var EMBED_TIMEOUT = 1e4;
+    var embedCache = /* @__PURE__ */ new Map();
+    function fetchWithTimeout(_0) {
+      return __async(this, arguments, function* (url, opts = {}) {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), opts.timeout || EMBED_TIMEOUT);
+        try {
+          const res = yield fetch(url, {
+            headers: __spreadValues({ "User-Agent": UA2 }, opts.headers),
+            signal: ctrl.signal,
+            redirect: "follow"
+          });
+          return res;
+        } finally {
+          clearTimeout(t);
+        }
+      });
+    }
+    function htmlText(_0) {
+      return __async(this, arguments, function* (url, opts = {}) {
+        try {
+          const res = yield fetchWithTimeout(url, {
+            headers: __spreadValues({ "Accept": "text/html,application/xhtml+xml,*/*" }, opts.headers),
+            timeout: opts.timeout || EMBED_TIMEOUT
+          });
+          if (!res.ok) return null;
+          return yield res.text();
+        } catch (e) {
+          return null;
+        }
+      });
+    }
+    function resolveStreamwish(html, url) {
+      return __async(this, null, function* () {
+        const dataMatch = html.match(/const\s+_0xa\w*\s*=\s*(\{[^}]+\})/);
+        if (dataMatch) {
+          try {
+            const obj = JSON.parse(dataMatch[1].replace(/'/g, '"').replace(/(\w+):/g, '"$1":'));
+            const keys = Object.values(obj);
+            for (const key of keys) {
+              if (typeof key === "string" && key.length > 20 && /^[A-Za-z0-9+/=]+$/.test(key) && !key.startsWith("http")) {
+                try {
+                  const d = Buffer.from(key, "base64").toString();
+                  if (d.includes("m3u8") || d.includes("mp4")) return d;
+                } catch (e) {
+                }
+              }
+            }
+          } catch (e) {
+          }
+        }
+        const m3u8 = html.match(/https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*/i);
+        if (m3u8) return m3u8[0];
+        const mp4 = html.match(/https?:\/\/[^"'\s<>]+\.mp4[^"'\s<>]*/i);
+        if (mp4) return mp4[0];
+        const evalMatch = html.match(/eval\s*\(([^)]+)\)/);
+        if (evalMatch) {
+          try {
+            const decoded = Buffer.from(evalMatch[1].replace(/['"]/g, ""), "base64").toString();
+            const m = decoded.match(/https?:\/\/[^"'\\]+\.m3u8[^"'\\]*/);
+            if (m) return m[0];
+          } catch (e) {
+          }
+        }
+        return null;
+      });
+    }
+    function resolveFilemoon(html, url) {
+      return __async(this, null, function* () {
+        const m3u8 = html.match(/https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*/i);
+        if (m3u8) return m3u8[0];
+        const mp4 = html.match(/https?:\/\/[^"'\s<>]+\.mp4[^"'\s<>]*/i);
+        if (mp4) return mp4[0];
+        const jsMatch = html.match(/"file"\s*:\s*"([^"]+\.(?:m3u8|mp4)[^"]*)"/i);
+        if (jsMatch) return jsMatch[1];
+        return null;
+      });
+    }
+    function resolveDoodstream(html, url) {
+      return __async(this, null, function* () {
+        const m3u8 = html.match(/https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*/i);
+        if (m3u8) return m3u8[0];
+        const passMatch = html.match(/\$.get\('([^']+pass_md5[^']*\.d00dmedia[^']*)'/i);
+        if (passMatch) {
+          const tokenHtml = yield htmlText(passMatch[1].startsWith("http") ? passMatch[1] : new URL(passMatch[1], url).href, {
+            headers: { "Referer": url }
+          });
+          if (tokenHtml) {
+            const m = tokenHtml.match(/https?:\/\/[^"'\s<>]+\.(?:m3u8|mp4)[^"'\s<>]*/i);
+            if (m) return m[0];
+            const parts = tokenHtml.split(" ");
+            for (const p of parts) {
+              if (p.match(/\.(?:m3u8|mp4)/i) && p.includes("http")) return p.replace(/^[^h]*/, "").trim();
+            }
+          }
+        }
+        const mp4 = html.match(/https?:\/\/[^"'\s<>]+\.mp4[^"'\s<>]*/i);
+        if (mp4) return mp4[0];
+        return null;
+      });
+    }
+    function resolveMixdrop(html, url) {
+      return __async(this, null, function* () {
+        const mdMatch = html.match(/"poster"\s*:\s*"[^"]+","wurl"\s*:\s*"([^"]+)"/);
+        if (mdMatch) return mdMatch[1].replace(/\\\//g, "/");
+        const m3u8 = html.match(/https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*/i);
+        if (m3u8) return m3u8[0];
+        return null;
+      });
+    }
+    function resolveVoeSx(html, url) {
+      return __async(this, null, function* () {
+        const mp4 = html.match(/https?:\/\/[^"'\s<>]+\.mp4[^"'\s<>]*/i);
+        if (mp4) return mp4[0];
+        const m3u8 = html.match(/https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*/i);
+        if (m3u8) return m3u8[0];
+        const evalMatch = html.match(/<script>\s*tm\s*=\s*('(?:\\.|[^'\\])*')/);
+        if (evalMatch) {
+          try {
+            const s = evalMatch[1].slice(1, -1);
+            const m = s.match(/https?:\/\/[^"'\\]+\.(?:m3u8|mp4)[^"'\\]*/);
+            if (m) return m[0];
+          } catch (e) {
+          }
+        }
+        return null;
+      });
+    }
+    function resolveVidHide(html, url) {
+      return __async(this, null, function* () {
+        const m3u8 = html.match(/https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*/i);
+        if (m3u8) return m3u8[0];
+        const mp4 = html.match(/https?:\/\/[^"'\s<>]+\.mp4[^"'\s<>]*/i);
+        if (mp4) return mp4[0];
+        return null;
+      });
+    }
+    function resolveOkRu(html, url) {
+      return __async(this, null, function* () {
+        var _a;
+        const jsMatch = html.match(/data-options="([^"]+)"/);
+        if (jsMatch) {
+          try {
+            const opts = JSON.parse(jsMatch[1].replace(/&quot;/g, '"'));
+            const vLink = ((_a = opts.flashvars) == null ? void 0 : _a.metadataUrl) || "";
+            if (vLink) {
+              const vHtml = yield htmlText(vLink, { headers: { "Referer": "https://ok.ru/" } });
+              if (vHtml) {
+                const js = vHtml.match(/<script>\s*tm\s*=\s*('(?:\\.|[^'\\])*')/);
+                if (js) {
+                  try {
+                    const s = js[1].slice(1, -1);
+                    const m = s.match(/https?:\/\/[^"'\\]+\.(?:m3u8|mp4)[^"'\\]*/);
+                    if (m) return m[0];
+                  } catch (e) {
+                  }
+                }
+                const m3 = vHtml.match(/https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*/i);
+                if (m3) return m3[0];
+              }
+            }
+          } catch (e) {
+          }
+        }
+        return null;
+      });
+    }
+    function resolveStreamtape(html, url) {
+      return __async(this, null, function* () {
+        const linkMatch = html.match(/"id="([^"]+robotlink[^"]*)"/i);
+        if (linkMatch) {
+          const linkId = linkMatch[1];
+          const normUrl = linkId.includes("get_video") ? "https://streamtape.com/" + linkId + "&stream=1" : "https://streamtape.com/" + linkId;
+          const vHtml = yield htmlText(normUrl, { headers: { "Referer": url } });
+          if (vHtml) {
+            const m = vHtml.match(/https?:\/\/[^"'\s<>]+\.(?:m3u8|mp4)[^"'\s<>]*/i);
+            if (m) return m[0];
+            const link = vHtml.match(/"link"\s*:\s*"([^"]+)"/);
+            if (link) return link[1].replace(/\\\//g, "/");
+          }
+        }
+        const token = html.match(/document\.getElementById\('norobotlink'\)\.innerHTML\s*=\s*["']([^"']+)["']/);
+        if (token) {
+          const vHtml = yield htmlText("https://streamtape.com/get_video?id=" + token + "&stream=1", { headers: { "Referer": url } });
+          if (vHtml) {
+            const m = vHtml.match(/https?:\/\/[^"'\s<>]+\.(?:m3u8|mp4)[^"'\s<>]*/i);
+            if (m) return m[0];
+          }
+        }
+        return null;
+      });
+    }
+    function resolveUpstream(html, url) {
+      return __async(this, null, function* () {
+        const m3u8 = html.match(/https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*/i);
+        if (m3u8) return m3u8[0];
+        const mp4 = html.match(/https?:\/\/[^"'\s<>]+\.mp4[^"'\s<>]*/i);
+        if (mp4) return mp4[0];
+        return null;
+      });
+    }
+    function resolveNetuTv(html, url) {
+      return __async(this, null, function* () {
+        const evalMatch = html.match(/eval\s*\(([^)]+)\)/);
+        if (evalMatch) {
+          try {
+            const decoded = Buffer.from(evalMatch[1].replace(/['"]/g, ""), "base64").toString();
+            const m = decoded.match(/https?:\/\/[^"'\\]+\.(?:m3u8|mp4)[^"'\\]*/);
+            if (m) return m[0];
+          } catch (e) {
+          }
+        }
+        const m3u8 = html.match(/https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*/i);
+        if (m3u8) return m3u8[0];
+        return null;
+      });
+    }
+    function resolveVidmoly(html, url) {
+      return __async(this, null, function* () {
+        const m3u8 = html.match(/https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*/i);
+        if (m3u8) return m3u8[0];
+        const mp4 = html.match(/https?:\/\/[^"'\s<>]+\.mp4[^"'\s<>]*/i);
+        if (mp4) return mp4[0];
+        return null;
+      });
+    }
+    function tryResolveJWPlayer(html, referer) {
+      return __async(this, null, function* () {
+        const scripts = [];
+        const re = /<script[^>]*>([\s\S]*?)<\/script>/gi;
+        let m;
+        while ((m = re.exec(html)) !== null) {
+          const text = m[1];
+          if (text.length > 10) scripts.push(text);
+        }
+        for (const script of scripts) {
+          if (!script.includes("jwplayer") && !script.includes("sources") && !script.includes("playlist")) continue;
+          const fileMatch = script.match(/["']file["']\s*:\s*["']([^"']+\.(?:m3u8|mp4)[^"']*)["']/i);
+          if (fileMatch) return fileMatch[1];
+          const setupMatch = script.match(/jwplayer\s*\(\s*["'][^"']*["']\s*\)\s*\.\s*setup\s*\(\s*(\{[\s\S]*?\})\s*\)\s*;/);
+          if (setupMatch) {
+            try {
+              const config = JSON.parse(
+                setupMatch[1].replace(/([{,]\s*)(\w+)(\s*:)/g, '$1"$2"$3').replace(/'/g, '"')
+              );
+              if (config.sources && Array.isArray(config.sources)) {
+                const sorted = config.sources.filter((s) => s.file).sort((a, b) => {
+                  const aLabel = (a.label || "").match(/(\d+)/);
+                  const bLabel = (b.label || "").match(/(\d+)/);
+                  return (parseInt(bLabel == null ? void 0 : bLabel[1]) || 0) - (parseInt(aLabel == null ? void 0 : aLabel[1]) || 0);
+                });
+                if (sorted.length > 0) return sorted[0].file;
+              }
+              if (config.playlist && Array.isArray(config.playlist)) {
+                for (const item of config.playlist) {
+                  if (item.sources && Array.isArray(item.sources) && item.sources.length > 0) return item.sources[0].file;
+                  if (item.file) return item.file;
+                }
+              }
+              if (config.file) return config.file;
+            } catch (e) {
+            }
+          }
+          const playlistMatch = script.match(/playlist\s*:\s*(\[[\s\S]*?\])\s*\}/);
+          if (playlistMatch) {
+            try {
+              const playlist = JSON.parse(playlistMatch[1].replace(/(\w+):/g, '"$1":').replace(/'/g, '"'));
+              if (Array.isArray(playlist)) {
+                for (const item of playlist) {
+                  if (item.sources && Array.isArray(item.sources) && item.sources.length > 0) return item.sources[0].file;
+                  if (item.file) return item.file;
+                }
+              }
+            } catch (e) {
+            }
+          }
+        }
+        return null;
+      });
+    }
+    function tryResolveGeneric(embedUrl, referer) {
+      return __async(this, null, function* () {
+        const html = yield htmlText(embedUrl, {
+          headers: { "Referer": referer || embedUrl }
+        });
+        if (!html) return null;
+        const jwUrl = yield tryResolveJWPlayer(html, referer);
+        if (jwUrl) return jwUrl.startsWith("//") ? "https:" + jwUrl : jwUrl;
+        const patterns = [
+          /https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*/i,
+          /https?:\/\/[^"'\s<>]+\.mp4[^"'\s<>]*/i
+        ];
+        for (const p of patterns) {
+          const match = html.match(p);
+          if (match) return match[0];
+        }
+        const iframeMatch = html.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+        if (iframeMatch) {
+          const iframeUrl = iframeMatch[1].startsWith("//") ? "https:" + iframeMatch[1] : iframeMatch[1];
+          if (iframeUrl !== embedUrl && iframeUrl !== referer) {
+            return yield resolveEmbed(iframeUrl, embedUrl);
+          }
+        }
+        return null;
+      });
+    }
+    function getHostname(url) {
+      try {
+        return new URL(url).hostname.toLowerCase();
+      } catch (e) {
+        return "";
+      }
+    }
+    function resolveEmbed(embedUrl, referer) {
+      return __async(this, null, function* () {
+        if (!embedUrl) return null;
+        if (embedCache.has(embedUrl)) return embedCache.get(embedUrl) || null;
+        const host = getHostname(embedUrl);
+        let html = null;
+        let result = null;
+        const hostRules = [
+          { pat: /streamwish|wish\.com|swdyu|sfastwish|wishembed|wishy|watchwish/i, fn: resolveStreamwish, needHtml: true },
+          { pat: /filemoon|filemoon\.sx|kerapoxy|moplay|moon\.sx|moonplayer/i, fn: resolveFilemoon, needHtml: true },
+          { pat: /dood\.|doodstream|dood\.la|dood\.to|dood\.ws|dood\.wf|dood\.re|dood\.so|dood\.sh|dood\.pm|dood\.yt|dooood|ds2play/i, fn: resolveDoodstream, needHtml: true },
+          { pat: /mixdrop|mixdrop\.co|mixdrop\.ag|mixdrop\.vc|mixdrop\.to|mixdrop\.ch|mixdrop\.gl|mixdrp/i, fn: resolveMixdrop, needHtml: true },
+          { pat: /voe\.sx|voe\.su|vidvodo|voe\.to|voeunblock/i, fn: resolveVoeSx, needHtml: true },
+          { pat: /vidhide|vidpro|vidmoly\.to|vidguard|vid2v11/i, fn: resolveVidHide, needHtml: true },
+          { pat: /ok\.ru|odnoklassniki/i, fn: resolveOkRu, needHtml: true },
+          { pat: /streamtape|strtape|stape\.with|streamta\.to|stpete|tapecontent|streamtape\.com/i, fn: resolveStreamtape, needHtml: true },
+          { pat: /upstream\.to|uptostream|uptobox|upstreamcdn/i, fn: resolveUpstream, needHtml: true },
+          { pat: /netu\.tv|netutv|anavids|waaw\.tv|hqq\.tv|waaw1|netuplayer/i, fn: resolveNetuTv, needHtml: true },
+          { pat: /vidmoly|vidmoly\.to|vidmoly\.net|moly\.to/i, fn: resolveVidmoly, needHtml: true },
+          { pat: /vidoza|vidoza\.net|vidozahd/i, fn: null, needHtml: false },
+          { pat: /vidlox|vidlox\.tv|vidlox\.net/i, fn: null, needHtml: false },
+          { pat: /wolfstream|wolfmax|stream\.wolfmax/i, fn: null, needHtml: false },
+          { pat: /mp4upload|mp4upload\.com/i, fn: null, needHtml: false },
+          { pat: /streamlare|streamlare\.com/i, fn: null, needHtml: false },
+          { pat: /jawcloud|jaw\.cloud/i, fn: null, needHtml: false },
+          { pat: /vudeo|vudeo\.net/i, fn: null, needHtml: false },
+          { pat: /cloudvideo|cloudvideo\.tv|vidcloud/i, fn: null, needHtml: false }
+        ];
+        for (const rule of hostRules) {
+          if (rule.pat.test(host)) {
+            if (rule.needHtml) {
+              html = html || (yield htmlText(embedUrl, { headers: { "Referer": referer || embedUrl } }));
+              if (!html) {
+                embedCache.set(embedUrl, null);
+                return null;
+              }
+            }
+            if (rule.fn) {
+              result = yield rule.fn(html || "", embedUrl);
+              if (result) {
+                result = result.startsWith("//") ? "https:" + result : result;
+                embedCache.set(embedUrl, result);
+                return result;
+              }
+            }
+            break;
+          }
+        }
+        html = html || (yield htmlText(embedUrl, { headers: { "Referer": referer || embedUrl } }));
+        if (html) {
+          result = yield tryResolveGeneric(embedUrl, referer);
+          if (!result) {
+            const jw = yield tryResolveJWPlayer(html, referer);
+            result = jw ? jw.startsWith("//") ? "https:" + jw : jw : null;
+          }
+        }
+        if (result) result = result.startsWith("//") ? "https:" + result : result;
+        embedCache.set(embedUrl, result || null);
+        return result;
+      });
+    }
+    function clearCache() {
+      embedCache.clear();
+    }
+    module2.exports = { resolveEmbed, tryResolveJWPlayer, tryResolveGeneric, clearCache };
+  }
+});
+
 // src/alfa-providers/engine.js
 var require_engine = __commonJS({
   "src/alfa-providers/engine.js"(exports2, module2) {
     var cheerio = require("cheerio-without-node-native") || require("cheerio");
     var crypto = require("crypto");
+    var { resolveEmbed } = require_embed_resolver();
     var anubisCookieCache = /* @__PURE__ */ new Map();
     function parseSetCookie(sc) {
       if (!sc) return "";
@@ -1666,49 +2052,10 @@ var require_engine = __commonJS({
         return results;
       });
     }
-    var embedCache = /* @__PURE__ */ new Map();
     function tryResolveEmbedToDirect(embedUrl, referer) {
       return __async(this, null, function* () {
-        if (!embedUrl || embedCache.has(embedUrl)) return embedCache.get(embedUrl) || null;
-        try {
-          const ctrl = new AbortController();
-          const t = setTimeout(() => ctrl.abort(), 3e3);
-          const res = yield fetch(embedUrl, {
-            headers: { "User-Agent": UA2, "Referer": referer || embedUrl, "Accept": "text/html,*/*" },
-            signal: ctrl.signal
-          });
-          clearTimeout(t);
-          if (!res.ok) {
-            embedCache.set(embedUrl, null);
-            return null;
-          }
-          const html = yield res.text();
-          let directUrl = null;
-          const m3u8 = html.match(/https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*/i);
-          if (m3u8) directUrl = m3u8[0];
-          if (!directUrl) {
-            const mp4 = html.match(/https?:\/\/[^"'\s<>]+\.mp4[^"'\s<>]*/i);
-            if (mp4) directUrl = mp4[0];
-          }
-          if (!directUrl) {
-            const srcKey = html.match(/["'](?:src|file)["']\s*:\s*["']([^"']+\.(?:m3u8|mp4)[^"']*)["']/i);
-            if (srcKey) directUrl = srcKey[1];
-          }
-          if (!directUrl) {
-            const hlsKey = html.match(/["'](?:url|src)["']\s*:\s*["']([^"']+)["'][\s\S]{0,200}["'](?:application\/x-mpegURL|hls)["']/i);
-            if (hlsKey) directUrl = hlsKey[1];
-          }
-          if (directUrl) {
-            if (directUrl.startsWith("//")) directUrl = "https:" + directUrl;
-            embedCache.set(embedUrl, directUrl);
-            return directUrl;
-          }
-          embedCache.set(embedUrl, null);
-          return null;
-        } catch (e) {
-          embedCache.set(embedUrl, null);
-          return null;
-        }
+        if (!embedUrl) return null;
+        return resolveEmbed(embedUrl, referer);
       });
     }
     function detectServer2(url) {
@@ -1734,8 +2081,7 @@ var require_engine = __commonJS({
         ["streampe", /streampe/i],
         ["gvideo", /drive\.google|googlevideo/i],
         ["mega", /mega\.nz/i],
-        ["wolfmax", /wolfmax/i],
-        ["youtube", /youtube|youtu\.be/i]
+        ["wolfmax", /wolfmax/i]
       ];
       for (const [name, re] of patterns) {
         if (re.test(url)) return name;

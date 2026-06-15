@@ -718,7 +718,7 @@ function detectServer(url) {
     ['vidhide', /vidhide|vidpro/i], ['voe', /voe\.sx/i], ['mystream', /mystream/i],
     ['netutv', /netu\.tv/i], ['yourupload', /yourupload/i], ['jawcloud', /jawcloud/i],
     ['streampe', /streampe/i], ['gvideo', /drive\.google|googlevideo/i],
-    ['mega', /mega\.nz/i], ['wolfmax', /wolfmax/i], ['youtube', /youtube|youtu\.be/i]
+    ['mega', /mega\.nz/i], ['wolfmax', /wolfmax/i]
   ];
   for (const [name, re] of patterns) {
     if (re.test(url)) return name;
