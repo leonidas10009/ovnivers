@@ -39,8 +39,8 @@ Tras cada fetch de embed, se ejecuta el resolvedor `tryResolveEmbedToDirect()` q
 | Categoria | Activos | Providers destacados |
 |---|---|---|
 | **Películas** | ~29 | CineCalidad, PelisPedia, PoseidonHD, WolfMax4K + iframe providers |
-| **Series** | ~17 | DoramasYT, FullSerieHD, PelisPedia, PoseidonHD, WolfMax4K + iframe |
-| **Anime** | 10 | AnimeFLV, JKAnime, TioAnime + iframe/jsvar providers |
+| **Series** | ~21 | DoramasYT, FullSerieHD, PelisPedia, PoseidonHD, WolfMax4K + iframe |
+| **Anime** | 11 | AnimeFLV, JKAnime, TioAnime + iframe/jsvar providers |
 | **Documentales** | 3 | AreaDocumental, DocumentalesOnline, EliteTorrent |
 
 **Idiomas:** Castellano, Latino, VOSE, English, Japanese, Korean, Hindi, Portuguese.
@@ -83,7 +83,7 @@ Los torrents se entregan como streams con `infoHash` — NuvioTV los reproduce v
 | VidSrc | ❌ | Fetch fails desde servidores |
 | PoseidonHD | ❌ | Next.js no resoluble server-side |
 
-> **EZTV**, **Cuevana2**, **Hermes scrapers (62)**: todos rotos/bloqueados desde Render. Mantenidos por compatibilidad legacy.
+> **EZTV**, **Cuevana2**, **Hermes scrapers (61)**: todos rotos/bloqueados desde Render. Mantenidos por compatibilidad legacy.
 
 ## Endpoints
 
@@ -196,7 +196,7 @@ node build.js    # Build de scrapers desde src/
 - **Fix crítico**: `require('./providers/alfa-providers')` devolvía `{__esModule, default: fn}` pero se esperaba la función directa — Alfa providers (80+ scrapers ES) nunca se ejecutaban desde el manifiesto.
 - **Selectores actualizados**: 35 providers ahora funcionales (vs 0). Patrón principal: sitios WordPress cambiaron de `<article>` a `<li>` en resultados de búsqueda.
 - **Nuevo tipo `iframe-chain`**: Resolución en 2 pasos para sitios con iframes anidados — extrae `data-src` → fetch embed page → iframe src real (ej. PelisPedia → fastream.to).
-- **Torrentio**: Añadido `es`, `cast`, `lat` a contentLanguage. Disponible para usuarios español.
+- **Torrentio**: Añadido al manifiesto como scraper Hermes (en, hi). Disponible vía local providers si el usuario activa exposeLocalScrapers.
 - **Bundle**: `alfa-providers.js` regenerado con esbuild.
 - **Docs**: Versiones sincronizadas a 1.4.19
 
