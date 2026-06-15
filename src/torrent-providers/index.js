@@ -297,6 +297,26 @@ async function scrapeSolidTorrents(query) {
   } catch { return []; }
 }
 
+// ─── Detail page resolver ──────────────────
+
+async function resolveDetailMagnet(detailUrl) {
+  try {
+    const html = await fetchHTML(detailUrl);
+    if (!html) return null;
+    const $ = cheerio.load(html);
+    const magnet = $('a[href^="magnet:"]').first().attr('href');
+    if (magnet) {
+      const infoHash = magnet.match(/btih:([a-fA-F0-9]{40})/i)?.[1]?.toLowerCase();
+      return { magnet, infoHash: infoHash || '' };
+    }
+    const torrentLink = $('a[href$=".torrent"]').first().attr('href');
+    if (torrentLink) {
+      return { magnet: '', infoHash: '', torrentUrl: torrentLink.startsWith('http') ? torrentLink : new URL(torrentLink, detailUrl).href };
+    }
+    return null;
+  } catch { return null; }
+}
+
 // ─── LimeTorrents ──────────────────────────
 
 async function scrapeLimeTorrents(query) {
@@ -324,6 +344,17 @@ async function scrapeLimeTorrents(query) {
         sizeFormatted: sizeText,
       });
     });
+    // Resolve detail pages for top results (max 5 to avoid too many requests)
+    const toResolve = results.slice(0, 5).filter(r => r.detailUrl && !r.magnet);
+    if (toResolve.length) {
+      const resolved = await Promise.allSettled(toResolve.map(r => resolveDetailMagnet(r.detailUrl)));
+      for (let i = 0; i < toResolve.length; i++) {
+        if (resolved[i].status === 'fulfilled' && resolved[i].value) {
+          toResolve[i].magnet = resolved[i].value.magnet || '';
+          toResolve[i].infoHash = resolved[i].value.infoHash || '';
+        }
+      }
+    }
     return results;
   } catch { return []; }
 }
@@ -368,7 +399,20 @@ async function scrape1337x(query) {
           verified: $(row).find('.vip, .trusted').length > 0,
         });
       });
-      if (results.length) return results;
+      if (results.length) {
+        // Resolve detail pages for top results (max 5)
+        const toResolve = results.slice(0, 5).filter(r => r.detailUrl && !r.magnet);
+        if (toResolve.length) {
+          const resolved = await Promise.allSettled(toResolve.map(r => resolveDetailMagnet(r.detailUrl)));
+          for (let i = 0; i < toResolve.length; i++) {
+            if (resolved[i].status === 'fulfilled' && resolved[i].value) {
+              toResolve[i].magnet = resolved[i].value.magnet || '';
+              toResolve[i].infoHash = resolved[i].value.infoHash || '';
+            }
+          }
+        }
+        return results;
+      }
     } catch {}
   }
   return [];

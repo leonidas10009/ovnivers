@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.6.4
+ * Ovnivers — Stremio Addon Backend v1.6.5
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
@@ -37,7 +37,7 @@ const { StreamPipeline } = require('./src/stream-pipeline/index');
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.6.4';
+const VERSION = '1.6.5';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 const PIGAMER = 'https://pigamer37.alwaysdata.net';
@@ -82,6 +82,28 @@ let HttpsProxyAgent;
 if (PROXY_URL) {
   try { HttpsProxyAgent = require('https-proxy-agent').HttpsProxyAgent; } catch {}
 }
+// Domains that use Anubis PoW — route DIRECT (bypass proxy)
+// The Anubis solver in engine.js works with direct access but the proxy
+// breaks the cookie chain (Worker receives challenge, backend solves it,
+// but auth cookie stays in backend, not in Worker)
+const PROXY_BYPASS_DOMAINS = new Set(
+  (process.env.PROXY_BYPASS_DOMAINS || 'dontorrent.support,dontorrent.fit,www43.mejortorrent.eu,grantorrent.zip,divxtotal.foo,wolfmax4k.com,pelispanda.org,elitetorrent.biz,mitorrent.mx,hacktorrent.to,bloghorror.com')
+    .split(',')
+    .map(d => d.trim().toLowerCase())
+    .filter(Boolean)
+);
+
+function shouldBypassProxy(urlStr) {
+  try {
+    const hostname = new URL(urlStr).hostname.toLowerCase();
+    if (PROXY_BYPASS_DOMAINS.has(hostname)) return true;
+    for (const d of PROXY_BYPASS_DOMAINS) {
+      if (hostname.endsWith('.' + d)) return true;
+    }
+  } catch {}
+  return false;
+}
+
 if (PROXY_URL) {
   const origFetch = global.fetch;
   const isWorkerProxy = PROXY_URL.includes('workers.dev') || PROXY_URL.includes('worker');
@@ -94,18 +116,26 @@ if (PROXY_URL) {
       else if (input && typeof input.url === 'string') urlStr = input.url;
       else urlStr = String(input);
       if (urlStr.startsWith('http:') || urlStr.startsWith('https:')) {
+        if (shouldBypassProxy(urlStr)) return origFetch(urlStr, init);
         return origFetch(`${proxyBase}/?url=${encodeURIComponent(urlStr)}`, init);
       }
       return origFetch(input, init);
     };
   } else if (HttpsProxyAgent) {
     global.fetch = async (input, init = {}) => {
+      let urlStr;
+      if (typeof input === 'string') urlStr = input;
+      else if (input instanceof URL) urlStr = input.href;
+      else if (input && typeof input.url === 'string') urlStr = input.url;
+      else urlStr = String(input);
+      if (shouldBypassProxy(urlStr)) return origFetch(input, init);
       if (!init.agent) init.agent = new HttpsProxyAgent(PROXY_URL);
       return origFetch(input, init);
     };
   }
   const mode = isWorkerProxy ? 'Cloudflare Worker' : 'HTTP proxy';
-  console.log(`[proxy] All fetch() routed through ${mode}: ${PROXY_URL}`);
+  const bypassCount = PROXY_BYPASS_DOMAINS.size;
+  console.log(`[proxy] All fetch() routed through ${mode}: ${PROXY_URL} (${bypassCount} domains bypassed)`);
 }
 
 const LOCAL_PROVIDER_TIMEOUT = Number(process.env.LOCAL_PROVIDER_TIMEOUT || 10000);
@@ -1286,7 +1316,18 @@ async function handleStream(req, res, type, id) {
           imdbId = metaEN.imdb_id || null;
         }
       } else if (rawId.startsWith('tt')) {
-        imdbId = rawId; searchTitle = rawId.replace(/^tt0*/, '');
+        imdbId = rawId;
+        const metaEN = await withTimeout(
+          fetchAPI(`https://api.themoviedb.org/3/find/${rawId}?api_key=${TMDB_KEY}&external_source=imdb_id`),
+          4000
+        );
+        if (metaEN) {
+          const result = metaEN[mediaType === 'tv' ? 'tv_results' : 'movie_results']?.[0];
+          if (result) {
+            searchTitle = result.title || result.name || '';
+            year = parseInt((result.release_date || result.first_air_date || '').substring(0, 4)) || null;
+          }
+        }
       }
     } catch {}
     if (searchTitle.length < 2) return results;
