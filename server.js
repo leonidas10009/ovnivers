@@ -28,7 +28,7 @@ const { StreamPipeline } = require('./src/stream-pipeline/index');
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.6.1';
+const VERSION = '1.6.2';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 const PIGAMER = 'https://pigamer37.alwaysdata.net';
@@ -205,48 +205,63 @@ function parseSources(data) {
   return [];
 }
 
-function parse2embedHTML(html) {
+function isValidEmbedUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  try {
+    const u = new URL(url.startsWith('//') ? 'https:' + url : url);
+    const host = u.hostname;
+    const path = u.pathname + u.search;
+
+    if (/api\.|\.api\b/.test(host) || /\/api\b/.test(path)) return false;
+    if (/google\.|facebook\.|twitter\.|cloudflare|sharethis|amung\.us|googletagmanager/i.test(host)) return false;
+    if (/\b(search|trending|similar)\b/i.test(path)) return false;
+    if (path === '/' || path === '' || /^\/\w{0,3}$/.test(path)) return false;
+    if (/\.(css|js|svg|png|jpg|webp|woff|ttf)\b/i.test(path)) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function parse2embedHTML(html, mirrorName) {
   if (!html || typeof html !== 'string') return [];
   const streams = [];
   const seen = new Set();
+  const label = mirrorName || '2embed';
 
-  const m3u8Re = /https?:\/\/[^"'\s<>(){}[\]]+\.m3u8[^"'\s<>(){}[\]]*/gi;
-  const mp4Re = /https?:\/\/[^"'\s<>(){}[\]]+\.mp4[^"'\s<>(){}[\]]*/gi;
+  const urlRe = /https?:\/\/[^"'\s<>(){}[\]]+/gi;
   const iframeRe = /<iframe[^>]+src=["']([^"']+)["']/gi;
-  const jsUrlRe = /(?:file|src|url|source|videoSrc|streamUrl)\s*[:=]\s*["']([^"']+)["']/gi;
-  const dataSrcRe = /data-(?:src|file|url|video)=["']([^"']+)["']/gi;
-  const jsonBlockRe = /"((?:https?:)?\/\/[^"]+(?:m3u8|mp4|mkv|embed|hls)[^"]*)"/gi;
+  const jsUrlRe = /(?:file|src|url|source|videoSrc|streamUrl|playlist)\s*[:=]\s*["']([^"']+)["']/gi;
+
+  const isVideoExt = (u) => /\.(m3u8|mp4|mkv|webm|avi)(\?|$)/i.test(u);
+  const isEmbedPage = (u) => /\/(embed|e|player|play|watch)\b/i.test(u);
+  const shouldKeep = (urlStr) => {
+    if (!isValidEmbedUrl(urlStr)) return false;
+    return isVideoExt(urlStr) || (isEmbedPage(urlStr) && !urlStr.includes('.js'));
+  };
 
   let m;
-  while ((m = m3u8Re.exec(html)) !== null) {
-    if (!seen.has(m[0])) { seen.add(m[0]); streams.push({ name: 'Adaptive', description: '2embed', url: m[0], behaviorHints: { notWebReady: true } }); }
+  while ((m = urlRe.exec(html)) !== null) {
+    const url = m[0].replace(/[)'"}>[\]]+$/, '');
+    if (!shouldKeep(url) || seen.has(url)) continue;
+    seen.add(url);
+    const quality = isVideoExt(url) ? (url.includes('m3u8') ? 'Adaptive' : 'HD') : 'Embed';
+    streams.push({ name: `${label}\n${quality}`, url, behaviorHints: { notWebReady: !isVideoExt(url) } });
   }
-  while ((m = mp4Re.exec(html)) !== null) {
-    if (!seen.has(m[0])) { seen.add(m[0]); streams.push({ name: 'HD', description: '2embed', url: m[0], behaviorHints: { notWebReady: true } }); }
-  }
+
   while ((m = iframeRe.exec(html)) !== null) {
     const src = m[1];
-    if (src && !seen.has(src) && (src.includes('m3u8') || src.includes('mp4') || src.includes('embed') || src.includes('player') || src.includes('stream'))) {
-      seen.add(src); streams.push({ name: 'HD', description: '2embed', url: src, behaviorHints: { notWebReady: true } });
+    if (src && !seen.has(src) && (src.includes('embed') || src.includes('player') || src.includes('stream') || isVideoExt(src))) {
+      seen.add(src);
+      streams.push({ name: `${label} (iframe)\nEmbed`, url: src, behaviorHints: { notWebReady: true } });
     }
   }
+
   while ((m = jsUrlRe.exec(html)) !== null) {
     const url = m[1];
-    if (url && url.startsWith('http') && !seen.has(url)) {
-      seen.add(url); streams.push({ name: 'HD', description: '2embed', url: url, behaviorHints: { notWebReady: true } });
-    }
-  }
-  while ((m = dataSrcRe.exec(html)) !== null) {
-    const url = m[1];
-    if (url && url.startsWith('http') && !seen.has(url)) {
-      seen.add(url); streams.push({ name: 'HD', description: '2embed', url: url, behaviorHints: { notWebReady: true } });
-    }
-  }
-  while ((m = jsonBlockRe.exec(html)) !== null) {
-    const url = m[1];
-    const fullUrl = url.startsWith('//') ? 'https:' + url : url;
-    if (!seen.has(fullUrl)) {
-      seen.add(fullUrl); streams.push({ name: 'HD', description: '2embed', url: fullUrl, behaviorHints: { notWebReady: true } });
+    if (url && !seen.has(url) && shouldKeep(url) && !url.includes('.js')) {
+      seen.add(url);
+      streams.push({ name: `${label}\n${url.includes('m3u8') ? 'Adaptive' : 'HD'}`, url, behaviorHints: { notWebReady: !isVideoExt(url) } });
     }
   }
 
@@ -373,11 +388,12 @@ async function scrape2embed(rawId, mediaType, season, episode) {
         const sources = parseSources(data);
         for (const s of sources) {
           const streamUrl = s.url || s.file || s.link || s.src || s.stream || '';
-          if (streamUrl) {
+          if (streamUrl && isValidEmbedUrl(streamUrl)) {
+            const q = s.quality || s.label || s.resolution || 'HD';
             results.push({
-              name: s.quality || s.label || s.resolution || 'HD',
-              description: mirror.name,
+              name: `${mirror.name}\n${q}${s.lang ? ' ' + s.lang : ''}`,
               url: streamUrl,
+              ...(s.lang ? { description: s.lang } : {}),
               behaviorHints: { notWebReady: true }
             });
           }
@@ -387,9 +403,9 @@ async function scrape2embed(rawId, mediaType, season, episode) {
 
       // Parse HTML response
       if (typeof data === 'string' && data.length > 500) {
-        const htmlStreams = parse2embedHTML(data);
+        const htmlStreams = parse2embedHTML(data, mirror.name);
         if (htmlStreams.length) {
-          results.push(...htmlStreams.map(s => ({ ...s, description: mirror.name })));
+          results.push(...htmlStreams);
           break;
         }
       }
@@ -441,8 +457,9 @@ async function scrapePoseidonHD(rawId, mediaType) {
           if (Array.isArray(arr)) {
             for (const p of arr) {
               if (p.result) streams.push({
-                name: p.quality || 'HD', description: lang,
-                url: p.result, behaviorHints: { notWebReady: true }
+                name: `PoseidonHD\n${p.quality || 'HD'}${lang ? ' ' + lang : ''}`,
+                description: lang, url: p.result,
+                behaviorHints: { notWebReady: true }
               });
             }
           }
