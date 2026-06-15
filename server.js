@@ -187,16 +187,26 @@ function cacheSet(cache, key, value, max) {
   cache.set(key, value);
 }
 
+const PROXY_URL = process.env.PROXY_URL || '';
+let HttpsProxyAgent;
+if (PROXY_URL) {
+  try { HttpsProxyAgent = require('https-proxy-agent').HttpsProxyAgent; } catch {}
+}
+
 // ─── Helpers ──────────────────────────────
 
 async function fetchAPI(url, opts = {}, timeout = 15000) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeout);
   try {
-    const res = await fetch(url, {
+    const fetchOpts = {
       headers: { 'User-Agent': UA, 'Accept': '*/*', ...opts.headers },
       signal: ctrl.signal, ...opts
-    });
+    };
+    if (PROXY_URL && HttpsProxyAgent) {
+      fetchOpts.agent = new HttpsProxyAgent(PROXY_URL);
+    }
+    const res = await fetch(url, fetchOpts);
     if (!res.ok) return null;
     const text = await res.text();
     try { return JSON.parse(text); } catch { return text; }
