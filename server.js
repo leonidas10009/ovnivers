@@ -10,6 +10,13 @@ const path = require('path');
 const fs = require('fs');
 const cheerio = require('cheerio');
 
+// Inyectar globals para scrapers Hermes (disenados para motor Hermes de NuvioTV)
+// Hermes inyecta cheerio y CryptoJS como variables globales en el motor JS
+global.cheerio = cheerio;
+global['cheerio-without-node-native'] = cheerio;
+global['react-native-cheerio'] = cheerio;
+try { global.CryptoJS = require('crypto-js'); } catch {}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
