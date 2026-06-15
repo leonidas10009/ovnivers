@@ -23,6 +23,7 @@ const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
 const catalog = require('./src/catalog/index');
 const torrentIndex = require('./src/torrent-providers/index');
+const { resolveEmbed } = require('./src/alfa-providers/embed-resolver');
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
@@ -1219,11 +1220,14 @@ async function handleStream(req, res, type, id) {
     let year = null;
     try {
       if (rawId.match(/^\d+$/)) {
-        const meta = await withTimeout(getTMDbMeta(rawId, mediaType), 4000);
-        if (meta) {
-          searchTitle = meta.title || meta.name || '';
-          year = parseInt((meta.release_date || meta.first_air_date || '').substring(0, 4)) || null;
-          imdbId = meta.imdb_id || null;
+        // Buscar con titulo EN ENGLISH (indexers no tienen titulos en espanol)
+        const [metaEN] = await Promise.allSettled([
+          withTimeout(fetchAPI(`https://api.themoviedb.org/3/${mediaType==='tv'?'tv':'movie'}/${rawId}?api_key=${TMDB_KEY}&language=en`), 4000),
+        ]);
+        if (metaEN.status === 'fulfilled' && metaEN.value) {
+          searchTitle = metaEN.value.title || metaEN.value.name || '';
+          year = parseInt((metaEN.value.release_date || metaEN.value.first_air_date || '').substring(0, 4)) || null;
+          imdbId = metaEN.value.imdb_id || null;
         }
       } else if (rawId.startsWith('tt')) {
         imdbId = rawId;
@@ -1283,6 +1287,28 @@ async function handleStream(req, res, type, id) {
 
   const uniqueStreams = dedupeStreams(streams).slice(0, MAX_STREAM_RESULTS);
   console.log(`[stream] ${type}/${id} → ${uniqueStreams.length} unique (${streams.length} raw)`);
+
+  // ── Post-pipeline: resolver embeds pendientes a URLs directas ──
+  const unresolved = uniqueStreams.filter(s => s.url && !s.infoHash && s.behaviorHints?.notWebReady);
+  if (unresolved.length > 0) {
+    const toResolve = unresolved.slice(0, 12);
+    const resolved = await Promise.allSettled(
+      toResolve.map(s => resolveEmbed(s.url, BASE_URL))
+    );
+    let count = 0;
+    for (let i = 0; i < toResolve.length; i++) {
+      if (resolved[i].status === 'fulfilled' && resolved[i].value) {
+        const directUrl = resolved[i].value;
+        if (/\.(m3u8|mp4)/i.test(directUrl)) {
+          toResolve[i].url = directUrl;
+          toResolve[i].behaviorHints = { ...toResolve[i].behaviorHints, notWebReady: false };
+          count++;
+        }
+      }
+    }
+    if (count > 0) console.log(`[stream] resolved ${count} embeds → direct ExoPlayer`);
+  }
+
   if (!isAnime) cacheSet(streamCache, ck, { data: uniqueStreams, time: Date.now() }, MAX_CACHE);
 
   const filtered = filterStreams(uniqueStreams, config);

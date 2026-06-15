@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-15T09:17:14.383Z
+ * Generated: 2026-06-15T10:02:49.162Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -224,19 +224,6 @@ var require_providers = __commonJS({
         videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
       },
       {
-        name: "estrenoscinesaa",
-        title: "EstrenosCinesaa",
-        baseUrl: "https://www.estrenoscinesaa.com",
-        categories: ["movie", "tvshow"],
-        language: ["cast"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h3", linkSelector: "a" },
-        // <-- fixed
-        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", defaultQuality: "HD", srcAttr: "src" }
-        // <-- fixed
-      },
-      {
         name: "flizzmovies",
         title: "FlizzMovies",
         baseUrl: "https://flizzmovies.com",
@@ -293,19 +280,6 @@ var require_providers = __commonJS({
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         episodes: { type: "post", url: null, seasonParam: "season", episodeParam: "episode", extraParams: { action: "season", show: null }, episodeSelector: "a" },
         videos: { type: "iframe", containerSelector: ".player-container", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "homecine",
-        title: "HomeCine",
-        baseUrl: "https://www3.homecine.to",
-        categories: ["movie", "tvshow", "direct"],
-        language: ["lat", "cast"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "div.ml-item", titleSelector: "h2", linkSelector: "a" },
-        // <-- fixed
-        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", defaultQuality: "HD", srcAttr: "src" }
-        // <-- fixed
       },
       {
         name: "legalmentegratis",
