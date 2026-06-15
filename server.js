@@ -1196,7 +1196,8 @@ async function handleStream(req, res, type, id) {
     } catch {}
   }
 
-  const ck = cacheKey(type, id, `${season}:${episode}`);
+  const configKey = `${config.quality}|${(config.langs||[]).join(',')}|${config.enableBackend}|${config.enableLocal}`;
+  const ck = cacheKey(type, id, `${season}:${episode}_${configKey}`);
   if (!isAnime) {
     const cached = streamCache.get(ck);
     if (cached && Date.now() - cached.time < CACHE_TTL) {
