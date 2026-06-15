@@ -199,14 +199,19 @@ async function fetchAPI(url, opts = {}, timeout = 15000) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeout);
   try {
+    let fetchUrl = url;
     const fetchOpts = {
       headers: { 'User-Agent': UA, 'Accept': '*/*', ...opts.headers },
       signal: ctrl.signal, ...opts
     };
-    if (PROXY_URL && HttpsProxyAgent) {
-      fetchOpts.agent = new HttpsProxyAgent(PROXY_URL);
+    if (PROXY_URL) {
+      if (PROXY_URL.includes('workers.dev') || PROXY_URL.includes('worker')) {
+        fetchUrl = `${PROXY_URL.replace(/\/+$/, '')}/?url=${encodeURIComponent(url)}`;
+      } else if (HttpsProxyAgent) {
+        fetchOpts.agent = new HttpsProxyAgent(PROXY_URL);
+      }
     }
-    const res = await fetch(url, fetchOpts);
+    const res = await fetch(fetchUrl, fetchOpts);
     if (!res.ok) return null;
     const text = await res.text();
     try { return JSON.parse(text); } catch { return text; }
