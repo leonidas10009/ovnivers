@@ -15,49 +15,78 @@ Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fue
 
 | Funcionalidad | Detalle |
 |---|---|
-| **Torrent indexers** (6 fuentes) | GloDLS, Nyaa.si, SolidTorrents, LimeTorrents, 1337x (5 mirrors), EZTV — ~70+ magnets por búsqueda |
-| **Embed resolver** (11+ dominios) | streamwish, filemoon, doodstream, mixdrop, voe.sx, vidhide, ok.ru, streamtape, upstream, netu.tv, vidmoly + JWPlayer + genérico |
+| **Torrent indexers** (6 fuentes) | GloDLS, Nyaa.si, SolidTorrents, LimeTorrents, 1337x (5 mirrors), EZTV — ~70+ magnets por busqueda con metadata enriquecida (seeds, size, codec, audio, source) |
+| **Embed resolver** (11+ dominios) | streamwish, filemoon, doodstream, mixdrop, voe.sx, vidhide, ok.ru, streamtape, upstream, netu.tv, vidmoly + JWPlayer + generico |
 | **Pipeline unificado** | Orquestador central: circuit breaker (5 fallos = 5min off), dedup, post-resolver de embeds, scoring por idioma |
-| **Prioridad castellano** | Streams en español/latino/VOSE/dual aparecen primero por `computeLangScore()` |
+| **Prioridad castellano** | Streams en espanol/latino/VOSE/dual aparecen primero por `computeLangScore()` |
 | **Pigamer37** (proxy anime) | AnimeFLV, AnimeAV1, TioAnime, Henaojara — solo para anime detectado |
-| **Alfa Providers** (server-side) | 46 providers activos: peliculas, series, anime, documentales + torrents |
-| **Hermes scrapers** (server-side) | 27/61 funcionales en Node.js (inyección de globales cheerio/CryptoJS) |
-| **Alfa multi-título** | Busca por título EN + ES + JA + slug en paralelo |
+| **Alfa Providers** (server-side) | 42 providers activos (3 funcionales, 12 bloqueados por Turnstile, 4 con selectores wrong, resto sin resultados) |
+| **Hermes scrapers** (server-side) | 9/43 funcionales en Node.js (inyeccion de globales cheerio/CryptoJS). 19 deshabilitados (dominio muerto), 15 ofuscados sin streams |
+| **Alfa multi-titulo** | Busca por titulo EN + ES + JA + slug en paralelo |
 | **Backend scrapers** | 8 mirrors rotativos (2embed vesy/vsrc/skin/cc, VidSrc pro/icu/xyz, SuperEmbed) + PoseidonHD 3 dominios |
-| **notWebReady automático** | Streams directos (`.m3u8`/`.mp4`) + torrents (infoHash) → `notWebReady: false` (ExoPlayer) |
+| **notWebReady automatico** | Streams directos (`.m3u8`/`.mp4`) + torrents (infoHash) → `notWebReady: false` (ExoPlayer) |
 | **Config panel** | `/configure` — tipos, calidad, idiomas, scrapers on/off |
+| **Proxy inteligente** | Cloudflare Worker v2 con cookie jar, header forwarding, retry backoff. Bypass list para 11 dominios Anubis |
 
 ## Catalogs
 
 19 catálogos TMDB activos + 4 universales + 4 Amatsu anime: popular, trending, top-rated, search para movie/series/anime.
 IDs con prefijo `ovn:` para los catálogos propios y `tt:`/`tmdb:` para compatibilidad cross-addon (Torrentio, AnimeFLV, TMDB Community).
 
-## Alfa Providers (75 registrados, 46 activos)
+## Alfa Providers (75 registrados, 42 activos)
 
 Scraper unificado del addon **Alfa** de Kodi. Corre server-side en Node.js.
-Busca con multiples variantes del título (EN/ES/JA/slug) en paralelo.
+Busca con multiples variantes del titulo (EN/ES/JA/slug) en paralelo.
 
-Tras cada fetch de embed, se ejecuta el resolvedor `tryResolveEmbedToDirect()` que extrae URLs directas (`.m3u8`/`.mp4`) del HTML. Si tiene éxito, el stream se marca `notWebReady: false` (reproducible en ExoPlayer). Si falla, se conserva la URL embed con `notWebReady: true`.
+Tras cada fetch de embed, se ejecuta el resolvedor `tryResolveEmbedToDirect()` que extrae URLs directas (`.m3u8`/`.mp4`) del HTML. Si tiene exito, el stream se marca `notWebReady: false` (reproducible en ExoPlayer). Si falla, se conserva la URL embed con `notWebReady: true`.
 
-| Categoria | Activos | Providers destacados |
+### Estado real (audit 2026-06-15)
+
+| Categoria | Count | Detalle |
 |---|---|---|
-| **Películas** | ~29 | CineCalidad, PelisPedia, PoseidonHD, WolfMax4K + iframe providers |
-| **Series** | ~21 | DoramasYT, FullSerieHD, PelisPedia, PoseidonHD, WolfMax4K + iframe |
-| **Anime** | 11 | AnimeFLV, JKAnime, TioAnime + iframe/jsvar providers |
-| **Documentales** | 3 | AreaDocumental, DocumentalesOnline, EliteTorrent |
+| **Funcionando** | 3 | CineCalidad (5 videos), CineLibreOnline (10), PelisPedia (3) |
+| **Cloudflare Turnstile** | 12 | cine24h, detodopeliculas, doramasflix, doramedplay, pelisforte, wolfmax4k, doramasyt, eztv, estrenosanime, henaojara, sololatino, tiodonghua — requieren navegador real |
+| **Anubis PoW** | 1 | DonTorrent — funciona con bypass directo (sin proxy) |
+| **Selectores wrong** | 4 | DivXTotal, GranTorrent, MiTorrent, AllCalidad — buscan en selectores incorrectos |
+| **URL shorteners** | 3 | GranTorrent, MiTorrent, DivXTotal — .torrent detras de redirect (super-enlace.com, acortalink.net, short-info.link) |
+| **Sin resultados** | 8 | allcalidad, entrepeliculasyseries, lacartoons, hacktorrent, pelispanda, areadocumental, elitetorrent, mejortorrent |
+| **0 videos extraidos** | 10 | bloghorror, genteclic, gnula, legalmentegratis, mirapeliculas, poseidonhd, tubeonline, tubepelis, yandispoiler, fullseriehd, seriesretro |
+| **Dominio muerto/roto** | 3 | MejorTorrent (403→fixeado), EliteTorrent (vacio→fixeado), DoramasQueen (163B→deshabilitado) |
+| **Eliminado** | 1 | eCarteleraTrailers (YouTube trailers) |
+
+### Causas raiz
+
+1. **Cloudflare Turnstile (12 providers):** CAPTCHA que requiere JavaScript en navegador real. Sin solucion server-side.
+2. **URL shorteners (3 providers):** Los .torrent pasan por `super-enlace.com/s.php?i=...`, `acortalink.net/s.php?i=...`, `download_tt.php?u=<base64>`. El engine no sigue redirects ni decodifica base64.
+3. **Selectores desactualizados (4 providers):** DivXTotal usa `<tr>`, GranTorrent usa `div.relative`, MiTorrent usa `div.browse-movie-wrap`. Los selectores buscan `li`/`article`.
+4. **JS-dependiente (8+ providers):** AllCalidad, BlogHorror, EntrePeliculasYSeriais cargan resultados via JavaScript. Cheerio solo ve HTML estatico.
+
+## Hermes Scrapers (43 activos, 19 deshabilitados)
+
+Scrapers legacy del ecosistema Nuvio/Hermes. Mayormente ofuscados (`_0x` obfuscation).
+
+### Estado real (audit 2026-06-15)
+
+| Categoria | Count | Detalle |
+|---|---|---|
+| **Funcionando** | 9 | MovieBlast, Movix VF, PlayIMDb, StreamFlix, TopCartoons, Torrentio, MultiVid, VidLink, CorsaroViola |
+| **Completan pero 0 streams** | 15 | 4KHDHub-NEW, CineFreak, Dahmermovies, FibWatch, HindMoviez, MoviesDrive, MoviesMod, NetMirror, Peachify, VidFast, XPass, HDMovie2, ZinkMovies, OneTouchTV, VidEasy — ofuscados, no editables |
+| **Deshabilitados (dominio muerto)** | 19 | allmovieland, castle, cineby, cinemacity, cinetv, goatapi, hdhub4u, isaidub, lamovie, moviebox, movies4u, onlykdrama, kisskh, purstream, showbox, toflix, uhdmovies, vegamovies, vidsrc, vixsrc |
+| **Anime-only (sin probar)** | 10 | AllAnime, AllWish, AnimeKai, AnikotoTV, AnimePahe, AnimeSalt, Animetsu, AnimeWorld, AnimeSama, HiAnime |
+| **DooFlix** | 1 | Re-activado (dominio `dooflix.com` vivo) |
 
 **Idiomas:** Castellano, Latino, VOSE, English, Japanese, Korean, Hindi, Portuguese.
 
 **Servidores:** streamwish, filemoon, doodstream, streamtape, fembed, okru, mixdrop, upstream, netutv, vidmoly.
 
-**Estado real (~80 streams por película):**
+**Estado real (~80 streams por pelicula):**
 | Tipo | Funcional | Reproducible en |
 |---|---|---|
-| Torrent indexers (6 fuentes) | ✅ ~70+ magnets | NuvioTV ✅ (TorrentService nativo vía infoHash) |
+| Torrent indexers (6 fuentes) | ✅ ~70+ magnets | NuvioTV ✅ (TorrentService nativo via infoHash) |
 | Embed directo (11+ dominios resueltos) | ✅ ~10-20 streams | NuvioTV ✅ (URL directa `.m3u8`/`.mp4`) |
 | Embed sin resolver | ⚠️ requiere JS client-side | Stremio Desktop ✅ (WebView) / NuvioTV ❌ |
-| Backend scrapers (8 mirrors) | ⚠️ variable (bloqueo según mirror) | NuvioTV ✅ (si se resuelve) |
-| Hermes scrapers (27/61 funcionales) | ⚠️ 27 devuelven streams, 34 sin resultados | Variable |
+| Backend scrapers (8 mirrors) | ⚠️ variable (bloqueo segun mirror) | NuvioTV ✅ (si se resuelve) |
+| Hermes scrapers (9/43 funcionales) | ⚠️ 9 devuelven streams, 34 sin resultados | Variable |
 
 ## Torrent Indexers (6 fuentes)
 
