@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.6.5
+ * Ovnivers — Stremio Addon Backend v1.6.6
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
@@ -37,7 +37,7 @@ const { StreamPipeline } = require('./src/stream-pipeline/index');
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.6.5';
+const VERSION = '1.6.6';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 const PIGAMER = 'https://pigamer37.alwaysdata.net';
@@ -977,9 +977,26 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
     if (serverName) addLine(serverName);
   }
 
+  const hasInfoHash = !!stream.infoHash;
+
+  // Torrent metadata enrichment
+  if (hasInfoHash) {
+    const metaParts = [];
+    if (stream.source) metaParts.push(stream.source);
+    if (stream.codec) metaParts.push(stream.codec);
+    if (stream.audio) metaParts.push(stream.audio);
+    if (stream.isHDR) metaParts.push('HDR');
+    if (stream.isDV) metaParts.push('DV');
+    if (stream.isRemux) metaParts.push('Remux');
+    if (stream.isDualAudio) metaParts.push('Dual Audio');
+    if (stream.verified) metaParts.push('Verified');
+    if (metaParts.length) addLine(metaParts.join(' · '));
+    const statsLine = `Seeds: ${stream.seeds || 0} · Size: ${stream.sizeFormatted || '?'}`;
+    if (stream.seeds || stream.sizeFormatted) addLine(statsLine);
+  }
+
   const title = titleParts.join('\n');
 
-  const hasInfoHash = !!stream.infoHash;
   const isDirectMedia = !hasInfoHash && url && /\.(mp4|m3u8|mkv|webm|avi)(\?|$)/i.test(url);
   return {
     name,
@@ -990,6 +1007,16 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
     ...(stream.sources ? { sources: stream.sources } : {}),
     ...(stream.externalUrl ? { externalUrl: stream.externalUrl } : {}),
     ...(stream.file ? { file: stream.file } : {}),
+    ...(stream.seeds !== undefined ? { seeds: stream.seeds } : {}),
+    ...(stream.sizeFormatted ? { sizeFormatted: stream.sizeFormatted } : {}),
+    ...(stream.codec ? { codec: stream.codec } : {}),
+    ...(stream.audio ? { audio: stream.audio } : {}),
+    ...(stream.source ? { source: stream.source } : {}),
+    ...(stream.isHDR ? { isHDR: true } : {}),
+    ...(stream.isDV ? { isDV: true } : {}),
+    ...(stream.isRemux ? { isRemux: true } : {}),
+    ...(stream.isDualAudio ? { isDualAudio: true } : {}),
+    ...(stream.verified ? { verified: true } : {}),
     behaviorHints: {
       notWebReady: !hasInfoHash && !isDirectMedia,
       bingeGroup: `provider|${providerId}`,
@@ -1333,11 +1360,34 @@ async function handleStream(req, res, type, id) {
     if (searchTitle.length < 2) return results;
     try {
       const torrents = await torrentIndex.search(searchTitle, mediaType, imdbId, year, season, episode);
-      for (const t of torrents.slice(0, 12)) {
+      for (const t of torrents.slice(0, 15)) {
+        const metaParts = [];
+        if (t.source) metaParts.push(t.source);
+        if (t.codec) metaParts.push(t.codec);
+        if (t.audio) metaParts.push(t.audio);
+        if (t.isHDR) metaParts.push('HDR');
+        if (t.isDV) metaParts.push('DV');
+        if (t.isRemux) metaParts.push('Remux');
+        if (t.isDualAudio) metaParts.push('Dual Audio');
+        if (t.verified) metaParts.push('✓ Verified');
+        const metaLine = metaParts.join(' · ');
+        const statsLine = `👥 ${t.seeds || 0} seeds · 📦 ${t.sizeFormatted || '?'}`;
+        const qualityLine = `${t.quality || 'HD'}${t.isHDR ? ' HDR' : ''} · 👥${t.seeds || 0} · 📦${t.sizeFormatted || '?'}`;
         const s = normalizeStream({
           url: t.magnet, infoHash: t.infoHash,
-          name: `${t.indexer}\n${t.quality || 'HD'}${t.isHDR ? ' HDR' : ''}`,
-          title: t.title, quality: t.quality || 'HD',
+          name: `${t.indexer}\n${qualityLine}`,
+          title: [t.title, metaLine, statsLine].filter(Boolean).join('\n'),
+          quality: t.quality || 'HD',
+          seeds: t.seeds || 0,
+          sizeFormatted: t.sizeFormatted || '',
+          codec: t.codec || '',
+          audio: t.audio || '',
+          source: t.source || '',
+          isHDR: t.isHDR || false,
+          isDV: t.isDV || false,
+          isRemux: t.isRemux || false,
+          isDualAudio: t.isDualAudio || false,
+          verified: t.verified || false,
           sources: ['dht:' + t.infoHash],
           behaviorHints: { notWebReady: false },
         }, t.indexer.toLowerCase().replace(/[^a-z0-9]/g, ''), t.indexer);

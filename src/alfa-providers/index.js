@@ -161,51 +161,61 @@ async function scrapeAlfaProviders(type, id, season, episode) {
   if (!activeProviders.length) return [];
 
   const results = [];
-  const chunks = chunkArray(activeProviders, 8);
+  const chunks = chunkArray(activeProviders, 4);
+  const PER_PROVIDER_TIMEOUT = 10000;
 
   for (const chunk of chunks) {
     const chunkResults = await Promise.allSettled(
       chunk.map(async (provider) => {
+          const providerTimer = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('provider timeout')), PER_PROVIDER_TIMEOUT)
+          );
           try {
-            let pageUrl = null;
-            const validVariants = titleVariants.filter(tv => tv.title);
-            if (validVariants.length === 1) {
-              pageUrl = await searchProvider(provider, validVariants[0].title, validVariants[0].year, mediaType);
-            } else if (validVariants.length > 1) {
-              const searchResults = await Promise.allSettled(
-                validVariants.map(tv => searchProvider(provider, tv.title, tv.year, mediaType))
-              );
-              for (const r of searchResults) {
-                if (r.status === 'fulfilled' && r.value) { pageUrl = r.value; break; }
-              }
-            }
-            if (!pageUrl) return [];
+            const result = await Promise.race([
+              (async () => {
+                let pageUrl = null;
+                const validVariants = titleVariants.filter(tv => tv.title);
+                if (validVariants.length === 1) {
+                  pageUrl = await searchProvider(provider, validVariants[0].title, validVariants[0].year, mediaType);
+                } else if (validVariants.length > 1) {
+                  const searchResults = await Promise.allSettled(
+                    validVariants.map(tv => searchProvider(provider, tv.title, tv.year, mediaType))
+                  );
+                  for (const r of searchResults) {
+                    if (r.status === 'fulfilled' && r.value) { pageUrl = r.value; break; }
+                  }
+                }
+                if (!pageUrl) return [];
 
-          let targetUrl = pageUrl;
-          if ((category === 'tvshow' || category === 'anime') && season && episode) {
-            const epUrl = await getEpisodeUrl(provider, pageUrl, season, episode);
-            if (epUrl) targetUrl = epUrl;
-          }
+                let targetUrl = pageUrl;
+                if ((category === 'tvshow' || category === 'anime') && season && episode) {
+                  const epUrl = await getEpisodeUrl(provider, pageUrl, season, episode);
+                  if (epUrl) targetUrl = epUrl;
+                }
 
-          const videos = await extractVideos(provider, targetUrl);
-          if (!videos.length) return [];
+                const videos = await extractVideos(provider, targetUrl);
+                if (!videos.length) return [];
 
-          return videos.map(v => ({
-            name: `${provider.title}\n${v.server || detectServer(v.url)}`,
-            title: `${v.quality || 'HD'}\n⚙️ ${v.server || detectServer(v.url)}\n🔗 ${provider.title}`,
-            description: v.lang || (category === 'anime' && !(Array.isArray(provider.language) && provider.language.includes('*'))
-              ? [...new Set([...(Array.isArray(provider.language) ? provider.language : []), 'ja'])].join(',')
-              : (Array.isArray(provider.language) ? provider.language.join(',') : '')),
-            ...(v.url && !v.infoHash ? { url: v.url } : {}),
-            ...(v.infoHash ? { infoHash: v.infoHash } : {}),
-            ...(v.sources ? { sources: v.sources } : {}),
-            behaviorHints: {
-              notWebReady: !v.infoHash && v.server !== 'direct',
-              bingeGroup: `alfa|${provider.name}|${v.server || detectServer(v.url)}`,
-              ...(v.filename ? { filename: v.filename } : {})
-            }
-          }));
-        } catch { return []; }
+                return videos.map(v => ({
+                  name: `${provider.title}\n${v.server || detectServer(v.url)}`,
+                  title: `${v.quality || 'HD'}\n⚙️ ${v.server || detectServer(v.url)}\n🔗 ${provider.title}`,
+                  description: v.lang || (category === 'anime' && !(Array.isArray(provider.language) && provider.language.includes('*'))
+                    ? [...new Set([...(Array.isArray(provider.language) ? provider.language : []), 'ja'])].join(',')
+                    : (Array.isArray(provider.language) ? provider.language.join(',') : '')),
+                  ...(v.url && !v.infoHash ? { url: v.url } : {}),
+                  ...(v.infoHash ? { infoHash: v.infoHash } : {}),
+                  ...(v.sources ? { sources: v.sources } : {}),
+                  behaviorHints: {
+                    notWebReady: !v.infoHash && v.server !== 'direct',
+                    bingeGroup: `alfa|${provider.name}|${v.server || detectServer(v.url)}`,
+                    ...(v.filename ? { filename: v.filename } : {})
+                  }
+                }));
+              })(),
+              providerTimer
+            ]);
+            return result;
+          } catch { return []; }
       })
     );
     for (const r of chunkResults) {
