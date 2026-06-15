@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.6.3
+ * Ovnivers — Stremio Addon Backend v1.6.4
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
@@ -37,7 +37,7 @@ const { StreamPipeline } = require('./src/stream-pipeline/index');
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.6.3';
+const VERSION = '1.6.4';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 const PIGAMER = 'https://pigamer37.alwaysdata.net';
@@ -75,6 +75,39 @@ try {
 } catch (e) {
   console.warn('Could not load scrapers from manifest.json:', e.message);
 }
+
+// ─── Proxy setup: route ALL fetch() calls through proxy ──────
+const PROXY_URL = process.env.PROXY_URL || '';
+let HttpsProxyAgent;
+if (PROXY_URL) {
+  try { HttpsProxyAgent = require('https-proxy-agent').HttpsProxyAgent; } catch {}
+}
+if (PROXY_URL) {
+  const origFetch = global.fetch;
+  const isWorkerProxy = PROXY_URL.includes('workers.dev') || PROXY_URL.includes('worker');
+  const proxyBase = PROXY_URL.replace(/\/+$/, '');
+  if (isWorkerProxy) {
+    global.fetch = async (input, init = {}) => {
+      let urlStr;
+      if (typeof input === 'string') urlStr = input;
+      else if (input instanceof URL) urlStr = input.href;
+      else if (input && typeof input.url === 'string') urlStr = input.url;
+      else urlStr = String(input);
+      if (urlStr.startsWith('http:') || urlStr.startsWith('https:')) {
+        return origFetch(`${proxyBase}/?url=${encodeURIComponent(urlStr)}`, init);
+      }
+      return origFetch(input, init);
+    };
+  } else if (HttpsProxyAgent) {
+    global.fetch = async (input, init = {}) => {
+      if (!init.agent) init.agent = new HttpsProxyAgent(PROXY_URL);
+      return origFetch(input, init);
+    };
+  }
+  const mode = isWorkerProxy ? 'Cloudflare Worker' : 'HTTP proxy';
+  console.log(`[proxy] All fetch() routed through ${mode}: ${PROXY_URL}`);
+}
+
 const LOCAL_PROVIDER_TIMEOUT = Number(process.env.LOCAL_PROVIDER_TIMEOUT || 10000);
 const LOCAL_PROVIDER_CONCURRENCY = Number(process.env.LOCAL_PROVIDER_CONCURRENCY || 6);
 const STREAM_GLOBAL_TIMEOUT = Number(process.env.STREAM_GLOBAL_TIMEOUT || 18000);
@@ -187,31 +220,16 @@ function cacheSet(cache, key, value, max) {
   cache.set(key, value);
 }
 
-const PROXY_URL = process.env.PROXY_URL || '';
-let HttpsProxyAgent;
-if (PROXY_URL) {
-  try { HttpsProxyAgent = require('https-proxy-agent').HttpsProxyAgent; } catch {}
-}
-
 // ─── Helpers ──────────────────────────────
 
 async function fetchAPI(url, opts = {}, timeout = 15000) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeout);
   try {
-    let fetchUrl = url;
-    const fetchOpts = {
+    const res = await fetch(url, {
       headers: { 'User-Agent': UA, 'Accept': '*/*', ...opts.headers },
       signal: ctrl.signal, ...opts
-    };
-    if (PROXY_URL) {
-      if (PROXY_URL.includes('workers.dev') || PROXY_URL.includes('worker')) {
-        fetchUrl = `${PROXY_URL.replace(/\/+$/, '')}/?url=${encodeURIComponent(url)}`;
-      } else if (HttpsProxyAgent) {
-        fetchOpts.agent = new HttpsProxyAgent(PROXY_URL);
-      }
-    }
-    const res = await fetch(fetchUrl, fetchOpts);
+    });
     if (!res.ok) return null;
     const text = await res.text();
     try { return JSON.parse(text); } catch { return text; }
