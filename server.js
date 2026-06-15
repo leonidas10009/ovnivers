@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.5.7
+ * Ovnivers — Stremio Addon Backend v1.5.8
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
@@ -15,10 +15,12 @@ const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
 const catalog = require('./src/catalog/index');
+const nyaasi = require('./src/torrent-providers/nyaasi');
+const glodls = require('./src/torrent-providers/glodls');
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.5.7';
+const VERSION = '1.5.8';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 const PIGAMER = 'https://pigamer37.alwaysdata.net';
@@ -1197,6 +1199,51 @@ async function handleStream(req, res, type, id) {
       streamTasks.push(scrapeAlfa(rawId, 'tv', 'anime', season, episode, config));
     }
   }
+
+  // ── Torrent indexers: GloDLS (movies/TV) + Nyaa (anime) ──
+  streamTasks.push((async () => {
+    const results = [];
+    let searchTitle = '';
+    try {
+      if (rawId.match(/^\d+$/)) {
+        const meta = await withTimeout(getTMDbMeta(rawId, mediaType), 4000);
+        if (meta) searchTitle = meta.title || meta.name || '';
+      } else {
+        searchTitle = rawId.replace(/^tt0*/, '');
+      }
+    } catch {}
+    if (mediaType === 'tv' && season && episode) {
+      searchTitle += ` S${String(season).padStart(2, '0')}E${String(episode).padStart(2, '0')}`;
+    }
+    if (searchTitle.length < 3) return results;
+    try {
+      const glodlsResults = await glodls.search(searchTitle);
+      for (const r of glodlsResults.slice(0, 8)) {
+        const s = normalizeStream({
+          url: r.magnet,
+          infoHash: r.infoHash,
+          name: r.name,
+          quality: r.quality
+        }, 'glodls', 'GloDLS');
+        if (s) results.push(s);
+      }
+    } catch {}
+    try {
+      if (isAnime) {
+        const nyaaResults = await nyaasi.search(searchTitle, 'anime');
+        for (const r of nyaaResults.slice(0, 8)) {
+          const s = normalizeStream({
+            url: r.magnet,
+            infoHash: r.infoHash,
+            name: r.name,
+            quality: r.quality
+          }, 'nyaasi', 'Nyaa.si');
+          if (s) results.push(s);
+        }
+      }
+    } catch {}
+    return results;
+  })());
 
   const settled = await Promise.allSettled(streamTasks);
   for (const item of settled) {

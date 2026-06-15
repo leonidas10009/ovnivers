@@ -1,6 +1,6 @@
 {
   "id": "com.ovnivers.allinone",
-  "version": "1.5.7",
+  "version": "1.5.8",
   "name": "Ovnivers All-in-One",
   "description": "62 scrapers + 4 backend + AnimeFLV/AnimeAV1/TioAnime/Henaojara. Movies, TV, anime, multi-language, up to 4K.",
   "logo": "https://raw.githubusercontent.com/leonidas10009/ovnivers/main/logo.png",
@@ -94,30 +94,132 @@
     "anidb:"
   ],
   "catalogs": [
-    { "type": "movie", "id": "tmdb-popular-movie", "name": "Películas Populares" },
-    { "type": "movie", "id": "tmdb-top-movie", "name": "Películas Mejor Valoradas" },
-    { "type": "movie", "id": "tmdb-trending-movie", "name": "Películas en Tendencia" },
-    { "type": "movie", "id": "tmdb-action-movie", "name": "Acción" },
-    { "type": "movie", "id": "tmdb-comedy-movie", "name": "Comedia" },
-    { "type": "movie", "id": "tmdb-drama-movie", "name": "Drama" },
-    { "type": "movie", "id": "tmdb-horror-movie", "name": "Terror" },
-    { "type": "movie", "id": "tmdb-scifi-movie", "name": "Ciencia Ficción" },
-    { "type": "movie", "id": "tmdb-thriller-movie", "name": "Suspenso" },
-    { "type": "movie", "id": "tmdb-romance-movie", "name": "Romance" },
-    { "type": "movie", "id": "tmdb-animation-movie", "name": "Animación" },
-    { "type": "series", "id": "tmdb-popular-series", "name": "Series Populares" },
-    { "type": "series", "id": "tmdb-top-series", "name": "Series Mejor Valoradas" },
-    { "type": "series", "id": "tmdb-trending-series", "name": "Series en Tendencia" },
-    { "type": "series", "id": "tmdb-popular-anime", "name": "Anime Popular" },
-    { "type": "series", "id": "tmdb-top-anime", "name": "Anime Mejor Valorado" },
-    { "type": "series", "id": "tmdb-trending-anime", "name": "Anime en Tendencia" },
-    { "type": "movie", "id": "tmdb-popular-anime-movie", "name": "Películas Anime Populares" },
-    { "type": "movie", "id": "tmdb-top-anime-movie", "name": "Películas Anime Mejor Valoradas" },
-    { "type": "movie", "id": "tt-popular-movie", "name": "Todas las Películas (Universal)" },
-    { "type": "series", "id": "tt-popular-series", "name": "Todas las Series (Universal)" },
-    { "type": "series", "id": "tt-popular-anime", "name": "Todo Anime (Universal)" },
-    { "type": "movie", "id": "tt-popular-anime-movie", "name": "Películas Anime (Universal)" },
-    { "type": "movie", "id": "tmdb-search", "name": "Búsqueda", "extra": [{ "name": "search", "isRequired": true }] }
+    {
+      "type": "movie",
+      "id": "tmdb-popular-movie",
+      "name": "Películas Populares"
+    },
+    {
+      "type": "movie",
+      "id": "tmdb-top-movie",
+      "name": "Películas Mejor Valoradas"
+    },
+    {
+      "type": "movie",
+      "id": "tmdb-trending-movie",
+      "name": "Películas en Tendencia"
+    },
+    {
+      "type": "movie",
+      "id": "tmdb-action-movie",
+      "name": "Acción"
+    },
+    {
+      "type": "movie",
+      "id": "tmdb-comedy-movie",
+      "name": "Comedia"
+    },
+    {
+      "type": "movie",
+      "id": "tmdb-drama-movie",
+      "name": "Drama"
+    },
+    {
+      "type": "movie",
+      "id": "tmdb-horror-movie",
+      "name": "Terror"
+    },
+    {
+      "type": "movie",
+      "id": "tmdb-scifi-movie",
+      "name": "Ciencia Ficción"
+    },
+    {
+      "type": "movie",
+      "id": "tmdb-thriller-movie",
+      "name": "Suspenso"
+    },
+    {
+      "type": "movie",
+      "id": "tmdb-romance-movie",
+      "name": "Romance"
+    },
+    {
+      "type": "movie",
+      "id": "tmdb-animation-movie",
+      "name": "Animación"
+    },
+    {
+      "type": "series",
+      "id": "tmdb-popular-series",
+      "name": "Series Populares"
+    },
+    {
+      "type": "series",
+      "id": "tmdb-top-series",
+      "name": "Series Mejor Valoradas"
+    },
+    {
+      "type": "series",
+      "id": "tmdb-trending-series",
+      "name": "Series en Tendencia"
+    },
+    {
+      "type": "series",
+      "id": "tmdb-popular-anime",
+      "name": "Anime Popular"
+    },
+    {
+      "type": "series",
+      "id": "tmdb-top-anime",
+      "name": "Anime Mejor Valorado"
+    },
+    {
+      "type": "series",
+      "id": "tmdb-trending-anime",
+      "name": "Anime en Tendencia"
+    },
+    {
+      "type": "movie",
+      "id": "tmdb-popular-anime-movie",
+      "name": "Películas Anime Populares"
+    },
+    {
+      "type": "movie",
+      "id": "tmdb-top-anime-movie",
+      "name": "Películas Anime Mejor Valoradas"
+    },
+    {
+      "type": "movie",
+      "id": "tt-popular-movie",
+      "name": "Todas las Películas (Universal)"
+    },
+    {
+      "type": "series",
+      "id": "tt-popular-series",
+      "name": "Todas las Series (Universal)"
+    },
+    {
+      "type": "series",
+      "id": "tt-popular-anime",
+      "name": "Todo Anime (Universal)"
+    },
+    {
+      "type": "movie",
+      "id": "tt-popular-anime-movie",
+      "name": "Películas Anime (Universal)"
+    },
+    {
+      "type": "movie",
+      "id": "tmdb-search",
+      "name": "Búsqueda",
+      "extra": [
+        {
+          "name": "search",
+          "isRequired": true
+        }
+      ]
+    }
   ],
   "behaviorHints": {
     "adult": false,

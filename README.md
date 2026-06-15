@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.5.7
+# Ovnivers — Stream Provider v1.5.8
 
 Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fuentes.
 
@@ -15,14 +15,14 @@ Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fue
 
 | Funcionalidad | Detalle |
 |---|---|
-| **Backend scrapers** | 2embed (Vesy + Vsrc), VidSrc, PoseidonHD |
+| **Torrent indexers** (server-side) | GloDLS (movies/TV, ~15 magnets) + Nyaa.si (anime, ~75 magnets) |
+| **Embed resolver** (YouTube, JWPlayer) | Fetch automático de páginas → extracción `.m3u8`/`.mp4` directo |
 | **Pigamer37** (proxy anime) | AnimeFLV, AnimeAV1, TioAnime, Henaojara — solo para anime detectado |
 | **Alfa Providers** (server-side) | 48 providers: peliculas, series, anime, documentales + torrents |
 | **Alfa multi-título** | Busca por título EN + ES + JA + slug en paralelo |
-| **Embed-to-direct resolver** | Fetch automático de páginas embed → extracción `.m3u8`/`.mp4` |
 | **notWebReady automático** | Streams directos (`.m3u8`/`.mp4`) marcados como reproducibles en ExoPlayer |
 | **Config panel** | `/configure` — tipos, calidad, idiomas, scrapers on/off |
-| **Separación por categoría** | Pigamer37 solo para anime detectado; Alfa anime para TV animado; Backend + Alfa + Hermes para todo |
+| **Separación por categoría** | Pigamer37 solo para anime detectado; Alfa anime para TV animado; Torrent indexers + Backend + Alfa + Hermes para todo |
 
 ## Catalogs
 
@@ -50,22 +50,40 @@ Tras cada fetch de embed, se ejecuta el resolvedor `tryResolveEmbedToDirect()` q
 **Estado real (~80 streams por película):**
 | Tipo | Funcional | Reproducible en |
 |---|---|---|
-| Torrent (bloghorror, divxtotal, dontorrent, grantorrent, mejortorrent, mitorrent, wolfmax4k, eztv, hacktorrent, pelispanda, elitetorrent) | ❌ Sitios caídos/cambiados/requieren login | Ninguno |
-| Embed directo (`.m3u8`/`.mp4` resuelto) | ✅ ~36/80 streams | Stremio Desktop ✅ / NuvioTV ✅ |
-| Embed sin resolver (página HTML) | ⚠️ ~44/80 streams | Stremio Desktop ✅ (Chromium WebView) / NuvioTV ❌ (ExoPlayer) |
+| Torrent indexer (GloDLS) | ✅ ~15 magnets para movies/TV | NuvioTV ✅ (TorrentService nativo vía infoHash) |
+| Torrent indexer (Nyaa.si) | ✅ ~75 magnets para anime | NuvioTV ✅ (TorrentService nativo vía infoHash) |
+| Embed directo (YouTube, JWPlayer resuelto) | ✅ ~5-10 streams (según título) | NuvioTV ✅ (URL directa `.m3u8`/`.mp4`) |
+| Embed sin resolver (fastream.to, etc.) | ⚠️ no resoluble server-side (JS requerido) | Stremio Desktop ✅ (WebView) / NuvioTV ❌ (ExoPlayer) |
+| Backend scrapers (2embed, VidSrc, PoseidonHD) | ❌ APIs bloqueadas/rotas desde Render | Ninguno |
+| Hermes scrapers (62 originales) | ❌ Todos rotos (bloqueados, sin resultados) | Ninguno |
 
-> ⚠️ Los 11 providers torrent están marcados como activos pero sus sitios ya no devuelven infoHash/magnet. El addon funciona exclusivamente con providers iframe/jsvar/nextjs cuyos embeds se resuelven a URLs directas o se abren en WebView.
+## Torrent Indexers (2 activos)
 
-## Backend Scrapers (4 activos)
+| Indexador | Contenido | Resultados |
+|---|---|---|
+| **GloDLS** | Movies & TV (multi-idioma) | ~15 magnets con seeds, calidad, tamaño |
+| **Nyaa.si** | Anime (subs/dubs) | ~75 magnets con seeds, calidad, tamaño |
 
-| Scraper | Fuente | Datos | Nota |
-|---|---|---|---|
-| 2embed (Vesy) | streamsrcs.2embed.cc | HTML parsed | Regex m3u8/mp4/iframe |
-| 2embed (Vsrc) | streamsrcs.2embed.cc | HTML parsed | Regex m3u8/mp4/iframe |
-| VidSrc | vidsrc.rip | API/HTML | Fetch con fallbacks |
-| PoseidonHD | poseidonhd2.co | Next.js JSON | |
+Los torrents se entregan como streams con `infoHash` — NuvioTV los reproduce vía su TorrentService nativo (libtorrent4j).
 
-> **EZTV** y **Cuevana2** removidos en v1.2.0 — bloqueados desde Render (403/fetch failed).
+## Embed Resolver (3 patrones)
+
+| Patrón | Funciona | Descripción |
+|---|---|---|
+| YouTube | ✅ | Extrae `ytInitialPlayerResponse` → streamingData.formats (URL directa Google Video) |
+| JWPlayer | ✅ (si setup inline) | Extrae `setup({...})` del script tag → `file` URL |
+| fastream.to / genérico | ❌ | JS-render blocking — requiere headless browser |
+
+## Backend Scrapers (4 — todos rotos)
+
+| Scraper | Estado | Nota |
+|---|---|---|
+| 2embed (Vesy) | ❌ | APIs bloqueadas desde Render |
+| 2embed (Vsrc) | ❌ | APIs bloqueadas desde Render |
+| VidSrc | ❌ | Fetch fails desde servidores |
+| PoseidonHD | ❌ | Next.js no resoluble server-side |
+
+> **EZTV**, **Cuevana2**, **Hermes scrapers (62)**: todos rotos/bloqueados desde Render. Mantenidos por compatibilidad legacy.
 
 ## Endpoints
 
@@ -93,6 +111,16 @@ node build.js    # Build de scrapers desde src/
 - **URL:** https://ovnivers.onrender.com
 
 ## Changelog
+
+### v1.5.8 — Torrent indexers + embed resolver + doc update
+
+- **Torrent indexers**: GloDLS (movies/TV, ~15 results) + Nyaa.si (anime, ~75 results) — scraping server-side con cheerio
+- **TMDB title fetch**: Torrent indexers buscan usando título real de TMDB (no ID crudo). Soporte para `S01E01` en TV
+- **Fix GloDLS scraper**: Selectores corregidos (`t-row` class, columnas: name=col1, seeds=col5, size=col4). Eliminado `cat=0` (rompía búsqueda). Name extraído de `a[title]` (full name, no truncado)
+- **Embed resolver (YouTube)**: Nuevo `embed-resolver.js` con per-domain resolvers — YouTube extrae `ytInitialPlayerResponse`, JWPlayer extrae setup inline
+- **Integración en server.js**: Torrent indexers ejecutados en pipeline de streams tras Alfa/Hermes section
+- **Docs**: README actualizado con estado real de providers, torrent indexers, embed resolver
+- **Version**: 1.5.8 (bump patch, center number intacto)
 
 ### v1.5.7 — Fix stremio URL + documentación
 
