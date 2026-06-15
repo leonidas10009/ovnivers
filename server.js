@@ -342,60 +342,62 @@ async function getTMDbEpisodes(tmdbId, seasons) {
 
 // ─── Backend Scrapers ─────────────────────
 
-async function scrape2embedVesy(rawId, mediaType, season, episode) {
-  try {
-    let tmdbId = rawId;
-    if (rawId.startsWith('tt')) {
-      tmdbId = await getTMDbId(rawId, mediaType);
-      if (!tmdbId) return [];
-    }
-    let url = `https://streamsrcs.2embed.cc/vesy?tmdb=${tmdbId}`;
-    if (mediaType === 'tv') url += `&s=${season}&e=${episode}`;
-    const data = await fetchAPI(url, {}, 12000);
-    if (typeof data === 'string') return parse2embedHTML(data);
-    return parseSources(data).map(s => ({
-      name: s.quality || s.label || s.resolution || 'HD',
-      description: '2embed',
-      url: s.url || s.link || s.file || s.src || s.stream || '',
-      behaviorHints: { notWebReady: true }
-    })).filter(s => s.url);
-  } catch { return []; }
+async function scrape2embed(rawId, mediaType, season, episode) {
+  const mirrors = [
+    { name: '2embed (vesy)', url: (id) => `https://streamsrcs.2embed.cc/vesy?tmdb=${id}${mediaType==='tv'?`&s=${season}&e=${episode}`:''}`, key: 'tmdb' },
+    { name: '2embed (vsrc)', url: (id) => `https://streamsrcs.2embed.cc/vsrc?imdb=${id}${mediaType==='tv'?`&s=${season}&e=${episode}`:''}`, key: 'tt' },
+    { name: '2embed (skin)',  url: (id) => `https://www.2embed.skin/api/${mediaType==='tv'?'tv':'movie'}/${id}.json`, key: 'tmdb' },
+    { name: '2embed (cc)',    url: (id) => `https://vidsrc.cc/v2/embed/${mediaType==='tv'?'tv':'movie'}/${id}${mediaType==='tv'?`/${season}/${episode}`:''}`, key: 'tmdb' },
+    { name: 'VidSrc (pro)',   url: (id) => `https://vidsrc.pro/v2/embed/${mediaType==='tv'?'tv':'movie'}/${id}${mediaType==='tv'?`/${season}/${episode}`:''}`, key: 'tmdb' },
+    { name: 'VidSrc (icu)',   url: (id) => `https://vidsrc.icu/embed/${mediaType==='tv'?'tv':'movie'}/${id}${mediaType==='tv'?`/${season}/${episode}`:''}`, key: 'tmdb' },
+    { name: 'VidSrc (xyz)',   url: (id) => `https://vidsrc.xyz/embed/${mediaType==='tv'?'tv':'movie'}/${id}${mediaType==='tv'?`/${season}/${episode}`:''}`, key: 'tmdb' },
+    { name: 'SuperEmbed',     url: (id) => `https://multiembed.mov/direct?tmdb=${id}${mediaType==='tv'?`&season=${season}&episode=${episode}`:''}`, key: 'tmdb' },
+  ];
+
+  let tmdbId = rawId;
+  let imdbId = rawId;
+  if (rawId.startsWith('tt')) imdbId = rawId;
+  else imdbId = await getIMDbId(rawId, mediaType);
+
+  const results = [];
+  for (const mirror of mirrors) {
+    try {
+      const id = mirror.key === 'tt' ? imdbId : tmdbId;
+      if (!id) continue;
+      const data = await fetchAPI(mirror.url(id), {}, 10000);
+      if (!data) continue;
+
+      // Parse JSON response
+      if (typeof data === 'object') {
+        const sources = parseSources(data);
+        for (const s of sources) {
+          const streamUrl = s.url || s.file || s.link || s.src || s.stream || '';
+          if (streamUrl) {
+            results.push({
+              name: s.quality || s.label || s.resolution || 'HD',
+              description: mirror.name,
+              url: streamUrl,
+              behaviorHints: { notWebReady: true }
+            });
+          }
+        }
+        if (sources.length) break; // got results, stop trying mirrors
+      }
+
+      // Parse HTML response
+      if (typeof data === 'string' && data.length > 500) {
+        const htmlStreams = parse2embedHTML(data);
+        if (htmlStreams.length) {
+          results.push(...htmlStreams.map(s => ({ ...s, description: mirror.name })));
+          break;
+        }
+      }
+    } catch {}
+  }
+  return results;
 }
 
-async function scrape2embedVsrc(rawId, mediaType, season, episode) {
-  try {
-    let imdbId = rawId;
-    if (!rawId.startsWith('tt')) {
-      imdbId = await getIMDbId(rawId, mediaType);
-      if (!imdbId) return [];
-    }
-    let url = `https://streamsrcs.2embed.cc/vsrc?imdb=${imdbId}`;
-    if (mediaType === 'tv') url += `&s=${season}&e=${episode}`;
-    const data = await fetchAPI(url, {}, 12000);
-    if (typeof data === 'string') return parse2embedHTML(data);
-    return parseSources(data).map(s => ({
-      name: s.quality || s.label || s.resolution || 'HD',
-      description: '2embed (IMDb)',
-      url: s.url || s.link || s.file || s.src || s.stream || '',
-      behaviorHints: { notWebReady: true }
-    })).filter(s => s.url);
-  } catch { return []; }
-}
-
-async function scrapeVidSrcRip(tmdbId, mediaType, season, episode) {
-  try {
-    const epPath = mediaType === 'tv'
-      ? `/tv/${tmdbId}/${season}/${episode}` : `/movie/${tmdbId}`;
-    const data = await fetchAPI(`https://vidsrc.rip/api${epPath}`);
-    if (!data || !data.sources) return [];
-    return (Array.isArray(data.sources) ? data.sources : []).map(s => ({
-      name: s.quality || 'HD', description: 'VidSrc',
-      url: s.url || s.file || '', behaviorHints: { notWebReady: true }
-    })).filter(s => s.url);
-  } catch { return []; }
-}
-
-async function scrapePoseidonHD(rawId, mediaType, season, episode) {
+async function scrapePoseidonHD(rawId, mediaType) {
   try {
     let tmdbId = rawId;
     if (rawId.startsWith('tt')) {
@@ -407,49 +409,52 @@ async function scrapePoseidonHD(rawId, mediaType, season, episode) {
     const title = meta.title || meta.name || '';
     const year = (meta.release_date || meta.first_air_date || '').substring(0, 4);
     if (!title) return [];
-    const searchUrl = `https://www.poseidonhd2.co/search?q=${encodeURIComponent(title)}`;
-    const html = await fetchAPI(searchUrl, {}, 12000);
-    if (!html || typeof html !== 'string') return [];
-    const linkMatch = html.match(/href="(\/[^"]*pelicula[^"]*)"[^>]*>([^<]*)<\/a>/gi);
-    if (!linkMatch) return [];
-    let bestUrl = null, bestScore = 0;
-    for (const m of linkMatch) {
-      const href = m.match(/href="([^"]+)"/)?.[1];
-      const txt = m.match(/>([^<]+)</)?.[1]?.trim();
-      if (!href || !txt) continue;
-      let s = txt.toLowerCase().includes(title.toLowerCase().substring(0, 5)) ? 1 : 0;
-      if (year && txt.includes(year)) s += 0.2;
-      if (s > bestScore) { bestScore = s; bestUrl = `https://www.poseidonhd2.co${href}`; }
-    }
-    if (!bestUrl) return [];
-    const pageHtml = await fetchAPI(bestUrl, {}, 12000);
-    if (!pageHtml || typeof pageHtml !== 'string') return [];
-    const nextMatch = pageHtml.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/);
-    if (!nextMatch) return [];
-    const data = JSON.parse(nextMatch[1]);
-    const players = data?.props?.pageProps?.post?.players;
-    if (!players) return [];
-    const streams = [];
-    for (const [lang, arr] of Object.entries(players)) {
-      if (Array.isArray(arr)) {
-        for (const p of arr) {
-          if (p.result) streams.push({
-            name: p.quality || 'HD',
-            description: lang,
-            url: p.result,
-            behaviorHints: { notWebReady: true }
-          });
+
+    const domains = ['poseidonhd2.co', 'poseidonhd3.co', 'poseidonhd.lat'];
+    for (const domain of domains) {
+      try {
+        const searchUrl = `https://www.${domain}/search?q=${encodeURIComponent(title)}`;
+        const html = await fetchAPI(searchUrl, {}, 10000);
+        if (!html || typeof html !== 'string') continue;
+        const linkMatch = html.match(/href="(\/[^"]*pelicula[^"]*)"[^>]*>([^<]*)<\/a>/gi);
+        if (!linkMatch) continue;
+        let bestUrl = null, bestScore = 0;
+        for (const m of linkMatch) {
+          const href = m.match(/href="([^"]+)"/)?.[1];
+          const txt = m.match(/>([^<]+)</)?.[1]?.trim();
+          if (!href || !txt) continue;
+          let s = txt.toLowerCase().includes(title.toLowerCase().substring(0, 5)) ? 1 : 0;
+          if (year && txt.includes(year)) s += 0.2;
+          if (s > bestScore) { bestScore = s; bestUrl = `https://www.${domain}${href}`; }
         }
-      }
+        if (!bestUrl) continue;
+        const pageHtml = await fetchAPI(bestUrl, {}, 10000);
+        if (!pageHtml || typeof pageHtml !== 'string') continue;
+        const nextMatch = pageHtml.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/);
+        if (!nextMatch) continue;
+        const data = JSON.parse(nextMatch[1]);
+        const players = data?.props?.pageProps?.post?.players;
+        if (!players) continue;
+        const streams = [];
+        for (const [lang, arr] of Object.entries(players)) {
+          if (Array.isArray(arr)) {
+            for (const p of arr) {
+              if (p.result) streams.push({
+                name: p.quality || 'HD', description: lang,
+                url: p.result, behaviorHints: { notWebReady: true }
+              });
+            }
+          }
+        }
+        if (streams.length) return streams;
+      } catch {}
     }
-    return streams;
+    return [];
   } catch { return []; }
 }
 
 const BACKEND_SCRAPERS = [
-  { name: '2embed (Vesy)', fn: scrape2embedVesy },
-  { name: '2embed (Vsrc)', fn: scrape2embedVsrc },
-  { name: 'VidSrc', fn: scrapeVidSrcRip },
+  { name: '2embed+Mirrors', fn: scrape2embed },
   { name: 'PoseidonHD', fn: scrapePoseidonHD },
 ];
 
