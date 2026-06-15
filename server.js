@@ -744,6 +744,7 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
   const url = stream.url || stream.file || stream.src || stream.link;
   const hasPlayableTarget = url || stream.externalUrl || stream.infoHash;
   if (!hasPlayableTarget) return null;
+  if (url && /youtube\.com|youtu\.be/i.test(url)) return null;
 
   const rawName = stream.name || '';
   const rawTitle = stream.title || '';
