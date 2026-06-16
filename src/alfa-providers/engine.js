@@ -507,7 +507,11 @@ async function extractVideos(provider, pageUrl) {
         if (decoded.startsWith('http://') || decoded.startsWith('https://')) return decoded;
       } catch {}
     }
-    return val.startsWith('//') ? 'https:' + val : val;
+    if (val.startsWith('//')) return 'https:' + val;
+    if (val.startsWith('/')) {
+      try { return new URL(val, pageUrl).href; } catch { return val; }
+    }
+    return val;
   }
 
   if (cfg.type === 'iframe') {
