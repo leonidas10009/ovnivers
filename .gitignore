@@ -13,7 +13,6 @@ logs/
 
 tmp/
 temp/
-.memory.md
 .env
 
 error.txt

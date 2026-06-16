@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.6.7
+# Ovnivers — Stream Provider v1.6.8
 
 Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fuentes.
 
@@ -20,7 +20,7 @@ Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fue
 | **Pipeline unificado** | Orquestador central: circuit breaker (5 fallos = 5min off), dedup, post-resolver de embeds, scoring por idioma |
 | **Prioridad castellano** | Streams en espanol/latino/VOSE/dual aparecen primero por `computeLangScore()` |
 | **Pigamer37** (proxy anime) | AnimeFLV, AnimeAV1, TioAnime, Henaojara — solo para anime detectado |
-| **Alfa Providers** (server-side) | 42 providers activos (3 funcionales, 12 bloqueados por Turnstile, 4 con selectores wrong, resto sin resultados) |
+| **Alfa Providers** (server-side) | 48 providers activos (5 funcionales, 12 bloqueados por Turnstile, 4 con selectores wrong, resto sin resultados) |
 | **Hermes scrapers** (server-side) | 9/43 funcionales en Node.js (inyeccion de globales cheerio/CryptoJS). 19 deshabilitados (dominio muerto), 15 ofuscados sin streams |
 | **Alfa multi-titulo** | Busca por titulo EN + ES + JA + slug en paralelo |
 | **Backend scrapers** | 8 mirrors rotativos (2embed vesy/vsrc/skin/cc, VidSrc pro/icu/xyz, SuperEmbed) + PoseidonHD 3 dominios |
@@ -30,10 +30,10 @@ Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fue
 
 ## Catalogs
 
-19 catálogos TMDB activos + 4 universales + 4 Amatsu anime: popular, trending, top-rated, search para movie/series/anime.
+19 catálogos TMDB activos + 4 universales + 4 Amatsu anime (vía Pigamer37): popular, trending, top-rated, search para movie/series/anime.
 IDs con prefijo `ovn:` para los catálogos propios y `tt:`/`tmdb:` para compatibilidad cross-addon (Torrentio, AnimeFLV, TMDB Community).
 
-## Alfa Providers (75 registrados, 42 activos)
+## Alfa Providers (74 registrados, 48 activos)
 
 Scraper unificado del addon **Alfa** de Kodi. Corre server-side en Node.js.
 Busca con multiples variantes del titulo (EN/ES/JA/slug) en paralelo.
@@ -44,7 +44,7 @@ Tras cada fetch de embed, se ejecuta el resolvedor `tryResolveEmbedToDirect()` q
 
 | Categoria | Count | Detalle |
 |---|---|---|
-| **Funcionando** | 3 | CineCalidad (5 videos), CineLibreOnline (10), PelisPedia (3) |
+| **Funcionando** | 5 | CineCalidad (5 videos), CineLibreOnline (10), PelisPedia (3), DivXTotal, SeriesKao |
 | **Cloudflare Turnstile** | 12 | cine24h, detodopeliculas, doramasflix, doramedplay, pelisforte, wolfmax4k, doramasyt, eztv, estrenosanime, henaojara, sololatino, tiodonghua — requieren navegador real |
 | **Anubis PoW** | 1 | DonTorrent — funciona con bypass directo (sin proxy) |
 | **Selectores wrong** | 4 | DivXTotal, GranTorrent, MiTorrent, AllCalidad — buscan en selectores incorrectos |
@@ -99,7 +99,7 @@ Scrapers legacy del ecosistema Nuvio/Hermes. Mayormente ofuscados (`_0x` obfusca
 | **LimeTorrents** | Movies, TV | ~10 torrents | Scraping cheerio |
 | **EZTV** | TV series (por IMDb ID) | Resultados exactos por S/E | API JSON |
 
-**Scoring:** word match 50% + seeds 20% + calidad 7% + año 10% + source/codec 5% + verified 5% + penalización año distinto (-25%).
+**Scoring:** wordMatch estricto (exacto=1.0, prefijo/sufijo=0.5, contiene=0.25, falta=-0.5) + titleStartBonus (+0.18 si titulo empieza con query) + seeds 12% + calidad 5% + año 10% (penalizacion -40% por año distinto) + S/E exacto (+12% match, -30% temporada incorrecta) + source/codec 3% + verified 3%. Stop words filtrados. Min score threshold 0.25. Packs de temporada rechazados en busquedas TV.
 **Trackers:** 13 trackers UDP/HTTP/HTTPS inyectados en cada magnet. Dedup por infoHash.
 
 ## Embed Resolver (11+ dominios)
@@ -122,8 +122,6 @@ Scrapers legacy del ecosistema Nuvio/Hermes. Mayormente ofuscados (`_0x` obfusca
 
 ## Backend Scrapers (8 mirrors rotativos)
 
-## Backend Scrapers (8 mirrors rotativos)
-
 | Mirror | Key | Nota |
 |---|---|---|
 | 2embed vesy | tmdb | streamsrcs.2embed.cc/vesy |
@@ -137,10 +135,9 @@ Scrapers legacy del ecosistema Nuvio/Hermes. Mayormente ofuscados (`_0x` obfusca
 
 > Se rotan en orden. El primer mirror que devuelva streams para el pipeline. PoseidonHD rota 3 dominios.
 
-## Hermes Providers (61 total, 27 funcionales)
+## Catálogos Amatsu (Pigamer37)
 
-Inyección de globales `cheerio` y `CryptoJS` para compatibilidad con Node.js.
-27 devuelven streams reales (videasy, torrentio, vidlink, peachify, castle, etc.). 34 sin resultados (anime-specific en movies, APIs caídas, o requieren interacción JS).
+4 catálogos de anime adicionales servidos por el proxy Pigamer37: AnimeFLV, AnimeAV1, TioAnime, Henaojara (onair, popular, latest, search).
 
 ## Endpoints
 
@@ -169,6 +166,17 @@ node build.js    # Build de scrapers desde src/
 
 ## Changelog
 
+### v1.6.8 — Precision scoring para torrents
+
+- **wordMatch estricto**: normalizacion de acentos, filtro de stop words (the, of, from, de, el...), scoring granular (exacto=1.0, prefijo/sufijo=0.5, contiene=0.25, falta=-0.5)
+- **titleStartBonus**: +0.18 si el titulo empieza exactamente con la query — elimina falsos positivos en busquedas de una palabra (ej. "From" ya no devuelve "Stranger Things Tales from 85")
+- **Verificacion S/E exacta**: +0.12 si SxxExx coincide, -0.30 si temporada incorrecta
+- **Penalizacion año**: -0.40 por año distinto (antes -0.25)
+- **Filtro de puntuacion minima**: descarta resultados < 0.25
+- **Deteccion de packs**: rechaza season packs en busquedas de episodio individual
+- **Penalizacion por ruido**: titulos con muchas palabras extra reciben penalty
+- **Docs**: README, manifest.json y .memory.md sincronizados al estado real del codigo
+
 ### v1.6.1 — Documentación actualizada
 
 - **Docs**: README sincronizado al estado real del proyecto: 6 indexers de torrent, 11+ dominios embed resolver, 8 mirrors backend, 27/61 Hermes funcionales, pipeline unificado con prioridad castellano
@@ -187,14 +195,6 @@ node build.js    # Build de scrapers desde src/
 - **Metadata enriquecida en torrents**: seeds, peers, tamaño (GB/MB), calidad (4K/1080p/720p), codec (HEVC/x264/AV1), source (BluRay/WEB-DL/Remux), audio (DTS/AC3/EAC3), HDR/DV
 - **13 trackers** UDP/HTTP/HTTPS inyectados en cada magnet link
 - **Version**: 1.6.0
-
-- **Torrent indexers**: GloDLS (movies/TV, ~15 results) + Nyaa.si (anime, ~75 results) — scraping server-side con cheerio
-- **TMDB title fetch**: Torrent indexers buscan usando título real de TMDB (no ID crudo). Soporte para `S01E01` en TV
-- **Fix GloDLS scraper**: Selectores corregidos (`t-row` class, columnas: name=col1, seeds=col5, size=col4). Eliminado `cat=0` (rompía búsqueda). Name extraído de `a[title]` (full name, no truncado)
-- **Embed resolver (YouTube)**: Nuevo `embed-resolver.js` con per-domain resolvers — YouTube extrae `ytInitialPlayerResponse`, JWPlayer extrae setup inline
-- **Integración en server.js**: Torrent indexers ejecutados en pipeline de streams tras Alfa/Hermes section
-- **Docs**: README actualizado con estado real de providers, torrent indexers, embed resolver
-- **Version**: 1.5.8 (bump patch, center number intacto)
 
 ### v1.5.7 — Fix stremio URL + documentación
 

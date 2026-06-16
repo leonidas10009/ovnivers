@@ -65,19 +65,42 @@ function formatSize(bytes) {
   return Math.round(bytes / 1024) + ' KB';
 }
 
+const STOP_WORDS = new Set(['the', 'a', 'an', 'de', 'el', 'la', 'los', 'las', 'del', 'en', 'un', 'una', 'y', 'e', 'o', 'of', 'in', 'on', 'at', 'to', 'for', 'is', 'and', 'or', 'le', 'des', 'et', 'und', 'der', 'die', 'das']);
+
+function normalizeText(text) {
+  return text.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, ' ');
+}
+
 function wordMatch(query, title) {
   if (!query || !title) return 0;
-  const qw = query.toLowerCase().replace(/[^a-z0-9]/g, ' ').split(' ').filter(w => w.length >= 2);
-  const tw = title.toLowerCase().replace(/[^a-z0-9]/g, ' ').split(' ');
-  if (!qw.length) return 0;
-  let matched = 0;
-  for (const q of qw) {
-    if (tw.some(t => t === q)) matched++;
-    else if (tw.some(t => t.includes(q) && t.length < q.length + 5)) matched += 0.3;
-    else matched -= 0.2;
+  const rawQw = normalizeText(query).split(' ').filter(w => w.length >= 2);
+  const tw = normalizeText(title).split(' ').filter(w => w.length >= 2);
+  if (!rawQw.length) return 0;
+  const qw = rawQw.filter(w => !STOP_WORDS.has(w));
+  if (!qw.length) {
+    const short = rawQw.filter(w => w.length <= 3);
+    if (short.length) {
+      const exact = short.filter(q => tw.some(t => t === q)).length;
+      return exact / short.length;
+    }
+    return 0;
   }
-  const ratio = matched / qw.length;
-  return Math.max(0, ratio);
+  let score = 0;
+  for (const q of qw) {
+    if (tw.some(t => t === q)) score += 1.0;
+    else if (q.length >= 4 && tw.some(t => t.startsWith(q) || t.endsWith(q))) score += 0.5;
+    else if (q.length >= 4 && tw.some(t => t.includes(q))) score += 0.25;
+    else score -= 0.5;
+  }
+  return Math.max(0, score / qw.length);
+}
+
+function extractSE(title) {
+  const m = (title || '').match(/[Ss](\d{1,2})\s*[Ee](\d{1,2})/);
+  if (!m) return null;
+  return { season: parseInt(m[1]), episode: parseInt(m[2]) };
 }
 
 function parseYear(title) {
@@ -148,36 +171,57 @@ function enrichMagnet(magnet) {
   return magnet + tr;
 }
 
-function scoreTorrent(torrent, query, year, exactEpisode) {
+function titleStartBonus(query, title) {
+  const qNorm = normalizeText(query).replace(/\s+/g, ' ').trim();
+  const tNorm = normalizeText(title).replace(/\s+/g, ' ').trim();
+  if (tNorm.startsWith(qNorm)) return 0.18;
+  const qWords = qNorm.split(' ');
+  const tWords = tNorm.split(' ');
+  if (qWords.length >= 2 && qWords.every((w, i) => tWords[i] === w)) return 0.14;
+  if (qWords.length === 1 && tWords[0] === qWords[0]) return 0.18;
+  return 0;
+}
+
+function scoreTorrent(torrent, query, year, season, episode) {
   let score = 0;
 
-  const rel = wordMatch(query, torrent.title || torrent.name);
-  score += rel * 0.50;
+  const title = (torrent.title || torrent.name || '').toLowerCase();
+  const rel = wordMatch(query, title);
+  score += rel * 0.45;
+
+  score += titleStartBonus(query, torrent.title || torrent.name || '');
 
   if (torrent.seeds !== undefined) {
-    score += Math.min((torrent.seeds || 0) / 500, 1) * 0.20;
+    score += Math.min((torrent.seeds || 0) / 500, 1) * 0.12;
   }
   const ratio = (torrent.seeds || 0) / Math.max(torrent.leechers || 1, 1);
-  score += Math.min(ratio, 3) / 3 * 0.03;
+  score += Math.min(ratio, 3) / 3 * 0.02;
 
   const q = torrent.quality || parseQuality(torrent.title || torrent.name);
-  if (q === '4K') score += 0.07;
-  else if (q === '1080p') score += 0.05;
-  else if (q === '720p') score += 0.02;
+  if (q === '4K') score += 0.05;
+  else if (q === '1080p') score += 0.03;
+  else if (q === '720p') score += 0.01;
 
   const ty = torrent.year || parseYear(torrent.title || torrent.name);
   if (ty && year) {
     if (ty === year) score += 0.10;
-    else if (Math.abs(ty - year) <= 1) score += 0.03;
-    else score -= 0.25; // penalizacion fuerte por ano distinto
-  } else if (ty && !ty) {
-    // sin info del usuario, no penalizamos
+    else if (Math.abs(ty - year) <= 1) score += 0.02;
+    else score -= 0.40;
   }
 
-  if (torrent.verified) score += 0.05;
+  if (season !== undefined && episode !== undefined) {
+    const se = extractSE(title);
+    if (se) {
+      if (se.season === season && se.episode === episode) score += 0.12;
+      else if (se.season === season) score += 0.03;
+      else score -= 0.30;
+    }
+  }
 
-  if (torrent.source === 'BluRay' || torrent.source === 'Remux') score += 0.03;
-  if (torrent.codec === 'HEVC' || torrent.codec === 'AV1') score += 0.02;
+  if (torrent.verified) score += 0.03;
+
+  if (torrent.source === 'BluRay' || torrent.source === 'Remux') score += 0.02;
+  if (torrent.codec === 'HEVC' || torrent.codec === 'AV1') score += 0.01;
 
   return score;
 }
@@ -442,6 +486,22 @@ async function scrapeEZTV(imdbId) {
 
 // ─── Orchestrator ──────────────────────────
 
+const MIN_SCORE_THRESHOLD = 0.25;
+
+function isPack(title) {
+  const t = title.toLowerCase();
+  return /\b(complete|season\s*\d+\s*(complete|pack)|s\d{1,2}\s*(complete|pack)|all\s*episodes|full\s*season)\b/i.test(t);
+}
+
+function titleNoisePenalty(query, title) {
+  const qw = query.toLowerCase().replace(/[^a-z0-9]/g, ' ').split(' ').filter(w => w.length >= 2);
+  const tw = title.toLowerCase().replace(/[^a-z0-9]/g, ' ').split(' ').filter(w => w.length >= 2);
+  const extra = tw.length - qw.length;
+  if (extra > 8) return -0.10;
+  if (extra > 4) return -0.05;
+  return 0;
+}
+
 async function search(query, mediaType, imdbId, year, season, episode) {
   if (!query || query.length < 2) return [];
 
@@ -476,22 +536,25 @@ async function search(query, mediaType, imdbId, year, season, episode) {
 
   if (!all.length) return [];
 
-  // Score & dedup
-  const scored = all.map(t => ({
-    ...t,
-    score: scoreTorrent(t, query, year, season !== undefined),
-  }));
+  const isTV = season !== undefined && episode !== undefined;
+
+  const scored = all.map(t => {
+    const s = scoreTorrent(t, query, year, season, episode);
+    const noise = titleNoisePenalty(query, t.title || t.name);
+    return { ...t, score: s + noise };
+  });
 
   const seen = new Set();
   const deduped = [];
   for (const t of scored.sort((a, b) => b.score - a.score)) {
+    if (t.score < MIN_SCORE_THRESHOLD) continue;
+    if (isTV && isPack(t.title || t.name)) continue;
     const key = t.infoHash;
     if (!key || seen.has(key)) continue;
     seen.add(key);
     deduped.push(t);
   }
 
-  // Sort by score descending, then seeds descending
   deduped.sort((a, b) => b.score - a.score || b.seeds - a.seeds);
 
   return deduped;
