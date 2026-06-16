@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.6.8
+# Ovnivers — Stream Provider v1.6.9
 
 Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fuentes.
 
@@ -165,6 +165,20 @@ node build.js    # Build de scrapers desde src/
 - **URL:** https://ovnivers.onrender.com
 
 ## Changelog
+
+### v1.6.9 — Modulo unificado de anime
+
+- **Nuevo modulo `src/anime/`**: 7 archivos que consolidan toda la logica de anime dispersa en server.js, catalog y alfa-providers
+- **`detector.js`**: deteccion robusta con 3 metodos — prefix (1.0), TMDB genre 16 + origin_country JP (0.95), type=anime (0.9). The Simpsons ya NO se detecta como anime (antes si, por genre 16 solo)
+- **`resolver.js`**: pipeline unificado de resolucion de IDs — xref→source→tmdb, con cache 24h
+- **`pigamer.js`**: cliente dedicado para Pigamer37 (streams + meta)
+- **`amatsu.js`**: cliente dedicado para Amatsu (synonyms, catalogs, search, meta)
+- **`providers.js`**: registro centralizado de providers anime-only (11 IDs), reemplaza la lista hardcodeada en server.js
+- **`types.js`**: constantes compartidas (prefixes, bases, provider IDs)
+- **Nyaa.si anime**: torrent search ahora usa categoria `1_0` (anime) cuando `isAnime=true`, en vez de `0_0` (todas)
+- **Eliminado codigo muerto**: `fixPigamerId` (no-op), `proxyPigamer`, `animeTMDbCache` duplicado, `ANIME_PREFIXES`/`ANIME_SOURCE_PREFIXES`/`ANIME_XREF_PREFIXES` duplicados en server.js
+- **Eliminada llamada duplicada a scrapeAlfa**: antes se llamaba 2 veces para anime (type original + type='anime'), ahora 1 sola con categoria correcta
+- **server.js**: -94 lineas de codigo anime disperso, reemplazadas por `const anime = require('./src/anime/index')`
 
 ### v1.6.8 — Precision scoring para torrents
 

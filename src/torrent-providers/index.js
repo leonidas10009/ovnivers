@@ -292,9 +292,10 @@ async function scrapeGloDLS(query) {
 
 // ─── Nyaa.si ───────────────────────────────
 
-async function scrapeNyaaSi(query) {
+async function scrapeNyaaSi(query, isAnime = false) {
   try {
-    const html = await fetchHTML(`https://nyaa.si/?q=${encodeURIComponent(query)}&f=0&c=0_0`);
+    const cat = isAnime ? '1_0' : '0_0';
+    const html = await fetchHTML(`https://nyaa.si/?q=${encodeURIComponent(query)}&f=0&c=${cat}`);
     if (!html) return [];
     const $ = cheerio.load(html);
     const results = [];
@@ -502,7 +503,7 @@ function titleNoisePenalty(query, title) {
   return 0;
 }
 
-async function search(query, mediaType, imdbId, year, season, episode) {
+async function search(query, mediaType, imdbId, year, season, episode, isAnime = false) {
   if (!query || query.length < 2) return [];
 
   const searchStr = mediaType === 'tv' && season !== undefined && episode !== undefined
@@ -511,7 +512,7 @@ async function search(query, mediaType, imdbId, year, season, episode) {
 
   const tasks = [
     { name: 'GloDLS', fn: () => scrapeGloDLS(searchStr) },
-    { name: 'Nyaa.si', fn: () => scrapeNyaaSi(searchStr) },
+    { name: 'Nyaa.si', fn: () => scrapeNyaaSi(searchStr, isAnime) },
     { name: 'SolidTorrents', fn: () => scrapeSolidTorrents(searchStr) },
     { name: 'LimeTorrents', fn: () => scrapeLimeTorrents(searchStr) },
     { name: '1337x', fn: () => scrape1337x(searchStr) },

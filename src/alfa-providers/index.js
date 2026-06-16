@@ -1,9 +1,9 @@
 const providers = require('./providers');
 const { fetchHTML, fetchJSON, similarity, searchProvider, getEpisodeUrl, extractVideos, detectServer } = require('./engine');
+const { isAnimeId, extractSlug, AMATSU_BASE, UA: ANIME_UA } = require('../anime/types');
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
-const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
-const ANIME_PREFIXES = ['animeflv:', 'animeav1:', 'henaojara:', 'tioanime:', 'anilist:', 'kitsu:', 'mal:', 'anidb:'];
+const UA = ANIME_UA;
 
 const titleCache = new Map();
 const MAX_CACHE = 500;
@@ -14,15 +14,6 @@ function cacheSet(key, value) {
     titleCache.delete(firstKey);
   }
   titleCache.set(key, value);
-}
-
-function isAnimeId(id) {
-  return ANIME_PREFIXES.some(p => id.startsWith(p));
-}
-
-function extractSlug(id) {
-  const parts = id.split(':');
-  return parts.length >= 2 ? parts[1] : id;
 }
 
 async function resolveTitles(id, mediaType) {
@@ -48,7 +39,7 @@ async function resolveTitles(id, mediaType) {
     if (id.startsWith('anilist:')) {
       try {
         const ac = new AbortController(); setTimeout(() => ac.abort(), 4000);
-        const r = await fetch(`https://amatsu.ruka.pw/meta/anime/${id}.json`, { headers: { 'User-Agent': UA }, signal: ac.signal });
+        const r = await fetch(`${AMATSU_BASE}/meta/anime/${id}.json`, { headers: { 'User-Agent': UA }, signal: ac.signal });
         if (r.ok) {
           const data = await r.json();
           if (data?.meta) {

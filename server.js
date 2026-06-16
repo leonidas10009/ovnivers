@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.6.8
+ * Ovnivers — Stremio Addon Backend v1.6.9
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
@@ -44,13 +44,10 @@ if (process.env.SCRAPELESS_API_KEY) {
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.6.8';
+const VERSION = '1.6.9';
 const ADDON_ID = 'com.ovnivers.allinone';
 
-const PIGAMER = 'https://pigamer37.alwaysdata.net';
-const ANIME_PREFIXES = ['animeflv:', 'animeav1:', 'henaojara:', 'tioanime:', 'anilist:', 'kitsu:', 'mal:', 'anidb:'];
-const ANIME_SOURCE_PREFIXES = ['animeflv:', 'animeav1:', 'henaojara:', 'tioanime:'];
-const ANIME_XREF_PREFIXES = ['anilist:', 'kitsu:', 'mal:', 'anidb:'];
+const anime = require('./src/anime/index');
 
 // Available languages for filtering
 const ALL_LANGS = {
@@ -573,65 +570,7 @@ const BACKEND_SCRAPERS = [
   { name: 'PoseidonHD', fn: scrapePoseidonHD },
 ];
 
-// ─── Pigamer37 Proxy ────────────────────
-
-function isAnimeId(id) {
-  return ANIME_PREFIXES.some(p => id.startsWith(p) || id.startsWith(p.replace(':', '|')));
-}
-
-function isAnimeSourceId(id) {
-  return ANIME_SOURCE_PREFIXES.some(p => id.startsWith(p) || id.startsWith(p.replace(':', '|')));
-}
-
-function isAnimeXrefId(id) {
-  return ANIME_XREF_PREFIXES.some(p => id.startsWith(p) || id.startsWith(p.replace(':', '|')));
-}
-
-async function resolveAnimeId(id) {
-  if (isAnimeSourceId(id)) return id;
-  if (!isAnimeXrefId(id)) return null;
-  try {
-    const meta = await proxyPigamer(`/meta/series/${encodeURIComponent(fixPigamerId(id))}.json`);
-    if (meta?.meta?.id && isAnimeSourceId(meta.meta.id)) {
-      console.log(`[anime] resolved ${id} → ${meta.meta.id}`);
-      return meta.meta.id;
-    }
-  } catch {}
-  return null;
-}
-
-function fixPigamerId(id) {
-  return id;
-}
-
-const animeTMDbCache = new Map();
-const ANIME_TMDB_CACHE_TTL = 24 * 60 * 60 * 1000; // 24h
-
-async function getAnimeTMDbId(id) {
-  const cached = animeTMDbCache.get(id);
-  if (cached && Date.now() - cached.time < ANIME_TMDB_CACHE_TTL) return cached.tmdbId;
-  try {
-    const meta = await proxyPigamer(`/meta/series/${encodeURIComponent(id)}.json`);
-    if (meta?.meta) {
-      let tmdbId = null;
-      if (Array.isArray(meta.meta.links)) {
-        for (const link of meta.meta.links) {
-          if (link.category === 'tmdb' || (typeof link.name === 'string' && link.name.toLowerCase().includes('tmdb'))) {
-            const url = link.url || '';
-            const match = url.match(/\/(\d+)$/);
-            if (match) { tmdbId = match[1]; break; }
-          }
-        }
-      }
-      if (!tmdbId && meta.meta.tmdb_id) tmdbId = String(meta.meta.tmdb_id);
-      if (tmdbId) {
-        animeTMDbCache.set(id, { tmdbId, time: Date.now() });
-        return tmdbId;
-      }
-    }
-  } catch {}
-  return null;
-}
+// ─── Anime (unified module) ──────────────
 
 function parsePathExtras(extraStr) {
   const params = {};
@@ -643,10 +582,6 @@ function parsePathExtras(extraStr) {
     else if (pair) params[pair] = '';
   }
   return params;
-}
-
-async function proxyPigamer(pathSuffix, timeout = 20000) {
-  return await fetchAPI(`${PIGAMER}${pathSuffix}`, {}, timeout);
 }
 
 // ─── Route helpers ────────────────────────
@@ -1073,22 +1008,17 @@ async function resolveTMDbIdForProviders(rawId, mediaType) {
 async function scrapeLocalProviders(rawId, mediaType, type, season, episode, config, isAnime) {
   if (!config.enableLocal) return [];
   let tmdbId;
-  const isIdAnime = type === 'anime' || ANIME_PREFIXES.some(p => rawId.startsWith(p.replace(':', '|')) || rawId.startsWith(p));
+  const isIdAnime = type === 'anime' || anime.isAnimeId(rawId);
   if (isIdAnime) {
-    if (rawId.match(/^\d+$/)) {
-      tmdbId = rawId;
-    } else {
-      const proxyId = await resolveAnimeId(rawId) || rawId;
-      tmdbId = await getAnimeTMDbId(proxyId);
-    }
+    tmdbId = await anime.resolveToTMDbId(rawId, mediaType, true);
   } else {
     tmdbId = await resolveTMDbIdForProviders(rawId, mediaType);
   }
   if (!tmdbId) return [];
 
-  const ANIME_PROVIDER_IDS = new Set(['allanime','animekai','animepahe','animesalt','animetsu','animeworld','anime-sama','hianime','allwish','anikototv']);
   const providers = localProviders.filter(provider => {
-    if (!isAnime && ANIME_PROVIDER_IDS.has(provider.id)) return false;
+    if (isAnime && !anime.isAnimeProvider(provider.id)) return false;
+    if (!isAnime && anime.isAnimeProvider(provider.id)) return false;
     return providerSupportsType(provider, mediaType, type) && providerMatchesLang(provider, config) && isProviderHealthy(provider.id);
   });
   if (!providers.length) return [];
@@ -1126,28 +1056,21 @@ async function scrapeLocalProviders(rawId, mediaType, type, season, episode, con
   return streams;
 }
 
-async function scrapeAlfa(rawId, mediaType, type, season, episode, config) {
+async function scrapeAlfa(rawId, mediaType, type, season, episode, config, isAnime) {
   if (!config.enableLocal || typeof scrapeAlfaProviders !== 'function') return [];
   if (!rawId) return [];
   let tmdbId;
-  if (type === 'anime') {
-    // If rawId is already a numeric TMDB ID, use it directly (no Pigamer37 meta needed)
-    if (rawId.match(/^\d+$/)) {
-      tmdbId = rawId;
-    } else {
-      const proxyId = await resolveAnimeId(rawId) || rawId;
-      tmdbId = await getAnimeTMDbId(proxyId);
-      // Fallback: pass anime slug directly to Alfa (resolveTitle handles it natively)
-      if (!tmdbId) tmdbId = proxyId;
-    }
+  if (isAnime) {
+    tmdbId = await anime.resolveToTMDbId(rawId, mediaType, true);
   } else {
     tmdbId = await resolveTMDbIdForProviders(rawId, mediaType);
   }
   if (!tmdbId) return [];
+  const alfaType = anime.getAlfaCategory(isAnime, type);
   const start = Date.now();
   try {
     const data = await withTimeout(
-      Promise.resolve(scrapeAlfaProviders(type === 'anime' ? 'anime' : (isSeriesType(type) ? 'series' : type), String(tmdbId), season, episode)),
+      Promise.resolve(scrapeAlfaProviders(alfaType, String(tmdbId), season, episode)),
       LOCAL_PROVIDER_TIMEOUT
     );
     const streams = (Array.isArray(data) ? data : [])
@@ -1189,10 +1112,10 @@ app.get('/manifest.json', async (req, res) => {
 
   const streamPrefixes = ['ovn', 'tt'];
   if (config.enableBackend) streamPrefixes.push('tmdb');
-  if (config.enableAnime) streamPrefixes.push(...ANIME_PREFIXES);
+  if (config.enableAnime) streamPrefixes.push(...anime.ANIME_PREFIXES);
 
   const metaPrefixes = ['ovn', 'tmdb', 'tt'];
-  if (config.enableAnime) metaPrefixes.push(...ANIME_PREFIXES);
+  if (config.enableAnime) metaPrefixes.push(...anime.ANIME_PREFIXES);
 
   const allPrefixes = [...new Set([...streamPrefixes, ...metaPrefixes])];
 
@@ -1232,7 +1155,7 @@ app.get('/manifest.json', async (req, res) => {
   const resources = [
     { name: 'stream', types: enabledTypes, idPrefixes: streamPrefixes },
     { name: 'meta', types: enabledTypes, idPrefixes: metaPrefixes },
-    { name: 'catalog', types: catalogTypes, idPrefixes: ['ovn', 'tmdb', 'tt', 'tmdb-genre:', ...ANIME_PREFIXES] }
+    { name: 'catalog', types: catalogTypes, idPrefixes: ['ovn', 'tmdb', 'tt', 'tmdb-genre:', ...anime.ANIME_PREFIXES] }
   ];
 
   const manifest = {
@@ -1283,14 +1206,10 @@ async function handleStream(req, res, type, id) {
   const mediaType = mapType(type);
   const rawId = extractId(parsed.contentId);
 
-  let isAnime = isAnimeId(id);
-  if (!isAnime && config.enableAnime && mediaType === 'tv' && rawId.match(/^\d+$/)) {
-    try {
-      const tmdb = await withTimeout(fetchAPI(
-        `https://api.themoviedb.org/3/tv/${rawId}?api_key=${TMDB_KEY}&language=en`
-      ), 5000);
-      isAnime = !!tmdb?.genres?.some(g => g.id === 16);
-    } catch {}
+  const detection = await anime.detectAnime(id, type, mediaType, config);
+  const isAnime = detection.isAnime;
+  if (detection.method !== 'disabled' && detection.method !== 'prefix') {
+    console.log(`[anime:detect] ${id} → ${isAnime} (${detection.method}, confidence=${detection.confidence})`);
   }
 
   const configKey = `${config.quality}|${(config.langs||[]).join(',')}|${config.enableBackend}|${config.enableLocal}`;
@@ -1310,10 +1229,10 @@ async function handleStream(req, res, type, id) {
   if (isAnime && config.enableAnime) {
     streamTasks.push((async () => {
       try {
-        const resolvedId = await resolveAnimeId(id);
+        const resolvedId = await anime.resolveAnimeId(id);
         const proxyId = resolvedId || (rawId.match(/^\d+$/) ? `tmdb:${rawId}` : rawId);
-        const data = await proxyPigamer(`/stream/series/${encodeURIComponent(proxyId)}.json?season=${season}&episode=${episode}`);
-        return parseSources(data).map(s => normalizeStream(s, 'pigamer37', 'Pigamer37')).filter(Boolean);
+        const data = await anime.pigamer.getStreams(proxyId, season, episode);
+        return data.map(s => normalizeStream(s, 'pigamer37', 'Pigamer37')).filter(Boolean);
       } catch { return []; }
     })());
   }
@@ -1328,11 +1247,8 @@ async function handleStream(req, res, type, id) {
   }
 
   if (config.enableLocal) {
-    streamTasks.push(scrapeAlfa(rawId, mediaType, type, season, episode, config));
+    streamTasks.push(scrapeAlfa(rawId, mediaType, type, season, episode, config, isAnime));
     streamTasks.push(scrapeLocalProviders(rawId, mediaType, type, season, episode, config, isAnime));
-    if (isAnime && config.enableAnime && mediaType === 'tv') {
-      streamTasks.push(scrapeAlfa(rawId, 'tv', 'anime', season, episode, config));
-    }
   }
 
   streamTasks.push((async () => {
@@ -1366,7 +1282,7 @@ async function handleStream(req, res, type, id) {
     } catch {}
     if (searchTitle.length < 2) return results;
     try {
-      const torrents = await torrentIndex.search(searchTitle, mediaType, imdbId, year, season, episode);
+      const torrents = await torrentIndex.search(searchTitle, mediaType, imdbId, year, season, episode, isAnime);
       for (const t of torrents.slice(0, 15)) {
         const metaParts = [];
         if (t.source) metaParts.push(t.source);
@@ -1583,22 +1499,21 @@ async function handleMeta(req, res, type, id) {
   if (!isTypeEnabled(type, config)) return res.json({ meta: null });
 
   // Anime meta → Amatsu (para anilist:) o Pigamer37 (para otros)
-  if (isAnimeId(id)) {
+  if (anime.isAnimeId(id)) {
     if (!config.enableAnime) return res.json({ meta: null });
     try {
-      // Para anilist: IDs, intentar Amatsu primero (datos más ricos con synonyms)
       if (id.startsWith('anilist:')) {
-        const amatsu = await catalog.getAmatsuMeta(id);
-        if (amatsu) {
+        const amatsuMeta = await anime.amatsu.getMeta(id);
+        if (amatsuMeta) {
           const meta = {
-            id: `anilist:${amatsu.anilistId.replace('anilist:', '')}`,
+            id: `anilist:${amatsuMeta.anilistId.replace('anilist:', '')}`,
             type: 'series',
-            name: amatsu.name || amatsu.englishName || 'Unknown',
-            poster: amatsu.poster || null,
-            background: amatsu.background || null,
-            description: (amatsu.description || '').substring(0, 2000),
-            releaseInfo: amatsu.year || '',
-            imdbRating: amatsu.score || null,
+            name: amatsuMeta.name || amatsuMeta.englishName || 'Unknown',
+            poster: amatsuMeta.poster || null,
+            background: amatsuMeta.background || null,
+            description: (amatsuMeta.description || '').substring(0, 2000),
+            releaseInfo: amatsuMeta.year || '',
+            imdbRating: amatsuMeta.score || null,
             genres: [],
           };
           res.setHeader('Access-Control-Allow-Origin', '*');
@@ -1606,8 +1521,7 @@ async function handleMeta(req, res, type, id) {
           return res.json({ meta });
         }
       }
-      const proxyType = 'series';
-      const data = await proxyPigamer(`/meta/${proxyType}/${encodeURIComponent(id)}.json`);
+      const data = await anime.pigamer.getMeta(id, 'series');
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Cache-Control', `public, max-age=${META_TTL / 1000}`);
       return res.json(data || { meta: null });
