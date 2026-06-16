@@ -376,8 +376,21 @@ async function getEpisodeUrl(provider, seriesUrl, season, episode) {
                 const epUrl = $$(eel).attr('href');
                 if (epUrl) {
                   try { return new URL(epUrl, provider.baseUrl).href; } catch { return null; }
-                }
-              }
+    }
+    // Fallback: search HTML for direct media URLs (.mp4, .m3u8, .mkv)
+    if (!results.length) {
+      const mediaRe = /https?:\/\/[^"'\s<>]+\.(?:mp4|m3u8|mkv|webm)[^"'\s<>]*/gi;
+      const seen = new Set();
+      let m;
+      while ((m = mediaRe.exec(html)) !== null) {
+        const mediaUrl = m[0].replace(/[)"'<>]+$/, '');
+        if (!seen.has(mediaUrl)) {
+          seen.add(mediaUrl);
+          results.push({ url: mediaUrl, server: 'direct', quality: cfg.defaultQuality || 'HD' });
+        }
+      }
+    }
+  }
             }
           }
         }

@@ -723,7 +723,7 @@ module.exports = [
     language: ['cast', 'lat'],
     active: true,
     adult: false,
-    search: { url: '/search/{query}', itemSelector: 'div.col-md-2', titleSelector: 'img[alt]', linkSelector: 'a', titleAttr: 'alt' }, // <-- fixed
+    search: { url: '/search/{query}', itemSelector: 'div.col-md-2:has(a[href*="player.php"])', titleSelector: 'a[href*="player.php"]', linkSelector: 'a[href*="player.php"]' },
     videos: { type: 'iframe', containerSelector: '.player', iframeSelector: 'iframe', defaultQuality: 'HD' }
   },
   {
