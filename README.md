@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.6.9
+# Ovnivers — Stream Provider v1.7.0
 
 Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fuentes.
 
@@ -18,7 +18,7 @@ Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fue
 | **Torrent indexers** (6 fuentes) | GloDLS, Nyaa.si, SolidTorrents, LimeTorrents, 1337x (5 mirrors), EZTV — ~70+ magnets por busqueda con metadata enriquecida (seeds, size, codec, audio, source) |
 | **Embed resolver** (11+ dominios) | streamwish, filemoon, doodstream, mixdrop, voe.sx, vidhide, ok.ru, streamtape, upstream, netu.tv, vidmoly + JWPlayer + generico |
 | **Pipeline unificado** | Orquestador central: circuit breaker (5 fallos = 5min off), dedup, post-resolver de embeds, scoring por idioma |
-| **Prioridad castellano** | Streams en espanol/latino/VOSE/dual aparecen primero por `computeLangScore()` |
+| **Prioridad castellano** | Streams en espanol/latino/VOSE/dual aparecen primero via `media.language.computeScore()` |
 | **Pigamer37** (proxy anime) | AnimeFLV, AnimeAV1, TioAnime, Henaojara — solo para anime detectado |
 | **Alfa Providers** (server-side) | 48 providers activos (5 funcionales, 12 bloqueados por Turnstile, 4 con selectores wrong, resto sin resultados) |
 | **Hermes scrapers** (server-side) | 9/43 funcionales en Node.js (inyeccion de globales cheerio/CryptoJS). 19 deshabilitados (dominio muerto), 15 ofuscados sin streams |
@@ -166,19 +166,32 @@ node build.js    # Build de scrapers desde src/
 
 ## Changelog
 
-### v1.6.9 — Modulo unificado de anime
+### v1.6.9 — Modulos unificados: anime + media + movies + series
 
-- **Nuevo modulo `src/anime/`**: 7 archivos que consolidan toda la logica de anime dispersa en server.js, catalog y alfa-providers
-- **`detector.js`**: deteccion robusta con 3 metodos — prefix (1.0), TMDB genre 16 + origin_country JP (0.95), type=anime (0.9). The Simpsons ya NO se detecta como anime (antes si, por genre 16 solo)
-- **`resolver.js`**: pipeline unificado de resolucion de IDs — xref→source→tmdb, con cache 24h
-- **`pigamer.js`**: cliente dedicado para Pigamer37 (streams + meta)
-- **`amatsu.js`**: cliente dedicado para Amatsu (synonyms, catalogs, search, meta)
-- **`providers.js`**: registro centralizado de providers anime-only (11 IDs), reemplaza la lista hardcodeada en server.js
-- **`types.js`**: constantes compartidas (prefixes, bases, provider IDs)
-- **Nyaa.si anime**: torrent search ahora usa categoria `1_0` (anime) cuando `isAnime=true`, en vez de `0_0` (todas)
-- **Eliminado codigo muerto**: `fixPigamerId` (no-op), `proxyPigamer`, `animeTMDbCache` duplicado, `ANIME_PREFIXES`/`ANIME_SOURCE_PREFIXES`/`ANIME_XREF_PREFIXES` duplicados en server.js
-- **Eliminada llamada duplicada a scrapeAlfa**: antes se llamaba 2 veces para anime (type original + type='anime'), ahora 1 sola con categoria correcta
-- **server.js**: -94 lineas de codigo anime disperso, reemplazadas por `const anime = require('./src/anime/index')`
+**Modulo anime (`src/anime/`):**
+- 7 archivos que consolidan toda la logica de anime dispersa en server.js, catalog y alfa-providers
+- `detector.js`: deteccion robusta con 3 metodos — prefix (1.0), TMDB genre 16 + origin_country JP (0.95), type=anime (0.9). The Simpsons ya NO se detecta como anime (antes si, por genre 16 solo)
+- `resolver.js`: pipeline unificado de resolucion de IDs — xref→source→tmdb, con cache 24h
+- `pigamer.js`: cliente dedicado para Pigamer37 (streams + meta)
+- `amatsu.js`: cliente dedicado para Amatsu (synonyms, catalogs, search, meta)
+- `providers.js`: registro centralizado de providers anime-only (11 IDs), reemplaza la lista hardcodeada en server.js
+- `types.js`: constantes compartidas (prefixes, bases, provider IDs)
+- Nyaa.si anime: torrent search ahora usa categoria `1_0` (anime) cuando `isAnime=true`, en vez de `0_0` (todas)
+- Eliminado codigo muerto: `fixPigamerId` (no-op), `proxyPigamer`, `animeTMDbCache` duplicado, `ANIME_PREFIXES`/`ANIME_SOURCE_PREFIXES`/`ANIME_XREF_PREFIXES` duplicados en server.js
+- Eliminada llamada duplicada a scrapeAlfa: antes se llamaba 2 veces para anime (type original + type='anime'), ahora 1 sola con categoria correcta
+- server.js: -94 lineas de codigo anime disperso, reemplazadas por `const anime = require('./src/anime/index')`
+
+**Modulos media/movies/series (`src/media/`, `src/movies/`, `src/series/`):**
+- `src/media/`: infraestructura compartida — `types.js` (constantes), `tmdb.js` (API TMDB), `language.js` (deteccion + scoring + filtro de idiomas), `quality.js` (normalizacion + comparacion + filtro), `dedup.js` (deduplicacion con prioridad por calidad), `health.js` (health tracking con cooldown 5min), `index.js` (API unificada)
+- `src/movies/`: resolucion de metadatos y filtrado de streams por year para peliculas
+- `src/series/`: extraccion S/E, verificacion, deteccion de packs, filtrado por episodio
+- server.js: -116 lineas de funciones inline reemplazadas por llamadas a modulos:
+  - `providerStats`/`trackProviderResult`/`isProviderHealthy`/`getProviderReport` → `media.health`
+  - `matchesQuality`/`filterStreams`/`computeLangScore` → `media.language.matchesFilter`/`computeScore` + `media.quality.matchesFilter`/`compareQuality`
+  - Dedup inline → `media.dedup.dedupeWithPriority`
+  - Eliminadas funciones: `matchesQuality`, `computeLangScore`, `filterStreams`
+  - Nuevos campos estructurados en streams: `quality` (string normalizado) y `languages` (array de codigos)
+- Fix: alias `cast` → `es` en language module para que idioma detectado como `cast` coincida con preferencia de usuario `es`
 
 ### v1.6.8 — Precision scoring para torrents
 
@@ -352,6 +365,8 @@ node build.js    # Build de scrapers desde src/
   "name": "ProviderName\n1080p 🇯🇵🇪🇸",
   "title": "1080p | ProviderName\nServerName\nDetalle",
   "url": "https://.../video.m3u8",
+  "quality": "1080p",
+  "languages": ["cast", "en"],
   "notWebReady": false
 }
 ```
@@ -359,6 +374,8 @@ node build.js    # Build de scrapers desde src/
 | Campo | Descripción |
 |---|---|
 | `url` | URL directa `.mp4`/`.m3u8` o URL de embed HTML |
+| `quality` | Calidad normalizada (`4K`, `1080p`, `720p`, `480p`, `HD`, `CAM`) |
+| `languages` | Array de códigos de idioma detectados (`cast`, `lat`, `en`, `ja`, `vose`, ...) |
 | `notWebReady` | `false` = directo (ExoPlayer). `true` = embed (solo Chromium WebView) |
 | `name` | Provider + calidad + flags de idioma |
 | `title` | Provider + servidor + detalle (episodio, HDR, dual audio) |

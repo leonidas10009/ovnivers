@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.6.9
+ * Ovnivers — Stremio Addon Backend v1.7.0
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
@@ -35,6 +35,10 @@ const torrentIndex = require('./src/torrent-providers/index');
 const { resolveEmbed } = require('./src/alfa-providers/embed-resolver');
 const { StreamPipeline } = require('./src/stream-pipeline/index');
 const scrapeless = require('./src/scrapeless-proxy');
+const anime = require('./src/anime/index');
+const media = require('./src/media/index');
+const movies = require('./src/movies/index');
+const series = require('./src/series/index');
 
 // Configure Scrapeless if API key is set
 if (process.env.SCRAPELESS_API_KEY) {
@@ -44,10 +48,8 @@ if (process.env.SCRAPELESS_API_KEY) {
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.6.9';
+const VERSION = '1.7.0';
 const ADDON_ID = 'com.ovnivers.allinone';
-
-const anime = require('./src/anime/index');
 
 // Available languages for filtering
 const ALL_LANGS = {
@@ -186,59 +188,13 @@ for (const scraper of manifestScrapers) {
 console.log(`Loaded ${localProviders.length} local provider modules`);
 
 // ─── Health Check / Provider Stats ─────────
-const CONSECUTIVE_FAIL_LIMIT = 5;
-const providerStats = new Map();
+const health = media.health;
 
-function initProviderStats(provider) {
-  const id = provider.id || provider.name || 'unknown';
-  if (!providerStats.has(id)) {
-    providerStats.set(id, { name: provider.name || id, total: 0, ok: 0, fail: 0, failStreak: 0, totalMs: 0, lastOk: 0, lastFail: 0 });
-  }
-  return providerStats.get(id);
-}
-
-function trackProviderResult(providerId, success, timeMs) {
-  const stat = providerStats.get(providerId);
-  if (!stat) return;
-  stat.total++;
-  stat.totalMs += timeMs;
-  if (success) {
-    stat.ok++;
-    stat.failStreak = 0;
-    stat.lastOk = Date.now();
-  } else {
-    stat.fail++;
-    stat.failStreak++;
-    stat.lastFail = Date.now();
-  }
-}
-
-function isProviderHealthy(providerId) {
-  const stat = providerStats.get(providerId);
-  if (!stat) return true;
-  return stat.failStreak < CONSECUTIVE_FAIL_LIMIT;
-}
-
-function getProviderReport() {
-  const report = [];
-  for (const [id, stat] of providerStats) {
-    report.push({
-      id, name: stat.name,
-      total: stat.total, ok: stat.ok, fail: stat.fail,
-      failStreak: stat.failStreak,
-      avgMs: stat.total > 0 ? Math.round(stat.totalMs / stat.total) : 0,
-      healthy: stat.failStreak < CONSECUTIVE_FAIL_LIMIT,
-      lastOk: stat.lastOk ? new Date(stat.lastOk).toISOString() : null,
-      lastFail: stat.lastFail ? new Date(stat.lastFail).toISOString() : null,
-    });
-  }
-  return report;
-}
-
-localProviders.forEach(p => initProviderStats(p));
-initProviderStats({ id: 'alfa-providers', name: 'Alfa Providers' });
-initProviderStats({ id: 'backend-scrapers', name: 'Backend (2embed/VidSrc/Poseidon)' });
-initProviderStats({ id: 'pigamer37', name: 'Pigamer37 (Anime Proxy)' });
+localProviders.forEach(p => health.init(p.id));
+health.init('alfa-providers');
+health.init('backend-scrapers');
+health.init('pigamer37');
+health.init('torrent-indexers');
 
 const streamCache = new Map();
 const CACHE_TTL = 10 * 60 * 1000;
@@ -385,16 +341,6 @@ function parseConfig(req) {
     return { ...DEFAULT_CONFIG, ...cfg };
   }
   return DEFAULT_CONFIG;
-}
-
-function matchesQuality(streamName, qualityPref) {
-  if (qualityPref === 'all') return true;
-  const name = (streamName || '').toLowerCase();
-  const isLowQuality = /\b(cam|ts|tc|scr|r5|camrip|hdts|hdtc)\b/.test(name);
-  if (qualityPref === '4k') return (name.includes('4k') || name.includes('2160') || name.includes('uhd')) && !isLowQuality;
-  if (qualityPref === '1080p') return (name.includes('1080') || name.includes('fhd')) && !isLowQuality;
-  if (qualityPref === '720p') return (name.includes('720') || name.includes('1080') || name.includes('4k') || name.includes('2160')) && !isLowQuality;
-  return true;
 }
 
 // ─── TMDB Helpers ─────────────────────────
@@ -940,9 +886,13 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
   const title = titleParts.join('\n');
 
   const isDirectMedia = !hasInfoHash && url && /\.(mp4|m3u8|mkv|webm|avi)(\?|$)/i.test(url);
+  const languages = media.language.detectFromStream({ name, title, description: stream.description, audioLang });
+  const normalizedQuality = media.quality.normalizeQuality(quality);
   return {
     name,
     title,
+    quality: normalizedQuality,
+    languages,
     ...(url ? { url } : {}),
     ...(hasInfoHash ? { infoHash: stream.infoHash } : {}),
     ...(stream.fileIdx !== undefined ? { fileIdx: stream.fileIdx } : {}),
@@ -1019,7 +969,7 @@ async function scrapeLocalProviders(rawId, mediaType, type, season, episode, con
   const providers = localProviders.filter(provider => {
     if (isAnime && !anime.isAnimeProvider(provider.id)) return false;
     if (!isAnime && anime.isAnimeProvider(provider.id)) return false;
-    return providerSupportsType(provider, mediaType, type) && providerMatchesLang(provider, config) && isProviderHealthy(provider.id);
+    return providerSupportsType(provider, mediaType, type) && providerMatchesLang(provider, config) && health.isHealthy(provider.id);
   });
   if (!providers.length) return [];
 
@@ -1037,7 +987,7 @@ async function scrapeLocalProviders(rawId, mediaType, type, season, episode, con
           .map(stream => normalizeStream(stream, provider.id, provider.name, { contentLanguage: provider.contentLanguage }))
           .filter(Boolean);
         const elapsed = Date.now() - start;
-        trackProviderResult(provider.id, normalized.length > 0, elapsed);
+        health.track(provider.id, normalized.length > 0, elapsed);
         if (normalized.length) {
           console.log(`  [${provider.name}] ${normalized.length} streams (${elapsed}ms)`);
         } else if (normalized.length === 0) {
@@ -1045,7 +995,7 @@ async function scrapeLocalProviders(rawId, mediaType, type, season, episode, con
         }
         return normalized;
       } catch (e) {
-        trackProviderResult(provider.id, false, Date.now() - start);
+        health.track(provider.id, false, Date.now() - start);
         console.warn(`  [${provider.name}] ${e.message}`);
         return [];
       }
@@ -1076,10 +1026,10 @@ async function scrapeAlfa(rawId, mediaType, type, season, episode, config, isAni
     const streams = (Array.isArray(data) ? data : [])
       .map(stream => normalizeStream(stream, 'alfa-providers', 'Alfa Providers'))
       .filter(Boolean);
-    trackProviderResult('alfa-providers', streams.length > 0, Date.now() - start);
+    health.track('alfa-providers', streams.length > 0, Date.now() - start);
     return streams;
   } catch (e) {
-    trackProviderResult('alfa-providers', false, Date.now() - start);
+    health.track('alfa-providers', false, Date.now() - start);
     console.warn(`[alfa] ${e.message}`);
     return [];
   }
@@ -1088,7 +1038,7 @@ async function scrapeAlfa(rawId, mediaType, type, season, episode, config, isAni
 
 
 app.get('/health', (req, res) => {
-  const report = getProviderReport();
+  const report = health.getReport();
   const healthy = report.filter(p => p.healthy).length;
   const total = report.length;
   res.json({
@@ -1218,7 +1168,10 @@ async function handleStream(req, res, type, id) {
     const cached = streamCache.get(ck);
     if (cached && Date.now() - cached.time < CACHE_TTL) {
       res.setHeader('Access-Control-Allow-Origin', '*');
-      return res.json({ streams: filterStreams(cached.data, config) });
+      return res.json({ streams: cached.data.filter(s =>
+        media.language.matchesFilter(s.languages, config.langs) &&
+        media.quality.matchesFilter(s.quality, config.quality)
+      ) });
     }
   }
 
@@ -1332,16 +1285,8 @@ async function handleStream(req, res, type, id) {
     }, STREAM_GLOBAL_TIMEOUT))
   ]);
 
-  const seen = new Set();
-  let unique = [];
-  for (const s of rawStreams) {
-    const key = (s.infoHash || s.url || '') + '|' + (s.name || '').toLowerCase().substring(0, 40);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    unique.push(s);
-  }
+  let unique = media.dedup.dedupeWithPriority(rawStreams, true);
 
-  // Resolver embeds a directo (max 8, con timeout)
   const unresolved = unique.filter(s => s.url && !s.infoHash && s.behaviorHints?.notWebReady);
   if (unresolved.length > 0) {
     const toResolve = unresolved.slice(0, 8);
@@ -1368,49 +1313,21 @@ async function handleStream(req, res, type, id) {
 
   if (!isAnime && unique.length > 0) cacheSet(streamCache, ck, { data: unique, time: Date.now() }, MAX_CACHE);
 
-  const filtered = filterStreams(unique, config);
+  const filtered = unique.filter(s =>
+    media.language.matchesFilter(s.languages, config.langs) &&
+    media.quality.matchesFilter(s.quality, config.quality)
+  );
 
-  // ── Ordenar: castellano primero, luego calidad ──
   filtered.sort((a, b) => {
-    const la = computeLangScore(a);
-    const lb = computeLangScore(b);
+    const la = media.language.computeScore(a.languages, config.langs);
+    const lb = media.language.computeScore(b.languages, config.langs);
     if (la !== lb) return lb - la;
-    const qo = { '4K': 4, '1080p': 3, '720p': 2, '480p': 1, 'HD': 2, 'CAM': 0 };
-    const qa = qo[(a.name || '').match(/\b(4K|1080p|720p|480p|HD)\b/)?.[1]] || 0;
-    const qb = qo[(b.name || '').match(/\b(4K|1080p|720p|480p|HD)\b/)?.[1]] || 0;
-    return qb - qa;
+    return media.quality.compareQuality(a.quality, b.quality);
   });
 
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', `public, max-age=${CACHE_TTL / 1000}`);
   res.json({ streams: filtered });
-}
-
-function computeLangScore(stream) {
-  const text = `${stream.name || ''}\n${stream.title || ''}\n${stream.description || ''}`.toLowerCase();
-  let score = 0;
-  if (/\b(castellano|español|espanol|castellano latino)\b/i.test(text)) score += 3;
-  if (/\b(latino|audio latino)\b/i.test(text)) score += 2;
-  if (/\b(vose|subtitulado)\b/i.test(text)) score += 1.5;
-  if (/\b(dual|multi).*?(audio|idioma)/i.test(text)) score += 1.5;
-  if (/[\u{1F1EA}\u{1F1F8}]/u.test(stream.name || '')) score += 1;
-  return score;
-}
-
-function filterStreams(streams, config) {
-  const enabledLangs = new Set((config.langs || []).map(l => l.toLowerCase()));
-  return streams.filter(s => {
-    if (!matchesQuality(s.name, config.quality)) return false;
-    if (enabledLangs.size === 0 || enabledLangs.has('*')) return true;
-    const nameFlags = (s.name || '').match(/[\u{1F1E6}-\u{1F1FF}]{2}/ug) || [];
-    if (nameFlags.length === 0) return true;
-    return nameFlags.some(f => {
-      for (const [code, flag] of Object.entries(LANG_TO_FLAG)) {
-        if (flag === f && enabledLangs.has(code.replace(/['"]/g, ''))) return true;
-      }
-      return false;
-    });
-  });
 }
 
 // ─── Catalog (TMDB en español) ────────────
@@ -1867,7 +1784,7 @@ footer a{color:var(--accent2);text-decoration:none}
 
 app.get('/', (req, res) => {
   const config = parseConfig(req);
-  const report = getProviderReport();
+  const report = health.getReport();
   const healthy = report.filter(p => p.healthy).length;
   res.json({
     name: 'Ovnivers Streams',
