@@ -601,7 +601,7 @@ module.exports = [
     language: ['*'],
     active: true,
     adult: false,
-    search: { url: '/busquedas/?donghua={query}', itemSelector: '.md-card', titleSelector: '.md-card-title', linkSelector: 'a' },
+    search: { url: '/busquedas/?donghua={query}', itemSelector: '.md-card:has(a[href*="/donghua/"])', titleSelector: '.md-card-title', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
   },
   {
@@ -621,7 +621,7 @@ module.exports = [
     baseUrl: 'https://ww3.pelisplus.to',
     categories: ['anime', 'documentary', 'direct'],
     language: ['lat'],
-    active: true,
+    active: false,
     adult: false,
     search: { url: '/search?q={query}', itemSelector: 'a[href*="/pelicula/"]', titleSelector: '.title', linkSelector: '&' },
     videos: { type: 'nextjs', dataPath: 'props.pageProps.post.players', defaultQuality: 'HD' }
@@ -634,7 +634,7 @@ module.exports = [
     language: ['lat', 'cast', 'vose'],
     active: true,
     adult: false,
-    search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
+    search: { url: '/?s={query}', itemSelector: '.card', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
   },
   {
