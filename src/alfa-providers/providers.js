@@ -276,7 +276,7 @@ module.exports = [
     active: true,
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
-    videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
+    videos: { type: 'iframe', containerSelector: 'body', iframeSelector: 'iframe', srcAttr: 'data-src', defaultQuality: 'HD' }
   },
   {
     name: 'peliculasflix',
