@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.7.6
+# Ovnivers — Stream Provider v1.7.7
 
 Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fuentes.
 
@@ -174,6 +174,11 @@ node build.js    # Build de scrapers desde src/
 - **URL:** https://ovnivers.onrender.com
 
 ## Changelog
+
+### v1.7.7 — Kitsu cross-reference resolution + docs update
+
+- **Resolución Kitsu → Pigamer37**: IDs `kitsu:`, `mal:`, `anilist:`, `anidb:` ahora se resuelven con 3 estrategias: Pigamer37 `/meta` → `relations.yuna.moe` → Kitsu API + Amatsu. Al abrir anime desde el addon Kitsu, nuestro addon ya puede servir streams.
+- **Documentación**: `.memory.md` y `README.md` sincronizados con todos los descubrimientos de la sesión (shorteners anti-bot, JS dinámico en animeflv, formato S/E de Pigamer37, catálogos nativos).
 
 ### v1.7.6 — Anime streams fix + modular shortener resolver + catálogos nativos Pigamer37
 
