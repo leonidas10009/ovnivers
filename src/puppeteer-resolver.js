@@ -72,12 +72,24 @@ async function resolveEmbedWithBrowser(embedUrl, timeout = 15000) {
   const cached = cache.get(ck);
   if (cached && Date.now() - cached.time < CACHE_TTL) return cached.url;
 
-  const b = await getBrowser();
-  if (!b) return null;
-
+  let browserInstance = null;
   let page = null;
   try {
-    page = await b.newPage();
+    const pptr = await getPuppeteer();
+    if (!pptr) return null;
+    const chromium = await getChromium();
+    if (!chromium) return null;
+
+    // Launch a fresh browser for this request, close it after
+    browserInstance = await pptr.launch({
+      args: chromium.args,
+      executablePath: chromium.executablePath,
+      headless: true,
+      defaultViewport: { width: 1280, height: 720 },
+    });
+    console.log('[pptr] browser launched for', embedUrl.substring(0, 40));
+
+    page = await browserInstance.newPage();
     await page.setUserAgent(UA);
 
     let videoUrl = null;
@@ -104,7 +116,7 @@ async function resolveEmbedWithBrowser(embedUrl, timeout = 15000) {
     });
 
     try { await page.goto(embedUrl, { waitUntil: 'domcontentloaded', timeout }); } catch {}
-    await new Promise(r => setTimeout(r, 5000));
+    await new Promise(r => setTimeout(r, 4000));
 
     if (!videoUrl) {
       try {
@@ -112,10 +124,7 @@ async function resolveEmbedWithBrowser(embedUrl, timeout = 15000) {
           const v = document.querySelector('video');
           if (v && v.src && !v.src.startsWith('blob:')) return v.src;
           const src = document.querySelector('video source, source');
-          if (src) {
-            const s = src.getAttribute('src') || src.src;
-            if (s && !s.startsWith('blob:')) return s;
-          }
+          if (src) { const s = src.getAttribute('src') || src.src; if (s && !s.startsWith('blob:')) return s; }
           return null;
         });
       } catch {}
@@ -123,14 +132,15 @@ async function resolveEmbedWithBrowser(embedUrl, timeout = 15000) {
 
     if (videoUrl) {
       cache.set(ck, { url: videoUrl, time: Date.now() });
-      if (cache.size > 100) { const first = cache.keys().next().value; cache.delete(first); }
+      if (cache.size > 50) { const first = cache.keys().next().value; cache.delete(first); }
     }
     return videoUrl;
   } catch (e) {
-    console.error('[pptr] resolve:', embedUrl.substring(0, 50), e.message);
+    console.error('[pptr] resolve error:', e.message);
     return null;
   } finally {
     if (page) try { await page.close(); } catch {}
+    if (browserInstance) try { await browserInstance.close(); } catch {}
   }
 }
 
