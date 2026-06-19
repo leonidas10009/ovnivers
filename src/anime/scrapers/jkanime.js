@@ -132,6 +132,29 @@ function extractIframes(html) {
   return results;
 }
 
+function extractServers(html) {
+  const serverMatch = html.match(/var servers\s*=\s*(\[[\s\S]*?\]);/);
+  if (!serverMatch) return [];
+  try {
+    const servers = JSON.parse(serverMatch[1]);
+    const results = [];
+    for (const s of servers) {
+      try {
+        const url = Buffer.from(s.remote, 'base64').toString('utf-8').trim();
+        if (url && url.startsWith('http')) {
+          results.push({
+            server: s.server,
+            lang: s.lang === 1 ? 'SUB' : s.lang === 2 ? 'LAT' : s.lang === 3 ? 'DUB' : '',
+            size: s.size || '',
+            url,
+          });
+        }
+      } catch { /* skip malformed */ }
+    }
+    return results;
+  } catch { return []; }
+}
+
 function extractM3U8(html) {
   const m3u8Re = /(https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*)/gi;
   const matches = [];
@@ -160,29 +183,51 @@ async function getStreams(slug, episode) {
   if (!page) return [];
 
   const iframes = extractIframes(page);
+  const servers = extractServers(page);
   const results = [];
 
-  // Try each iframe URL to extract video
-  for (const iframeUrl of iframes.slice(0, 3)) {
+  // 1. Extract m3u8/mp4 from JKPlayer iframes (um=Desu + umv=Magi)
+  const playerNames = ['Desu', 'Magi'];
+  for (let idx = 0; idx < iframes.length && idx < 2; idx++) {
+    const iframeUrl = iframes[idx];
     try {
       const iframeHtml = await fetchText(iframeUrl, { timeout: 10000 });
       if (!iframeHtml) continue;
 
       const m3u8s = extractM3U8(iframeHtml);
       const mp4s = extractMP4(iframeHtml);
+      const label = playerNames[idx] || 'JKPlayer';
 
       for (const url of [...new Set([...m3u8s, ...mp4s])]) {
         const host = new URL(url).hostname;
         results.push({
           url,
-          server: host,
-          name: `JKAnime\n${host}`,
-          title: `${slug} Ep. ${episode}\n⚙️ ${host}`,
-          description: host.includes('playmudos') ? 'Nika' : 'Direct',
-          behaviorHints: { notWebReady: false, bingeGroup: `jkanime|${host}` },
+          server: `${label} (${host})`,
+          name: `JKAnime\n${label}`,
+          title: `${slug} Ep. ${episode}\n⚙️ ${label} · ${host}`,
+          description: 'M3U8 Directo',
+          behaviorHints: { notWebReady: false, bingeGroup: `jkanime|${label.toLowerCase()}` },
         });
       }
-    } catch { /* continue to next iframe */ }
+    } catch { /* continue */ }
+  }
+
+  // 2. Add all server embed/download URLs
+  for (const s of servers) {
+    const label = s.server + (s.lang ? ' ' + s.lang : '') + (s.size ? ' ' + s.size : '');
+    const isEmbed = /\/e\/|embed|stream|play/i.test(s.url);
+    const isDirect = /\.(mp4|mkv|m3u8)($|\?)/i.test(s.url);
+    results.push({
+      url: s.url,
+      server: s.server,
+      name: `JKAnime\n${s.server}`,
+      title: `${slug} Ep. ${episode}\n⚙️ ${label}`,
+      description: s.lang || '',
+      behaviorHints: {
+        notWebReady: !isDirect,
+        bingeGroup: `jkanime|${s.server}`,
+      },
+    });
   }
 
   return results;
