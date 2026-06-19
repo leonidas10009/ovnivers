@@ -1714,13 +1714,12 @@ footer a{color:var(--accent2);text-decoration:none}
       var status = gid('status');
       var urlText = gid('urlText');
       var result = gid('result');
-      if (!status || !urlText || !result) throw new Error('DOM missing: ' +
-        [!status && 'status', !urlText && 'urlText', !result && 'result'].filter(Boolean).join(','));
+      if (!status || !urlText || !result) throw new Error('DOM missing');
 
       var cfg = getConfig();
       var qs = params(cfg);
       var url = BASE_URL + '/manifest.json' + (qs ? '?' + qs : '');
-      var baseHost = BASE_URL.replace(/^https?:\/\//, '');
+      var baseHost = BASE_URL.replace('https://', '').replace('http://', '');
       var stremioUrl = 'stremio://' + baseHost + '/manifest.json' + (qs ? '?' + qs : '');
 
       status.className = 'status ok';
@@ -1779,7 +1778,7 @@ footer a{color:var(--accent2);text-decoration:none}
     if (r) r.classList.remove('show');
   };
 
-  showStatus('Ready — configure and click Generate Install URL');
+  showStatus('Ready - configure and click Generate Install URL');
 })();
 </script>
 </body>
