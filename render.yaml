@@ -2,8 +2,9 @@ services:
   - type: web
     name: ovnivers
     env: node
-    buildCommand: npm install
+    runtime: node
+    buildCommand: npm install --no-audit --no-fund
     startCommand: node server.js
     plan: free
-    healthCheckPath: /
+    healthCheckPath: /health
     autoDeploy: true
