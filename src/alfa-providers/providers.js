@@ -360,7 +360,7 @@ module.exports = [
     name: 'serieskao',
     title: 'SeriesKao',
     baseUrl: 'https://serieskao.top',
-    categories: ['movie', 'tvshow', 'vos'],
+    categories: ['anime'],
     language: ['lat', 'cast'],
     active: true,
     adult: false,

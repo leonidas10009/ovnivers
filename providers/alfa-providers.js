@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-19T19:12:09.604Z
+ * Generated: 2026-06-19T19:19:39.722Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -419,7 +419,7 @@ var require_providers = __commonJS({
         name: "serieskao",
         title: "SeriesKao",
         baseUrl: "https://serieskao.top",
-        categories: ["movie", "tvshow", "vos"],
+        categories: ["anime"],
         language: ["lat", "cast"],
         active: true,
         adult: false,
@@ -1835,9 +1835,10 @@ var require_engine = __commonJS({
               try {
                 const ctrl = new AbortController();
                 const t = setTimeout(() => ctrl.abort(), 12e3);
+                const cookie = anubisCookieCache.get(domain);
                 const res = yield fetch(searchUrl, {
                   method: "POST",
-                  headers: __spreadValues({ "User-Agent": UA2, "Content-Type": "application/x-www-form-urlencoded" }, cfg.headers || {}),
+                  headers: __spreadValues(__spreadValues({ "User-Agent": UA2, "Content-Type": "application/x-www-form-urlencoded" }, cfg.headers || {}), cookie ? { "Cookie": cookie } : {}),
                   body: (cfg.body || "query={query}").replace("{query}", encodeURIComponent(query)),
                   signal: ctrl.signal
                 });
