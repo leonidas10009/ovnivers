@@ -6,15 +6,15 @@ let browser = null;
 
 async function getPuppeteer() {
   if (puppeteer) return puppeteer;
-  try { puppeteer = require('puppeteer'); } catch { return null; }
-  return puppeteer;
+  try { puppeteer = require('puppeteer'); console.log('[puppeteer] module loaded'); return puppeteer; }
+  catch (e) { console.error('[puppeteer] module not available:', e.message); return null; }
 }
 
 async function getBrowser() {
   if (browser && browser.isConnected && browser.isConnected()) return browser;
   if (browser && !browser.isConnected) return browser;
   const pptr = await getPuppeteer();
-  if (!pptr) { console.error('[puppeteer] module not available'); return null; }
+  if (!pptr) return null;
   
   if (!browserPromise) {
     console.log('[puppeteer] launching browser...');
@@ -29,12 +29,15 @@ async function getBrowser() {
         '--no-zygote',
       ],
     }).then(b => {
-      console.log('[puppeteer] browser launched successfully');
+      console.log('[puppeteer] browser launched OK');
       browser = b;
       browserPromise = null;
       return b;
     }).catch(e => {
-      console.error('[puppeteer] launch failed:', e.message);
+      console.error('[puppeteer] launch FAILED:', e.message);
+      if (e.message.includes('chromium') || e.message.includes('executable')) {
+        console.error('[puppeteer] Chromium not installed. Try: npx puppeteer browsers install chrome');
+      }
       browserPromise = null;
       return null;
     });
