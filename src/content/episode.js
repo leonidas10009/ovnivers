@@ -31,10 +31,10 @@ function parseEpisodeId(id) {
   let episode = 1;
   let animePrefix = null;
 
-  // Standard prefijos tmdb:/ovn: (ovn:tmdbId:season:episode)
-  if (id.startsWith('tmdb:') || id.startsWith('ovn:')) {
+  // Standard prefijos tmdb:/ovn-anime:/ovn: (ovn-anime:tmdbId:season:episode)
+  if (id.startsWith('tmdb:') || id.startsWith('ovn-anime:') || id.startsWith('ovn:')) {
     const parts = id.split(':');
-    contentId = parts[1] || id.replace(/^(tmdb:|ovn:)/, '');
+    contentId = parts[1] || id.replace(/^(tmdb:|ovn-anime:|ovn:)/, '');
     if (parts.length >= 4) {
       season = parseInt(parts[2]) || 1;
       episode = parseInt(parts[3]) || 1;

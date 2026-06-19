@@ -1,6 +1,6 @@
 /**
  * content - Built from src/content/
- * Generated: 2026-06-19T18:19:16.597Z
+ * Generated: 2026-06-19T18:26:18.771Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -1287,9 +1287,9 @@ var require_episode = __commonJS({
       let season = 1;
       let episode2 = 1;
       let animePrefix = null;
-      if (id.startsWith("tmdb:") || id.startsWith("ovn:")) {
+      if (id.startsWith("tmdb:") || id.startsWith("ovn-anime:") || id.startsWith("ovn:")) {
         const parts = id.split(":");
-        contentId = parts[1] || id.replace(/^(tmdb:|ovn:)/, "");
+        contentId = parts[1] || id.replace(/^(tmdb:|ovn-anime:|ovn:)/, "");
         if (parts.length >= 4) {
           season = parseInt(parts[2]) || 1;
           episode2 = parseInt(parts[3]) || 1;

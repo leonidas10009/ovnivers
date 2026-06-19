@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-19T18:19:16.499Z
+ * Generated: 2026-06-19T18:26:18.717Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;

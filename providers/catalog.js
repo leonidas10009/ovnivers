@@ -1,6 +1,6 @@
 /**
  * catalog - Built from src/catalog/
- * Generated: 2026-06-19T18:19:16.552Z
+ * Generated: 2026-06-19T18:26:18.759Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -1287,9 +1287,9 @@ var require_episode = __commonJS({
       let season = 1;
       let episode = 1;
       let animePrefix = null;
-      if (id.startsWith("tmdb:") || id.startsWith("ovn:")) {
+      if (id.startsWith("tmdb:") || id.startsWith("ovn-anime:") || id.startsWith("ovn:")) {
         const parts = id.split(":");
-        contentId = parts[1] || id.replace(/^(tmdb:|ovn:)/, "");
+        contentId = parts[1] || id.replace(/^(tmdb:|ovn-anime:|ovn:)/, "");
         if (parts.length >= 4) {
           season = parseInt(parts[2]) || 1;
           episode = parseInt(parts[3]) || 1;
@@ -1803,48 +1803,61 @@ var require_scrapers = __commonJS({
     function getStreams(id, season, episode, pigamerGetStreams) {
       return __async(this, null, function* () {
         var _a, _b;
-        const slug = extractSlug(id);
-        const promises = [];
-        if (id.startsWith("animeflv:")) {
-          promises.push(
-            (() => __async(null, null, function* () {
-              try {
-                const streams = yield animeflv.getStreams(slug, episode || 1);
-                return { provider: "AnimeFLV", streams };
-              } catch (e) {
-                return { provider: "AnimeFLV", streams: [] };
+        const animePrefixes = ["animeflv:", "animeav1:", "henaojara:", "tioanime:"];
+        const hasAnimePrefix = animePrefixes.some((p) => id.startsWith(p));
+        if (hasAnimePrefix) {
+          const slug = extractSlug(id);
+          if (!slug || slug.match(/^\d+$/)) {
+          } else {
+            const promises = [];
+            if (id.startsWith("animeflv:")) {
+              promises.push(
+                (() => __async(null, null, function* () {
+                  try {
+                    const streams = yield animeflv.getStreams(slug, episode || 1);
+                    return { provider: "AnimeFLV", streams };
+                  } catch (e) {
+                    return { provider: "AnimeFLV", streams: [] };
+                  }
+                }))()
+              );
+            }
+            const providers = [
+              { prefix: "animeflv:", label: "AnimeFLV" },
+              { prefix: "animeav1:", label: "AnimeAV1" },
+              { prefix: "henaojara:", label: "Henaojara" },
+              { prefix: "tioanime:", label: "TioAnime" }
+            ];
+            for (const { prefix, label } of providers) {
+              if (id.startsWith(prefix)) continue;
+              const providerId = `${prefix}${slug}`;
+              promises.push(
+                (() => __async(null, null, function* () {
+                  try {
+                    const streams = yield pigamerGetStreams(providerId, season, episode);
+                    return { provider: label, streams };
+                  } catch (e) {
+                    return { provider: label, streams: [] };
+                  }
+                }))()
+              );
+            }
+            const results = yield Promise.allSettled(promises);
+            const allStreams = [];
+            for (const r of results) {
+              if (r.status === "fulfilled" && ((_b = (_a = r.value) == null ? void 0 : _a.streams) == null ? void 0 : _b.length)) {
+                allStreams.push(...r.value.streams);
               }
-            }))()
-          );
-        }
-        const providers = [
-          { prefix: "animeflv:", label: "AnimeFLV" },
-          { prefix: "animeav1:", label: "AnimeAV1" },
-          { prefix: "henaojara:", label: "Henaojara" },
-          { prefix: "tioanime:", label: "TioAnime" }
-        ];
-        for (const { prefix, label } of providers) {
-          if (id.startsWith(prefix)) continue;
-          const providerId = `${prefix}${slug}`;
-          promises.push(
-            (() => __async(null, null, function* () {
-              try {
-                const streams = yield pigamerGetStreams(providerId, season, episode);
-                return { provider: label, streams };
-              } catch (e) {
-                return { provider: label, streams: [] };
-              }
-            }))()
-          );
-        }
-        const results = yield Promise.allSettled(promises);
-        const allStreams = [];
-        for (const r of results) {
-          if (r.status === "fulfilled" && ((_b = (_a = r.value) == null ? void 0 : _a.streams) == null ? void 0 : _b.length)) {
-            allStreams.push(...r.value.streams);
+            }
+            if (allStreams.length) return { source: "parallel", streams: allStreams };
           }
         }
-        return { source: "combined", streams: allStreams };
+        try {
+          const streams = yield pigamerGetStreams(id, season, episode);
+          return { source: "pigamer", streams };
+        } catch (e) {
+          return { source: "error", streams: [] };
+        }
       });
     }
     function extractSlug(id) {
