@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.8.4
+ * Ovnivers — Stremio Addon Backend v1.8.5
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
@@ -78,7 +78,7 @@ if (process.env.SCRAPELESS_API_KEY) {
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.8.4';
+const VERSION = '1.8.5';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 // Available languages for filtering
@@ -123,7 +123,7 @@ if (PROXY_URL) {
 // breaks the cookie chain (Worker receives challenge, backend solves it,
 // but auth cookie stays in backend, not in Worker)
 const PROXY_BYPASS_DOMAINS = new Set(
-  (process.env.PROXY_BYPASS_DOMAINS || 'dontorrent.support,dontorrent.fit,www43.mejortorrent.eu,grantorrent.zip,divxtotal.foo,wolfmax4k.com,pelispanda.org,elitetorrent.biz,mitorrent.mx,hacktorrent.to,bloghorror.com')
+  (process.env.PROXY_BYPASS_DOMAINS || 'dontorrent.support,dontorrent.fit,www43.mejortorrent.eu,grantorrent.zip,divxtotal.foo,wolfmax4k.com,pelispanda.org,elitetorrent.biz,mitorrent.mx,hacktorrent.to,bloghorror.com,jkanime.net,tioanime.com,animeav1.com')
     .split(',')
     .map(d => d.trim().toLowerCase())
     .filter(Boolean)
