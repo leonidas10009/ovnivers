@@ -2,7 +2,7 @@
 
 Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fuentes.
 
-> **Changelog v1.10.0:** 3 scrapers anime nuevos (JKAnime, TioAnime, AnimeAV1) + catálogos de búsqueda. Fix detección IMDb→anime para catálogos Cinemeta. Puppeteer descartado (Chromium no disponible en Render 512MB).
+> **v1.13.0:** Puppeteer integrado al flujo normal — JKAnime (4-6 ExoPlayer), TioAnime (1-2 ExoPlayer), AnimeAV1 (1-2 ExoPlayer). Browser persistente + cache 30min. `@sparticuz/chromium` (~50MB comprimido).
 
 ## Instalacion
 
@@ -18,8 +18,8 @@ Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fue
 | Funcionalidad | Detalle |
 |---|---|
 | **Torrent indexers** (6 fuentes) | GloDLS, Nyaa.si, SolidTorrents, LimeTorrents, 1337x, EZTV — ~70+ magnets por búsqueda |
-| **Scrapers anime locales** | JKAnime (2 m3u8 ExoPlayer), TioAnime (Mega/Voe/YourUpload), AnimeAV1 (HLS/UPNShare/Mega/MP4Upload via SvelteKit API), AnimeFLV (roto, delega a Pigamer37) |
-| **Pigamer37** (proxy anime) | AnimeFLV, AnimeAV1, TioAnime, Henaojara — para anime detectado |
+| **Scrapers anime (Puppeteer)** | JKAnime (9 servers → 4 ExoPlayer), TioAnime (12 servers → 1-2 ExoPlayer), AnimeAV1 (14 servers → 1-2 ExoPlayer). Browser persistente, cache 30min. Streamwish/Mp4upload/Vidhide/Streamtape resueltos a m3u8/mp4 directo |
+| **Pigamer37** (proxy anime) | AnimeFLV, AnimeAV1, TioAnime, Henaojara — ~6 mp4 directos (ExoPlayer) |
 | **Alfa Providers** | 42 providers activos (6 funcionales). Selectores corregidos en v1.7.7 |
 | **Hermes scrapers** | 61 scrapers (42 activos, 19 deshabilitados). 9 funcionales via inyección cheerio/CryptoJS |
 | **Backend scrapers** | 2embed+Mirrors (8 mirrors) + PoseidonHD (3 dominios) |
