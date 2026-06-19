@@ -196,11 +196,10 @@ function extractMP4(html) {
 
 async function getStreams(slug, episode) {
   const page = await getEpisodePage(slug, episode);
-  if (!page) { console.log('[jkanime] failed to fetch page for ' + slug + '/' + episode); return []; }
+  if (!page) return [];
 
   const iframes = extractIframes(page);
   const servers = extractServers(page);
-  console.log('[jkanime] ' + slug + '/' + episode + ' → iframes=' + iframes.length + ' servers=' + servers.length);
   const results = [];
 
   // 1. Extract m3u8/mp4 from JKPlayer iframes (um=Desu + umv=Magi)
