@@ -12,11 +12,12 @@ async function getPuppeteer() {
 
 async function getBrowser() {
   if (browser && browser.isConnected && browser.isConnected()) return browser;
-  if (browser && !browser.isConnected) return browser; // older puppeteer
+  if (browser && !browser.isConnected) return browser;
   const pptr = await getPuppeteer();
-  if (!pptr) return null;
+  if (!pptr) { console.error('[puppeteer] module not available'); return null; }
   
   if (!browserPromise) {
+    console.log('[puppeteer] launching browser...');
     browserPromise = pptr.launch({
       headless: 'new',
       args: [
@@ -28,6 +29,7 @@ async function getBrowser() {
         '--no-zygote',
       ],
     }).then(b => {
+      console.log('[puppeteer] browser launched successfully');
       browser = b;
       browserPromise = null;
       return b;
