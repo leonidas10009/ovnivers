@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.11.0
+ * Ovnivers — Stremio Addon Backend v1.12.0
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
@@ -80,7 +80,7 @@ if (process.env.SCRAPELESS_API_KEY) {
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.11.0';
+const VERSION = '1.12.0';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 // Available languages for filtering
@@ -1100,9 +1100,20 @@ app.get('/pptr-test', async (req, res) => {
 
 app.get('/stream/jkanime-pptr/:slug/:episode.json', async (req, res) => {
   const { slug, episode } = req.params;
-  console.log('[jk-pptr] resolving', slug, 'ep', episode);
   const streams = await jkanimePuppeteer.resolveJKAnime(slug, parseInt(episode) || 1);
   res.json({ streams: streams.map(s => normalizeStream(s, 'jkanime-pptr', 'JKAnime')).filter(Boolean) });
+});
+
+app.get('/stream/tioanime-pptr/:slug/:episode.json', async (req, res) => {
+  const { slug, episode } = req.params;
+  const streams = await jkanimePuppeteer.resolveTioAnime(slug, parseInt(episode) || 1);
+  res.json({ streams: streams.map(s => normalizeStream(s, 'tioanime-pptr', 'TioAnime')).filter(Boolean) });
+});
+
+app.get('/stream/animeav1-pptr/:slug/:episode.json', async (req, res) => {
+  const { slug, episode } = req.params;
+  const streams = await jkanimePuppeteer.resolveAnimeAV1(slug, parseInt(episode) || 1);
+  res.json({ streams: streams.map(s => normalizeStream(s, 'animeav1-pptr', 'AnimeAV1')).filter(Boolean) });
 });
 
 // ─── Manifest ─────────────────────────────

@@ -19,6 +19,80 @@ async function getChromium() {
   } catch { return null; }
 }
 
+// Resolvable embed domains (proven working in Puppeteer)
+const RESOLVABLE = ['streamwish', 'sfastwish', 'flaswish', 'mp4upload', 'streamtape', 'vidhide', 'callistanise'];
+
+async function resolveEmbedUrl(browser, embedUrl, waitMs = 8000) {
+  const page = await browser.newPage();
+  await page.setUserAgent(UA);
+  let videoUrl = null;
+
+  await page.setRequestInterception(true);
+  page.on('request', req => {
+    const u = req.url();
+    if (videoUrl) { req.abort(); return; }
+    const isVideo = /\.(m3u8|mp4|mkv|ts|webm)(\?|$)/i.test(u)
+      && !u.includes('.css') && !u.includes('.js') && !u.includes('videojs')
+      && !u.includes('test-videos') && !u.includes('novideo');
+    if (isVideo) { videoUrl = u; req.abort(); }
+    else req.continue();
+  });
+
+  try { await page.goto(embedUrl, { waitUntil: 'networkidle2', timeout: 20000 }); } catch {}
+  await new Promise(r => setTimeout(r, waitMs));
+
+  if (!videoUrl) {
+    try {
+      videoUrl = await page.evaluate(() => {
+        const v = document.querySelector('video');
+        if (v && v.src && !v.src.startsWith('blob:')) return v.src;
+        const src = document.querySelector('source[src]');
+        if (src) { const s = src.getAttribute('src'); if (s && !s.startsWith('blob:')) return s; }
+        return null;
+      });
+    } catch {}
+  }
+
+  await page.close();
+  return videoUrl && videoUrl.startsWith('http') && !videoUrl.includes('novideo') ? videoUrl : null;
+}
+
+function isResolvable(url) {
+  try { return RESOLVABLE.some(h => new URL(url).hostname.includes(h)); } catch { return false; }
+}
+
+async function resolveEmbedList(browser, servers, slug, episode, baseUrl) {
+  const results = [];
+  for (const s of servers) {
+    const url = s.url;
+    if (!url || !url.startsWith('http')) continue;
+
+    if (isResolvable(url)) {
+      const direct = await resolveEmbedUrl(browser, url, 8000);
+      if (direct) {
+        results.push({
+          url: direct,
+          server: s.server,
+          name: `${baseUrl}\n${s.server}`,
+          title: `${slug} Ep. ${episode}\n⚙️ ${s.server} (directo)`,
+          behaviorHints: { notWebReady: false, bingeGroup: `${baseUrl}|${s.server}`.toLowerCase() },
+        });
+        continue;
+      }
+    }
+    // Fallback: embed URL
+    results.push({
+      url,
+      server: s.server,
+      name: `${baseUrl}\n${s.server}`,
+      title: `${slug} Ep. ${episode}\n⚙️ ${s.server} (${s.size || ''})`,
+      behaviorHints: { notWebReady: true, bingeGroup: `${baseUrl}|${s.server}`.toLowerCase() },
+    });
+  }
+  return results;
+}
+
+// ═══ JKAnime ═══
 async function resolveJKAnime(slug, episode) {
   const pptr = await getPuppeteer();
   if (!pptr) return [];
@@ -27,7 +101,6 @@ async function resolveJKAnime(slug, episode) {
 
   const jkUrl = `https://jkanime.net/${slug}/${episode}/`;
   let browser = null;
-  const streams = [];
 
   try {
     browser = await pptr.launch({
@@ -39,177 +112,114 @@ async function resolveJKAnime(slug, episode) {
 
     const page = await browser.newPage();
     await page.setUserAgent(UA);
-
-    // Collect all m3u8/mp4 URLs from network
-    const videoUrls = [];
-    await page.setRequestInterception(true);
-    page.on('request', req => {
-      const u = req.url();
-      const isVideo = /\.(m3u8|mp4|mkv|ts|webm)(\?|$)/i.test(u)
-        && !u.includes('.css') && !u.includes('.js') && !u.includes('videojs')
-        && !u.includes('google') && !u.includes('analytics') && !u.includes('cdn.jkdesa')
-        && !u.includes('test-videos');
-      if (isVideo) {
-        videoUrls.push(u);
-        req.abort();
-      } else {
-        req.continue();
-      }
-    });
-
-    page.on('response', resp => {
-      const ct = resp.headers()['content-type'] || '';
-      if (ct.includes('mpegurl') || ct.includes('video/mp4')) {
-        videoUrls.push(resp.url());
-      }
-    });
-
     await page.goto(jkUrl, { waitUntil: 'networkidle2', timeout: 30000 });
     await new Promise(r => setTimeout(r, 8000));
 
-    // 1. Extract m3u8 from iframes (Desu + Magi)
+    // Extract iframes (Desu + Magi)
+    let streams = [];
     const iframes = await page.evaluate(() => {
-      const ifs = document.querySelectorAll('iframe');
-      return Array.from(ifs).map(f => f.src).filter(s => s && s.startsWith('http'));
+      return Array.from(document.querySelectorAll('iframe')).map(f => f.src).filter(s => s && s.startsWith('http'));
     });
 
-    // Load each iframe to get m3u8
     for (const frameUrl of iframes) {
-      const serverName = frameUrl.includes('/um?') ? 'Desu' : frameUrl.includes('/umv?') ? 'Magi' : 'JKPlayer';
-      try {
-        const framePage = await browser.newPage();
-        await framePage.setUserAgent(UA);
-        let frameVideo = null;
-
-        framePage.on('response', resp => {
-          if (frameVideo) return;
-          const ct = resp.headers()['content-type'] || '';
-          if (ct.includes('mpegurl')) frameVideo = resp.url();
+      const serverName = frameUrl.includes('/um?') ? 'Desu' : frameUrl.includes('/umv?') ? 'Magi' : null;
+      if (!serverName) continue;
+      const m3u8Url = await resolveEmbedUrl(browser, frameUrl, 5000);
+      if (m3u8Url) {
+        streams.push({
+          url: m3u8Url, server: serverName,
+          name: `JKAnime\n${serverName}`,
+          title: `${slug} Ep. ${episode}\n⚙️ ${serverName} (m3u8)`,
+          behaviorHints: { notWebReady: false, bingeGroup: `jkanime|${serverName.toLowerCase()}` },
         });
-
-        await framePage.goto(frameUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
-        await new Promise(r => setTimeout(r, 5000));
-
-        if (!frameVideo) {
-          try {
-            frameVideo = await framePage.evaluate(() => {
-              const s = document.querySelector('video source, source[src]');
-              if (s) return s.getAttribute('src') || s.src;
-              return null;
-            });
-          } catch {}
-        }
-
-        if (frameVideo && frameVideo.startsWith('http')) {
-          streams.push({
-            url: frameVideo,
-            server: serverName,
-            name: `JKAnime\n${serverName}`,
-            title: `${slug} Ep. ${episode}\n⚙️ ${serverName} (m3u8)`,
-            behaviorHints: { notWebReady: false, bingeGroup: `jkanime|${serverName.toLowerCase()}` },
-          });
-        }
-        await framePage.close();
-      } catch {}
+      }
     }
 
-    // 2. Extract servers from var servers (JS-rendered)
+    // Extract servers from JS-rendered page
     try {
       const serverData = await page.evaluate(() => {
         if (typeof servers !== 'undefined' && Array.isArray(servers)) return JSON.stringify(servers);
         return null;
       });
-
       if (serverData) {
-        const servers = JSON.parse(serverData);
-        for (const s of servers) {
-          try {
-            const embedUrl = Buffer.from(s.remote, 'base64').toString('utf-8').trim();
-            if (!embedUrl || !embedUrl.startsWith('http')) continue;
-
-            // Only try to resolve Streamwish and Mp4upload (proven working)
-            const host = new URL(embedUrl).hostname;
-            const shouldResolve = host.includes('streamwish') || host.includes('sfastwish')
-              || host.includes('mp4upload') || host.includes('flaswish');
-
-            if (shouldResolve) {
-              const serverPage = await browser.newPage();
-              await serverPage.setUserAgent(UA);
-              let serverVideo = null;
-
-              serverPage.on('request', req => {
-                const u = req.url();
-                if (serverVideo) { req.abort(); return; }
-                if (/\.(m3u8|mp4|mkv|ts)(\?|$)/i.test(u) && !u.includes('.css') && !u.includes('.js') && !u.includes('videojs')) {
-                  serverVideo = u;
-                  req.abort();
-                } else { req.continue(); }
-              });
-
-              try { await serverPage.goto(embedUrl, { waitUntil: 'networkidle2', timeout: 20000 }); } catch {}
-              await new Promise(r => setTimeout(r, 8000));
-
-              if (!serverVideo) {
-                try {
-                  serverVideo = await serverPage.evaluate(() => {
-                    const v = document.querySelector('video');
-                    if (v && v.src && !v.src.startsWith('blob:')) return v.src;
-                    const src = document.querySelector('source[src]');
-                    if (src) return src.getAttribute('src');
-                    return null;
-                  });
-                } catch {}
-              }
-
-              await serverPage.close();
-
-              if (serverVideo && serverVideo.startsWith('http')) {
-                streams.push({
-                  url: serverVideo,
-                  server: s.server,
-                  name: `JKAnime\n${s.server}`,
-                  title: `${slug} Ep. ${episode}\n⚙️ ${s.server} (directo)`,
-                  behaviorHints: { notWebReady: false, bingeGroup: `jkanime|${s.server.toLowerCase()}` },
-                });
-              } else {
-                streams.push({
-                  url: embedUrl,
-                  server: s.server,
-                  name: `JKAnime\n${s.server}`,
-                  title: `${slug} Ep. ${episode}\n⚙️ ${s.server} (${s.size || ''})`,
-                  behaviorHints: { notWebReady: true, bingeGroup: `jkanime|${s.server.toLowerCase()}` },
-                });
-              }
-            } else {
-              // Don't resolve, just return embed URL
-              streams.push({
-                url: embedUrl,
-                server: s.server,
-                name: `JKAnime\n${s.server}`,
-                title: `${slug} Ep. ${episode}\n⚙️ ${s.server} (${s.size || ''})`,
-                behaviorHints: { notWebReady: true, bingeGroup: `jkanime|${s.server.toLowerCase()}` },
-              });
-            }
-          } catch {}
-        }
+        const decoded = JSON.parse(serverData).map(s => ({
+          server: s.server,
+          size: s.size || '',
+          lang: s.lang === 1 ? 'SUB' : s.lang === 2 ? 'LAT' : '',
+          url: Buffer.from(s.remote, 'base64').toString('utf-8').trim(),
+        })).filter(s => s.url);
+        const resolved = await resolveEmbedList(browser, decoded, slug, episode, 'JKAnime');
+        streams.push(...resolved);
       }
     } catch {}
 
-    // Filter duplicates by URL
-    const seen = new Set();
-    return streams.filter(s => {
-      const k = (s.url || '') + s.server;
-      if (seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    });
+    await page.close();
 
-  } catch (e) {
-    console.error('[jk-pptr] error:', e.message);
-    return [];
-  } finally {
-    if (browser) { try { await browser.close(); } catch {} }
-  }
+    // Deduplicate by URL
+    const seen = new Set();
+    return streams.filter(s => { const k = s.url + s.server; if (seen.has(k)) return false; seen.add(k); return true; });
+  } catch (e) { console.error('[jk-pptr] error:', e.message); return []; }
+  finally { if (browser) try { await browser.close(); } catch {} }
 }
 
-module.exports = { resolveJKAnime };
+// ═══ TioAnime ═══
+async function resolveTioAnime(slug, episode) {
+  const pptr = await getPuppeteer();
+  if (!pptr) return [];
+  const chromium = await getChromium();
+  if (!chromium) return [];
+
+  // Get servers from static HTML (no Puppeteer needed for extraction)
+  try {
+    const res = await fetch(`https://tioanime.com/ver/${slug}-${episode}`, { headers: { 'User-Agent': UA } });
+    if (!res.ok) return [];
+    const html = await res.text();
+    const m = html.match(/var videos\s*=\s*(\[[\s\S]*?\]);/);
+    if (!m) return [];
+    const videos = JSON.parse(m[1]);
+    if (!Array.isArray(videos)) return [];
+
+    const servers = videos.map(v => ({ server: v[0] || '?', url: (v[1] || '').replace(/\\\//g, '/') })).filter(s => s.url.startsWith('http'));
+
+    const browser = await pptr.launch({ args: chromium.args, executablePath: chromium.executablePath, headless: true, defaultViewport: { width: 1280, height: 720 } });
+    const results = await resolveEmbedList(browser, servers, slug, episode, 'TioAnime');
+    await browser.close();
+    return results;
+  } catch (e) { console.error('[tio-pptr] error:', e.message); return []; }
+}
+
+// ═══ AnimeAV1 ═══
+async function resolveAnimeAV1(slug, episode) {
+  const pptr = await getPuppeteer();
+  if (!pptr) return [];
+  const chromium = await getChromium();
+  if (!chromium) return [];
+
+  try {
+    const res = await fetch(`https://animeav1.com/media/${slug}/${episode}/__data.json`, { headers: { 'User-Agent': UA, 'Accept': 'application/json' } });
+    if (!res.ok) return [];
+    const data = await res.json();
+
+    const servers = [];
+    for (const node of (data.nodes || [])) {
+      if (node?.type !== 'data' || !Array.isArray(node.data)) continue;
+      for (let i = 0; i < node.data.length; i++) {
+        const val = node.data[i];
+        if (val && val.server && val.url) {
+          const srv = typeof val.server === 'number' ? node.data[val.server] : val.server;
+          const u = typeof val.url === 'number' ? node.data[val.url] : val.url;
+          if (typeof srv === 'string' && typeof u === 'string' && u.startsWith('http'))
+            servers.push({ server: srv, url: u });
+        }
+      }
+    }
+
+    if (!servers.length) return [];
+    const browser = await pptr.launch({ args: chromium.args, executablePath: chromium.executablePath, headless: true, defaultViewport: { width: 1280, height: 720 } });
+    const results = await resolveEmbedList(browser, servers, slug, episode, 'AnimeAV1');
+    await browser.close();
+    return results;
+  } catch (e) { console.error('[av1-pptr] error:', e.message); return []; }
+}
+
+module.exports = { resolveJKAnime, resolveTioAnime, resolveAnimeAV1 };
