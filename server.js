@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.10.5
+ * Ovnivers — Stremio Addon Backend v1.11.0
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
@@ -63,6 +63,7 @@ const catalog = require('./src/catalog/index');
 const torrentIndex = require('./src/torrent-providers/index');
 const { resolveEmbed } = require('./src/alfa-providers/embed-resolver');
 const puppeteerResolver = require('./src/puppeteer-resolver');
+const jkanimePuppeteer = require('./src/jkanime-puppeteer');
 const { StreamPipeline } = require('./src/stream-pipeline/index');
 const scrapeless = require('./src/scrapeless-proxy');
 const anime = require('./src/anime/index');
@@ -79,7 +80,7 @@ if (process.env.SCRAPELESS_API_KEY) {
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.10.5';
+const VERSION = '1.11.0';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 // Available languages for filtering
@@ -1093,6 +1094,15 @@ app.get('/pptr-test', async (req, res) => {
     } catch(e) { return { error: e.message }; }
   })();
   res.json(page);
+});
+
+// ─── JKAnime via Puppeteer ──────────────────
+
+app.get('/stream/jkanime-pptr/:slug/:episode.json', async (req, res) => {
+  const { slug, episode } = req.params;
+  console.log('[jk-pptr] resolving', slug, 'ep', episode);
+  const streams = await jkanimePuppeteer.resolveJKAnime(slug, parseInt(episode) || 1);
+  res.json({ streams: streams.map(s => normalizeStream(s, 'jkanime-pptr', 'JKAnime')).filter(Boolean) });
 });
 
 // ─── Manifest ─────────────────────────────
