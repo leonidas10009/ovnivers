@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.7.1
+# Ovnivers — Stream Provider v1.7.2
 
 Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fuentes.
 
@@ -165,6 +165,14 @@ node build.js    # Build de scrapers desde src/
 - **URL:** https://ovnivers.onrender.com
 
 ## Changelog
+
+### v1.7.2 — Fix Pigamer37 streams para TMDB anime (ovn: prefix)
+
+- **Bug 1 — Pigamer37 ignoraba TMDB numerico anime**: `ovn:46260` (Naruto) enviaba `'46260'` pelado a Pigamer37, que no lo reconocia. Ahora usa `tmdb:46260` (con prefijo estandar)
+- **Bug 2 — Alfa/Local providers ignoraban TMDB numerico anime**: Mismo problema — recibian ID numerico sin prefijo. Ahora usan `animeProviderId` centralizado
+- **Bug 3 — Torrents sin multi-titulo para TMDB anime**: La condicion `!rawId.match(/^\d+$/)` excluia IDs numericos del resolvedor multi-titulo. Ahora `isAnime && !rawId.startsWith('tt')` los incluye
+- **Cleanup**: Eliminado bloque muerto de enhancement anime secundario (lineas 1238-1244) que quedo inaccesible tras corregir Bug 3
+- **Refactor**: Centralizada logica de resolucion de provider ID en `animeProviderId`
 
 ### v1.7.1 — Anime torrent fix + Content profiles + Process safety
 

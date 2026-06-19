@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.7.1
+ * Ovnivers — Stremio Addon Backend v1.7.2
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
@@ -73,7 +73,7 @@ if (process.env.SCRAPELESS_API_KEY) {
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.7.1';
+const VERSION = '1.7.2';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 // Available languages for filtering
@@ -1170,12 +1170,17 @@ async function handleStream(req, res, type, id) {
 
   const streamTasks = [];
 
+  // Para anime TMDB numerico (ovn:46260), construir ID que los providers entiendan
+  const animeProviderId = isAnime ? (animeFullId || (rawId.match(/^\d+$/) ? `tmdb:${rawId}` : rawId)) : null;
+
   if (isAnime && config.enableAnime) {
     streamTasks.push((async () => {
       try {
-        const proxyId = animeFullId || rawId;
-        const resolvedId = await anime.resolveAnimeId(proxyId);
-        const finalId = resolvedId || proxyId;
+        let finalId = animeProviderId;
+        if (animeFullId) {
+          const resolvedId = await anime.resolveAnimeId(animeProviderId);
+          if (resolvedId) finalId = resolvedId;
+        }
         const data = await anime.pigamer.getStreams(finalId, season, episode);
         return data.map(s => normalizeStream(s, 'pigamer37', 'Pigamer37')).filter(Boolean);
       } catch { return []; }
@@ -1192,10 +1197,8 @@ async function handleStream(req, res, type, id) {
   }
 
   if (config.enableLocal) {
-    // Para anime, pasar el ID completo (animeflv:naruto) en vez del slug pelado
-    const providerId = isAnime && animeFullId ? animeFullId : rawId;
-    streamTasks.push(scrapeAlfa(providerId, mediaType, type, season, episode, config, isAnime));
-    streamTasks.push(scrapeLocalProviders(providerId, mediaType, type, season, episode, config, isAnime));
+    streamTasks.push(scrapeAlfa(animeProviderId || rawId, mediaType, type, season, episode, config, isAnime));
+    streamTasks.push(scrapeLocalProviders(animeProviderId || rawId, mediaType, type, season, episode, config, isAnime));
   }
 
   streamTasks.push((async () => {
@@ -1211,8 +1214,8 @@ async function handleStream(req, res, type, id) {
           year = movieTitles.year || null;
           imdbId = movieTitles.imdbId || null;
         }
-      } else if (isAnime && !rawId.match(/^\d+$/) && !rawId.startsWith('tt')) {
-        const titlesId = animeFullId || rawId;
+      } else if (isAnime && !rawId.startsWith('tt')) {
+        const titlesId = rawId.match(/^\d+$/) ? rawId : (animeProviderId || rawId);
         const anifeTitles = await anime.titles.resolveTitles(titlesId);
         if (anifeTitles) {
           searchTitles = anifeTitles.searchTitles || [];
@@ -1231,13 +1234,6 @@ async function handleStream(req, res, type, id) {
           searchTitle = metaEN.title || metaEN.name || '';
           year = parseInt((metaEN.release_date || metaEN.first_air_date || '').substring(0, 4)) || null;
           imdbId = metaEN.imdb_id || null;
-        }
-        // For anime detected via TMDB (genre16+JP), also get multi-title support
-        if (isAnime && rawId.match(/^\d+$/)) {
-          const anifeTitles = await anime.titles.resolveTitles(rawId);
-          if (anifeTitles?.searchTitles?.length > 1) {
-            searchTitles = anifeTitles.searchTitles;
-          }
         }
       } else if (rawId.startsWith('tt')) {
         imdbId = rawId;
