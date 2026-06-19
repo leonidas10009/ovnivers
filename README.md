@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.7.3
+# Ovnivers — Stream Provider v1.7.4
 
 Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fuentes.
 
@@ -166,13 +166,14 @@ node build.js    # Build de scrapers desde src/
 
 ## Changelog
 
-### v1.7.3 — Fix pagina de configuracion + estabilidad Render
+### v1.7.4 — Fix notWebReady + timeout + health tracking
 
-- **Fix pagina de configuracion**: Botones ahora tienen `type="button"` (antes actuaban como submit y recargaban la pagina en WebViews). Corregido SyntaxError `missing ) after argument list` removiendo caracteres Unicode y simplificando expresiones complejas
-- **Render deploy stability**: `undici` pineado a `^6.21.0` (v7 requiere Node >=20.18.1, Render usa Node 18). Polyfill de `File` para Node 18
-- **render.yaml restaurado**: `npm install --no-audit --no-fund`, `runtime: node`, `healthCheckPath: /health`
-- **.node-version**: Fijado a Node 18 para compatibilidad con Render free tier
-- **Diagnostico**: API devuelve Pigamer37 correctamente (AnimeAV1 + TioAnime) para `ovn:46260`, pero no aparecen en Stremio/NuvioTV — health tracking de pigamer37 no implementado (muestra 0 calls falso). Investigacion en curso
+- **Fix critico `notWebReady`**: El spread de `behaviorHints` sobrescribia `notWebReady: false` (calculado para URLs .mp4 directas) con el `true` original de Pigamer37. NuvioTV/Stremio ocultaban estos streams. Ahora el spread va primero y `notWebReady` calculado pisa correctamente
+- **Timeout global**: 18s → 30s para cubrir Pigamer37 en cold starts de Render (promediaba ~20s)
+- **Timeout Pigamer37**: 20s → 25s individual (antes el global lo mataba primero)
+- **Health tracking**: Agregado para pigamer37, backend-scrapers, torrent-indexers (antes mostraban 0 calls falso)
+- **Fix meta ID rewriting**: `kitsu:`, `mal:`, `anidb:`, `henaojara:`, `tioanime:` ya no se corrompen a `ovn:kitsu:12` en `/meta`. Usa `isAnimeId()` para preservar todos los prefixes anime
+- **Fix pagina de configuracion**: Botones `type="button"` (antes actuaban como submit), removido Unicode em-dash que causaba `SyntaxError`, simplificadas expresiones complejas
 
 ### v1.7.2 — Fix Pigamer37 streams para TMDB anime (ovn: prefix)
 
