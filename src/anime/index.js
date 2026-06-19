@@ -4,6 +4,7 @@ const { resolveAnimeId, getAnimeTMDbId, resolveToTMDbId } = require('./resolver'
 const pigamer = require('./pigamer');
 const amatsu = require('./amatsu');
 const { filterLocalProviders, getAlfaCategory } = require('./providers');
+const titles = require('./titles');
 
 module.exports = {
   ...types,
@@ -15,4 +16,5 @@ module.exports = {
   amatsu,
   filterLocalProviders,
   getAlfaCategory,
+  titles,
 };

@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.7.0
+# Ovnivers — Stream Provider v1.7.1
 
 Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fuentes.
 
@@ -166,7 +166,27 @@ node build.js    # Build de scrapers desde src/
 
 ## Changelog
 
-### v1.6.9 — Modulos unificados: anime + media + movies + series
+### v1.7.1 — Anime torrent fix + Content profiles + Process safety
+
+**Anime → torrent fix (CRITICAL):**
+- Anime prefix IDs (`animeflv:one-piece`, `anilist:123`) ya NO saltan la búsqueda de torrents. El resolvedor usa 5 estrategias de fallback para obtener títulos EN/ES/JA: Amatsu → Pigamer37 → TMDB enhance → cross-ref → direct TMDB
+- Multi-título anime: `anime.titles.resolveTitles()` devuelve hasta 10 títulos alternativos. `server.js` busca con cada uno y combina resultados (sin modificar el módulo torrent)
+
+**Nuevo módulo:** `src/anime/titles.js` — resolvedor multi-título con cache 24h (max 500). Exporta `resolveTitles()`, `getSearchTitles()`, `getEnglishTitle()`, `fromTMDB()`, `fromAmatsu()`, `fromPigamer()`
+
+**Content profiles (`src/content/`):**
+- `profile.js`: perfiles de contenido normalizados con `resolveAny()`, `resolveByTMDB()`, `resolveByAnimeId()`, `buildStremioMeta()`, `buildCatalogMeta()`. Perfiles anime incluyen `searchTitles`, `synonyms`, `titleEN/ES/JA`
+- `identifier.js`: clasificador de contenido (`CONTENT_ANIME`, `CONTENT_MOVIE`, `CONTENT_SERIES`) con `classify()`, `classifyByPrefix()`, `isAnimeIdPrefix()`
+- `episode.js`: gestor de episodios con soporte para IDs anime prefix, `parseEpisodeId()`, `extractSE()`, `verifySE()`, `isPack()`, `isMovieTitle()`
+
+**Process safety (Render stability):**
+- `process.on('unhandledRejection')` — previene crash por promesas sin manejar (Node 15+ default behavior)
+- `process.on('uncaughtException')` — previene crash por excepciones no capturadas
+- Memory watchdog cada 5 min: limpia caches (stream + meta) si heap supera 70%. Reporta en log antes de limpiar
+- `/health` ahora reporta `memory` (heapUsed, heapTotal, rss, heapPercent) y `cache` (streamCache, metaCache sizes)
+- Nueva dependencia `undici` como fallback de fetch
+
+### v1.7.0 — Modulos unificados: anime + media + movies + series
 
 **Modulo anime (`src/anime/`):**
 - 7 archivos que consolidan toda la logica de anime dispersa en server.js, catalog y alfa-providers

@@ -1,5 +1,6 @@
-const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
-const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+const { isJapaneseAnime, findByIMDB, fetchTMDB } = require('../media/tmdb');
+const content = require('../content/index');
+const anime = require('../anime/index');
 
 const catCache = new Map();
 const genreCache = { map: {}, loaded: false };
@@ -57,16 +58,7 @@ async function loadGenres() {
 function catDef(id) { return CATEGORIES.find(c => c.id === id); }
 
 async function tmdbFetch(path) {
-  const sep = path.includes('?') ? '&' : '?';
-  const url = `https://api.themoviedb.org/3${path}${sep}api_key=${TMDB_KEY}`;
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 8000);
-  try {
-    const res = await fetch(url, { headers: { 'User-Agent': UA }, signal: ctrl.signal });
-    if (!res.ok) return null;
-    return res.json();
-  } catch { return null; }
-  finally { clearTimeout(timer); }
+  return fetchTMDB(path);
 }
 
 function itemGenres(item) {
@@ -76,9 +68,11 @@ function itemGenres(item) {
 }
 
 function toMetaItem(item, type) {
+  const isAnime = type === 'anime' || (item.genre_ids && item.genre_ids.includes(16) && item.origin_country?.includes('JP'));
+  const effectiveType = isAnime ? 'series' : type;
   return {
     id: `ovn:${item.id}`,
-    type,
+    type: effectiveType,
     name: item.title || item.name || 'Unknown',
     poster: item.poster_path ? `https://image.tmdb.org/t/p/w342${item.poster_path}` : null,
     background: item.backdrop_path ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}` : null,
@@ -137,7 +131,7 @@ async function getFilmaffinityMeta(imdbId) {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 6000);
     const res = await fetch(url, {
-      headers: { 'User-Agent': UA, 'Accept': 'text/html' },
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36', 'Accept': 'text/html' },
       signal: ctrl.signal
     });
     clearTimeout(timer);
@@ -152,7 +146,7 @@ async function getFilmaffinityMeta(imdbId) {
     if (!faId) return null;
     const detailUrl = `https://www.filmaffinity.com/es/film${faId}.html`;
     const dRes = await fetch(detailUrl, {
-      headers: { 'User-Agent': UA, 'Accept': 'text/html' },
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36', 'Accept': 'text/html' },
       signal: AbortSignal.timeout(6000)
     });
     if (!dRes.ok) return null;
@@ -176,96 +170,15 @@ async function getFilmaffinityMeta(imdbId) {
 const AMATSU_BASE = 'https://amatsu.ruka.pw';
 
 async function getAmatsuMeta(anilistId) {
-  const id = anilistId.replace(/^anilist:/, '');
-  try {
-    const url = `${AMATSU_BASE}/meta/anime/anilist:${id}.json`;
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 6000);
-    const res = await fetch(url, { headers: { 'User-Agent': UA }, signal: ctrl.signal });
-    clearTimeout(timer);
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data?.meta) return null;
-    return {
-      anilistId: `anilist:${id}`,
-      malId: data.meta.idMal || null,
-      name: data.meta.name,
-      englishName: data.meta.englishName,
-      altName: data.meta.altName,
-      synonyms: data.meta.synonyms || [],
-      poster: data.meta.poster || null,
-      background: data.meta.background || null,
-      description: data.meta.description || null,
-      year: data.meta.releaseInfo || null,
-      score: data.meta.imdbRating || data.meta.score || null,
-      format: (data.meta.description || '').match(/Format:\s*(\S+)/)?.[1] || null,
-      status: (data.meta.description || '').match(/Status:\s*(\S+)/)?.[1] || null,
-    };
-  } catch { return null; }
+  return await content.profile.resolveByAnimeId(anilistId);
 }
 
 async function getAmatsuCatalog(catalogId, page = 1) {
-  const VALID = ['amatsu_seasonal_series', 'amatsu_airing_series', 'amatsu_trending_series', 'amatsu_top_series'];
-  if (!VALID.includes(catalogId)) return { metas: [] };
-
-  const ck = `amatsu:${catalogId}:${page}`;
-  const cached = catCache.get(ck);
-  if (cached && Date.now() - cached.time < CACHE_TTL) return { metas: cached.data };
-
-  try {
-    const url = `${AMATSU_BASE}/catalog/anime/${catalogId}.json`;
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 10000);
-    const res = await fetch(url, { headers: { 'User-Agent': UA }, signal: ctrl.signal });
-    clearTimeout(timer);
-    if (!res.ok) return { metas: [] };
-    const data = await res.json();
-    if (!data?.metas?.length) return { metas: [] };
-
-    const metas = data.metas.map(m => ({
-      id: m.id,
-      type: 'series',
-      name: m.name || 'Unknown',
-      poster: m.poster || null,
-      background: m.background || null,
-      description: (m.description || '').substring(0, 500),
-      releaseInfo: m.releaseInfo || m.year || '',
-      imdbRating: m.imdbRating || m.score || null,
-      genres: m.genres || [],
-    }));
-
-    catCache.set(ck, { data: metas, time: Date.now() });
-    if (catCache.size > MAX_CACHE) {
-      const first = catCache.keys().next().value;
-      catCache.delete(first);
-    }
-    return { metas };
-  } catch { return { metas: [] }; }
+  return await anime.amatsu.getCatalog(catalogId, page);
 }
 
 async function searchAnilist(query) {
-  try {
-    const q = encodeURIComponent(query);
-    const url = `${AMATSU_BASE}/catalog/anime/amatsu_search/search=${q}.json`;
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 8000);
-    const res = await fetch(url, { headers: { 'User-Agent': UA }, signal: ctrl.signal });
-    clearTimeout(timer);
-    if (!res.ok) return [];
-    const data = await res.json();
-    if (!data?.metas?.length) return [];
-    return data.metas.map(m => ({
-      id: m.id,
-      type: 'series',
-      name: m.name || 'Unknown',
-      poster: m.poster || null,
-      background: m.background || null,
-      description: (m.description || '').substring(0, 500),
-      releaseInfo: m.releaseInfo || '',
-      imdbRating: m.imdbRating || null,
-      genres: m.genres || [],
-    }));
-  } catch { return []; }
+  return await anime.amatsu.searchAnilist(query);
 }
 
 async function fetchIMDbId(tmdbId, mediaType) {
@@ -314,8 +227,43 @@ async function getUniversalCatalog(catalogId, page = 1) {
   return result;
 }
 
+function getAmatsuCatalogDefs() {
+  return [
+    { id: 'amatsu_seasonal_series', name: 'Anime de Temporada (Amatsu)', type: 'anime', extra: [{ name: 'search', isRequired: false }] },
+    { id: 'amatsu_airing_series', name: 'Anime Emitiéndose (Amatsu)', type: 'anime', extra: [{ name: 'search', isRequired: false }] },
+    { id: 'amatsu_trending_series', name: 'Anime Tendencias (Amatsu)', type: 'anime', extra: [{ name: 'search', isRequired: false }] },
+    { id: 'amatsu_top_series', name: 'Anime Mejor Valorado (Amatsu)', type: 'anime', extra: [{ name: 'search', isRequired: false }] },
+  ];
+}
+
+function getUniversalCatalogDefs(config) {
+  const defs = [
+    { id: 'tt-popular-movie', name: 'Todas las Películas (Universal)', type: 'movie', extra: [{ name: 'search', isRequired: false }] },
+    { id: 'tt-popular-series', name: 'Todas las Series (Universal)', type: 'series', extra: [{ name: 'search', isRequired: false }] },
+  ];
+  if (config?.enableAnime) {
+    defs.push(
+      { id: 'tt-popular-anime', name: 'Todo Anime (Universal)', type: 'series', extra: [{ name: 'search', isRequired: false }] },
+      { id: 'tt-popular-anime-movie', name: 'Películas Anime (Universal)', type: 'movie', extra: [{ name: 'search', isRequired: false }] }
+    );
+  }
+  return defs;
+}
+
+function getAnimeCatalogDefs() {
+  return [
+    { id: 'tmdb-popular-anime', name: 'Anime Popular', type: 'anime' },
+    { id: 'tmdb-top-anime', name: 'Anime Mejor Valorado', type: 'anime' },
+    { id: 'tmdb-trending-anime', name: 'Anime en Tendencia', type: 'anime' },
+    { id: 'tmdb-popular-anime-movie', name: 'Películas Anime Populares', type: 'anime' },
+    { id: 'tmdb-top-anime-movie', name: 'Películas Anime Mejor Valoradas', type: 'anime' },
+  ];
+}
+
 module.exports = {
   CATEGORIES, catDef, getCatalog, searchCatalog,
   getFilmaffinityMeta, getUniversalCatalog,
-  getAmatsuMeta, getAmatsuCatalog, searchAnilist
+  getAmatsuMeta, getAmatsuCatalog, searchAnilist,
+  getAmatsuCatalogDefs, getUniversalCatalogDefs,
+  getAnimeCatalogDefs,
 };

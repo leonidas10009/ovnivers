@@ -1,6 +1,6 @@
 {
     "name": "ovnivers-all-in-one",
-    "version": "1.7.0",
+    "version": "1.7.1",
     "description": "Ovnivers All-in-One addon — torrent indexers + Alfa providers + Pigamer37 anime proxy + TMDB catalogs for Stremio",
     "scripts": {
         "build": "node -e \"console.log('build ok')\"",
@@ -12,10 +12,10 @@
         "cheerio-without-node-native": "npm:cheerio@^1.2.0",
         "crypto-js": "^4.2.0",
         "dotenv": "^16.6.1",
-        "esbuild": "^0.25.0",
         "express": "^4.21.0",
         "https-proxy-agent": "^9.1.0",
-        "node-fetch": "^2.7.0"
+        "node-fetch": "^2.7.0",
+        "undici": "^7.0.0"
     },
     "keywords": [
         "nuvio",
