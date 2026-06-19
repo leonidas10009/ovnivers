@@ -1067,8 +1067,12 @@ app.get('/health', (req, res) => {
 app.get('/resolve-embed', async (req, res) => {
   const url = req.query.url;
   if (!url) return res.status(400).json({ error: 'missing url param' });
+  // Try embed-resolver first, but only if it returns actual video URL
   const direct = await resolveEmbed(url);
-  if (direct) return res.json({ url: direct, method: 'embed-resolver' });
+  if (direct && /\.(m3u8|mp4|mkv|webm)($|\?)/i.test(direct) && !direct.includes('.css') && !direct.includes('.js')) {
+    return res.json({ url: direct, method: 'embed-resolver' });
+  }
+  // Fall through to Puppeteer for proper JS resolution
   const start = Date.now();
   const puppeteerUrl = await puppeteerResolver.resolveEmbedWithBrowser(url);
   if (puppeteerUrl) return res.json({ url: puppeteerUrl, method: 'puppeteer', ms: Date.now() - start });
