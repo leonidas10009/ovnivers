@@ -27,7 +27,11 @@ const EXTERNAL_MODULES = [
     'cheerio',
     'crypto-js',
     'axios',
-    'crypto'
+    'crypto',
+    'puppeteer',
+    'puppeteer-core',
+    'puppeteer-resolver',
+    'ws',
 ];
 
 // Get provider names from command line or discover all
