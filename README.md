@@ -2,7 +2,7 @@
 
 Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fuentes.
 
-> **Nota de auditoría (2026-06-19):** la documentación está siendo sincronizada con el código real. Descubrimientos corregidos en esta pasada: el backend tiene **2 scrapers** (no 8), los catálogos Amatsu son servidos por el proxy **Amatsu** (no Pigamer37), el conteo de catálogos es 23 base + 4 Amatsu + 1 búsqueda, los scrapers Hermes son **61** (42 activos + 19 deshabilitados) en `manifest.json`, AllCalidad se desactivó porque es una SPA React sin items en HTML estático ni API REST útil, y los catálogos anime de TMDB ahora usan `type: 'anime'` para que Stremio/NuvioTV detecten anime sin depender de consultas TMDB.
+> **Nota de auditoría (2026-06-19):** documentación sincronizada. Backend: **2 scrapers**. Catálogos: **26** (sin duplicados, Kitsu reemplaza Amatsu para anime). Hermes: **61** scrapers. AllCalidad, GranTorrent y MiTorrent desactivados. Catálogos anime TMDB usan `type: 'anime'` y `ovn-anime:` prefix. Kitsu integrado como fuente principal de anime.
 
 ## Instalacion
 
@@ -32,8 +32,16 @@ Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fue
 
 ## Catalogs
 
-**23 catálogos base** (19 TMDB + 4 universales `tt:`) + **4 catálogos Amatsu** (anime, vía proxy Amatsu) + **1 catálogo de búsqueda** (`tmdb-search`). Total dinámico: 28 catálogos cuando el anime está habilitado.
-IDs con prefijo `ovn:` para los catálogos propios y `tt:`/`tmdb:` para compatibilidad cross-addon (Torrentio, AnimeFLV, TMDB Community).
+**26 catálogos**: 16 películas + 4 series + 6 anime. Sin duplicados. Kitsu como fuente principal de anime.
+
+| Tipo | Cantidad | Ejemplos |
+|------|----------|----------|
+| Películas | 16 | Populares, Mejor Valoradas, Tendencia, Acción, Comedia, Drama, Terror, Ciencia Ficción, Suspenso, Romance, Animación, Anime Movies, Universal |
+| Series | 4 | Populares, Mejor Valoradas, Tendencia, Universal |
+| Anime | 6 | Popular, Mejor Valorado, Tendencia (TMDB), **Anime Kitsu**, Anime en Emisión, Universal |
+| Búsqueda | 1 | Búsqueda global (TMDB + Kitsu) |
+
+IDs: `ovn:`, `ovn-anime:`, `kitsu:`, `tt:`, `tmdb:` para compatibilidad cross-addon.
 
 ## Alfa Providers (74 registrados, 42 activos)
 
