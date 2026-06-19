@@ -1,6 +1,6 @@
 /**
  * catalog - Built from src/catalog/
- * Generated: 2026-06-19T19:03:39.192Z
+ * Generated: 2026-06-19T19:09:04.520Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -2242,13 +2242,74 @@ function getUniversalCatalogDefs(config) {
   return defs;
 }
 function getAnimeCatalogDefs() {
-  return [
-    { id: "tmdb-popular-anime", name: "Anime Popular", type: "anime" },
-    { id: "tmdb-top-anime", name: "Anime Mejor Valorado", type: "anime" },
-    { id: "tmdb-trending-anime", name: "Anime en Tendencia", type: "anime" },
-    { id: "tmdb-popular-anime-movie", name: "Pel\xEDculas Anime Populares", type: "anime" },
-    { id: "tmdb-top-anime-movie", name: "Pel\xEDculas Anime Mejor Valoradas", type: "anime" }
-  ];
+  return __async(this, null, function* () {
+    return [
+      { id: "tmdb-popular-anime", name: "Anime Popular", type: "anime" },
+      { id: "tmdb-top-anime", name: "Anime Mejor Valorado", type: "anime" },
+      { id: "tmdb-trending-anime", name: "Anime en Tendencia", type: "anime" },
+      { id: "tmdb-popular-anime-movie", name: "Pel\xEDculas Anime Populares", type: "anime" },
+      { id: "tmdb-top-anime-movie", name: "Pel\xEDculas Anime Mejor Valoradas", type: "anime" }
+    ];
+  });
+}
+function getKitsuCatalog(catalogId, page = 1) {
+  return __async(this, null, function* () {
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 1e4);
+      const res = yield fetch(
+        `https://kitsu.io/api/edge/anime?sort=-user_count&page[limit]=20&page[offset]=${(page - 1) * 20}`,
+        { headers: { "Accept": "application/vnd.api+json", "User-Agent": "Mozilla/5.0" }, signal: ctrl.signal }
+      );
+      clearTimeout(t);
+      if (!res.ok) return { metas: [] };
+      const data = yield res.json();
+      const metas = (data.data || []).map((item) => {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
+        return {
+          id: `kitsu:${item.id}`,
+          type: ((_a = item.attributes) == null ? void 0 : _a.subtype) === "movie" ? "movie" : "series",
+          name: ((_b = item.attributes) == null ? void 0 : _b.canonicalTitle) || ((_d = (_c = item.attributes) == null ? void 0 : _c.titles) == null ? void 0 : _d.en) || ((_f = (_e = item.attributes) == null ? void 0 : _e.titles) == null ? void 0 : _f.en_jp) || "Unknown",
+          poster: ((_h = (_g = item.attributes) == null ? void 0 : _g.posterImage) == null ? void 0 : _h.medium) || null,
+          description: (((_i = item.attributes) == null ? void 0 : _i.synopsis) || "").substring(0, 500),
+          releaseInfo: ((_k = (_j = item.attributes) == null ? void 0 : _j.startDate) == null ? void 0 : _k.substring(0, 4)) || "",
+          imdbRating: ((_l = item.attributes) == null ? void 0 : _l.averageRating) || null
+        };
+      });
+      return { metas };
+    } catch (e) {
+      return { metas: [] };
+    }
+  });
+}
+function searchKitsu(query) {
+  return __async(this, null, function* () {
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 1e4);
+      const res = yield fetch(
+        `https://kitsu.io/api/edge/anime?filter[text]=${encodeURIComponent(query)}&page[limit]=20`,
+        { headers: { "Accept": "application/vnd.api+json", "User-Agent": "Mozilla/5.0" }, signal: ctrl.signal }
+      );
+      clearTimeout(t);
+      if (!res.ok) return [];
+      const data = yield res.json();
+      return (data.data || []).map((item) => {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l;
+        return {
+          id: `kitsu:${item.id}`,
+          type: ((_a = item.attributes) == null ? void 0 : _a.subtype) === "movie" ? "movie" : "series",
+          name: ((_b = item.attributes) == null ? void 0 : _b.canonicalTitle) || ((_d = (_c = item.attributes) == null ? void 0 : _c.titles) == null ? void 0 : _d.en) || ((_f = (_e = item.attributes) == null ? void 0 : _e.titles) == null ? void 0 : _f.en_jp) || "Unknown",
+          poster: ((_h = (_g = item.attributes) == null ? void 0 : _g.posterImage) == null ? void 0 : _h.medium) || null,
+          description: (((_i = item.attributes) == null ? void 0 : _i.synopsis) || "").substring(0, 500),
+          releaseInfo: ((_k = (_j = item.attributes) == null ? void 0 : _j.startDate) == null ? void 0 : _k.substring(0, 4)) || "",
+          imdbRating: ((_l = item.attributes) == null ? void 0 : _l.averageRating) || null
+        };
+      });
+    } catch (e) {
+      return [];
+    }
+  });
 }
 module.exports = {
   CATEGORIES,
@@ -2263,5 +2324,7 @@ module.exports = {
   getAmatsuCatalogDefs,
   getUniversalCatalogDefs,
   getAnimeCatalogDefs,
-  getPigamerCatalog
+  getPigamerCatalog,
+  getKitsuCatalog,
+  searchKitsu
 };

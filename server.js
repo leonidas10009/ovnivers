@@ -1078,22 +1078,23 @@ app.get('/manifest.json', async (req, res) => {
 
   const allPrefixes = [...new Set([...streamPrefixes, ...metaPrefixes])];
 
-  const catalogDefs = catalog.CATEGORIES.map(c => ({
+  const catalogDefs = catalog.CATEGORIES
+    .filter(c => !c.id.startsWith('tt-popular-')) // added later by getUniversalCatalogDefs
+    .map(c => ({
     id: c.id,
     name: c.name,
     type: c.type,
     extra: [{ name: 'search', isRequired: false }]
   }));
   if (config.enableAnime) {
-    const amatsuDefs = catalog.getAmatsuCatalogDefs();
-    catalogDefs.push(...amatsuDefs);
-    const pigamerCatalogDefs = [
-      { id: 'animeflv|onair', name: 'En Emisión (AnimeFLV)', type: 'anime' },
-      { id: 'animeav1|onair', name: 'En Emisión (AnimeAV1)', type: 'anime' },
-      { id: 'henaojara|onair', name: 'En Emisión (Henaojara)', type: 'anime' },
-      { id: 'tioanime|onair', name: 'En Emisión (TioAnime)', type: 'anime' },
-    ];
-    catalogDefs.push(...pigamerCatalogDefs);
+    // Kitsu anime catalog (replaces Amatsu)
+    catalogDefs.push(
+      { id: 'kitsu-trending', name: 'Anime Kitsu', type: 'anime', extra: [{ name: 'search', isRequired: false }] },
+    );
+    // On-air catalog from local scraper
+    catalogDefs.push(
+      { id: 'animeflv|onair', name: 'Anime en Emisión', type: 'anime' },
+    );
   }
   const universalDefs = catalog.getUniversalCatalogDefs(config);
   catalogDefs.push(...universalDefs);
@@ -1432,11 +1433,11 @@ async function handleCatalog(req, res, type, id) {
 
   try {
     if (search) {
-      const [tmdbResult, anilistMetas] = await Promise.all([
+      const [tmdbResult, kitsuMetas] = await Promise.all([
         catalog.searchCatalog(search, page),
-        catalog.searchAnilist(search)
+        catalog.searchKitsu(search).catch(() => [])
       ]);
-      const allMetas = [...tmdbResult.metas, ...anilistMetas];
+      const allMetas = [...tmdbResult.metas, ...kitsuMetas];
       const seen = new Set();
       const deduped = [];
       for (const m of allMetas) {
@@ -1450,19 +1451,22 @@ async function handleCatalog(req, res, type, id) {
     if (id === 'tmdb-search') {
       return res.json({ metas: [] });
     }
-    if (id.startsWith('amatsu_')) {
-      const result = await catalog.getAmatsuCatalog(id, page);
-      if (result.next) result.next = `/catalog/${type}/${id}/skip=${rawSkip + ITEMS_PER_PAGE}.json`;
-      return res.json(result);
-    }
     if (/^(animeflv|animeav1|henaojara|tioanime)\|/.test(id)) {
       // Try local scrapers first for on-air catalogs
       const localResult = await anime.scrapers.getOnAirCatalog(id);
       if (localResult.metas.length) {
         return res.json(localResult);
       }
-      // Fallback to Pigamer37 proxy
       const result = await catalog.getPigamerCatalog(id, page);
+      return res.json(result);
+    }
+    if (id === 'kitsu-trending') {
+      if (search) {
+        const kitsuMetas = await catalog.searchKitsu(search);
+        const result = { metas: kitsuMetas.slice(0, 50) };
+        return res.json(result);
+      }
+      const result = await catalog.getKitsuCatalog(id, page);
       return res.json(result);
     }
     if (id.startsWith('tt-popular-')) {

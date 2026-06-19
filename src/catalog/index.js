@@ -259,7 +259,7 @@ function getUniversalCatalogDefs(config) {
   return defs;
 }
 
-function getAnimeCatalogDefs() {
+async function getAnimeCatalogDefs() {
   return [
     { id: 'tmdb-popular-anime', name: 'Anime Popular', type: 'anime' },
     { id: 'tmdb-top-anime', name: 'Anime Mejor Valorado', type: 'anime' },
@@ -269,10 +269,58 @@ function getAnimeCatalogDefs() {
   ];
 }
 
+async function getKitsuCatalog(catalogId, page = 1) {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 10000);
+    const res = await fetch(
+      `https://kitsu.io/api/edge/anime?sort=-user_count&page[limit]=20&page[offset]=${(page - 1) * 20}`,
+      { headers: { 'Accept': 'application/vnd.api+json', 'User-Agent': 'Mozilla/5.0' }, signal: ctrl.signal }
+    );
+    clearTimeout(t);
+    if (!res.ok) return { metas: [] };
+    const data = await res.json();
+    const metas = (data.data || []).map(item => ({
+      id: `kitsu:${item.id}`,
+      type: item.attributes?.subtype === 'movie' ? 'movie' : 'series',
+      name: item.attributes?.canonicalTitle || item.attributes?.titles?.en || item.attributes?.titles?.en_jp || 'Unknown',
+      poster: item.attributes?.posterImage?.medium || null,
+      description: (item.attributes?.synopsis || '').substring(0, 500),
+      releaseInfo: item.attributes?.startDate?.substring(0, 4) || '',
+      imdbRating: item.attributes?.averageRating || null,
+    }));
+    return { metas };
+  } catch { return { metas: [] }; }
+}
+
+async function searchKitsu(query) {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 10000);
+    const res = await fetch(
+      `https://kitsu.io/api/edge/anime?filter[text]=${encodeURIComponent(query)}&page[limit]=20`,
+      { headers: { 'Accept': 'application/vnd.api+json', 'User-Agent': 'Mozilla/5.0' }, signal: ctrl.signal }
+    );
+    clearTimeout(t);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.data || []).map(item => ({
+      id: `kitsu:${item.id}`,
+      type: item.attributes?.subtype === 'movie' ? 'movie' : 'series',
+      name: item.attributes?.canonicalTitle || item.attributes?.titles?.en || item.attributes?.titles?.en_jp || 'Unknown',
+      poster: item.attributes?.posterImage?.medium || null,
+      description: (item.attributes?.synopsis || '').substring(0, 500),
+      releaseInfo: item.attributes?.startDate?.substring(0, 4) || '',
+      imdbRating: item.attributes?.averageRating || null,
+    }));
+  } catch { return []; }
+}
+
 module.exports = {
   CATEGORIES, catDef, getCatalog, searchCatalog,
   getFilmaffinityMeta, getUniversalCatalog,
   getAmatsuMeta, getAmatsuCatalog, searchAnilist,
   getAmatsuCatalogDefs, getUniversalCatalogDefs,
   getAnimeCatalogDefs, getPigamerCatalog,
+  getKitsuCatalog, searchKitsu,
 };
