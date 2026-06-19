@@ -1,4 +1,5 @@
 const cheerio = require('cheerio-without-node-native') || require('cheerio');
+const { resolveEmbed } = require('../../alfa-providers/embed-resolver');
 
 const BASE = 'https://jkanime.net';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
@@ -228,19 +229,32 @@ async function getStreams(slug, episode) {
     } catch { /* continue */ }
   }
 
-  // 2. Add all server embed/download URLs
+  // 2. Add all server embed/download URLs, resolve to direct when possible
   for (const s of servers) {
     const label = s.server + (s.lang ? ' ' + s.lang : '') + (s.size ? ' ' + s.size : '');
-    const isEmbed = /\/e\/|embed|stream|play/i.test(s.url);
     const isDirect = /\.(mp4|mkv|m3u8)($|\?)/i.test(s.url);
+    let finalUrl = s.url;
+    let resolved = false;
+
+    // Try to resolve embed pages to direct video URLs (ExoPlayer compatible)
+    if (!isDirect && s.url.startsWith('http')) {
+      try {
+        const directUrl = await resolveEmbed(s.url, BASE + '/' + slug + '/' + episode + '/');
+        if (directUrl && (directUrl.startsWith('http'))) {
+          finalUrl = directUrl;
+          resolved = true;
+        }
+      } catch {}
+    }
+
     results.push({
-      url: s.url,
+      url: finalUrl,
       server: s.server,
       name: `JKAnime\n${s.server}`,
-      title: `${slug} Ep. ${episode}\n⚙️ ${label}`,
+      title: `${slug} Ep. ${episode}\n⚙️ ${label}${resolved ? ' (directo)' : ''}`,
       description: s.lang || '',
       behaviorHints: {
-        notWebReady: !isDirect,
+        notWebReady: !(isDirect || resolved),
         bingeGroup: `jkanime|${s.server}`,
       },
     });
