@@ -1180,6 +1180,7 @@ async function handleStream(req, res, type, id) {
 
   if (isAnime && config.enableAnime) {
     streamTasks.push((async () => {
+      const start = Date.now();
       try {
         let finalId = animeProviderId;
         if (animeFullId) {
@@ -1187,17 +1188,22 @@ async function handleStream(req, res, type, id) {
           if (resolvedId) finalId = resolvedId;
         }
         const data = await anime.pigamer.getStreams(finalId, season, episode);
-        return data.map(s => normalizeStream(s, 'pigamer37', 'Pigamer37')).filter(Boolean);
-      } catch { return []; }
+        const normalized = data.map(s => normalizeStream(s, 'pigamer37', 'Pigamer37')).filter(Boolean);
+        health.track('pigamer37', normalized.length > 0, Date.now() - start);
+        return normalized;
+      } catch { health.track('pigamer37', false, Date.now() - start); return []; }
     })());
   }
 
   if (config.enableBackend) {
     streamTasks.push(...BACKEND_SCRAPERS.map(async (scraper) => {
+      const start = Date.now();
       try {
         const results = await scraper.fn(rawId, mediaType, season, episode);
-        return results.map(s => normalizeStream(s, scraper.name, scraper.name)).filter(Boolean);
-      } catch { return []; }
+        const normalized = results.map(s => normalizeStream(s, scraper.name, scraper.name)).filter(Boolean);
+        health.track(scraper.name, normalized.length > 0, Date.now() - start);
+        return normalized;
+      } catch { health.track(scraper.name, false, Date.now() - start); return []; }
     }));
   }
 
@@ -1207,6 +1213,7 @@ async function handleStream(req, res, type, id) {
   }
 
   streamTasks.push((async () => {
+    const startTorrent = Date.now();
     const results = [];
     let searchTitle = ''; let imdbId = null; let year = null;
     let searchTitles = [];
@@ -1310,6 +1317,7 @@ async function handleStream(req, res, type, id) {
         if (s) results.push(s);
       }
     } catch {}
+    health.track('torrent-indexers', results.length > 0, Date.now() - startTorrent);
     return results;
   })());
 
@@ -1474,8 +1482,7 @@ async function handleMeta(req, res, type, id) {
 
     const stremioId = id.startsWith('tt') ? id :
       (id.startsWith('ovn:') ? id :
-        (id.startsWith('anilist:') ? id :
-          (id.startsWith('anime') ? id : `ovn:${profile.id}`)));
+        (content.identifier.isAnimeId(id) ? id : `ovn:${profile.id}`));
 
     let meta = content.profile.buildStremioMeta(profile, stremioId);
 
