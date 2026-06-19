@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.10.0
+ * Ovnivers — Stremio Addon Backend v1.10.1
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
@@ -79,7 +79,7 @@ if (process.env.SCRAPELESS_API_KEY) {
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.10.0';
+const VERSION = '1.10.1';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 // Available languages for filtering
@@ -1077,6 +1077,18 @@ app.get('/resolve-embed', async (req, res) => {
   if (puppeteerUrl) return res.json({ url: puppeteerUrl, method: 'puppeteer' });
   
   res.json({ url: null, method: 'none' });
+});
+
+// Health check for Puppeteer
+app.get('/puppeteer-status', async (req, res) => {
+  const start = Date.now();
+  const url = 'https://www.google.com';
+  const puppeteerUrl = await puppeteerResolver.resolveEmbedWithBrowser(url, null, 8000);
+  res.json({
+    puppeteer: !!puppeteerUrl,
+    ms: Date.now() - start,
+    url: puppeteerUrl || null
+  });
 });
 
 // ─── Manifest ─────────────────────────────
