@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.7.9
+ * Ovnivers — Stremio Addon Backend v1.8.0
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
@@ -78,7 +78,7 @@ if (process.env.SCRAPELESS_API_KEY) {
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.7.9';
+const VERSION = '1.8.0';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 // Available languages for filtering
@@ -1094,9 +1094,10 @@ app.get('/manifest.json', async (req, res) => {
     catalogDefs.push(
       { id: 'kitsu-trending', name: 'Anime Kitsu', type: 'anime', extra: [{ name: 'search', isRequired: false }] },
     );
-    // On-air catalog from local scraper
+    // On-air catalogs from local scrapers
     catalogDefs.push(
-      { id: 'animeflv|onair', name: 'Anime en Emisión', type: 'anime' },
+      { id: 'animeflv|onair', name: 'Anime en Emision', type: 'anime' },
+      { id: 'jkanime|onair', name: 'JKAnime Ultimos', type: 'anime' },
     );
   }
   const universalDefs = catalog.getUniversalCatalogDefs(config);
@@ -1460,10 +1461,14 @@ async function handleCatalog(req, res, type, id) {
     if (id === 'tmdb-search') {
       return res.json({ metas: [] });
     }
-    if (/^(animeflv|animeav1|henaojara|tioanime)\|/.test(id)) {
+    if (/^(animeflv|animeav1|henaojara|tioanime|jkanime)\|/.test(id)) {
       // Try local scrapers first for on-air catalogs
       const localResult = await anime.scrapers.getOnAirCatalog(id);
       if (localResult.metas.length) {
+        return res.json(localResult);
+      }
+      if (id === 'jkanime|onair') {
+        // JKAnime on-air catalog: already returned by getOnAirCatalog
         return res.json(localResult);
       }
       const result = await catalog.getPigamerCatalog(id, page);
