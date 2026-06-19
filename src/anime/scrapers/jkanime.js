@@ -235,9 +235,21 @@ async function getStreams(slug, episode) {
     let finalUrl = s.url;
     let isResolved = false;
 
-    if (!/\.(mp4|mkv|m3u8)($|\?)/i.test(s.url) && s.url.startsWith('http')) {
+    // Follow c1.jkplayers.com redirects to get real embed URL
+    if (s.url.includes('c1.jkplayers.com') || s.url.includes('jkplayers.com/d/')) {
       try {
-        const direct = await puppeteerResolver.resolveEmbedWithBrowser(s.url, 12000);
+        const res = await fetch(s.url, { method: 'GET', redirect: 'follow', signal: AbortSignal.timeout(8000) });
+        if (res.ok) {
+          const realUrl = res.url;
+          if (realUrl !== s.url && realUrl.startsWith('http')) finalUrl = realUrl;
+        }
+      } catch {}
+    }
+
+    // Try Puppeteer on embed pages to get direct video URL
+    if (!/\.(mp4|mkv|m3u8)($|\?)/i.test(finalUrl) && finalUrl.startsWith('http')) {
+      try {
+        const direct = await puppeteerResolver.resolveEmbedWithBrowser(finalUrl, 12000);
         if (direct && direct.startsWith('http')) { finalUrl = direct; isResolved = true; }
       } catch {}
     }

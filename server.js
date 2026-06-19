@@ -1076,30 +1076,19 @@ app.get('/resolve-embed', async (req, res) => {
 });
 
 app.get('/pptr-test', async (req, res) => {
-  const result = { module: false, chromium: false, browser: false, error: null };
-  try {
-    const mod = await import('@sparticuz/chromium');
-    result.module = true;
-    const Cr = mod.default;
-    result.hasArgs = !!Cr.args?.length;
+  // Test jkanime scraper directly
+  const page = await (async () => {
     try {
-      const exe = await Cr.executablePath();
-      const fs = require('fs');
-      result.chromium = { path: exe, exists: fs.existsSync(exe) };
-    } catch(e) { result.chromium = { error: e.message }; }
-  } catch(e) { result.module = e.message; }
-
-  try {
-    const pptrMod = await import('puppeteer-core');
-    const pptrCore = pptrMod.default;
-    if (result.chromium?.exists && pptrCore) {
-      const b = await pptrCore.launch({ headless: true, executablePath: result.chromium.path, args: ['--no-sandbox', '--single-process'] });
-      result.browser = true;
-      await b.close();
-    }
-  } catch(e) { result.browser = e.message; }
-  
-  res.json(result);
+      const jk = require('./src/anime/scrapers/jkanime');
+      const html = await jk.fetchText ? null : null;
+      // Test if page fetch works
+      const url = 'https://jkanime.net/tensei-shitara-slime-datta-ken-4th-season/11/';
+      const pptr = require('./src/puppeteer-resolver');
+      const r = await pptr.resolveEmbedWithBrowser('https://sfastwish.com/e/0ky0tsum7i06', 15000);
+      return { jkanime_ok: !!html, puppeteer_ok: !!r };
+    } catch(e) { return { error: e.message }; }
+  })();
+  res.json(page);
 });
 
 // ─── Manifest ─────────────────────────────
