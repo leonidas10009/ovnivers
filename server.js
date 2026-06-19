@@ -912,6 +912,7 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
       bingeGroup: stream.behaviorHints?.bingeGroup || `provider|${providerId}`,
     }
   };
+}
 
 function dedupeStreams(streams) {
   const seen = new Set();
