@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.10.3
+# Ovnivers — Stream Provider v1.10.4
 
 Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fuentes.
 
