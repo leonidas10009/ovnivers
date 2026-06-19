@@ -1,6 +1,6 @@
 /**
  * anime - Built from src/anime/
- * Generated: 2026-06-19T18:26:18.751Z
+ * Generated: 2026-06-19T18:33:13.593Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -322,8 +322,11 @@ var require_pigamer = __commonJS({
     }
     function getStreams(id, season, episode) {
       return __async(this, null, function* () {
+        const s = season || 1;
+        const ep = episode || 1;
+        const fullId = s > 1 || ep > 1 ? `${id}:${s}:${ep}` : id;
         const data = yield fetchPigamer(
-          `/stream/series/${encodeURIComponent(id)}.json?season=${season || 1}&episode=${episode || 1}`
+          `/stream/series/${encodeURIComponent(fullId)}.json`
         );
         return parseSources(data);
       });

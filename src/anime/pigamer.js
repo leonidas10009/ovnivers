@@ -21,8 +21,13 @@ function parseSources(data) {
 }
 
 async function getStreams(id, season, episode) {
+  // Pigamer37 reads season/episode from the ID path (e.g. tmdb:46260:2:10),
+  // NOT from query string parameters.
+  const s = season || 1;
+  const ep = episode || 1;
+  const fullId = (s > 1 || ep > 1) ? `${id}:${s}:${ep}` : id;
   const data = await fetchPigamer(
-    `/stream/series/${encodeURIComponent(id)}.json?season=${season || 1}&episode=${episode || 1}`
+    `/stream/series/${encodeURIComponent(fullId)}.json`
   );
   return parseSources(data);
 }
