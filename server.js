@@ -903,9 +903,9 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
     ...(stream.isDualAudio ? { isDualAudio: true } : {}),
     ...(stream.verified ? { verified: true } : {}),
     behaviorHints: {
+      ...(stream.behaviorHints || {}),
       notWebReady: !hasInfoHash && !isDirectMedia,
-      bingeGroup: `provider|${providerId}`,
-      ...(stream.behaviorHints || {})
+      bingeGroup: stream.behaviorHints?.bingeGroup || `provider|${providerId}`,
     }
   };
 }
