@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.12.0
+ * Ovnivers — Stremio Addon Backend v1.13.0
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
@@ -63,7 +63,7 @@ const catalog = require('./src/catalog/index');
 const torrentIndex = require('./src/torrent-providers/index');
 const { resolveEmbed } = require('./src/alfa-providers/embed-resolver');
 const puppeteerResolver = require('./src/puppeteer-resolver');
-const jkanimePuppeteer = require('./src/jkanime-puppeteer');
+const pptrAnime = require('./src/jkanime-puppeteer');
 const { StreamPipeline } = require('./src/stream-pipeline/index');
 const scrapeless = require('./src/scrapeless-proxy');
 const anime = require('./src/anime/index');
@@ -80,7 +80,7 @@ if (process.env.SCRAPELESS_API_KEY) {
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.12.0';
+const VERSION = '1.13.0';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 // Available languages for filtering
@@ -1100,19 +1100,19 @@ app.get('/pptr-test', async (req, res) => {
 
 app.get('/stream/jkanime-pptr/:slug/:episode.json', async (req, res) => {
   const { slug, episode } = req.params;
-  const streams = await jkanimePuppeteer.resolveJKAnime(slug, parseInt(episode) || 1);
+  const streams = await pptrAnime.resolveJKAnime(slug, parseInt(episode) || 1);
   res.json({ streams: streams.map(s => normalizeStream(s, 'jkanime-pptr', 'JKAnime')).filter(Boolean) });
 });
 
 app.get('/stream/tioanime-pptr/:slug/:episode.json', async (req, res) => {
   const { slug, episode } = req.params;
-  const streams = await jkanimePuppeteer.resolveTioAnime(slug, parseInt(episode) || 1);
+  const streams = await pptrAnime.resolveTioAnime(slug, parseInt(episode) || 1);
   res.json({ streams: streams.map(s => normalizeStream(s, 'tioanime-pptr', 'TioAnime')).filter(Boolean) });
 });
 
 app.get('/stream/animeav1-pptr/:slug/:episode.json', async (req, res) => {
   const { slug, episode } = req.params;
-  const streams = await jkanimePuppeteer.resolveAnimeAV1(slug, parseInt(episode) || 1);
+  const streams = await pptrAnime.resolveAnimeAV1(slug, parseInt(episode) || 1);
   res.json({ streams: streams.map(s => normalizeStream(s, 'animeav1-pptr', 'AnimeAV1')).filter(Boolean) });
 });
 
@@ -1272,24 +1272,68 @@ async function handleStream(req, res, type, id) {
   }
 
   if (isAnime && config.enableAnime) {
-    streamTasks.push((async () => {
-      const start = Date.now();
-      try {
-        let finalId = animeProviderId;
-        if (animeFullId) {
-          const resolvedId = await anime.resolveAnimeId(animeProviderId);
-          if (resolvedId) finalId = resolvedId;
-        }
-        // Try local scrapers first for animeflv: IDs, fallback to Pigamer37 proxy
-        const result = await anime.scrapers.getStreams(
-          finalId, season, episode,
-          (id, s, ep) => anime.pigamer.getStreams(id, s, ep)
-        );
-        const normalized = result.streams.map(s => normalizeStream(s, 'pigamer37', 'Pigamer37')).filter(Boolean);
-        health.track('pigamer37', normalized.length > 0, Date.now() - start);
-        return normalized;
-      } catch { health.track('pigamer37', false, Date.now() - start); return []; }
-    })());
+    // Use Puppeteer-powered resolvers for supported prefixes (slower but gets JS-rendered data)
+    if (animeFullId) {
+      if (animeFullId.startsWith('jkanime:')) {
+        const slug = animeFullId.substring(8);
+        streamTasks.push((async () => {
+          const start = Date.now();
+          try {
+            const streams = await pptrAnime.resolveJKAnime(slug, episode || 1);
+            const normalized = streams.map(s => normalizeStream(s, 'jkanime-pptr', 'JKAnime')).filter(Boolean);
+            health.track('jkanime-pptr', normalized.length > 0, Date.now() - start);
+            return normalized;
+          } catch { health.track('jkanime-pptr', false, Date.now() - start); return []; }
+        })());
+      } else if (animeFullId.startsWith('tioanime:')) {
+        const slug = animeFullId.substring(9);
+        streamTasks.push((async () => {
+          const start = Date.now();
+          try {
+            const streams = await pptrAnime.resolveTioAnime(slug, episode || 1);
+            const normalized = streams.map(s => normalizeStream(s, 'tioanime-pptr', 'TioAnime')).filter(Boolean);
+            health.track('tioanime-pptr', normalized.length > 0, Date.now() - start);
+            return normalized;
+          } catch { health.track('tioanime-pptr', false, Date.now() - start); return []; }
+        })());
+      } else if (animeFullId.startsWith('animeav1:')) {
+        const slug = animeFullId.substring(9);
+        streamTasks.push((async () => {
+          const start = Date.now();
+          try {
+            const streams = await pptrAnime.resolveAnimeAV1(slug, episode || 1);
+            const normalized = streams.map(s => normalizeStream(s, 'animeav1-pptr', 'AnimeAV1')).filter(Boolean);
+            health.track('animeav1-pptr', normalized.length > 0, Date.now() - start);
+            return normalized;
+          } catch { health.track('animeav1-pptr', false, Date.now() - start); return []; }
+        })());
+      } else {
+        // Fallback to Pigamer37 for other prefixes
+        streamTasks.push((async () => {
+          const start = Date.now();
+          try {
+            let finalId = animeProviderId;
+            const resolvedId = await anime.resolveAnimeId(animeProviderId);
+            if (resolvedId) finalId = resolvedId;
+            const result = await anime.scrapers.getStreams(finalId, season, episode, (id, s, ep) => anime.pigamer.getStreams(id, s, ep));
+            const normalized = result.streams.map(s => normalizeStream(s, 'pigamer37', 'Pigamer37')).filter(Boolean);
+            health.track('pigamer37', normalized.length > 0, Date.now() - start);
+            return normalized;
+          } catch { health.track('pigamer37', false, Date.now() - start); return []; }
+        })());
+      }
+    } else {
+      // No anime prefix → Pigamer37
+      streamTasks.push((async () => {
+        const start = Date.now();
+        try {
+          const result = await anime.scrapers.getStreams(animeProviderId, season, episode, (id, s, ep) => anime.pigamer.getStreams(id, s, ep));
+          const normalized = result.streams.map(s => normalizeStream(s, 'pigamer37', 'Pigamer37')).filter(Boolean);
+          health.track('pigamer37', normalized.length > 0, Date.now() - start);
+          return normalized;
+        } catch { health.track('pigamer37', false, Date.now() - start); return []; }
+      })());
+    }
   }
 
   if (config.enableBackend) {
