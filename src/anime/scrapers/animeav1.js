@@ -134,22 +134,38 @@ async function getStreams(slug, episode) {
     const data = await fetchJson(`https://animeav1.com/media/${slug}/${episode}/__data.json`);
     if (!data?.nodes) return [];
 
-    // Find the data node with episode/video information
     for (const node of data.nodes) {
       if (node?.type !== 'data' || !Array.isArray(node.data)) continue;
       const servers = resolveDevalue(node.data);
       const results = [];
 
-      // Embeds (stream/embed URLs)
+      // Also parse downloads for direct links (Mega direct, MP4Upload direct, 1Fichier)
       for (const [lang, serverList] of Object.entries(servers.embeds)) {
         for (const { server, url } of serverList) {
+          const isDirect = /\.(mp4|mkv|m3u8)($|\?)/i.test(url);
+          let finalUrl = url;
+          
+          // Resolve HLS embeds to actual m3u8 if possible
+          if (server === 'HLS' && url.includes('zilla-networks.com')) {
+            try {
+              const playerHtml = await fetchText(url, 10000);
+              if (playerHtml) {
+                const m3u8Match = playerHtml.match(/https?:\/\/[^"'\s]+\.m3u8[^"'\s]*/i);
+                if (m3u8Match) finalUrl = m3u8Match[0];
+              }
+            } catch {}
+          }
+
           results.push({
-            url,
+            url: finalUrl,
             server,
             name: `AnimeAV1\n${server}`,
             title: `${slug} Ep. ${episode}\n⚙️ ${server} [${lang}]`,
             description: lang,
-            behaviorHints: { notWebReady: true, bingeGroup: `animeav1|${server}` },
+            behaviorHints: {
+              notWebReady: !isDirect,
+              bingeGroup: `animeav1|${server}`,
+            },
           });
         }
       }
