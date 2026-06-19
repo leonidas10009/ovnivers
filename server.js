@@ -5,6 +5,11 @@
  */
 try { require('dotenv').config(); } catch {}
 
+// Polyfill browser APIs missing in Node 18 (Render uses Node 18.20.8)
+if (typeof File === 'undefined') {
+  try { global.File = require('node:buffer').File; } catch { global.File = class File extends Blob { constructor(chunks, name, opts = {}) { super(chunks, opts); this.name = name; this.lastModified = opts.lastModified || Date.now(); } }; }
+}
+
 // Polyfill fetch for older Node versions (Render free tier may use Node 16/18)
 if (typeof fetch === 'undefined') {
   try { global.fetch = require('node-fetch'); } catch (e) {

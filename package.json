@@ -15,7 +15,7 @@
         "express": "^4.21.0",
         "https-proxy-agent": "^9.1.0",
         "node-fetch": "^2.7.0",
-        "undici": "^7.0.0"
+        "undici": "^6.21.0"
     },
     "keywords": [
         "nuvio",
