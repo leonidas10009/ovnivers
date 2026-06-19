@@ -73,10 +73,10 @@ module.exports = [
     baseUrl: 'https://www.cinelibreonline.com',
     categories: ['movie', 'direct'],
     language: ['lat'],
-    active: true,
+    active: false, // YouTube embeds only + Blogspot format not scrapeable
     adult: false,
-    search: { url: '/?s={query}', itemSelector: 'li', titleSelector: 'a[href]', linkSelector: 'a' }, // <-- fixed
-    videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD', srcAttr: 'src' } // <-- fixed
+    search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2.entry-title a', linkSelector: 'h2.entry-title a' },
+    videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
   },
   {
     name: 'cinemundo',
@@ -231,7 +231,7 @@ module.exports = [
     language: ['cast'],
     active: true,
     adult: false,
-    search: { url: '/?s={query}', itemSelector: 'li', titleSelector: 'a[title]', linkSelector: 'a', titleAttr: 'title' }, // <-- fixed
+    search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2.entry-title a', linkSelector: 'h2.entry-title a' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
   },
   {
@@ -342,8 +342,8 @@ module.exports = [
     language: ['lat'],
     active: true,
     adult: false,
-    search: { url: '/search?q={query}', itemSelector: 'a[href*="/pelicula/"], a[href*="/serie/"]', titleSelector: '.Title', linkSelector: '&' }, // <-- fixed
-    videos: { type: 'nextjs', dataPath: 'props.pageProps.post.players', defaultQuality: 'HD' }
+    search: { url: '/search?q={query}', itemSelector: '__NEXT_DATA__', jsonDataPath: 'props.pageProps.movies', titleSelector: 'titles.name', linkSelector: 'url.slug' },
+    videos: { type: 'nextjs', dataPath: 'props.pageProps.movieData.players', defaultQuality: 'HD' }
   },
   {
     name: 'retrotv',
@@ -474,7 +474,7 @@ module.exports = [
     baseUrl: 'https://www.lacartoons.com',
     categories: ['tvshow'],
     language: ['lat'],
-    active: true,
+    active: false, // 404 - site moved or changed URL
     adult: false,
     search: { url: '/search/{query}', itemSelector: '.serie-item', titleSelector: '.title', linkSelector: 'a' },
     episodes: { type: 'season-list', seasonSelector: '.temporadas a', episodeSelector: '.episodios a' },
@@ -488,9 +488,9 @@ module.exports = [
     language: ['lat'],
     active: true,
     adult: false,
-    search: { url: '/?s={query}', itemSelector: 'li', titleSelector: 'a[href]', linkSelector: 'a' }, // <-- fixed
+    search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h3.Title', linkSelector: 'a' },
     episodes: { type: 'season-list', seasonSelector: '.season-list a', episodeSelector: '.episode-list a' },
-    videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
+    videos: { type: 'iframe', containerSelector: 'body', iframeSelector: 'iframe', defaultQuality: 'HD' }
   },
   {
     name: 'animeflv',
@@ -732,10 +732,10 @@ module.exports = [
     baseUrl: 'https://www.documentales-online.com',
     categories: ['documentary'],
     language: ['cast', 'lat'],
-    active: true,
+    active: false, // mostly YouTube embeds + ad iframes, not useful
     adult: false,
-    search: { url: '/?s={query}', itemSelector: 'li', titleSelector: 'a[href]', linkSelector: 'a' }, // <-- fixed
-    videos: { type: 'iframe', containerSelector: 'body', iframeSelector: 'iframe', defaultQuality: 'HD', srcAttr: 'src' } // <-- fixed
+    search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2 a', linkSelector: 'h2 a' },
+    videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
   },
   {
     name: 'elitetorrent',

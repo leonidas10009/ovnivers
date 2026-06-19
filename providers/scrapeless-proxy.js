@@ -1,6 +1,6 @@
 /**
  * scrapeless-proxy - Built from src/scrapeless-proxy/
- * Generated: 2026-06-19T18:47:33.963Z
+ * Generated: 2026-06-19T19:03:39.243Z
  */
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve, reject) => {

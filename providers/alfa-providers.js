@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-19T18:47:33.893Z
+ * Generated: 2026-06-19T19:03:39.154Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -124,12 +124,11 @@ var require_providers = __commonJS({
         baseUrl: "https://www.cinelibreonline.com",
         categories: ["movie", "direct"],
         language: ["lat"],
-        active: true,
+        active: false,
+        // YouTube embeds only + Blogspot format not scrapeable
         adult: false,
-        search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
-        // <-- fixed
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD", srcAttr: "src" }
-        // <-- fixed
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2.entry-title a", linkSelector: "h2.entry-title a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
       },
       {
         name: "cinemundo",
@@ -289,8 +288,7 @@ var require_providers = __commonJS({
         language: ["cast"],
         active: true,
         adult: false,
-        search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[title]", linkSelector: "a", titleAttr: "title" },
-        // <-- fixed
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2.entry-title a", linkSelector: "h2.entry-title a" },
         videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
       },
       {
@@ -403,9 +401,8 @@ var require_providers = __commonJS({
         language: ["lat"],
         active: true,
         adult: false,
-        search: { url: "/search?q={query}", itemSelector: 'a[href*="/pelicula/"], a[href*="/serie/"]', titleSelector: ".Title", linkSelector: "&" },
-        // <-- fixed
-        videos: { type: "nextjs", dataPath: "props.pageProps.post.players", defaultQuality: "HD" }
+        search: { url: "/search?q={query}", itemSelector: "__NEXT_DATA__", jsonDataPath: "props.pageProps.movies", titleSelector: "titles.name", linkSelector: "url.slug" },
+        videos: { type: "nextjs", dataPath: "props.pageProps.movieData.players", defaultQuality: "HD" }
       },
       {
         name: "retrotv",
@@ -545,7 +542,8 @@ var require_providers = __commonJS({
         baseUrl: "https://www.lacartoons.com",
         categories: ["tvshow"],
         language: ["lat"],
-        active: true,
+        active: false,
+        // 404 - site moved or changed URL
         adult: false,
         search: { url: "/search/{query}", itemSelector: ".serie-item", titleSelector: ".title", linkSelector: "a" },
         episodes: { type: "season-list", seasonSelector: ".temporadas a", episodeSelector: ".episodios a" },
@@ -559,10 +557,9 @@ var require_providers = __commonJS({
         language: ["lat"],
         active: true,
         adult: false,
-        search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
-        // <-- fixed
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h3.Title", linkSelector: "a" },
         episodes: { type: "season-list", seasonSelector: ".season-list a", episodeSelector: ".episode-list a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
+        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", defaultQuality: "HD" }
       },
       {
         name: "animeflv",
@@ -811,12 +808,11 @@ var require_providers = __commonJS({
         baseUrl: "https://www.documentales-online.com",
         categories: ["documentary"],
         language: ["cast", "lat"],
-        active: true,
+        active: false,
+        // mostly YouTube embeds + ad iframes, not useful
         adult: false,
-        search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
-        // <-- fixed
-        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", defaultQuality: "HD", srcAttr: "src" }
-        // <-- fixed
+        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2 a", linkSelector: "h2 a" },
+        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
       },
       {
         name: "elitetorrent",
@@ -1760,8 +1756,17 @@ var require_engine = __commonJS({
         }
       });
     }
+    function getNested(obj, path) {
+      if (!obj || !path) return "";
+      const keys = path.split(".");
+      let val = obj;
+      for (const k of keys) {
+        if (val == null) return "";
+        val = val[k];
+      }
+      return typeof val === "string" ? val : val != null ? String(val) : "";
+    }
     function similarity2(a, b) {
-      if (!a || !b) return 0;
       const sa = a.toLowerCase().replace(/[^a-z0-9]/g, "");
       const sb = b.toLowerCase().replace(/[^a-z0-9]/g, "");
       if (sa === sb) return 1;
@@ -1811,6 +1816,7 @@ var require_engine = __commonJS({
     }
     function searchProvider2(provider, title, year, mediaType) {
       return __async(this, null, function* () {
+        var _a;
         const cfg = provider.search;
         if (!cfg) return null;
         const titleClean = title.replace(/[_-]/g, " ").replace(/\s+/g, " ").trim();
@@ -1856,6 +1862,29 @@ var require_engine = __commonJS({
           if (first.length > 3) html = yield trySearch(first);
         }
         if (!html) return null;
+        if (cfg.jsonDataPath) {
+          try {
+            const data = JSON.parse(((_a = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/)) == null ? void 0 : _a[1]) || html);
+            let items2 = data;
+            for (const key of cfg.jsonDataPath.split(".")) items2 = items2 == null ? void 0 : items2[key];
+            if (!Array.isArray(items2) || !items2.length) return null;
+            let bestMatch2 = null;
+            let bestScore2 = 0;
+            for (const item of items2) {
+              const itemTitle = getNested(item, cfg.titleSelector) || "";
+              const itemLinkRaw = getNested(item, cfg.linkSelector) || "";
+              if (!itemTitle || !itemLinkRaw) continue;
+              const itemLink = itemLinkRaw.startsWith("http") ? itemLinkRaw : itemLinkRaw.startsWith("/") ? new URL(itemLinkRaw, provider.baseUrl).href : `${provider.baseUrl}/${itemLinkRaw}`;
+              let score = similarity2(itemTitle, title);
+              if (score > bestScore2 && score > 0.4) {
+                bestScore2 = score;
+                bestMatch2 = itemLink;
+              }
+            }
+            return bestMatch2;
+          } catch (e) {
+          }
+        }
         const $ = cheerio.load(html);
         const items = $(cfg.itemSelector).toArray();
         if (!items.length) return null;

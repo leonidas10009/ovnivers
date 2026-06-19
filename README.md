@@ -22,7 +22,7 @@ Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fue
 | **Pipeline unificado** | Orquestador central: circuit breaker (5 fallos = 5min off), dedup, post-resolver de embeds, scoring por idioma |
 | **Prioridad castellano** | Streams en espanol/latino/VOSE/dual aparecen primero via `media.language.computeScore()` |
 | **Pigamer37** (proxy anime) | AnimeFLV, AnimeAV1, TioAnime, Henaojara — solo para anime detectado |
-| **Alfa Providers** (server-side) | 45 providers activos (4 funcionales, 12 bloqueados por Turnstile, 18 deshabilitados por shorteners/JS, resto sin resultados) |
+| **Alfa Providers** (server-side) | 42 providers activos (6 funcionales, 8 Cloudflare, 7 sin videos, resto JS-dinámico/rotos). Selectores de 5 providers corregidos en v1.7.7. |
 | **Hermes scrapers** (server-side) | 61 scrapers en `manifest.json` (42 activos, 19 deshabilitados). 9 devuelven streams en Node.js via inyeccion de globales cheerio/CryptoJS |
 | **Alfa multi-titulo** | Busca por titulo EN + ES + JA + slug en paralelo |
 | **Backend scrapers** | **2 scrapers**: `2embed+Mirrors` (8 mirrors rotativos: vesy/vsrc/skin/cc, VidSrc pro/icu/xyz, SuperEmbed) + `PoseidonHD` (3 dominios) |
@@ -35,7 +35,7 @@ Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fue
 **23 catálogos base** (19 TMDB + 4 universales `tt:`) + **4 catálogos Amatsu** (anime, vía proxy Amatsu) + **1 catálogo de búsqueda** (`tmdb-search`). Total dinámico: 28 catálogos cuando el anime está habilitado.
 IDs con prefijo `ovn:` para los catálogos propios y `tt:`/`tmdb:` para compatibilidad cross-addon (Torrentio, AnimeFLV, TMDB Community).
 
-## Alfa Providers (74 registrados, 45 activos)
+## Alfa Providers (74 registrados, 42 activos)
 
 Scraper unificado del addon **Alfa** de Kodi. Corre server-side en Node.js.
 Busca con multiples variantes del titulo (EN/ES/JA/slug) en paralelo.
@@ -46,16 +46,16 @@ Tras cada fetch de embed, se ejecuta el resolvedor `tryResolveEmbedToDirect()` q
 
 | Categoria | Count | Detalle |
 |---|---|---|
-| **Funcionando** | 4 | CineCalidad (5 videos), CineLibreOnline (10), PelisPedia (3), DivXTotal |
-| **Cloudflare Turnstile** | 12 | cine24h, detodopeliculas, doramasflix, doramedplay, pelisforte, wolfmax4k, doramasyt, eztv, estrenosanime, henaojara, sololatino, tiodonghua — requieren navegador real |
-| **Anubis PoW** | 1 | DonTorrent — funciona con bypass directo (sin proxy) |
-| **Selectores corregidos (2026-06-19)** | 1 | DivXTotal — selectores correctos; el link base64 `download_tt.php?u=` funciona |
-| **Deshabilitados por shortener anti-bot** | 2 | GranTorrent, MiTorrent — usan `super-enlace.com` y `acortalink.net` con POST protegido anti-scraping |
-| **Deshabilitados SPA/JS** | 1 | AllCalidad — React SPA sin items en HTML estático ni API REST útil |
-| **Sin resultados** | 7 | entrepeliculasyseries, lacartoons, hacktorrent, pelispanda, areadocumental, elitetorrent, mejortorrent |
-| **0 videos extraidos** | 10 | bloghorror, genteclic, gnula, legalmentegratis, mirapeliculas, poseidonhd, tubeonline, tubepelis, yandispoiler, fullseriehd, seriesretro |
-| **Dominio muerto/roto** | 3 | MejorTorrent (403→fixeado), EliteTorrent (vacio→fixeado), DoramasQueen (163B→deshabilitado) |
-| **Eliminado** | 1 | eCarteleraTrailers (YouTube trailers) |
+| **Funcionando** | 6 | CineCalidad (5), PelisPedia (3), SeriesKao (1), DocumentalesOnline (3), SeriesRetro (5 iframes), PoseidonHD |
+| **Cloudflare Turnstile** | 8 | detodopeliculas, doramasflix, doramedplay, pelicinehd, doramasyt, henaojara, sololatino, tiodonghua |
+| **Anubis PoW** | 1 | DonTorrent — bypass SHA256 directo |
+| **Deshabilitados shortener** | 2 | GranTorrent, MiTorrent (anti-bot super-enlace.com / acortalink.net) |
+| **Deshabilitados SPA/JS** | 2 | AllCalidad (React SPA), Yandispoiler (JS dinámico) |
+| **Deshabilitados YouTube** | 2 | CineLibreOnline, DocumentalesOnline |
+| **Deshabilitados caídos** | 6 | cine24h, gnula, pelisforte, animeflv, repelishd, lacartoons (404), entrepeliculasyseries (Cloudflare) |
+| **Deshabilitados bloqueados** | 3 | mirapeliculas, tubeonline, tubepelis |
+| **0 videos extraidos** | 6 | bloghorror, genteclic, gnula, legalmentegratis, poseidonhd, tubeonline, tubepelis, yandispoiler, fullseriehd, seriesretro |
+| **Sin resultados** | 4 | hacktorrent, pelispanda, areadocumental, mejortorrent |
 
 ### Causas raiz
 

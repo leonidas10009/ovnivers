@@ -133,8 +133,18 @@ async function fetchJSON(url, opts = {}) {
   } catch { return null; }
 }
 
+function getNested(obj, path) {
+  if (!obj || !path) return '';
+  const keys = path.split('.');
+  let val = obj;
+  for (const k of keys) {
+    if (val == null) return '';
+    val = val[k];
+  }
+  return typeof val === 'string' ? val : (val != null ? String(val) : '');
+}
+
 function similarity(a, b) {
-  if (!a || !b) return 0;
   const sa = a.toLowerCase().replace(/[^a-z0-9]/g, '');
   const sb = b.toLowerCase().replace(/[^a-z0-9]/g, '');
   if (sa === sb) return 1;
@@ -223,6 +233,30 @@ async function searchProvider(provider, title, year, mediaType) {
     if (first.length > 3) html = await trySearch(first);
   }
   if (!html) return null;
+
+  // JSON-based search (e.g. PoseidonHD __NEXT_DATA__)
+  if (cfg.jsonDataPath) {
+    try {
+      const data = JSON.parse(html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/)?.[1] || html);
+      let items = data;
+      for (const key of cfg.jsonDataPath.split('.')) items = items?.[key];
+      if (!Array.isArray(items) || !items.length) return null;
+
+      let bestMatch = null;
+      let bestScore = 0;
+      for (const item of items) {
+        const itemTitle = getNested(item, cfg.titleSelector) || '';
+        const itemLinkRaw = getNested(item, cfg.linkSelector) || '';
+        if (!itemTitle || !itemLinkRaw) continue;
+        const itemLink = itemLinkRaw.startsWith('http') ? itemLinkRaw
+          : (itemLinkRaw.startsWith('/') ? new URL(itemLinkRaw, provider.baseUrl).href
+            : `${provider.baseUrl}/${itemLinkRaw}`);
+        let score = similarity(itemTitle, title);
+        if (score > bestScore && score > 0.4) { bestScore = score; bestMatch = itemLink; }
+      }
+      return bestMatch;
+    } catch {}
+  }
 
   const $ = cheerio.load(html);
   const items = $(cfg.itemSelector).toArray();
