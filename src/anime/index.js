@@ -5,6 +5,7 @@ const pigamer = require('./pigamer');
 const amatsu = require('./amatsu');
 const { filterLocalProviders, getAlfaCategory } = require('./providers');
 const titles = require('./titles');
+const scrapers = require('./scrapers/index');
 
 module.exports = {
   ...types,
@@ -17,4 +18,5 @@ module.exports = {
   filterLocalProviders,
   getAlfaCategory,
   titles,
+  scrapers,
 };

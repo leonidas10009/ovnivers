@@ -1,6 +1,6 @@
 /**
  * anime - Built from src/anime/
- * Generated: 2026-06-19T18:05:35.467Z
+ * Generated: 2026-06-19T18:15:51.530Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -989,6 +989,190 @@ var require_titles = __commonJS({
   }
 });
 
+// src/anime/scrapers/animeflv.js
+var require_animeflv = __commonJS({
+  "src/anime/scrapers/animeflv.js"(exports2, module2) {
+    var cheerio = require("cheerio-without-node-native") || require("cheerio");
+    var BASE = "https://www3.animeflv.net";
+    var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+    function fetchText(url, timeout = 15e3) {
+      return __async(this, null, function* () {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), timeout);
+        try {
+          const res = yield fetch(url, { headers: { "User-Agent": UA }, signal: ctrl.signal });
+          clearTimeout(t);
+          if (!res.ok) return null;
+          return yield res.text();
+        } catch (e) {
+          clearTimeout(t);
+          return null;
+        }
+      });
+    }
+    function search(query) {
+      return __async(this, null, function* () {
+        const all = [];
+        for (const page of [1, 2]) {
+          const html = yield fetchText(`${BASE}/browse?q=${encodeURIComponent(query)}&page=${page}`);
+          if (!html) continue;
+          const $ = cheerio.load(html);
+          const items = $("ul.ListAnimes li");
+          if (!items.length) break;
+          items.each((_, el) => {
+            const a = $(el).find("a").first();
+            const href = a.attr("href") || "";
+            const slug = href.replace("/anime/", "");
+            if (!slug) return;
+            all.push({
+              title: $(el).find("h3.Title").text().trim(),
+              slug,
+              poster: $(el).find("figure img").attr("src") || "",
+              type: ($(el).find("span.Type").text() || "").toLowerCase().includes("pelicula") ? "movie" : "series",
+              synopsis: $(el).find("div.Description p").last().text().trim()
+            });
+          });
+          if (all.length >= 24) break;
+        }
+        return all;
+      });
+    }
+    function getAnime(slug) {
+      return __async(this, null, function* () {
+        const html = yield fetchText(`${BASE}/anime/${slug}`);
+        if (!html) return null;
+        const $ = cheerio.load(html);
+        const title = $("h1.Title").text().trim();
+        const rawType = $("span.Type").text().trim();
+        const animeType = rawType.toLowerCase().includes("pelicula") ? "movie" : "series";
+        const poster = $("div.AnimeCover figure img").attr("src") || "";
+        const synopsis = $("div.Description p").first().text().trim();
+        const genres = [];
+        $("nav.Nvgnrs a").each((_, el) => {
+          genres.push($(el).text().trim());
+        });
+        let episodes = [];
+        $("script").each((_, el) => {
+          const text = $(el).html() || "";
+          const m = text.match(/var episodes\s*=\s*(\[\[.*?\]\s*\]);/);
+          if (m) {
+            try {
+              const arr = JSON.parse(m[1]);
+              episodes = arr.map((ep) => ({
+                number: ep[0],
+                id: `animeflv:${slug}:${ep[0]}`,
+                url: `${BASE}/ver/${slug}-${ep[0]}`
+              }));
+            } catch (e) {
+            }
+          }
+        });
+        return { title, type: animeType, slug, poster, synopsis, genres, episodes };
+      });
+    }
+    function getStreams(slug, episode) {
+      return __async(this, null, function* () {
+        const html = yield fetchText(`${BASE}/ver/${slug}-${episode}`);
+        if (!html) return [];
+        let videosStr = null;
+        const $ = cheerio.load(html);
+        $("script").each((_, el) => {
+          const text = $(el).html() || "";
+          const m = text.match(/var videos\s*=\s*(\{[^;]+\});/);
+          if (m) videosStr = m[1];
+        });
+        if (!videosStr) return [];
+        let videos;
+        try {
+          videos = JSON.parse(videosStr);
+        } catch (e) {
+          return [];
+        }
+        const results = [];
+        const processServers = (servers, lang) => {
+          if (!Array.isArray(servers)) return;
+          for (const s of servers) {
+            const url = s.code || s.url || "";
+            if (!url) continue;
+            const serverName = (s.title || "embed").replace(/\s+/g, "");
+            results.push({
+              url,
+              server: serverName,
+              name: `AnimeFLV
+${serverName}`,
+              title: `${slug} Ep. ${episode}
+\u2699\uFE0F ${serverName}`,
+              description: lang === "ja" ? "SUB" : lang === "lat" ? "LAT" : "DUB",
+              behaviorHints: { notWebReady: true, bingeGroup: `animeflv|${serverName}` }
+            });
+          }
+        };
+        processServers(videos.SUB, "ja");
+        processServers(videos.LAT, "lat");
+        processServers(videos.DUB, "cast");
+        return results;
+      });
+    }
+    function getOnAir() {
+      return __async(this, null, function* () {
+        const html = yield fetchText(BASE);
+        if (!html) return [];
+        const $ = cheerio.load(html);
+        const items = [];
+        $(".ListSdbr li").each((_, el) => {
+          const a = $(el).find("a").first();
+          const href = a.attr("href") || "";
+          const slug = href.replace("/anime/", "");
+          if (!slug) return;
+          const rawType = a.find("span.Type").text().trim();
+          items.push({
+            id: `animeflv:${slug}`,
+            type: rawType.toLowerCase().includes("pelicula") ? "movie" : "series",
+            name: a.clone().children().remove().end().text().trim()
+          });
+        });
+        return items;
+      });
+    }
+    module2.exports = { search, getAnime, getStreams, getOnAir };
+  }
+});
+
+// src/anime/scrapers/index.js
+var require_scrapers = __commonJS({
+  "src/anime/scrapers/index.js"(exports2, module2) {
+    var animeflv = require_animeflv();
+    function getStreams(id, season, episode, pigamerGetStreams) {
+      return __async(this, null, function* () {
+        if (id.startsWith("animeflv:")) {
+          const slug = id.replace("animeflv:", "").split(":")[0];
+          try {
+            const streams = yield animeflv.getStreams(slug, episode || 1);
+            if (streams.length) return { source: "local", streams };
+          } catch (e) {
+          }
+        }
+        try {
+          const streams = yield pigamerGetStreams(id, season, episode);
+          return { source: "pigamer", streams };
+        } catch (e) {
+          return { source: "error", streams: [] };
+        }
+      });
+    }
+    function getOnAirCatalog(providerId) {
+      return __async(this, null, function* () {
+        if (providerId === "animeflv|onair") {
+          const items = yield animeflv.getOnAir();
+          return { metas: items };
+        }
+        return { metas: [] };
+      });
+    }
+    module2.exports = { getStreams, getOnAirCatalog, animeflv };
+  }
+});
+
 // src/anime/index.js
 var types = require_types();
 var { detectAnime } = require_detector();
@@ -997,6 +1181,7 @@ var pigamer = require_pigamer();
 var amatsu = require_amatsu();
 var { filterLocalProviders, getAlfaCategory } = require_providers();
 var titles = require_titles();
+var scrapers = require_scrapers();
 module.exports = __spreadProps(__spreadValues({}, types), {
   detectAnime,
   resolveAnimeId,
@@ -1006,5 +1191,6 @@ module.exports = __spreadProps(__spreadValues({}, types), {
   amatsu,
   filterLocalProviders,
   getAlfaCategory,
-  titles
+  titles,
+  scrapers
 });

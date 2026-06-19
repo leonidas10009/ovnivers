@@ -1210,8 +1210,12 @@ async function handleStream(req, res, type, id) {
           const resolvedId = await anime.resolveAnimeId(animeProviderId);
           if (resolvedId) finalId = resolvedId;
         }
-        const data = await anime.pigamer.getStreams(finalId, season, episode);
-        const normalized = data.map(s => normalizeStream(s, 'pigamer37', 'Pigamer37')).filter(Boolean);
+        // Try local scrapers first for animeflv: IDs, fallback to Pigamer37 proxy
+        const result = await anime.scrapers.getStreams(
+          finalId, season, episode,
+          (id, s, ep) => anime.pigamer.getStreams(id, s, ep)
+        );
+        const normalized = result.streams.map(s => normalizeStream(s, 'pigamer37', 'Pigamer37')).filter(Boolean);
         health.track('pigamer37', normalized.length > 0, Date.now() - start);
         return normalized;
       } catch { health.track('pigamer37', false, Date.now() - start); return []; }
@@ -1452,6 +1456,12 @@ async function handleCatalog(req, res, type, id) {
       return res.json(result);
     }
     if (/^(animeflv|animeav1|henaojara|tioanime)\|/.test(id)) {
+      // Try local scrapers first for on-air catalogs
+      const localResult = await anime.scrapers.getOnAirCatalog(id);
+      if (localResult.metas.length) {
+        return res.json(localResult);
+      }
+      // Fallback to Pigamer37 proxy
       const result = await catalog.getPigamerCatalog(id, page);
       return res.json(result);
     }
