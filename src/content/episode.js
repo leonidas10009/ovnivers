@@ -31,15 +31,7 @@ function parseEpisodeId(id) {
   let episode = 1;
   let animePrefix = null;
 
-  // Check for anime prefix IDs (animeflv:naruto, anilist:123, etc.)
-  for (const prefix of ANIME_PREFIXES) {
-    if (id.startsWith(prefix)) {
-      animePrefix = prefix;
-      contentId = id.slice(prefix.length);
-      break;
-    }
-  }
-
+  // Standard prefijos tmdb:/ovn: (ovn:tmdbId:season:episode)
   if (id.startsWith('tmdb:') || id.startsWith('ovn:')) {
     const parts = id.split(':');
     contentId = parts[1] || id.replace(/^(tmdb:|ovn:)/, '');
@@ -47,12 +39,31 @@ function parseEpisodeId(id) {
       season = parseInt(parts[2]) || 1;
       episode = parseInt(parts[3]) || 1;
     }
-  } else if (!animePrefix) {
-    const match = id.match(/^(tt\d+):(\d+):(\d+)$/);
-    if (match) {
-      contentId = match[1];
-      season = parseInt(match[2]) || 1;
-      episode = parseInt(match[3]) || 1;
+    return { contentId, season, episode };
+  }
+
+  // IMDB con S/E (tt1234567:season:episode)
+  const ttMatch = id.match(/^(tt\d+):(\d+):(\d+)$/);
+  if (ttMatch) {
+    return {
+      contentId: ttMatch[1],
+      season: parseInt(ttMatch[2]) || 1,
+      episode: parseInt(ttMatch[3]) || 1,
+    };
+  }
+
+  // Anime prefix IDs (animeflv:naruto, animeflv:naruto:1:1, anilist:123, ...)
+  for (const prefix of ANIME_PREFIXES) {
+    if (id.startsWith(prefix)) {
+      animePrefix = prefix;
+      const rest = id.slice(prefix.length);
+      const parts = rest.split(':');
+      contentId = parts[0];
+      if (parts.length >= 3) {
+        season = parseInt(parts[1]) || 1;
+        episode = parseInt(parts[2]) || 1;
+      }
+      break;
     }
   }
 

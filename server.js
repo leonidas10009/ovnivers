@@ -560,6 +560,7 @@ function parseStreamId(id, fallbackSeason = 1, fallbackEpisode = 1) {
   const parsed = content.episode.parseEpisodeId(id);
   return {
     contentId: parsed.contentId,
+    animePrefix: parsed.animePrefix || null,
     season: parsed.season || fallbackSeason,
     episode: parsed.episode || fallbackEpisode,
   };
@@ -1141,6 +1142,11 @@ async function handleStream(req, res, type, id) {
   const mediaType = mapType(type);
   const rawId = extractId(parsed.contentId);
 
+  // Reconstruir ID completo de anime si aplica (animeflv:naruto, no solo naruto)
+  const animeFullId = (parsed.animePrefix && content.identifier.classifyByPrefix(parsed.animePrefix + parsed.contentId))
+    ? parsed.animePrefix + parsed.contentId
+    : null;
+
   const detection = await content.identifier.classify(id, type, mediaType);
   const isAnime = detection.isAnime;
   if (detection.method !== 'prefix' && detection.method !== 'id-format') {
@@ -1167,9 +1173,10 @@ async function handleStream(req, res, type, id) {
   if (isAnime && config.enableAnime) {
     streamTasks.push((async () => {
       try {
-        const resolvedId = await anime.resolveAnimeId(id);
-        const proxyId = resolvedId || (rawId.match(/^\d+$/) ? `tmdb:${rawId}` : rawId);
-        const data = await anime.pigamer.getStreams(proxyId, season, episode);
+        const proxyId = animeFullId || rawId;
+        const resolvedId = await anime.resolveAnimeId(proxyId);
+        const finalId = resolvedId || proxyId;
+        const data = await anime.pigamer.getStreams(finalId, season, episode);
         return data.map(s => normalizeStream(s, 'pigamer37', 'Pigamer37')).filter(Boolean);
       } catch { return []; }
     })());
@@ -1185,8 +1192,10 @@ async function handleStream(req, res, type, id) {
   }
 
   if (config.enableLocal) {
-    streamTasks.push(scrapeAlfa(rawId, mediaType, type, season, episode, config, isAnime));
-    streamTasks.push(scrapeLocalProviders(rawId, mediaType, type, season, episode, config, isAnime));
+    // Para anime, pasar el ID completo (animeflv:naruto) en vez del slug pelado
+    const providerId = isAnime && animeFullId ? animeFullId : rawId;
+    streamTasks.push(scrapeAlfa(providerId, mediaType, type, season, episode, config, isAnime));
+    streamTasks.push(scrapeLocalProviders(providerId, mediaType, type, season, episode, config, isAnime));
   }
 
   streamTasks.push((async () => {
@@ -1195,15 +1204,15 @@ async function handleStream(req, res, type, id) {
     let searchTitles = [];
     try {
       if (isAnime && !rawId.match(/^\d+$/) && !rawId.startsWith('tt')) {
-        // Anime with prefix ID (animeflv:slug, anilist:id, etc.) — resolve through anime titles module
-        const anifeTitles = await anime.titles.resolveTitles(rawId);
+        const titlesId = animeFullId || rawId;
+        const anifeTitles = await anime.titles.resolveTitles(titlesId);
         if (anifeTitles) {
           searchTitles = anifeTitles.searchTitles || [];
           searchTitle = searchTitles[0] || '';
           year = anifeTitles.year ? (typeof anifeTitles.year === 'string' ? parseInt(anifeTitles.year) : anifeTitles.year) : null;
           if (!searchTitle && anifeTitles.titleEN) searchTitle = anifeTitles.titleEN;
           if (!searchTitle && anifeTitles.titleJA) searchTitle = anifeTitles.titleJA;
-          console.log(`[torrent] anime titles for ${rawId}: ${searchTitles.slice(0, 5).join(', ')}`);
+          console.log(`[torrent] anime titles for ${titlesId}: ${searchTitles.slice(0, 5).join(', ')}`);
         }
       } else if (rawId.match(/^\d+$/)) {
         const metaEN = await withTimeout(
