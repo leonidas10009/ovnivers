@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.7.2
+# Ovnivers — Stream Provider v1.7.3
 
 Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fuentes.
 
@@ -165,6 +165,14 @@ node build.js    # Build de scrapers desde src/
 - **URL:** https://ovnivers.onrender.com
 
 ## Changelog
+
+### v1.7.3 — Fix pagina de configuracion + estabilidad Render
+
+- **Fix pagina de configuracion**: Botones ahora tienen `type="button"` (antes actuaban como submit y recargaban la pagina en WebViews). Corregido SyntaxError `missing ) after argument list` removiendo caracteres Unicode y simplificando expresiones complejas
+- **Render deploy stability**: `undici` pineado a `^6.21.0` (v7 requiere Node >=20.18.1, Render usa Node 18). Polyfill de `File` para Node 18
+- **render.yaml restaurado**: `npm install --no-audit --no-fund`, `runtime: node`, `healthCheckPath: /health`
+- **.node-version**: Fijado a Node 18 para compatibilidad con Render free tier
+- **Diagnostico**: API devuelve Pigamer37 correctamente (AnimeAV1 + TioAnime) para `ovn:46260`, pero no aparecen en Stremio/NuvioTV — health tracking de pigamer37 no implementado (muestra 0 calls falso). Investigacion en curso
 
 ### v1.7.2 — Fix Pigamer37 streams para TMDB anime (ovn: prefix)
 

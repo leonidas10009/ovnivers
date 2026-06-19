@@ -1,0 +1,2 @@
+Uploading 1 total file(s)
+This uploader does not yet support projects that require a build process. At least one JavaScript file was found. Please use `wrangler deploy` instead for full feature support.
