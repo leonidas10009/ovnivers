@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.10.1
+ * Ovnivers — Stremio Addon Backend v1.10.2
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
@@ -62,6 +62,7 @@ const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 const catalog = require('./src/catalog/index');
 const torrentIndex = require('./src/torrent-providers/index');
 const { resolveEmbed } = require('./src/alfa-providers/embed-resolver');
+const puppeteerResolver = require('./src/puppeteer-resolver');
 const { StreamPipeline } = require('./src/stream-pipeline/index');
 const scrapeless = require('./src/scrapeless-proxy');
 const anime = require('./src/anime/index');
@@ -78,7 +79,7 @@ if (process.env.SCRAPELESS_API_KEY) {
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.10.1';
+const VERSION = '1.10.2';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 // Available languages for filtering
@@ -1059,6 +1060,18 @@ app.get('/health', (req, res) => {
     providers: { total, healthy, failed: total - healthy },
     detail: report.sort((a, b) => a.failStreak - b.failStreak)
   });
+});
+
+// ─── Embed Resolver (Puppeteer) ────────────
+
+app.get('/resolve-embed', async (req, res) => {
+  const url = req.query.url;
+  if (!url) return res.status(400).json({ error: 'missing url param' });
+  const direct = await resolveEmbed(url);
+  if (direct) return res.json({ url: direct, method: 'embed-resolver' });
+  const puppeteerUrl = await puppeteerResolver.resolveEmbedWithBrowser(url);
+  if (puppeteerUrl) return res.json({ url: puppeteerUrl, method: 'puppeteer' });
+  res.json({ url: null, method: 'none' });
 });
 
 // ─── Manifest ─────────────────────────────

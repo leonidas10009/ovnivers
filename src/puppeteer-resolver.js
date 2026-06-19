@@ -7,16 +7,19 @@ let browserPromise = null;
 async function getPuppeteer() {
   if (puppeteer) return puppeteer;
   try { puppeteer = require('puppeteer-core'); return puppeteer; }
-  catch (e) { console.error('[pptr] puppeteer-core not available:', e.message); return null; }
+  catch (e) { console.error('[pptr] puppeteer-core:', e.message); return null; }
 }
 
 async function getChromium() {
   try {
-    const sparticuz = require('@sparticuz/chromium');
-    const instance = new (sparticuz.default)();
-    return instance;
+    const mod = await import('@sparticuz/chromium');
+    const Cr = mod.default;
+    const exePath = await Cr.executablePath();
+    const args = Cr.args || [];
+    console.log('[pptr] chromium ready:', exePath.substring(0, 60));
+    return { executablePath: exePath, args, headless: 'shell' };
   } catch (e) {
-    console.error('[pptr] @sparticuz/chromium not available:', e.message);
+    console.error('[pptr] @sparticuz/chromium:', e.message);
     return null;
   }
 }
@@ -34,18 +37,17 @@ async function getBrowser() {
     if (!chromium) return null;
 
     try {
-      console.log('[pptr] launching browser...');
       browser = await pptr.launch({
-        args: chromium.args || ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-        defaultViewport: chromium.defaultViewport || { width: 1280, height: 720 },
-        executablePath: await chromium.executablePath(),
-        headless: chromium.headless !== false,
+        args: chromium.args,
+        executablePath: chromium.executablePath,
+        headless: true,
+        defaultViewport: { width: 1280, height: 720 },
       });
-      console.log('[pptr] browser launched OK');
+      console.log('[pptr] browser launched');
       browserPromise = null;
       return browser;
     } catch (e) {
-      console.error('[pptr] launch failed:', e.message);
+      console.error('[pptr] launch:', e.message);
       browserPromise = null;
       return null;
     }
@@ -81,9 +83,9 @@ async function resolveEmbedWithBrowser(embedUrl, timeout = 15000) {
     page.on('request', req => {
       const u = req.url();
       if (videoUrl) { req.abort(); return; }
-      const isVideo = /\.(m3u8|mp4|mkv|ts)(\?|$)/i.test(u) || u.includes('/hls/') || u.includes('/video/');
-      const isFromVideoHost = videoHosts.some(h => { try { return new URL(u).hostname.includes(h); } catch { return false; } });
-      if (isVideo && !isFromVideoHost && !u.includes('google') && !u.includes('analytics') && !u.includes('cdn.jkdesa')) {
+      const isVideo = /\.(m3u8|mp4|mkv|ts)(\?|$)/i.test(u) || u.includes('/hls/');
+      const isFromHost = videoHosts.some(h => { try { return new URL(u).hostname.includes(h); } catch { return false; } });
+      if (isVideo && !isFromHost && !u.includes('google') && !u.includes('analytics') && !u.includes('cdn')) {
         videoUrl = u;
         req.abort();
       } else {
@@ -94,9 +96,7 @@ async function resolveEmbedWithBrowser(embedUrl, timeout = 15000) {
     page.on('response', async resp => {
       if (videoUrl) return;
       const ct = resp.headers()['content-type'] || '';
-      if (ct.includes('application/x-mpegurl') || ct.includes('video/mp4') || ct.includes('video/webm')) {
-        videoUrl = resp.url();
-      }
+      if (ct.includes('mpegurl') || ct.includes('video/mp4')) videoUrl = resp.url();
     });
 
     try { await page.goto(embedUrl, { waitUntil: 'domcontentloaded', timeout }); } catch {}
@@ -123,7 +123,7 @@ async function resolveEmbedWithBrowser(embedUrl, timeout = 15000) {
     }
     return videoUrl;
   } catch (e) {
-    console.error('[pptr] resolve failed for', embedUrl, ':', e.message);
+    console.error('[pptr] resolve:', embedUrl.substring(0, 50), e.message);
     return null;
   } finally {
     if (page) try { await page.close(); } catch {}
