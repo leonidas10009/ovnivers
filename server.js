@@ -1076,12 +1076,29 @@ app.get('/resolve-embed', async (req, res) => {
 });
 
 app.get('/pptr-test', async (req, res) => {
+  const result = { module: false, chromium: false, browser: false, error: null };
   try {
     const mod = await import('@sparticuz/chromium');
-    res.json({ ok: true, hasDefault: !!mod.default, hasArgs: !!mod.default?.args });
-  } catch(e) {
-    res.json({ ok: false, error: e.message });
-  }
+    result.module = true;
+    const Cr = mod.default;
+    result.hasArgs = !!Cr.args?.length;
+    try {
+      const exe = await Cr.executablePath();
+      const fs = require('fs');
+      result.chromium = { path: exe, exists: fs.existsSync(exe) };
+    } catch(e) { result.chromium = { error: e.message }; }
+  } catch(e) { result.module = e.message; }
+
+  try {
+    const pptrCore = require('puppeteer-core');
+    if (result.chromium?.exists) {
+      const b = await pptrCore.launch({ headless: true, executablePath: result.chromium.path, args: ['--no-sandbox', '--single-process'] });
+      result.browser = true;
+      await b.close();
+    }
+  } catch(e) { result.browser = e.message; }
+  
+  res.json(result);
 });
 
 // ─── Manifest ─────────────────────────────
