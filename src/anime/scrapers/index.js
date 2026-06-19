@@ -1,6 +1,7 @@
 const animeflv = require('./animeflv');
 const jkanime = require('./jkanime');
 const tioanime = require('./tioanime');
+const animeav1 = require('./animeav1');
 
 const animePrefixes = ['animeflv:', 'animeav1:', 'henaojara:', 'tioanime:', 'jkanime:'];
 
@@ -38,6 +39,11 @@ async function getStreams(id, season, episode, pigamerGetStreams) {
   if (id.startsWith('animeflv:')) {
     promises.push(
       (async () => { try { return { provider: 'AnimeFLV', streams: await animeflv.getStreams(slug, ep) }; } catch { return { provider: 'AnimeFLV', streams: [] }; } })()
+    );
+  }
+  if (id.startsWith('animeav1:')) {
+    promises.push(
+      (async () => { try { return { provider: 'AnimeAV1', streams: await animeav1.getStreams(slug, ep) }; } catch { return { provider: 'AnimeAV1', streams: [] }; } })()
     );
   }
 
@@ -89,27 +95,13 @@ async function getOnAirCatalog(providerId) {
 async function searchCatalog(providerId, query) {
   if (providerId === 'jkanime|search') {
     const results = await jkanime.search(query);
-    return {
-      metas: results.map(r => ({
-        id: `jkanime:${r.slug}`,
-        type: 'series',
-        name: r.title,
-        poster: r.poster,
-      })),
-    };
+    return { metas: results.map(r => ({ id: `jkanime:${r.slug}`, type: 'series', name: r.title, poster: r.poster })) };
   }
   if (providerId === 'tioanime|search') {
     const results = await tioanime.search(query);
-    return {
-      metas: results.map(r => ({
-        id: `tioanime:${r.slug}`,
-        type: 'series',
-        name: r.title,
-        poster: r.poster,
-      })),
-    };
+    return { metas: results.map(r => ({ id: `tioanime:${r.slug}`, type: 'series', name: r.title, poster: r.poster })) };
   }
   return { metas: [] };
 }
 
-module.exports = { getStreams, getOnAirCatalog, searchCatalog, animeflv, jkanime, tioanime };
+module.exports = { getStreams, getOnAirCatalog, searchCatalog, animeflv, jkanime, tioanime, animeav1 };
