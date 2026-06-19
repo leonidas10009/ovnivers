@@ -62,7 +62,6 @@ const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 const catalog = require('./src/catalog/index');
 const torrentIndex = require('./src/torrent-providers/index');
 const { resolveEmbed } = require('./src/alfa-providers/embed-resolver');
-const puppeteerResolver = require('./src/puppeteer-resolver');
 const { StreamPipeline } = require('./src/stream-pipeline/index');
 const scrapeless = require('./src/scrapeless-proxy');
 const anime = require('./src/anime/index');
@@ -1059,35 +1058,6 @@ app.get('/health', (req, res) => {
     },
     providers: { total, healthy, failed: total - healthy },
     detail: report.sort((a, b) => a.failStreak - b.failStreak)
-  });
-});
-
-// ─── Embed Resolver (Puppeteer) ────────────
-
-app.get('/resolve-embed', async (req, res) => {
-  const url = req.query.url;
-  if (!url) return res.status(400).json({ error: 'missing url param' });
-  
-  // Try without browser first
-  const direct = await resolveEmbed(url);
-  if (direct) return res.json({ url: direct, method: 'embed-resolver' });
-  
-  // Try with Puppeteer
-  const puppeteerUrl = await puppeteerResolver.resolveEmbedWithBrowser(url);
-  if (puppeteerUrl) return res.json({ url: puppeteerUrl, method: 'puppeteer' });
-  
-  res.json({ url: null, method: 'none' });
-});
-
-// Health check for Puppeteer
-app.get('/puppeteer-status', async (req, res) => {
-  const start = Date.now();
-  const url = 'https://www.google.com';
-  const puppeteerUrl = await puppeteerResolver.resolveEmbedWithBrowser(url, null, 8000);
-  res.json({
-    puppeteer: !!puppeteerUrl,
-    ms: Date.now() - start,
-    url: puppeteerUrl || null
   });
 });
 
