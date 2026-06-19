@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.8.1
+ * Ovnivers — Stremio Addon Backend v1.8.2
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
@@ -78,7 +78,7 @@ if (process.env.SCRAPELESS_API_KEY) {
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.8.1';
+const VERSION = '1.8.2';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 // Available languages for filtering
@@ -1094,10 +1094,14 @@ app.get('/manifest.json', async (req, res) => {
     catalogDefs.push(
       { id: 'kitsu-trending', name: 'Anime Kitsu', type: 'anime', extra: [{ name: 'search', isRequired: false }] },
     );
-    // On-air catalogs from local scrapers
+    // Local scraper catalogs (on-air)
     catalogDefs.push(
-      { id: 'animeflv|onair', name: 'Anime en Emision', type: 'anime' },
-      { id: 'jkanime|onair', name: 'JKAnime Ultimos', type: 'anime' },
+      { id: 'animeflv|onair', name: 'AnimeFLV En Emision', type: 'anime' },
+    );
+    // Search-based catalogs (require search query)
+    catalogDefs.push(
+      { id: 'jkanime|search', name: 'JKAnime (buscar)', type: 'anime', extra: [{ name: 'search', isRequired: true }] },
+      { id: 'tioanime|search', name: 'TioAnime (buscar)', type: 'anime', extra: [{ name: 'search', isRequired: true }] },
     );
   }
   const universalDefs = catalog.getUniversalCatalogDefs(config);
@@ -1467,10 +1471,12 @@ async function handleCatalog(req, res, type, id) {
       if (localResult.metas.length) {
         return res.json(localResult);
       }
-      if (id === 'jkanime|onair') {
-        // JKAnime on-air catalog: already returned by getOnAirCatalog
-        return res.json(localResult);
+      // Try search-based catalogs
+      if (id.endsWith('|search') && search) {
+        const searchResult = await anime.scrapers.searchCatalog(id, search);
+        return res.json(searchResult);
       }
+      // Fallback to Pigamer37
       const result = await catalog.getPigamerCatalog(id, page);
       return res.json(result);
     }

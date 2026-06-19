@@ -1,88 +1,75 @@
 const animeflv = require('./animeflv');
 const jkanime = require('./jkanime');
+const tioanime = require('./tioanime');
 
-/**
- * Route an anime stream request to the correct source.
- * - For provider-prefixed IDs (jkanime:, animeflv:, etc.): query matching local scraper + Pigamer37
- * - For tmdb: / numeric IDs: try JKAnime slug resolution + Pigamer37
- */
+const animePrefixes = ['animeflv:', 'animeav1:', 'henaojara:', 'tioanime:', 'jkanime:'];
+
 async function getStreams(id, season, episode, pigamerGetStreams) {
-  const animePrefixes = ['animeflv:', 'animeav1:', 'henaojara:', 'tioanime:', 'jkanime:'];
   const hasAnimePrefix = animePrefixes.some(p => id.startsWith(p));
+  if (!hasAnimePrefix) {
+    // tmdb: / numeric IDs → Pigamer37
+    try {
+      const streams = await pigamerGetStreams(id, season, episode);
+      return { source: 'pigamer', streams: streams || [] };
+    } catch { return { source: 'error', streams: [] }; }
+  }
 
-  if (hasAnimePrefix) {
-    const slug = extractSlug(id);
-    if (!slug || slug.match(/^\d+$/)) {
-      // If slug is numeric or empty, fall through to Pigamer37 direct
-    } else {
-      const promises = [];
+  const slug = extractSlug(id);
+  if (!slug || slug.match(/^\d+$/)) {
+    try {
+      const streams = await pigamerGetStreams(id, season, episode);
+      return { source: 'pigamer', streams: streams || [] };
+    } catch { return { source: 'error', streams: [] }; }
+  }
 
-      if (id.startsWith('jkanime:')) {
-        promises.push(
-          (async () => {
-            try {
-              const streams = await jkanime.getStreams(slug, episode || 1);
-              return { provider: 'JKAnime', streams };
-            } catch { return { provider: 'JKAnime', streams: [] }; }
-          })()
-        );
-      }
+  const ep = episode || 1;
+  const promises = [];
 
-      if (id.startsWith('animeflv:')) {
-        promises.push(
-          (async () => {
-            try {
-              const streams = await animeflv.getStreams(slug, episode || 1);
-              return { provider: 'AnimeFLV', streams };
-            } catch { return { provider: 'AnimeFLV', streams: [] }; }
-          })()
-        );
-      }
+  if (id.startsWith('jkanime:')) {
+    promises.push(
+      (async () => { try { return { provider: 'JKAnime', streams: await jkanime.getStreams(slug, ep) }; } catch { return { provider: 'JKAnime', streams: [] }; } })()
+    );
+  }
+  if (id.startsWith('tioanime:')) {
+    promises.push(
+      (async () => { try { return { provider: 'TioAnime', streams: await tioanime.getStreams(slug, ep) }; } catch { return { provider: 'TioAnime', streams: [] }; } })()
+    );
+  }
+  if (id.startsWith('animeflv:')) {
+    promises.push(
+      (async () => { try { return { provider: 'AnimeFLV', streams: await animeflv.getStreams(slug, ep) }; } catch { return { provider: 'AnimeFLV', streams: [] }; } })()
+    );
+  }
 
-      // Query Pigamer37 for remaining providers
-      const pigamerProviders = [
-        { prefix: 'animeflv:', label: 'AnimeFLV' },
-        { prefix: 'animeav1:', label: 'AnimeAV1' },
-        { prefix: 'henaojara:', label: 'Henaojara' },
-        { prefix: 'tioanime:', label: 'TioAnime' },
-      ];
-
-      for (const { prefix, label } of pigamerProviders) {
-        if (id.startsWith(prefix)) continue;
-        const providerId = `${prefix}${slug}`;
-        promises.push(
-          (async () => {
-            try {
-              const streams = await pigamerGetStreams(providerId, season, episode);
-              return { provider: label, streams };
-            } catch { return { provider: label, streams: [] }; }
-          })()
-        );
-      }
-
-      const results = await Promise.allSettled(promises);
-      const allStreams = [];
-      for (const r of results) {
-        if (r.status === 'fulfilled' && r.value?.streams?.length) {
-          allStreams.push(...r.value.streams);
-        }
-      }
-      if (allStreams.length) return { source: 'parallel', streams: allStreams };
+  // Also query Pigamer37 for comparison/deduplication
+  if (!id.startsWith('jkanime:')) {
+    const pigamerProviders = [
+      { prefix: 'animeflv:', label: 'AnimeFLV' },
+      { prefix: 'animeav1:', label: 'AnimeAV1' },
+      { prefix: 'henaojara:', label: 'Henaojara' },
+      { prefix: 'tioanime:', label: 'TioAnime' },
+    ];
+    for (const { prefix, label } of pigamerProviders) {
+      if (id.startsWith(prefix)) continue;
+      promises.push(
+        (async () => {
+          try {
+            const streams = await pigamerGetStreams(`${prefix}${slug}`, season, episode);
+            return { provider: label, streams };
+          } catch { return { provider: label, streams: [] }; }
+        })()
+      );
     }
   }
 
-  // TMDB / numeric IDs: try JKAnime by resolving slug from Pigamer37 title info, then Pigamer37
-  let streams = [];
-  try {
-    // Try JKAnime with a slug deduced from Pigamer37 metadata
-    // This is a best-effort: search JKAnime by the series name
-    const pigamerStreams = await pigamerGetStreams(id, season, episode);
-    if (pigamerStreams && pigamerStreams.length) {
-      streams.push(...pigamerStreams);
+  const results = await Promise.allSettled(promises);
+  const allStreams = [];
+  for (const r of results) {
+    if (r.status === 'fulfilled' && r.value?.streams?.length) {
+      allStreams.push(...r.value.streams);
     }
-  } catch {}
-
-  return { source: streams.length ? 'merged' : 'empty', streams };
+  }
+  return { source: 'parallel', streams: allStreams };
 }
 
 function extractSlug(id) {
@@ -91,19 +78,38 @@ function extractSlug(id) {
   return id;
 }
 
-/**
- * Get on-air catalog from local scrapers.
- */
 async function getOnAirCatalog(providerId) {
   if (providerId === 'animeflv|onair') {
     const items = await animeflv.getOnAir();
     return { metas: items };
   }
-  if (providerId === 'jkanime|onair' || providerId === 'jkanime:latest') {
-    const items = await jkanime.getOnAir();
-    return { metas: items };
+  return { metas: [] };
+}
+
+async function searchCatalog(providerId, query) {
+  if (providerId === 'jkanime|search') {
+    const results = await jkanime.search(query);
+    return {
+      metas: results.map(r => ({
+        id: `jkanime:${r.slug}`,
+        type: 'series',
+        name: r.title,
+        poster: r.poster,
+      })),
+    };
+  }
+  if (providerId === 'tioanime|search') {
+    const results = await tioanime.search(query);
+    return {
+      metas: results.map(r => ({
+        id: `tioanime:${r.slug}`,
+        type: 'series',
+        name: r.title,
+        poster: r.poster,
+      })),
+    };
   }
   return { metas: [] };
 }
 
-module.exports = { getStreams, getOnAirCatalog, animeflv, jkanime };
+module.exports = { getStreams, getOnAirCatalog, searchCatalog, animeflv, jkanime, tioanime };
