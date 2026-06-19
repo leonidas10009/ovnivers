@@ -2,7 +2,7 @@
 
 Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fuentes.
 
-> **Nota de auditoría (2026-06-19):** documentación sincronizada. Backend: **2 scrapers**. Catálogos: **26** (sin duplicados, Kitsu reemplaza Amatsu para anime). Hermes: **61** scrapers. AllCalidad, GranTorrent y MiTorrent desactivados. Catálogos anime TMDB usan `type: 'anime'` y `ovn-anime:` prefix. Kitsu integrado como fuente principal de anime.
+> **Changelog v1.10.0:** 3 scrapers anime nuevos (JKAnime, TioAnime, AnimeAV1) + catálogos de búsqueda. Fix detección IMDb→anime para catálogos Cinemeta. Puppeteer descartado (Chromium no disponible en Render 512MB).
 
 ## Instalacion
 
@@ -17,27 +17,27 @@ Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fue
 
 | Funcionalidad | Detalle |
 |---|---|
-| **Torrent indexers** (6 fuentes) | GloDLS, Nyaa.si, SolidTorrents, LimeTorrents, 1337x (5 mirrors), EZTV — ~70+ magnets por busqueda con metadata enriquecida (seeds, size, codec, audio, source) |
-| **Embed resolver** (11+ dominios) | streamwish, filemoon, doodstream, mixdrop, voe.sx, vidhide, ok.ru, streamtape, upstream, netu.tv, vidmoly + JWPlayer + generico |
-| **Pipeline unificado** | Orquestador central: circuit breaker (5 fallos = 5min off), dedup, post-resolver de embeds, scoring por idioma |
-| **Prioridad castellano** | Streams en espanol/latino/VOSE/dual aparecen primero via `media.language.computeScore()` |
-| **Pigamer37** (proxy anime) | AnimeFLV, AnimeAV1, TioAnime, Henaojara — solo para anime detectado |
-| **Alfa Providers** (server-side) | 42 providers activos (6 funcionales, 8 Cloudflare, 7 sin videos, resto JS-dinámico/rotos). Selectores de 5 providers corregidos en v1.7.7. |
-| **Hermes scrapers** (server-side) | 61 scrapers en `manifest.json` (42 activos, 19 deshabilitados). 9 devuelven streams en Node.js via inyeccion de globales cheerio/CryptoJS |
-| **Alfa multi-titulo** | Busca por titulo EN + ES + JA + slug en paralelo |
-| **Backend scrapers** | **2 scrapers**: `2embed+Mirrors` (8 mirrors rotativos: vesy/vsrc/skin/cc, VidSrc pro/icu/xyz, SuperEmbed) + `PoseidonHD` (3 dominios) |
-| **notWebReady automatico** | Streams directos (`.m3u8`/`.mp4`) + torrents (infoHash) → `notWebReady: false` (ExoPlayer) |
+| **Torrent indexers** (6 fuentes) | GloDLS, Nyaa.si, SolidTorrents, LimeTorrents, 1337x, EZTV — ~70+ magnets por búsqueda |
+| **Scrapers anime locales** | JKAnime (2 m3u8 ExoPlayer), TioAnime (Mega/Voe/YourUpload), AnimeAV1 (HLS/UPNShare/Mega/MP4Upload via SvelteKit API), AnimeFLV (roto, delega a Pigamer37) |
+| **Pigamer37** (proxy anime) | AnimeFLV, AnimeAV1, TioAnime, Henaojara — para anime detectado |
+| **Alfa Providers** | 42 providers activos (6 funcionales). Selectores corregidos en v1.7.7 |
+| **Hermes scrapers** | 61 scrapers (42 activos, 19 deshabilitados). 9 funcionales via inyección cheerio/CryptoJS |
+| **Backend scrapers** | 2embed+Mirrors (8 mirrors) + PoseidonHD (3 dominios) |
+| **Embed resolver** | 11+ dominios (streamwish, voe, mixdrop, etc.) - requiere JS, no funcional en servidor |
+| **notWebReady automático** | m3u8/mp4/torrent → ExoPlayer directo, resto → browser |
 | **Config panel** | `/configure` — tipos, calidad, idiomas, scrapers on/off |
-| **Proxy inteligente** | Cloudflare Worker v2 con cookie jar, header forwarding, retry backoff. Bypass list para 11 dominios Anubis |
+| **Proxy inteligente** | Cloudflare Worker v2 con cookie jar, bypass list para dominios Anubis |
 
 ## Catalogs
 
-**26 catálogos**: 16 películas + 4 series + 6 anime. Sin duplicados. Kitsu como fuente principal de anime.
+**28 catálogos**: 16 películas + 4 series + 8 anime (TMDB, Kitsu, búsquedas locales).
 
 | Tipo | Cantidad | Ejemplos |
 |------|----------|----------|
 | Películas | 16 | Populares, Mejor Valoradas, Tendencia, Acción, Comedia, Drama, Terror, Ciencia Ficción, Suspenso, Romance, Animación, Anime Movies, Universal |
 | Series | 4 | Populares, Mejor Valoradas, Tendencia, Universal |
+| Anime | 8 | TMDB (Popular/Top/Tendencia/Películas), Kitsu Trending, AnimeFLV OnAir, JKAnime (buscar), TioAnime (buscar) |
+| Búsqueda | 1 | TMDB Search |
 | Anime | 6 | Popular, Mejor Valorado, Tendencia (TMDB), **Anime Kitsu**, Anime en Emisión, Universal |
 | Búsqueda | 1 | Búsqueda global (TMDB + Kitsu) |
 

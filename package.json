@@ -8,6 +8,7 @@
         "version:bump": "node scripts/bump-version.js"
     },
     "dependencies": {
+        "@sparticuz/chromium": "^149.0.0",
         "cheerio": "^1.2.0",
         "cheerio-without-node-native": "npm:cheerio@^1.2.0",
         "crypto-js": "^4.2.0",
@@ -16,6 +17,7 @@
         "express": "^4.21.0",
         "https-proxy-agent": "^9.1.0",
         "node-fetch": "^2.7.0",
+        "puppeteer-core": "^25.1.0",
         "undici": "^6.21.0"
     },
     "keywords": [
