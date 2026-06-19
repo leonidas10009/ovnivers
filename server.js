@@ -881,6 +881,10 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
   const isDirectMedia = !hasInfoHash && url && /\.(mp4|m3u8|mkv|webm|avi)(\?|$)/i.test(url);
   const languages = media.language.detectFromStream({ name, title, description: stream.description, audioLang });
   const normalizedQuality = media.quality.normalizeQuality(quality);
+
+  const originalHints = { ...(stream.behaviorHints || {}) };
+  delete originalHints.proxyHeaders; // NuvioTV filtra streams con proxyHeaders
+
   return {
     name,
     title,
@@ -903,12 +907,11 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
     ...(stream.isDualAudio ? { isDualAudio: true } : {}),
     ...(stream.verified ? { verified: true } : {}),
     behaviorHints: {
-      ...(stream.behaviorHints || {}),
+      ...originalHints,
       notWebReady: !hasInfoHash && !isDirectMedia,
       bingeGroup: stream.behaviorHints?.bingeGroup || `provider|${providerId}`,
     }
   };
-}
 
 function dedupeStreams(streams) {
   const seen = new Set();
