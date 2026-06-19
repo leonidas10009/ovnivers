@@ -1,6 +1,7 @@
 const ANIME_SOURCE_PREFIXES = ['animeflv:', 'animeav1:', 'henaojara:', 'tioanime:'];
 const ANIME_XREF_PREFIXES = ['anilist:', 'kitsu:', 'mal:', 'anidb:'];
-const ANIME_PREFIXES = [...ANIME_SOURCE_PREFIXES, ...ANIME_XREF_PREFIXES];
+const ANIME_LOCAL_PREFIXES = ['ovn-anime:'];
+const ANIME_PREFIXES = [...ANIME_SOURCE_PREFIXES, ...ANIME_XREF_PREFIXES, ...ANIME_LOCAL_PREFIXES];
 
 const ANIME_GENRE_ID = 16;
 const ANIME_ORIGIN_COUNTRY = 'JP';

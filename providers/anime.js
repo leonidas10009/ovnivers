@@ -1,6 +1,6 @@
 /**
  * anime - Built from src/anime/
- * Generated: 2026-06-19T17:39:26.564Z
+ * Generated: 2026-06-19T18:05:35.467Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -51,7 +51,8 @@ var require_types = __commonJS({
   "src/anime/types.js"(exports2, module2) {
     var ANIME_SOURCE_PREFIXES = ["animeflv:", "animeav1:", "henaojara:", "tioanime:"];
     var ANIME_XREF_PREFIXES = ["anilist:", "kitsu:", "mal:", "anidb:"];
-    var ANIME_PREFIXES = [...ANIME_SOURCE_PREFIXES, ...ANIME_XREF_PREFIXES];
+    var ANIME_LOCAL_PREFIXES = ["ovn-anime:"];
+    var ANIME_PREFIXES = [...ANIME_SOURCE_PREFIXES, ...ANIME_XREF_PREFIXES, ...ANIME_LOCAL_PREFIXES];
     var ANIME_GENRE_ID = 16;
     var ANIME_ORIGIN_COUNTRY = "JP";
     var PIGAMER_BASE = process.env.PIGAMER_BASE || "https://pigamer37.alwaysdata.net";
@@ -332,7 +333,23 @@ var require_pigamer = __commonJS({
         return yield fetchPigamer(`/meta/${type}/${encodeURIComponent(id)}.json`);
       });
     }
-    module2.exports = { getStreams, getMeta, fetchPigamer };
+    function pigamerTypeForCatalogId(catalogId) {
+      if (catalogId.startsWith("animeflv")) return "AnimeFLV";
+      if (catalogId.startsWith("animeav1")) return "AnimeAV1";
+      if (catalogId.startsWith("henaojara")) return "Henaojara";
+      if (catalogId.startsWith("tioanime")) return "TioAnime";
+      return "AnimeFLV";
+    }
+    function getCatalog(catalogId, page = 1) {
+      return __async(this, null, function* () {
+        var _a;
+        const type = pigamerTypeForCatalogId(catalogId);
+        const data = yield fetchPigamer(`/catalog/${type}/${encodeURIComponent(catalogId)}.json`, 15e3);
+        if (!((_a = data == null ? void 0 : data.metas) == null ? void 0 : _a.length)) return { metas: [] };
+        return { metas: data.metas };
+      });
+    }
+    module2.exports = { getStreams, getMeta, fetchPigamer, getCatalog };
   }
 });
 

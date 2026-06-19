@@ -31,4 +31,19 @@ async function getMeta(id, type = 'series') {
   return await fetchPigamer(`/meta/${type}/${encodeURIComponent(id)}.json`);
 }
 
-module.exports = { getStreams, getMeta, fetchPigamer };
+function pigamerTypeForCatalogId(catalogId) {
+  if (catalogId.startsWith('animeflv')) return 'AnimeFLV';
+  if (catalogId.startsWith('animeav1')) return 'AnimeAV1';
+  if (catalogId.startsWith('henaojara')) return 'Henaojara';
+  if (catalogId.startsWith('tioanime')) return 'TioAnime';
+  return 'AnimeFLV';
+}
+
+async function getCatalog(catalogId, page = 1) {
+  const type = pigamerTypeForCatalogId(catalogId);
+  const data = await fetchPigamer(`/catalog/${type}/${encodeURIComponent(catalogId)}.json`, 15000);
+  if (!data?.metas?.length) return { metas: [] };
+  return { metas: data.metas };
+}
+
+module.exports = { getStreams, getMeta, fetchPigamer, getCatalog };

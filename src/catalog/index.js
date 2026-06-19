@@ -72,8 +72,11 @@ function itemGenres(item) {
 function toMetaItem(item, type) {
   const isAnime = type === 'anime' || (item.genre_ids && item.genre_ids.includes(16) && item.origin_country?.includes('JP'));
   const effectiveType = isAnime ? 'series' : type;
+  // Use ovn-anime: prefix so Stremio/NuvioTV stream requests are detected as anime by prefix,
+  // avoiding reliance on a TMDB lookup that can fail/timeout in production.
+  const idPrefix = isAnime ? 'ovn-anime' : 'ovn';
   return {
-    id: `ovn:${item.id}`,
+    id: `${idPrefix}:${item.id}`,
     type: effectiveType,
     name: item.title || item.name || 'Unknown',
     poster: item.poster_path ? `https://image.tmdb.org/t/p/w342${item.poster_path}` : null,
@@ -179,6 +182,10 @@ async function getAmatsuCatalog(catalogId, page = 1) {
   return await anime.amatsu.getCatalog(catalogId, page);
 }
 
+async function getPigamerCatalog(catalogId, page = 1) {
+  return await anime.pigamer.getCatalog(catalogId, page);
+}
+
 async function searchAnilist(query) {
   return await anime.amatsu.searchAnilist(query);
 }
@@ -267,5 +274,5 @@ module.exports = {
   getFilmaffinityMeta, getUniversalCatalog,
   getAmatsuMeta, getAmatsuCatalog, searchAnilist,
   getAmatsuCatalogDefs, getUniversalCatalogDefs,
-  getAnimeCatalogDefs,
+  getAnimeCatalogDefs, getPigamerCatalog,
 };

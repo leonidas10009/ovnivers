@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-19T17:39:26.532Z
+ * Generated: 2026-06-19T18:05:35.431Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -2488,7 +2488,8 @@ var require_types = __commonJS({
   "src/anime/types.js"(exports2, module2) {
     var ANIME_SOURCE_PREFIXES = ["animeflv:", "animeav1:", "henaojara:", "tioanime:"];
     var ANIME_XREF_PREFIXES = ["anilist:", "kitsu:", "mal:", "anidb:"];
-    var ANIME_PREFIXES = [...ANIME_SOURCE_PREFIXES, ...ANIME_XREF_PREFIXES];
+    var ANIME_LOCAL_PREFIXES = ["ovn-anime:"];
+    var ANIME_PREFIXES = [...ANIME_SOURCE_PREFIXES, ...ANIME_XREF_PREFIXES, ...ANIME_LOCAL_PREFIXES];
     var ANIME_GENRE_ID = 16;
     var ANIME_ORIGIN_COUNTRY = "JP";
     var PIGAMER_BASE = process.env.PIGAMER_BASE || "https://pigamer37.alwaysdata.net";

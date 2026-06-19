@@ -23,7 +23,7 @@ function cacheSet(map, key, value, max = MAX_CACHE) {
   map.set(key, { value, time: Date.now() });
 }
 
-const ANIME_PREFIXES = ['animeflv:', 'anilist:', 'mal:', 'kitsu:', 'anidb:', 'simkl:', 'animeplanet:', 'livechart:', 'animenewsnetwork:', 'anisearch:', 'thetvdb:', 'myanimelist:'];
+const ANIME_PREFIXES = ['animeflv:', 'anilist:', 'mal:', 'kitsu:', 'anidb:', 'simkl:', 'animeplanet:', 'livechart:', 'animenewsnetwork:', 'anisearch:', 'thetvdb:', 'myanimelist:', 'ovn-anime:'];
 
 function parseEpisodeId(id) {
   let contentId = id;

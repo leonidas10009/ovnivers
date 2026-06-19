@@ -549,6 +549,7 @@ function mapType(type) {
 
 function extractId(rawId) {
   if (rawId.startsWith('tmdb:')) return rawId.substring(5);
+  if (rawId.startsWith('ovn-anime:')) return rawId.substring(10);
   if (rawId.startsWith('ovn:')) return rawId.substring(4);
   return rawId;
 }
@@ -1086,6 +1087,13 @@ app.get('/manifest.json', async (req, res) => {
   if (config.enableAnime) {
     const amatsuDefs = catalog.getAmatsuCatalogDefs();
     catalogDefs.push(...amatsuDefs);
+    const pigamerCatalogDefs = [
+      { id: 'animeflv|onair', name: 'En Emisión (AnimeFLV)', type: 'anime' },
+      { id: 'animeav1|onair', name: 'En Emisión (AnimeAV1)', type: 'anime' },
+      { id: 'henaojara|onair', name: 'En Emisión (Henaojara)', type: 'anime' },
+      { id: 'tioanime|onair', name: 'En Emisión (TioAnime)', type: 'anime' },
+    ];
+    catalogDefs.push(...pigamerCatalogDefs);
   }
   const universalDefs = catalog.getUniversalCatalogDefs(config);
   catalogDefs.push(...universalDefs);
@@ -1179,8 +1187,19 @@ async function handleStream(req, res, type, id) {
 
   const streamTasks = [];
 
-  // Para anime TMDB numerico (ovn:46260), construir ID que los providers entiendan
-  const animeProviderId = isAnime ? (animeFullId || (rawId.match(/^\d+$/) ? `tmdb:${rawId}` : rawId)) : null;
+  // Para anime TMDB numerico (ovn:46260 / ovn-anime:46260), construir ID que los providers entiendan
+  let animeProviderId = null;
+  if (isAnime) {
+    if (animeFullId && animeFullId.startsWith('ovn-anime:')) {
+      animeProviderId = `tmdb:${animeFullId.substring(10)}`;
+    } else if (animeFullId) {
+      animeProviderId = animeFullId;
+    } else if (rawId.match(/^\d+$/)) {
+      animeProviderId = `tmdb:${rawId}`;
+    } else {
+      animeProviderId = rawId;
+    }
+  }
 
   if (isAnime && config.enableAnime) {
     streamTasks.push((async () => {
@@ -1430,6 +1449,10 @@ async function handleCatalog(req, res, type, id) {
     if (id.startsWith('amatsu_')) {
       const result = await catalog.getAmatsuCatalog(id, page);
       if (result.next) result.next = `/catalog/${type}/${id}/skip=${rawSkip + ITEMS_PER_PAGE}.json`;
+      return res.json(result);
+    }
+    if (/^(animeflv|animeav1|henaojara|tioanime)\|/.test(id)) {
+      const result = await catalog.getPigamerCatalog(id, page);
       return res.json(result);
     }
     if (id.startsWith('tt-popular-')) {
