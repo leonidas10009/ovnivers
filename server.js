@@ -176,7 +176,7 @@ if (PROXY_URL) {
 
 const LOCAL_PROVIDER_TIMEOUT = Number(process.env.LOCAL_PROVIDER_TIMEOUT || 10000);
 const LOCAL_PROVIDER_CONCURRENCY = Number(process.env.LOCAL_PROVIDER_CONCURRENCY || 6);
-const STREAM_GLOBAL_TIMEOUT = Number(process.env.STREAM_GLOBAL_TIMEOUT || 18000);
+const STREAM_GLOBAL_TIMEOUT = Number(process.env.STREAM_GLOBAL_TIMEOUT || 30000);
 const MAX_STREAM_RESULTS = Number(process.env.MAX_STREAM_RESULTS || 80);
 let scrapeAlfaProviders = null;
 const localProviders = [];

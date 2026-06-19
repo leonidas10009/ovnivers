@@ -1,6 +1,6 @@
 const { PIGAMER_BASE, UA } = require('./types');
 
-async function fetchPigamer(path, timeout = 20000) {
+async function fetchPigamer(path, timeout = 25000) {
   try {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), timeout);
