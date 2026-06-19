@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.7.5
+# Ovnivers — Stream Provider v1.7.6
 
 Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fuentes.
 
@@ -174,6 +174,20 @@ node build.js    # Build de scrapers desde src/
 - **URL:** https://ovnivers.onrender.com
 
 ## Changelog
+
+### v1.7.6 — Anime streams fix + modular shortener resolver + catálogos nativos Pigamer37
+
+- **Fix crítico anime streams**: season/episode ahora se pasan en el path ID (`tmdb:ID:S:E`), no en query string (Pigamer37 ignoraba `?season=`). Los episodios de temporadas >1 ahora son correctos.
+- **Catálogos anime nativos**: añadidos 4 catálogos `En Emisión (AnimeFLV|AnimeAV1|Henaojara|TioAnime)` con scraper local (53 items on-air). Los items usan IDs nativos `animeflv:slug` detectados como anime por prefijo, sin depender de TMDB.
+- **Multi-provider en paralelo**: las queries de streams ahora llaman a los 4 proveedores anime en paralelo (AnimeFLV, AnimeAV1, Henaojara, TioAnime) replicando el comportamiento del addon original.
+- **Catálogos TMDB anime**: cambiado `type: 'series'` → `type: 'anime'` e IDs `ovn:` → `ovn-anime:`. Stremio/NuvioTV ahora piden `/stream/anime/...` y el addon detecta anime por tipo sin consultar TMDB.
+- **Nuevo módulo `src/alfa-providers/shortener-resolver.js`**: resolución dedicada para links torrent (magnet, `.torrent`, `download_tt.php` base64/directo, shorteners `s.php`). Extrae `parseTorrentInfoHash` a `torrent-parser.js` compartido.
+- **Refactor `engine.js`**: el bloque `type: 'torrent'` reducido de ~100 líneas a delegación en `resolveTorrentLink()`.
+- **DivXTotal**: funcional con `download_tt.php?u=`. Devuelve `.torrent` con infoHash real.
+- **Desactivados**: GranTorrent y MiTorrent (shorteners `super-enlace.com` / `acortalink.net` con POST anti-bot). AllCalidad (SPA React sin SSR).
+- **Documentación**: README y `.memory.md` sincronizados al estado real. Alfa providers: 45 activos, 4 funcionales.
+
+### v1.7.5 — Fix catálogos anime type + ovn-anime prefix + Pigamer37 catalogs
 
 ### v1.7.4 — Fix notWebReady + proxyHeaders + timeout + health tracking
 
