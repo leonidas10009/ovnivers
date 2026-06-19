@@ -166,14 +166,15 @@ node build.js    # Build de scrapers desde src/
 
 ## Changelog
 
-### v1.7.4 — Fix notWebReady + timeout + health tracking
+### v1.7.4 — Fix notWebReady + proxyHeaders + timeout + health tracking
 
-- **Fix critico `notWebReady`**: El spread de `behaviorHints` sobrescribia `notWebReady: false` (calculado para URLs .mp4 directas) con el `true` original de Pigamer37. NuvioTV/Stremio ocultaban estos streams. Ahora el spread va primero y `notWebReady` calculado pisa correctamente
+- **Fix critico `notWebReady`**: El spread de `behaviorHints` sobrescribia `notWebReady: false` (calculado para URLs .mp4 directas) con el `true` original de Pigamer37. Fix: spread primero, override despues
+- **Fix critico `proxyHeaders`**: Pigamer37 incluye `proxyHeaders` en sus streams, pero NuvioTV no soporta este campo y filtra los streams del listado. Ahora se eliminan en `normalizeStream`
 - **Timeout global**: 18s → 30s para cubrir Pigamer37 en cold starts de Render (promediaba ~20s)
-- **Timeout Pigamer37**: 20s → 25s individual (antes el global lo mataba primero)
-- **Health tracking**: Agregado para pigamer37, backend-scrapers, torrent-indexers (antes mostraban 0 calls falso)
-- **Fix meta ID rewriting**: `kitsu:`, `mal:`, `anidb:`, `henaojara:`, `tioanime:` ya no se corrompen a `ovn:kitsu:12` en `/meta`. Usa `isAnimeId()` para preservar todos los prefixes anime
-- **Fix pagina de configuracion**: Botones `type="button"` (antes actuaban como submit), removido Unicode em-dash que causaba `SyntaxError`, simplificadas expresiones complejas
+- **Timeout Pigamer37**: 20s → 25s individual
+- **Health tracking**: Agregado para pigamer37, backend-scrapers, torrent-indexers
+- **Fix meta ID rewriting**: `kitsu:`, `mal:`, `anidb:`, `henaojara:`, `tioanime:` ya no se corrompen a `ovn:kitsu:12`. Usa `isAnimeId()`
+- **Fix pagina de configuracion**: Botones `type="button"`, removido Unicode em-dash, simplificadas expresiones complejas
 
 ### v1.7.2 — Fix Pigamer37 streams para TMDB anime (ovn: prefix)
 
