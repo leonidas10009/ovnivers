@@ -54,7 +54,7 @@ Tras cada fetch de embed, se ejecuta el resolvedor `tryResolveEmbedToDirect()` q
 
 | Categoria | Count | Detalle |
 |---|---|---|
-| **Funcionando** | 6 | CineCalidad (5), PelisPedia (3), SeriesKao (1), DocumentalesOnline (3), SeriesRetro (5 iframes), PoseidonHD |
+| **Funcionando** | 4 | CineCalidad (5 videos), PelisPedia (3), DivXTotal (1 torrent), SeriesKao (1, anime). DonTorrent requiere fix de cookie Anubis. |
 | **Cloudflare Turnstile** | 8 | detodopeliculas, doramasflix, doramedplay, pelicinehd, doramasyt, henaojara, sololatino, tiodonghua |
 | **Anubis PoW** | 1 | DonTorrent — bypass SHA256 directo |
 | **Deshabilitados shortener** | 2 | GranTorrent, MiTorrent (anti-bot super-enlace.com / acortalink.net) |
@@ -183,10 +183,13 @@ node build.js    # Build de scrapers desde src/
 
 ## Changelog
 
-### v1.7.7 — Kitsu cross-reference resolution + docs update
+### v1.7.7 — Kitsu cross-reference + catálogos simplificados + fixes Alfa
 
-- **Resolución Kitsu → Pigamer37**: IDs `kitsu:`, `mal:`, `anilist:`, `anidb:` ahora se resuelven con 3 estrategias: Pigamer37 `/meta` → `relations.yuna.moe` → Kitsu API + Amatsu. Al abrir anime desde el addon Kitsu, nuestro addon ya puede servir streams.
-- **Documentación**: `.memory.md` y `README.md` sincronizados con todos los descubrimientos de la sesión (shorteners anti-bot, JS dinámico en animeflv, formato S/E de Pigamer37, catálogos nativos).
+- **Kitsu como fuente anime**: reemplaza Amatsu. Catálogo `Anime Kitsu` con 20 items. IDs `kitsu:` se resuelven con 3 estrategias (Pigamer37 → yuna.moe → Kitsu API). Búsqueda global incluye Kitsu.
+- **Catálogos simplificados**: 26 total (16 movie + 4 series + 6 anime). Eliminados duplicados `tt-*`. Amatsu reemplazado por Kitsu. 4 on-air unificados en 1.
+- **Fixes Alfa providers**: selectores corregidos (SeriesRetro, DocumentalesOnline, PoseidonHD jsonDataPath). YouTube/rotos desactivados (CineLibreOnline, DocumentalesOnline, LaCartoons, etc). SeriesKao cambiado a solo anime.
+- **Engine**: añadido `jsonDataPath` para búsqueda en JSON (NextJS). Fix cookie Anubis en POST search.
+- **Docs**: README y `.memory.md` sincronizados.
 
 ### v1.7.6 — Anime streams fix + modular shortener resolver + catálogos nativos Pigamer37
 
