@@ -1645,16 +1645,16 @@ footer a{color:var(--accent2);text-decoration:none}
   </div>
 
   <div class="actions">
-    <button class="btn btn-primary" onclick="generateUrl()">Generate Install URL</button>
-    <button class="btn btn-secondary" onclick="resetConfig()">Reset</button>
+    <button type="button" class="btn btn-primary" onclick="generateUrl()">Generate Install URL</button>
+    <button type="button" class="btn btn-secondary" onclick="resetConfig()">Reset</button>
   </div>
 
   <div class="status" id="status"></div>
   <div class="result" id="result">
     <div class="url" id="urlText"></div>
     <div class="hint">Copy this URL into Nuvio Settings &rarr; Addons to install with your preferences.</div>
-    <button class="copy-btn" onclick="copyUrl()">Copy URL</button>
-    <button class="copy-btn" onclick="installStremio()">Open in Stremio</button>
+    <button type="button" class="copy-btn" onclick="copyUrl()">Copy URL</button>
+    <button type="button" class="copy-btn" onclick="installStremio()">Open in Stremio</button>
   </div>
 </form>
 
@@ -1670,6 +1670,11 @@ footer a{color:var(--accent2);text-decoration:none}
   var VERSION = '${VERSION}';
 
   function gid(id) { return document.getElementById(id); }
+
+  function showStatus(msg, isError) {
+    var s = gid('status');
+    if (s) { s.className = 'status ' + (isError ? 'err' : 'ok'); s.textContent = msg; }
+  }
 
   function getConfig() {
     var f = gid('cfgForm');
@@ -1709,7 +1714,8 @@ footer a{color:var(--accent2);text-decoration:none}
       var status = gid('status');
       var urlText = gid('urlText');
       var result = gid('result');
-      if (!status || !urlText || !result) throw new Error('DOM elements missing');
+      if (!status || !urlText || !result) throw new Error('DOM missing: ' +
+        [!status && 'status', !urlText && 'urlText', !result && 'result'].filter(Boolean).join(','));
 
       var cfg = getConfig();
       var qs = params(cfg);
@@ -1734,6 +1740,7 @@ footer a{color:var(--accent2);text-decoration:none}
     } catch(e) {
       var s = gid('status');
       if (s) { s.className = 'status err'; s.textContent = 'Error: ' + e.message; }
+      console.error('generateUrl error:', e);
     }
   };
 
@@ -1742,14 +1749,16 @@ footer a{color:var(--accent2);text-decoration:none}
     if (!u) return;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(u).catch(function() {
-        var s = gid('status');
-        if (s) s.textContent = 'Select and copy the URL above';
+        showStatus('Select and copy the URL above');
       });
+    } else {
+      showStatus('Clipboard not available. Please copy the URL manually.');
     }
   };
 
   window.installStremio = function() {
-    window.open(window.__stremioUrl, '_blank');
+    var u = window.__stremioUrl;
+    if (u) window.open(u, '_blank');
   };
 
   window.resetConfig = function() {
@@ -1765,11 +1774,12 @@ footer a{color:var(--accent2);text-decoration:none}
       var cb = f['lang_' + code];
       if (cb) cb.checked = true;
     });
-    var s = gid('status');
-    if (s) { s.className = 'status ok'; s.textContent = 'Reset to defaults. Generate URL to apply.'; }
+    showStatus('Reset to defaults. Generate URL to apply.');
     var r = gid('result');
     if (r) r.classList.remove('show');
   };
+
+  showStatus('Ready — configure and click Generate Install URL');
 })();
 </script>
 </body>
