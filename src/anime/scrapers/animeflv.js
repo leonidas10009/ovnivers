@@ -1,6 +1,6 @@
 const cheerio = require('cheerio-without-node-native') || require('cheerio');
 
-const BASE = 'https://www3.animeflv.net';
+const BASE = 'https://www4.animeflv.net';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
 async function fetchText(url, timeout = 15000) {
@@ -83,11 +83,17 @@ async function getAnime(slug) {
 
 /**
  * Get video streams for a specific episode.
- * Parses var videos = {SUB:[...], LAT:[...]} and returns embed URLs.
+ * Parses var videos = {SUB:[...], LAT:[...]} (old format) or detects new JS-based format.
+ * New format (2026): animeflv.net loads videos via external trustedpromise.com script.
+ *   HTML has "var videos = []" and initEpisode() loads data dynamically.
+ *   The scraper falls back to empty results; Pigamer37 proxy handles the actual scraping.
  */
 async function getStreams(slug, episode) {
   const html = await fetchText(`${BASE}/ver/${slug}-${episode}`);
   if (!html) return [];
+
+  // Detect new format (empty videos array + initEpisode JS)
+  const isNewFormat = html.includes('var videos = []') || html.includes('initEpisode');
 
   let videosStr = null;
   const $ = cheerio.load(html);
@@ -96,7 +102,12 @@ async function getStreams(slug, episode) {
     const m = text.match(/var videos\s*=\s*(\{[^;]+\});/);
     if (m) videosStr = m[1];
   });
-  if (!videosStr) return [];
+
+  if (!videosStr) {
+    // New format: videos loaded by external JS, Pigamer37 will handle it
+    if (isNewFormat) console.log('[animeflv] new format detected for ' + slug + ', falling back to Pigamer37');
+    return [];
+  }
 
   let videos;
   try { videos = JSON.parse(videosStr); } catch { return []; }
