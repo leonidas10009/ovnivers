@@ -124,7 +124,7 @@ if (PROXY_URL) {
 // breaks the cookie chain (Worker receives challenge, backend solves it,
 // but auth cookie stays in backend, not in Worker)
 const PROXY_BYPASS_DOMAINS = new Set(
-  (process.env.PROXY_BYPASS_DOMAINS || 'dontorrent.support,dontorrent.fit,www43.mejortorrent.eu,grantorrent.zip,divxtotal.foo,wolfmax4k.com,pelispanda.org,elitetorrent.biz,mitorrent.mx,hacktorrent.to,bloghorror.com')
+  (process.env.PROXY_BYPASS_DOMAINS || 'dontorrent.support,dontorrent.fit,www43.mejortorrent.eu,grantorrent.zip,divxtotal.foo,wolfmax4k.com,pelispanda.org,elitetorrent.biz,mitorrent.mx,hacktorrent.to,bloghorror.com,jkanime.net,tioanime.com,animeav1.com,nika.playmudos.com')
     .split(',')
     .map(d => d.trim().toLowerCase())
     .filter(Boolean)
@@ -1090,8 +1090,9 @@ app.get('/pptr-test', async (req, res) => {
   } catch(e) { result.module = e.message; }
 
   try {
-    const pptrCore = require('puppeteer-core');
-    if (result.chromium?.exists) {
+    const pptrMod = await import('puppeteer-core');
+    const pptrCore = pptrMod.default;
+    if (result.chromium?.exists && pptrCore) {
       const b = await pptrCore.launch({ headless: true, executablePath: result.chromium.path, args: ['--no-sandbox', '--single-process'] });
       result.browser = true;
       await b.close();
