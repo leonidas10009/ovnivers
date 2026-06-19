@@ -93,15 +93,15 @@ async function resolveEmbedWithBrowser(embedUrl, timeout = 15000) {
     await page.setUserAgent(UA);
 
     let videoUrl = null;
-    const videoHosts = ['streamwish', 'voe', 'mixdrop', 'vidhide', 'filemoon', 'doodstream', 'streamtape'];
+    const blockedPatterns = ['test-videos.co.uk', 'bigbuckbunny', 'google.com', 'analytics', 'cdn.jkdesa', '.css', '.js', 'videojs'];
 
     await page.setRequestInterception(true);
     page.on('request', req => {
       const u = req.url();
       if (videoUrl) { req.abort(); return; }
-      const isVideo = /\.(m3u8|mp4|mkv|ts)(\?|$)/i.test(u) || u.includes('/hls/');
-      const isFromHost = videoHosts.some(h => { try { return new URL(u).hostname.includes(h); } catch { return false; } });
-      if (isVideo && !isFromHost && !u.includes('google') && !u.includes('analytics') && !u.includes('cdn')) {
+      const isVideo = /\.(m3u8|mp4|mkv|ts|webm)(\?|$)/i.test(u) || u.includes('/hls/');
+      const isBlocked = blockedPatterns.some(p => u.includes(p));
+      if (isVideo && !isBlocked) {
         videoUrl = u;
         req.abort();
       } else {
@@ -112,25 +112,45 @@ async function resolveEmbedWithBrowser(embedUrl, timeout = 15000) {
     page.on('response', async resp => {
       if (videoUrl) return;
       const ct = resp.headers()['content-type'] || '';
-      if (ct.includes('mpegurl') || ct.includes('video/mp4')) videoUrl = resp.url();
+      if ((ct.includes('mpegurl') || ct.includes('video/mp4')) && !blockedPatterns.some(p => resp.url().includes(p))) {
+        videoUrl = resp.url();
+      }
     });
 
-    try { await page.goto(embedUrl, { waitUntil: 'domcontentloaded', timeout }); } catch {}
-    await new Promise(r => setTimeout(r, 4000));
+    try { await page.goto(embedUrl, { waitUntil: 'networkidle2', timeout }); } catch {}
+    await new Promise(r => setTimeout(r, 8000));
 
+    // DOM-based detection (catches JS-generated players)
     if (!videoUrl) {
       try {
         videoUrl = await page.evaluate(() => {
+          // Strategy 1: direct video tag
           const v = document.querySelector('video');
           if (v && v.src && !v.src.startsWith('blob:')) return v.src;
-          const src = document.querySelector('video source, source');
-          if (src) { const s = src.getAttribute('src') || src.src; if (s && !s.startsWith('blob:')) return s; }
+          const sources = document.querySelectorAll('source[src]');
+          for (const s of sources) {
+            const src = s.getAttribute('src');
+            if (src && !src.startsWith('blob:') && (src.includes('.m3u8') || src.includes('.mp4'))) return src;
+          }
+          // Strategy 2: JWPlayer setup
+          const scripts = document.querySelectorAll('script');
+          for (const s of scripts) {
+            const c = s.textContent || '';
+            const m = c.match(/file\s*:\s*["']([^"']+\.(?:m3u8|mp4)[^"']*)["']/);
+            if (m) return m[1];
+          }
+          // Strategy 3: any m3u8/mp4 in scripts
+          for (const s of scripts) {
+            const c = s.textContent || '';
+            const m = c.match(/["'](https?:\/\/[^"']+\.(?:m3u8|mp4)[^"']*)["']/);
+            if (m && !m[1].includes('test-videos') && !m[1].includes('bigbuckbunny')) return m[1];
+          }
           return null;
         });
       } catch {}
     }
 
-    if (videoUrl) {
+    if (videoUrl && !blockedPatterns.some(p => videoUrl.includes(p))) {
       cache.set(ck, { url: videoUrl, time: Date.now() });
       if (cache.size > 50) { const first = cache.keys().next().value; cache.delete(first); }
     }
