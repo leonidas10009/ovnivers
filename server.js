@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.7.4
+ * Ovnivers — Stremio Addon Backend v1.7.5
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
@@ -78,7 +78,7 @@ if (process.env.SCRAPELESS_API_KEY) {
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.7.4';
+const VERSION = '1.7.5';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 // Available languages for filtering
@@ -1467,7 +1467,7 @@ async function handleMeta(req, res, type, id) {
 
   if (!isTypeEnabled(type, config)) return res.json({ meta: null });
 
-  const mediaType = type === 'series' ? 'tv' : 'movie';
+  const mediaType = (type === 'series' || type === 'anime') ? 'tv' : 'movie';
   const rawId = extractId(id);
 
   const ck = cacheKey(type, id, 'meta');
@@ -1646,7 +1646,7 @@ footer a{color:var(--accent2);text-decoration:none}
       <h3>Scrapers</h3>
     </div>
     <div class="toggle-row">
-      <div><div class="label">Backend scrapers</div><div class="hint">4 server-side sources (2embed Vesy, 2embed Vsrc, VidSrc, PoseidonHD)</div></div>
+      <div><div class="label">Backend scrapers</div><div class="hint">2 server-side sources (2embed+Mirrors: 8 mirrors, PoseidonHD)</div></div>
       <label class="toggle"><input type="checkbox" name="enableBackend"${currentConfig.enableBackend ? ' checked' : ''}><span class="track"></span></label>
     </div>
     <div class="toggle-row">

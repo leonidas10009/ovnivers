@@ -27,9 +27,11 @@ const CATEGORIES = [
   { id: 'tmdb-trending-series',name: 'Series en Tendencia',         type: 'series', tmdb: '/trending/tv/week?language=es&page={page}' },
 
   // ── Anime (filtrado por país JP para excluir animación occidental) ──
-  { id: 'tmdb-popular-anime',  name: 'Anime Popular',               type: 'series', tmdb: '/discover/tv?with_genres=16&with_origin_country=JP&language=es&sort_by=popularity.desc&vote_count.gte=50&page={page}' },
-  { id: 'tmdb-top-anime',      name: 'Anime Mejor Valorado',        type: 'series', tmdb: '/discover/tv?with_genres=16&with_origin_country=JP&language=es&sort_by=vote_average.desc&vote_count.gte=200&page={page}' },
-  { id: 'tmdb-trending-anime', name: 'Anime en Tendencia',          type: 'series', tmdb: '/discover/tv?with_genres=16&with_origin_country=JP&language=es&sort_by=popularity.desc&page={page}' },
+  // type: 'anime' so Stremio/NuvioTV requests /stream/anime/ovn:ID, letting
+  // classifyByType detect anime instantly without relying on a TMDB lookup.
+  { id: 'tmdb-popular-anime',  name: 'Anime Popular',               type: 'anime', tmdb: '/discover/tv?with_genres=16&with_origin_country=JP&language=es&sort_by=popularity.desc&vote_count.gte=50&page={page}' },
+  { id: 'tmdb-top-anime',      name: 'Anime Mejor Valorado',        type: 'anime', tmdb: '/discover/tv?with_genres=16&with_origin_country=JP&language=es&sort_by=vote_average.desc&vote_count.gte=200&page={page}' },
+  { id: 'tmdb-trending-anime', name: 'Anime en Tendencia',          type: 'anime', tmdb: '/discover/tv?with_genres=16&with_origin_country=JP&language=es&sort_by=popularity.desc&page={page}' },
 
   // ── Anime Movies ──
   { id: 'tmdb-popular-anime-movie', name: 'Películas Anime Populares', type: 'movie', tmdb: '/discover/movie?with_genres=16&with_origin_country=JP&language=es&sort_by=popularity.desc&vote_count.gte=20&page={page}' },
@@ -38,7 +40,7 @@ const CATEGORIES = [
   // ── Universal (IDs tt<imdb> para compatibilidad con otros addons) ──
   { id: 'tt-popular-movie',       name: 'Todas las Películas',         type: 'movie', tmdb: '/movie/popular?language=es&page={page}' },
   { id: 'tt-popular-series',      name: 'Todas las Series',            type: 'series', tmdb: '/tv/popular?language=es&page={page}' },
-  { id: 'tt-popular-anime',       name: 'Todo Anime',                  type: 'series', tmdb: '/discover/tv?with_genres=16&with_origin_country=JP&language=es&sort_by=popularity.desc&vote_count.gte=50&page={page}' },
+  { id: 'tt-popular-anime',       name: 'Todo Anime',                  type: 'anime', tmdb: '/discover/tv?with_genres=16&with_origin_country=JP&language=es&sort_by=popularity.desc&vote_count.gte=50&page={page}' },
   { id: 'tt-popular-anime-movie', name: 'Películas Anime (Universal)', type: 'movie', tmdb: '/discover/movie?with_genres=16&with_origin_country=JP&language=es&sort_by=popularity.desc&vote_count.gte=20&page={page}' },
 ];
 
@@ -243,7 +245,7 @@ function getUniversalCatalogDefs(config) {
   ];
   if (config?.enableAnime) {
     defs.push(
-      { id: 'tt-popular-anime', name: 'Todo Anime (Universal)', type: 'series', extra: [{ name: 'search', isRequired: false }] },
+      { id: 'tt-popular-anime', name: 'Todo Anime (Universal)', type: 'anime', extra: [{ name: 'search', isRequired: false }] },
       { id: 'tt-popular-anime-movie', name: 'Películas Anime (Universal)', type: 'movie', extra: [{ name: 'search', isRequired: false }] }
     );
   }

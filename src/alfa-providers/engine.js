@@ -1,6 +1,8 @@
 const cheerio = require('cheerio-without-node-native') || require('cheerio');
 const crypto = require('crypto');
 const { resolveEmbed } = require('./embed-resolver');
+const { resolveTorrentLink } = require('./shortener-resolver');
+const { parseTorrentInfoHash } = require('./torrent-parser');
 const scrapeless = require('../scrapeless-proxy');
 
 const anubisCookieCache = new Map();
@@ -676,97 +678,10 @@ async function extractVideos(provider, pageUrl) {
       if (!href) continue;
       const label = $(link).text().trim() || '';
       const qualityMatch = label.match(/\b(4K|2160p?|1080p?|720p?|480p?)\b/i);
+      const quality = (qualityMatch ? qualityMatch[1] : '') || cfg.defaultQuality || 'HD';
 
-      // Direct magnet
-      if (href.startsWith('magnet:')) {
-        const infoHashMatch = href.match(/urn:btih:([a-fA-F0-9]{40})/i);
-        const sources = [];
-        const trRe = /tr=([^&]+)/g;
-        let m;
-        while ((m = trRe.exec(href)) !== null) {
-          const trackerUrl = decodeURIComponent(m[1]);
-          if (trackerUrl.startsWith('udp://') || trackerUrl.startsWith('http://') || trackerUrl.startsWith('https://') || trackerUrl.startsWith('ws://')) {
-            sources.push(trackerUrl);
-          }
-        }
-        if (infoHashMatch) sources.push('dht:' + infoHashMatch[1].toLowerCase());
-        results.push({
-          url: href, server: 'torrent',
-          quality: (qualityMatch ? qualityMatch[1] : '') || cfg.defaultQuality || 'HD',
-          ...(infoHashMatch ? { infoHash: infoHashMatch[1].toLowerCase() } : {}),
-          ...(sources.length ? { sources } : {}),
-          ...(label ? { filename: label } : {})
-        });
-        continue;
-      }
-
-      // Direct .torrent link
-      if (href.endsWith('.torrent')) {
-        results.push({
-          url: href, server: 'torrent',
-          quality: (qualityMatch ? qualityMatch[1] : '') || cfg.defaultQuality || 'HD',
-          ...(label ? { filename: label } : {})
-        });
-        continue;
-      }
-
-      // URL shortener (super-enlace.com, acortalink.net, short-info.link)
-      if (/\/s\.php\?i=/.test(href) || /\/s\.php\?u=/.test(href)) {
-        try {
-          const ctrl = new AbortController();
-          const t = setTimeout(() => ctrl.abort(), 10000);
-          const redirRes = await fetch(href, {
-            headers: { 'User-Agent': UA, 'Referer': pageUrl },
-            redirect: 'follow',
-            signal: ctrl.signal
-          });
-          clearTimeout(t);
-          if (redirRes.ok) {
-            const finalUrl = redirRes.url;
-            if (finalUrl.endsWith('.torrent')) {
-              const buf = Buffer.from(await redirRes.arrayBuffer());
-              const infoHash = parseTorrentInfoHash(buf);
-              results.push({
-                url: finalUrl, server: 'torrent',
-                quality: (qualityMatch ? qualityMatch[1] : '') || cfg.defaultQuality || 'HD',
-                ...(infoHash ? { infoHash } : {}),
-                ...(infoHash ? { sources: ['dht:' + infoHash] } : {}),
-                ...(label ? { filename: label } : {})
-              });
-            }
-          }
-        } catch {}
-        continue;
-      }
-
-      // Base64 download link (download_tt.php?u=<base64>)
-      const b64Match = href.match(/[?&]u=([A-Za-z0-9+/=]{20,})/);
-      if (b64Match) {
-        try {
-          const decoded = Buffer.from(b64Match[1], 'base64').toString('utf-8').trim();
-          if (decoded.startsWith('http') && decoded.endsWith('.torrent')) {
-            const ctrl = new AbortController();
-            const t = setTimeout(() => ctrl.abort(), 10000);
-            const dlRes = await fetch(decoded, {
-              headers: { 'User-Agent': UA, 'Referer': pageUrl },
-              signal: ctrl.signal
-            });
-            clearTimeout(t);
-            if (dlRes.ok) {
-              const buf = Buffer.from(await dlRes.arrayBuffer());
-              const infoHash = parseTorrentInfoHash(buf);
-              results.push({
-                url: decoded, server: 'torrent',
-                quality: (qualityMatch ? qualityMatch[1] : '') || cfg.defaultQuality || 'HD',
-                ...(infoHash ? { infoHash } : {}),
-                ...(infoHash ? { sources: ['dht:' + infoHash] } : {}),
-                ...(label ? { filename: label } : {})
-              });
-            }
-          }
-        } catch {}
-        continue;
-      }
+      const resolved = await resolveTorrentLink(href, label, quality, pageUrl);
+      if (resolved) results.push(resolved);
     }
   }
 
@@ -849,31 +764,6 @@ function solveSha256PoW(challenge, difficulty) {
     if (hash.startsWith(target)) return nonce;
     nonce++;
   }
-}
-
-function parseTorrentInfoHash(buf) {
-  try {
-    const str = buf.toString('latin1');
-    const infoStart = str.indexOf('4:info');
-    if (infoStart < 0) return null;
-    let i = infoStart + 5;
-    const start = i;
-    while (i < buf.length) {
-      const c = String.fromCharCode(buf[i]);
-      if (c === 'd') i++;
-      else if (c === 'l') i++;
-      else if (c === 'e') break;
-      else if (c === 'i') { i = buf.indexOf('e'.charCodeAt(0), i); if (i < 0) return null; i++; }
-      else if (c >= '0' && c <= '9') {
-        const colon = buf.indexOf(':'.charCodeAt(0), i);
-        if (colon < 0) return null;
-        const len = parseInt(buf.toString('ascii', i, colon), 10);
-        i = colon + 1 + len;
-      } else i++;
-    }
-    const infoRaw = buf.slice(start, i);
-    return crypto.createHash('sha1').update(infoRaw).digest('hex').toLowerCase();
-  } catch { return null; }
 }
 
 async function downloadDontorrentTorrent(baseUrl, contentId, tabla) {

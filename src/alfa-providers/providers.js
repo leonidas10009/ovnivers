@@ -7,7 +7,7 @@ module.exports = [
     baseUrl: 'https://allcalidad.re',
     categories: ['movie', 'direct'],
     language: ['lat'],
-    active: true,
+    active: false, // JS-dependent SPA: search results render client-side, no items in static HTML
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: 'body', iframeSelector: 'iframe', srcAttr: 'data-src', defaultQuality: 'HD' }
@@ -206,9 +206,9 @@ module.exports = [
     baseUrl: 'https://grantorrent.zip',
     categories: ['movie', 'tvshow', 'vos', 'torrent'],
     language: ['cast', 'lat'],
-    active: true,
+    active: false, // disabled: download links route through super-enlace.com which uses anti-bot POST shortener
     adult: false,
-    search: { url: '/?s={query}', itemSelector: 'div.relative a[href*="/"][href*="-"]:not([href*="categoria"]):not([href*="genero"])', titleSelector: '&', linkSelector: '&' },
+    search: { url: '/?s={query}', itemSelector: 'div.relative a[href*="/"][href*="-"]:not([href*="categoria"]):not([href*="genero"])', titleSelector: 'img', titleAttr: 'alt', linkSelector: '&' },
     videos: { type: 'torrent', linkSelector: 'a[href*="s.php"], a[class*="linktorrent"], a[class*="descargar"]', defaultQuality: 'HD' }
   },
   {
@@ -251,7 +251,7 @@ module.exports = [
     baseUrl: 'https://mitorrent.mx',
     categories: ['movie', 'tvshow', 'torrent'],
     language: ['lat'],
-    active: true,
+    active: false, // disabled: download links route through acortalink.net which uses anti-bot POST shortener
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'div.browse-movie-wrap', titleSelector: 'div.browse-movie-bottom a', linkSelector: 'div.browse-movie-bottom a' },
     videos: { type: 'torrent', linkSelector: 'a[href*="s.php"], a[class*="torrent-modal-download"], a[class*="quality-download"]', defaultQuality: 'HD' }

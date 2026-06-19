@@ -1,6 +1,8 @@
-# Ovnivers — Stream Provider v1.7.4
+# Ovnivers — Stream Provider v1.7.5
 
 Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fuentes.
+
+> **Nota de auditoría (2026-06-19):** la documentación está siendo sincronizada con el código real. Descubrimientos corregidos en esta pasada: el backend tiene **2 scrapers** (no 8), los catálogos Amatsu son servidos por el proxy **Amatsu** (no Pigamer37), el conteo de catálogos es 23 base + 4 Amatsu + 1 búsqueda, los scrapers Hermes son **61** (42 activos + 19 deshabilitados) en `manifest.json`, AllCalidad se desactivó porque es una SPA React sin items en HTML estático ni API REST útil, y los catálogos anime de TMDB ahora usan `type: 'anime'` para que Stremio/NuvioTV detecten anime sin depender de consultas TMDB.
 
 ## Instalacion
 
@@ -20,20 +22,20 @@ Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fue
 | **Pipeline unificado** | Orquestador central: circuit breaker (5 fallos = 5min off), dedup, post-resolver de embeds, scoring por idioma |
 | **Prioridad castellano** | Streams en espanol/latino/VOSE/dual aparecen primero via `media.language.computeScore()` |
 | **Pigamer37** (proxy anime) | AnimeFLV, AnimeAV1, TioAnime, Henaojara — solo para anime detectado |
-| **Alfa Providers** (server-side) | 48 providers activos (5 funcionales, 12 bloqueados por Turnstile, 4 con selectores wrong, resto sin resultados) |
-| **Hermes scrapers** (server-side) | 9/43 funcionales en Node.js (inyeccion de globales cheerio/CryptoJS). 19 deshabilitados (dominio muerto), 15 ofuscados sin streams |
+| **Alfa Providers** (server-side) | 45 providers activos (4 funcionales, 12 bloqueados por Turnstile, 18 deshabilitados por shorteners/JS, resto sin resultados) |
+| **Hermes scrapers** (server-side) | 61 scrapers en `manifest.json` (42 activos, 19 deshabilitados). 9 devuelven streams en Node.js via inyeccion de globales cheerio/CryptoJS |
 | **Alfa multi-titulo** | Busca por titulo EN + ES + JA + slug en paralelo |
-| **Backend scrapers** | 8 mirrors rotativos (2embed vesy/vsrc/skin/cc, VidSrc pro/icu/xyz, SuperEmbed) + PoseidonHD 3 dominios |
+| **Backend scrapers** | **2 scrapers**: `2embed+Mirrors` (8 mirrors rotativos: vesy/vsrc/skin/cc, VidSrc pro/icu/xyz, SuperEmbed) + `PoseidonHD` (3 dominios) |
 | **notWebReady automatico** | Streams directos (`.m3u8`/`.mp4`) + torrents (infoHash) → `notWebReady: false` (ExoPlayer) |
 | **Config panel** | `/configure` — tipos, calidad, idiomas, scrapers on/off |
 | **Proxy inteligente** | Cloudflare Worker v2 con cookie jar, header forwarding, retry backoff. Bypass list para 11 dominios Anubis |
 
 ## Catalogs
 
-19 catálogos TMDB activos + 4 universales + 4 Amatsu anime (vía Pigamer37): popular, trending, top-rated, search para movie/series/anime.
+**23 catálogos base** (19 TMDB + 4 universales `tt:`) + **4 catálogos Amatsu** (anime, vía proxy Amatsu) + **1 catálogo de búsqueda** (`tmdb-search`). Total dinámico: 28 catálogos cuando el anime está habilitado.
 IDs con prefijo `ovn:` para los catálogos propios y `tt:`/`tmdb:` para compatibilidad cross-addon (Torrentio, AnimeFLV, TMDB Community).
 
-## Alfa Providers (74 registrados, 48 activos)
+## Alfa Providers (74 registrados, 45 activos)
 
 Scraper unificado del addon **Alfa** de Kodi. Corre server-side en Node.js.
 Busca con multiples variantes del titulo (EN/ES/JA/slug) en paralelo.
@@ -44,12 +46,13 @@ Tras cada fetch de embed, se ejecuta el resolvedor `tryResolveEmbedToDirect()` q
 
 | Categoria | Count | Detalle |
 |---|---|---|
-| **Funcionando** | 5 | CineCalidad (5 videos), CineLibreOnline (10), PelisPedia (3), DivXTotal, SeriesKao |
+| **Funcionando** | 4 | CineCalidad (5 videos), CineLibreOnline (10), PelisPedia (3), DivXTotal |
 | **Cloudflare Turnstile** | 12 | cine24h, detodopeliculas, doramasflix, doramedplay, pelisforte, wolfmax4k, doramasyt, eztv, estrenosanime, henaojara, sololatino, tiodonghua — requieren navegador real |
 | **Anubis PoW** | 1 | DonTorrent — funciona con bypass directo (sin proxy) |
-| **Selectores wrong** | 4 | DivXTotal, GranTorrent, MiTorrent, AllCalidad — buscan en selectores incorrectos |
-| **URL shorteners** | 3 | GranTorrent, MiTorrent, DivXTotal — .torrent detras de redirect (super-enlace.com, acortalink.net, short-info.link) |
-| **Sin resultados** | 8 | allcalidad, entrepeliculasyseries, lacartoons, hacktorrent, pelispanda, areadocumental, elitetorrent, mejortorrent |
+| **Selectores corregidos (2026-06-19)** | 1 | DivXTotal — selectores correctos; el link base64 `download_tt.php?u=` funciona |
+| **Deshabilitados por shortener anti-bot** | 2 | GranTorrent, MiTorrent — usan `super-enlace.com` y `acortalink.net` con POST protegido anti-scraping |
+| **Deshabilitados SPA/JS** | 1 | AllCalidad — React SPA sin items en HTML estático ni API REST útil |
+| **Sin resultados** | 7 | entrepeliculasyseries, lacartoons, hacktorrent, pelispanda, areadocumental, elitetorrent, mejortorrent |
 | **0 videos extraidos** | 10 | bloghorror, genteclic, gnula, legalmentegratis, mirapeliculas, poseidonhd, tubeonline, tubepelis, yandispoiler, fullseriehd, seriesretro |
 | **Dominio muerto/roto** | 3 | MejorTorrent (403→fixeado), EliteTorrent (vacio→fixeado), DoramasQueen (163B→deshabilitado) |
 | **Eliminado** | 1 | eCarteleraTrailers (YouTube trailers) |
@@ -57,11 +60,13 @@ Tras cada fetch de embed, se ejecuta el resolvedor `tryResolveEmbedToDirect()` q
 ### Causas raiz
 
 1. **Cloudflare Turnstile (12 providers):** CAPTCHA que requiere JavaScript en navegador real. Sin solucion server-side.
-2. **URL shorteners (3 providers):** Los .torrent pasan por `super-enlace.com/s.php?i=...`, `acortalink.net/s.php?i=...`, `download_tt.php?u=<base64>`. El engine no sigue redirects ni decodifica base64.
-3. **Selectores desactualizados (4 providers):** DivXTotal usa `<tr>`, GranTorrent usa `div.relative`, MiTorrent usa `div.browse-movie-wrap`. Los selectores buscan `li`/`article`.
-4. **JS-dependiente (8+ providers):** AllCalidad, BlogHorror, EntrePeliculasYSeriais cargan resultados via JavaScript. Cheerio solo ve HTML estatico.
+2. **URL shorteners con anti-bot (2 providers):** GranTorrent y MiTorrent usan `super-enlace.com` y `acortalink.net` con formularios POST protegidos que redirigen a Google cuando se accede desde cualquier cliente automatizado (incluido navegador headless con stealth). No son resolubles localmente sin servicio de scraping remoto.
+3. **URL shortener funcional (1 provider):** DivXTotal expone tanto `short-info.link` como `download_tt.php?u=<base64>`. El link base64 se decodifica y descarga directamente, devolviendo infoHash real.
+4. **SPA React (1 provider):** AllCalidad carga resultados completamente en cliente. Su API REST solo devuelve el post por defecto de WordPress. Desactivado.
 
-## Hermes Scrapers (43 activos, 19 deshabilitados)
+## Hermes Scrapers (61 registrados: 42 activos, 19 deshabilitados)
+
+> **Descubrimiento de auditoría:** `manifest.json` tiene **62** entradas en `scrapers`, pero una de ellas es el bridge `alfa-providers` (que agrupa 74 providers reales). Los **61** restantes son los scrapers Hermes legacy: **42 activos** + **19 deshabilitados**. El conteo "43 activos" que aparecía antes incluía erróneamente el bridge `alfa-providers`.
 
 Scrapers legacy del ecosistema Nuvio/Hermes. Mayormente ofuscados (`_0x` obfuscation).
 
@@ -85,8 +90,8 @@ Scrapers legacy del ecosistema Nuvio/Hermes. Mayormente ofuscados (`_0x` obfusca
 | Torrent indexers (6 fuentes) | ✅ ~70+ magnets | NuvioTV ✅ (TorrentService nativo via infoHash) |
 | Embed directo (11+ dominios resueltos) | ✅ ~10-20 streams | NuvioTV ✅ (URL directa `.m3u8`/`.mp4`) |
 | Embed sin resolver | ⚠️ requiere JS client-side | Stremio Desktop ✅ (WebView) / NuvioTV ❌ |
-| Backend scrapers (8 mirrors) | ⚠️ variable (bloqueo segun mirror) | NuvioTV ✅ (si se resuelve) |
-| Hermes scrapers (9/43 funcionales) | ⚠️ 9 devuelven streams, 34 sin resultados | Variable |
+| Backend scrapers (2 scrapers / 8 mirrors) | ⚠️ variable (bloqueo segun mirror) | NuvioTV ✅ (si se resuelve) |
+| Hermes scrapers (9/42 funcionales) | ⚠️ 9 devuelven streams, 33 sin resultados | Variable |
 
 ## Torrent Indexers (6 fuentes)
 
@@ -120,7 +125,9 @@ Scrapers legacy del ecosistema Nuvio/Hermes. Mayormente ofuscados (`_0x` obfusca
 | JWPlayer | ✅ | setup({sources}) / file key |
 | Genérico (fallback) | ✅ | m3u8/mp4 regex + iframe follow |
 
-## Backend Scrapers (8 mirrors rotativos)
+## Backend Scrapers (2 scrapers / 8 mirrors rotativos)
+
+> **Descubrimiento de auditoría:** `server.js` registra solo **2 backend scrapers**: `2embed+Mirrors` y `PoseidonHD`. Los "8 mirrors" son sub-rutas internas del scraper `2embed+Mirrors`; no son scrapers independientes. La documentación anterior los contaba como 8 backend scrapers separados.
 
 | Mirror | Key | Nota |
 |---|---|---|
@@ -135,9 +142,11 @@ Scrapers legacy del ecosistema Nuvio/Hermes. Mayormente ofuscados (`_0x` obfusca
 
 > Se rotan en orden. El primer mirror que devuelva streams para el pipeline. PoseidonHD rota 3 dominios.
 
-## Catálogos Amatsu (Pigamer37)
+## Catálogos Amatsu
 
-4 catálogos de anime adicionales servidos por el proxy Pigamer37: AnimeFLV, AnimeAV1, TioAnime, Henaojara (onair, popular, latest, search).
+> **Descubrimiento de auditoría:** los 4 catálogos de anime adicionales no son servidos por Pigamer37, sino por el proxy **Amatsu** (`amatsu.ruka.pw`). Pigamer37 se usa para resolver streams/meta de AnimeFLV, AnimeAV1, TioAnime y Henaojara, no para estos catálogos.
+
+4 catálogos de anime adicionales servidos por el proxy Amatsu: `amatsu_seasonal_series`, `amatsu_airing_series`, `amatsu_trending_series`, `amatsu_top_series`.
 
 ## Endpoints
 
