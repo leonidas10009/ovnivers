@@ -1069,9 +1069,19 @@ app.get('/resolve-embed', async (req, res) => {
   if (!url) return res.status(400).json({ error: 'missing url param' });
   const direct = await resolveEmbed(url);
   if (direct) return res.json({ url: direct, method: 'embed-resolver' });
+  const start = Date.now();
   const puppeteerUrl = await puppeteerResolver.resolveEmbedWithBrowser(url);
-  if (puppeteerUrl) return res.json({ url: puppeteerUrl, method: 'puppeteer' });
-  res.json({ url: null, method: 'none' });
+  if (puppeteerUrl) return res.json({ url: puppeteerUrl, method: 'puppeteer', ms: Date.now() - start });
+  res.json({ url: null, method: 'none', ms: Date.now() - start });
+});
+
+app.get('/pptr-test', async (req, res) => {
+  try {
+    const mod = await import('@sparticuz/chromium');
+    res.json({ ok: true, hasDefault: !!mod.default, hasArgs: !!mod.default?.args });
+  } catch(e) {
+    res.json({ ok: false, error: e.message });
+  }
 });
 
 // ─── Manifest ─────────────────────────────
