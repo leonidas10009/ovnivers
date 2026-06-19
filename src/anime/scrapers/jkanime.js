@@ -1,4 +1,5 @@
 const cheerio = require('cheerio-without-node-native') || require('cheerio');
+const puppeteerResolver = require('../../puppeteer-resolver');
 
 const BASE = 'https://jkanime.net';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
@@ -228,20 +229,31 @@ async function getStreams(slug, episode) {
     } catch { /* continue */ }
   }
 
-  // 2. Add all server embed/download URLs
+  // 2. Add all server embed/download URLs, resolve to direct when possible
   for (const s of servers) {
     const label = s.server + (s.lang ? ' ' + s.lang : '') + (s.size ? ' ' + s.size : '');
-    const isDirect = /\.(mp4|mkv|m3u8)($|\?)/i.test(s.url);
+    let finalUrl = s.url;
+    let isResolved = false;
+
+    // Try to resolve embed pages to direct video via Puppeteer
+    if (!/\.(mp4|mkv|m3u8)($|\?)/i.test(s.url) && s.url.startsWith('http')) {
+      try {
+        const direct = await puppeteerResolver.resolveEmbedWithBrowser(s.url, null, 12000);
+        if (direct && direct.startsWith('http')) {
+          finalUrl = direct;
+          isResolved = true;
+        }
+      } catch {}
+    }
+
+    const isDirect = isResolved || /\.(mp4|mkv|m3u8)($|\?)/i.test(finalUrl);
     results.push({
-      url: s.url,
+      url: finalUrl,
       server: s.server,
       name: `JKAnime\n${s.server}`,
-      title: `${slug} Ep. ${episode}\n⚙️ ${label}`,
+      title: `${slug} Ep. ${episode}\n⚙️ ${label}${isResolved ? ' (directo)' : ''}`,
       description: s.lang || '',
-      behaviorHints: {
-        notWebReady: !isDirect,
-        bingeGroup: `jkanime|${s.server}`,
-      },
+      behaviorHints: { notWebReady: !isDirect, bingeGroup: `jkanime|${s.server}` },
     });
   }
 
