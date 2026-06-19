@@ -108,7 +108,8 @@ function extractIMDB(data) {
 
 function isJapaneseAnime(data) {
   if (!data) return false;
-  const hasGenre16 = (data.genres || []).some(g => g.id === 16);
+  const hasGenre16 = (data.genres || []).some(g => g.id === 16) ||
+    (data.genre_ids || []).includes(16);
   const isJP = (data.origin_country || []).includes('JP') ||
     (data.production_countries || []).some(c => c.iso_3166_1 === 'JP') ||
     data.original_language === 'ja';

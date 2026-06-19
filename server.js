@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.7.7
+ * Ovnivers — Stremio Addon Backend v1.7.8
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
@@ -78,7 +78,7 @@ if (process.env.SCRAPELESS_API_KEY) {
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.7.7';
+const VERSION = '1.7.8';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 // Available languages for filtering
@@ -1190,13 +1190,19 @@ async function handleStream(req, res, type, id) {
 
   // Para anime TMDB numerico (ovn:46260 / ovn-anime:46260), construir ID que los providers entiendan
   let animeProviderId = null;
+  let animeTmdbId = detection.tmdbId || null;
   if (isAnime) {
     if (animeFullId && animeFullId.startsWith('ovn-anime:')) {
       animeProviderId = `tmdb:${animeFullId.substring(10)}`;
+      animeTmdbId = parseInt(animeFullId.substring(10)) || null;
     } else if (animeFullId) {
       animeProviderId = animeFullId;
+    } else if (animeTmdbId) {
+      // IMDb-sourced anime (tt1234567) or TMDB-sourced with known TMDB ID
+      animeProviderId = `tmdb:${animeTmdbId}`;
     } else if (rawId.match(/^\d+$/)) {
       animeProviderId = `tmdb:${rawId}`;
+      animeTmdbId = parseInt(rawId) || null;
     } else {
       animeProviderId = rawId;
     }
@@ -1254,8 +1260,8 @@ async function handleStream(req, res, type, id) {
           year = movieTitles.year || null;
           imdbId = movieTitles.imdbId || null;
         }
-      } else if (isAnime && !rawId.startsWith('tt')) {
-        const titlesId = rawId.match(/^\d+$/) ? rawId : (animeProviderId || rawId);
+      } else if (isAnime) {
+        const titlesId = animeTmdbId ? String(animeTmdbId) : (rawId.match(/^\d+$/) ? rawId : (animeProviderId || rawId));
         const anifeTitles = await anime.titles.resolveTitles(titlesId);
         if (anifeTitles) {
           searchTitles = anifeTitles.searchTitles || [];

@@ -97,7 +97,50 @@ async function classify(rawId, type, mediaType) {
     };
   }
 
-  const cleanId = rawId.replace(/^(ovn:|tmdb:|tt)/, '');
+  // Handle IMDb IDs: tt1234567 (Cinemeta) or tt:1234567
+  // Stremio may append :season:episode (e.g. tt1234567:1:1)
+  const ttMatch = rawId.match(/^tt:?(\d{2,})(?::\d+(?::\d+)?)?$/);
+  if (ttMatch) {
+    const imdbId = `tt${ttMatch[1]}`;
+    const imdbData = await tmdb.findByIMDB(imdbId);
+    if (imdbData) {
+      const result = (mediaType === 'tv' ? imdbData.tv_results : imdbData.movie_results)?.[0]
+        || imdbData.tv_results?.[0] || imdbData.movie_results?.[0];
+      if (result) {
+        const isAnime = tmdb.isJapaneseAnime(result);
+        const isMovie = result.media_type === 'movie' || !result.seasons;
+        return {
+          contentType: isAnime ? CONTENT_ANIME : (isMovie ? CONTENT_MOVIE : CONTENT_SERIES),
+          isAnime,
+          isMovie: !isAnime && isMovie,
+          isSeries: !isAnime && !isMovie,
+          method: 'imdb-to-tmdb',
+          confidence: 0.95,
+          tmdbId: result.id,
+          title: result.title || result.name || '',
+          year: tmdb.extractYear(result),
+          genres: (result.genres || []).map(g => ({ id: g.id, name: g.name })),
+          hasSeasons: !!result.seasons?.length,
+          episodeCount: result.number_of_episodes || 0,
+          seasonCount: result.number_of_seasons || 0,
+          originCountry: result.origin_country || [],
+          originalLanguage: result.original_language || '',
+        };
+      }
+    }
+    // IMDb not found in TMDB — fall through to generic with confidence
+    return {
+      contentType: byType || (mediaType === 'tv' ? CONTENT_SERIES : CONTENT_MOVIE),
+      isAnime: false,
+      isMovie: mediaType !== 'tv',
+      isSeries: mediaType === 'tv',
+      method: 'imdb-fallback',
+      confidence: 0.2,
+    };
+  }
+
+  // Clean IDs: ovn:123 → 123, tmdb:123 → 123, tt:123 → 123
+  const cleanId = rawId.replace(/^(ovn:|tmdb:|tt:)/, '');
   if (!cleanId.match(/^\d+$/)) {
     return {
       contentType: byType || CONTENT_MOVIE,
@@ -109,6 +152,7 @@ async function classify(rawId, type, mediaType) {
     };
   }
 
+  const tmdbId = parseInt(cleanId);
   const tmdbResult = await classifyByTMDB(cleanId, mediaType);
   if (tmdbResult) {
     return {
@@ -118,12 +162,15 @@ async function classify(rawId, type, mediaType) {
       isSeries: tmdbResult.isSeries,
       method: 'tmdb',
       confidence: 0.95,
+      tmdbId,
       title: tmdbResult.title,
       year: tmdbResult.year,
       genres: tmdbResult.genres,
       hasSeasons: tmdbResult.hasSeasons,
       episodeCount: tmdbResult.episodeCount,
       seasonCount: tmdbResult.seasonCount,
+      originCountry: tmdbResult.originCountry,
+      originalLanguage: tmdbResult.originalLanguage,
     };
   }
 
