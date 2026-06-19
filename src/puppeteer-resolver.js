@@ -6,7 +6,11 @@ let browserPromise = null;
 
 async function getPuppeteer() {
   if (puppeteer) return puppeteer;
-  try { puppeteer = require('puppeteer-core'); return puppeteer; }
+  try { 
+    puppeteer = (await import('puppeteer-core')).default || puppeteer;
+    if (puppeteer) return puppeteer;
+    throw new Error('no default export');
+  }
   catch (e) { console.error('[pptr] puppeteer-core:', e.message); return null; }
 }
 
