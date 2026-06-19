@@ -1203,7 +1203,15 @@ async function handleStream(req, res, type, id) {
     let searchTitle = ''; let imdbId = null; let year = null;
     let searchTitles = [];
     try {
-      if (isAnime && !rawId.match(/^\d+$/) && !rawId.startsWith('tt')) {
+      if (mediaType === 'movie' && (rawId.match(/^\d+$/) || rawId.startsWith('tt'))) {
+        const movieTitles = await movies.resolveMovieTitles(rawId);
+        if (movieTitles) {
+          searchTitle = movieTitles.searchTitle || '';
+          searchTitles = movieTitles.searchTitles || [];
+          year = movieTitles.year || null;
+          imdbId = movieTitles.imdbId || null;
+        }
+      } else if (isAnime && !rawId.match(/^\d+$/) && !rawId.startsWith('tt')) {
         const titlesId = animeFullId || rawId;
         const anifeTitles = await anime.titles.resolveTitles(titlesId);
         if (anifeTitles) {
