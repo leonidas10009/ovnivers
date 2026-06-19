@@ -1,6 +1,6 @@
 /**
  * content - Built from src/content/
- * Generated: 2026-06-19T18:36:33.428Z
+ * Generated: 2026-06-19T18:45:14.455Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -553,7 +553,7 @@ var require_resolver = __commonJS({
     }
     function resolveAnimeId(id) {
       return __async(this, null, function* () {
-        var _a;
+        var _a, _b, _c, _d, _e, _f, _g, _h;
         if (isAnimeSourceId(id)) return id;
         if (!isAnimeXrefId(id)) return null;
         const cached = cacheGet(resolveCache, id, RESOLVE_TTL);
@@ -565,6 +565,85 @@ var require_resolver = __commonJS({
             return meta.meta.id;
           }
         } catch (e) {
+        }
+        try {
+          const parts = id.split(":");
+          if (parts.length === 2) {
+            const source = parts[0];
+            const numId = parts[1];
+            const relCtrl = new AbortController();
+            const relTimer = setTimeout(() => relCtrl.abort(), 1e4);
+            const relRes = yield fetch(
+              `https://relations.yuna.moe/api/v2/ids?source=${source}&id=${numId}`,
+              { headers: { "User-Agent": UA }, signal: relCtrl.signal }
+            );
+            clearTimeout(relTimer);
+            if (relRes.ok) {
+              const rel = yield relRes.json();
+              const tmdbId = (rel == null ? void 0 : rel.themoviedb) || (rel == null ? void 0 : rel.themoviedb_id);
+              if (tmdbId) {
+                const tmdbStr = `tmdb:${tmdbId}`;
+                cacheSet(resolveCache, id, tmdbStr, MAX_CACHE);
+                return tmdbStr;
+              }
+              const anilistId = rel == null ? void 0 : rel.anilist;
+              if (anilistId && source !== "anilist") {
+                const anilistStr = `anilist:${anilistId}`;
+                const meta2 = yield fetchPigamer(`/meta/series/${encodeURIComponent(anilistStr)}.json`);
+                if (((_b = meta2 == null ? void 0 : meta2.meta) == null ? void 0 : _b.id) && isAnimeSourceId(meta2.meta.id)) {
+                  cacheSet(resolveCache, id, meta2.meta.id, MAX_CACHE);
+                  return meta2.meta.id;
+                }
+              }
+            }
+          }
+        } catch (e) {
+        }
+        if (id.startsWith("kitsu:")) {
+          try {
+            const kitsuId = id.split(":")[1];
+            const kCtrl = new AbortController();
+            const kTimer = setTimeout(() => kCtrl.abort(), 8e3);
+            const kRes = yield fetch(
+              `https://kitsu.io/api/edge/anime/${kitsuId}`,
+              { headers: { "Accept": "application/vnd.api+json", "User-Agent": UA }, signal: kCtrl.signal }
+            );
+            clearTimeout(kTimer);
+            if (kRes.ok) {
+              const kData = yield kRes.json();
+              const attrs = (_c = kData == null ? void 0 : kData.data) == null ? void 0 : _c.attributes;
+              const titles = [
+                attrs == null ? void 0 : attrs.canonicalTitle,
+                (_d = attrs == null ? void 0 : attrs.titles) == null ? void 0 : _d.en,
+                (_e = attrs == null ? void 0 : attrs.titles) == null ? void 0 : _e.en_jp,
+                (_f = attrs == null ? void 0 : attrs.titles) == null ? void 0 : _f.ja_jp
+              ].filter(Boolean);
+              for (const title of titles.slice(0, 2)) {
+                const aCtrl = new AbortController();
+                const aTimer = setTimeout(() => aCtrl.abort(), 8e3);
+                const aRes = yield fetch(
+                  `https://amatsu.ruka.pw/catalog/anime/amatsu_search/search=${encodeURIComponent(title)}.json`,
+                  { headers: { "User-Agent": UA }, signal: aCtrl.signal }
+                );
+                clearTimeout(aTimer);
+                if (aRes.ok) {
+                  const aData = yield aRes.json();
+                  const match = (_g = aData == null ? void 0 : aData.metas) == null ? void 0 : _g.find((m) => {
+                    var _a2;
+                    return (_a2 = m.id) == null ? void 0 : _a2.startsWith("anilist:");
+                  });
+                  if (match) {
+                    const meta = yield fetchPigamer(`/meta/series/${encodeURIComponent(match.id)}.json`);
+                    if (((_h = meta == null ? void 0 : meta.meta) == null ? void 0 : _h.id) && isAnimeSourceId(meta.meta.id)) {
+                      cacheSet(resolveCache, id, meta.meta.id, MAX_CACHE);
+                      return meta.meta.id;
+                    }
+                  }
+                }
+              }
+            }
+          } catch (e) {
+          }
         }
         cacheSet(resolveCache, id, null, MAX_CACHE);
         return null;
