@@ -134,25 +134,41 @@ function extractIframes(html) {
 
 function extractServers(html) {
   const serverMatch = html.match(/var servers\s*=\s*(\[[\s\S]*?\]);/);
-  if (!serverMatch) return [];
-  try {
-    const servers = JSON.parse(serverMatch[1]);
-    const results = [];
-    for (const s of servers) {
-      try {
-        const url = Buffer.from(s.remote, 'base64').toString('utf-8').trim();
-        if (url && url.startsWith('http')) {
-          results.push({
-            server: s.server,
-            lang: s.lang === 1 ? 'SUB' : s.lang === 2 ? 'LAT' : s.lang === 3 ? 'DUB' : '',
-            size: s.size || '',
-            url,
-          });
-        }
-      } catch { /* skip malformed */ }
-    }
-    return results;
-  } catch { return []; }
+  if (serverMatch) {
+    try {
+      const servers = JSON.parse(serverMatch[1]);
+      const results = [];
+      for (const s of servers) {
+        try {
+          const url = Buffer.from(s.remote, 'base64').toString('utf-8').trim();
+          if (url && url.startsWith('http')) {
+            results.push({
+              server: s.server,
+              lang: s.lang === 1 ? 'SUB' : s.lang === 2 ? 'LAT' : s.lang === 3 ? 'DUB' : '',
+              size: s.size || '',
+              url,
+            });
+          }
+        } catch { /* skip malformed */ }
+      }
+      return results;
+    } catch { /* fall through */ }
+  }
+
+  // Fallback: parse download table (static HTML, always present)
+  const $ = cheerio.load(html);
+  const results = [];
+  $('table tbody tr').each((_, el) => {
+    const tds = $(el).find('td');
+    if (tds.length < 4) return;
+    const server = $(tds[0]).text().trim();
+    const size = $(tds[1]).text().trim();
+    const a = $(tds[3]).find('a').first();
+    const href = a.attr('href') || '';
+    if (!server || !href) return;
+    results.push({ server, size, url: href });
+  });
+  return results;
 }
 
 function extractM3U8(html) {
