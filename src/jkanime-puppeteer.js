@@ -16,6 +16,12 @@ const SERVER_TTL = 30 * 60 * 1000; // 30min
 
 const RESOLVABLE = ['streamwish', 'sfastwish', 'flaswish', 'mp4upload', 'streamtape', 'vidhide', 'callistanise', 'yourupload'];
 
+const BLOCKED_PATTERNS = [
+  'cloudflareinsights.com', 'cloudfront.net',
+  'googletagmanager', 'google-analytics', 'doubleclick',
+  'facebook.com/tr', 'hotjar.com', 'newrelic.com',
+];
+
 // ═══ Browser management ═══
 async function getPuppeteer() {
   if (puppeteer) return puppeteer;
@@ -160,6 +166,7 @@ async function resolveEmbedUrl(b, embedUrl, waitMs = 8000) {
     page.on('request', req => {
       const u = req.url();
       if (videoUrl) { req.abort(); return; }
+      if (BLOCKED_PATTERNS.some(p => u.includes(p))) { req.abort(); return; }
       if ((/\.(m3u8|mp4|mkv|ts|webm)(\?|$)/i.test(u)
         || /mp4upload\.com:\d+\/d\//i.test(u)
         || /\/hls\//i.test(u))
