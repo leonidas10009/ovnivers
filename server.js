@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.13.1
+ * Ovnivers — Stremio Addon Backend v1.13.2
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
@@ -61,7 +61,7 @@ const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
 const catalog = require('./src/catalog/index');
 const torrentIndex = require('./src/torrent-providers/index');
-const { resolveEmbed } = require('./src/alfa-providers/embed-resolver');
+const { resolveEmbed, isDirectVideoUrl } = require('./src/alfa-providers/embed-resolver');
 const puppeteerResolver = require('./src/puppeteer-resolver');
 const pptrAnime = require('./src/jkanime-puppeteer');
 const { StreamPipeline } = require('./src/stream-pipeline/index');
@@ -80,7 +80,7 @@ if (process.env.SCRAPELESS_API_KEY) {
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.13.1';
+const VERSION = '1.13.2';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 // Available languages for filtering
@@ -881,7 +881,7 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
 
   const title = titleParts.join('\n');
 
-  const isDirectMedia = !hasInfoHash && url && /\.(mp4|m3u8|mkv|webm|avi)(\?|$)/i.test(url);
+  const isDirectMedia = !hasInfoHash && url && isDirectVideoUrl(url);
   const languages = media.language.detectFromStream({ name, title, description: stream.description, audioLang });
   const normalizedQuality = media.quality.normalizeQuality(quality);
 
@@ -1070,7 +1070,7 @@ app.get('/resolve-embed', async (req, res) => {
   if (!url) return res.status(400).json({ error: 'missing url param' });
   // Try embed-resolver first, but only if it returns actual video URL
   const direct = await resolveEmbed(url);
-  if (direct && /\.(m3u8|mp4|mkv|webm)($|\?)/i.test(direct) && !direct.includes('.css') && !direct.includes('.js')) {
+  if (direct && isDirectVideoUrl(direct) && !direct.includes('.css') && !direct.includes('.js')) {
     return res.json({ url: direct, method: 'embed-resolver' });
   }
   // Fall through to Puppeteer for proper JS resolution
@@ -1486,7 +1486,7 @@ async function handleStream(req, res, type, id) {
     let count = 0;
     if (resolved !== '__EMBED_TIMEOUT__' && Array.isArray(resolved)) {
       for (let i = 0; i < toResolve.length; i++) {
-        if (resolved[i]?.status === 'fulfilled' && resolved[i].value && /\.(m3u8|mp4)/i.test(resolved[i].value)) {
+        if (resolved[i]?.status === 'fulfilled' && resolved[i].value && isDirectVideoUrl(resolved[i].value)) {
           toResolve[i].url = resolved[i].value;
           toResolve[i].behaviorHints = { ...toResolve[i].behaviorHints, notWebReady: false };
           count++;

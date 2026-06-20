@@ -1,6 +1,6 @@
 /**
  * stream-pipeline - Built from src/stream-pipeline/
- * Generated: 2026-06-20T13:16:47.550Z
+ * Generated: 2026-06-20T13:41:10.020Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -461,16 +461,24 @@ var require_embed_resolver = __commonJS({
         return result;
       });
     }
+    function isDirectVideoUrl2(url) {
+      if (!url) return false;
+      if (/\.(m3u8|mp4|mkv|webm|avi|ts|mov)(\?|$)/i.test(url)) return true;
+      if (/mp4upload\.com:\d+\/d\//i.test(url)) return true;
+      if (/\/hls\//i.test(url)) return true;
+      if (/streamtape\.com\/get_video/i.test(url)) return true;
+      return false;
+    }
     function clearCache() {
       embedCache.clear();
     }
-    module2.exports = { resolveEmbed: resolveEmbed2, tryResolveJWPlayer, tryResolveGeneric, clearCache };
+    module2.exports = { resolveEmbed: resolveEmbed2, tryResolveJWPlayer, tryResolveGeneric, clearCache, isDirectVideoUrl: isDirectVideoUrl2 };
   }
 });
 
 // src/stream-pipeline/index.js
 var cheerio = require("cheerio-without-node-native") || require("cheerio");
-var { resolveEmbed } = require_embed_resolver();
+var { resolveEmbed, isDirectVideoUrl } = require_embed_resolver();
 var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 var TMDB_KEY = process.env.TMDB_KEY || "d80ba92bc7cefe3359668d30d06f3305";
 var FETCH_TIMEOUT = 15e3;
@@ -622,7 +630,7 @@ function normalizeStream(stream, source) {
 ${quality}${flags ? " " + flags : ""}`;
   const title = `${typeEmoji} ${quality} | ${source}`;
   const hasInfoHash = !!stream.infoHash;
-  const isDirectMedia = url && /\.(mp4|m3u8|mkv|webm|avi)(\?|$)/i.test(url);
+  const isDirectMedia = url && isDirectVideoUrl(url);
   return __spreadProps(__spreadValues(__spreadValues(__spreadValues(__spreadValues({
     name,
     title,
@@ -739,7 +747,7 @@ var StreamPipeline = class {
       for (let i = 0; i < toResolve.length; i++) {
         if (resolved[i].status === "fulfilled" && resolved[i].value) {
           const directUrl = resolved[i].value;
-          if (/\.(m3u8|mp4)/i.test(directUrl)) {
+          if (isDirectVideoUrl(directUrl)) {
             toResolve[i].url = directUrl;
             toResolve[i].behaviorHints = __spreadProps(__spreadValues({}, toResolve[i].behaviorHints), { notWebReady: false });
             count++;

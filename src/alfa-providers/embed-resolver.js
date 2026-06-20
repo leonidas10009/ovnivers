@@ -468,8 +468,17 @@ async function resolveEmbed(embedUrl, referer) {
   return result;
 }
 
+function isDirectVideoUrl(url) {
+  if (!url) return false;
+  if (/\.(m3u8|mp4|mkv|webm|avi|ts|mov)(\?|$)/i.test(url)) return true;
+  if (/mp4upload\.com:\d+\/d\//i.test(url)) return true;
+  if (/\/hls\//i.test(url)) return true;
+  if (/streamtape\.com\/get_video/i.test(url)) return true;
+  return false;
+}
+
 function clearCache() {
   embedCache.clear();
 }
 
-module.exports = { resolveEmbed, tryResolveJWPlayer, tryResolveGeneric, clearCache };
+module.exports = { resolveEmbed, tryResolveJWPlayer, tryResolveGeneric, clearCache, isDirectVideoUrl };

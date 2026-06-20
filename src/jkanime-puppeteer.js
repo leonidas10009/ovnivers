@@ -139,11 +139,24 @@ async function resolveEmbedUrl(b, embedUrl, waitMs = 8000) {
     page.on('request', req => {
       const u = req.url();
       if (videoUrl) { req.abort(); return; }
-      if (/\.(m3u8|mp4|mkv|ts|webm)(\?|$)/i.test(u)
+      if ((/\.(m3u8|mp4|mkv|ts|webm)(\?|$)/i.test(u)
+        || /mp4upload\.com:\d+\/d\//i.test(u)
+        || /\/hls\//i.test(u))
         && !u.includes('.css') && !u.includes('.js') && !u.includes('videojs')
         && !u.includes('test-videos') && !u.includes('novideo')) {
         videoUrl = u; req.abort();
       } else req.continue();
+    });
+
+    page.on('response', resp => {
+      if (videoUrl) return;
+      const ct = resp.headers()['content-type'] || '';
+      if ((ct.includes('mpegurl') || ct.includes('video/mp4') || ct.includes('video/webm'))) {
+        const u = resp.url();
+        if (!u.includes('.css') && !u.includes('.js') && !u.includes('novideo')) {
+          videoUrl = u;
+        }
+      }
     });
 
     try { await page.goto(embedUrl, { waitUntil: 'networkidle2', timeout: 15000 }); } catch {}

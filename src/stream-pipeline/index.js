@@ -1,5 +1,5 @@
 const cheerio = require('cheerio-without-node-native') || require('cheerio');
-const { resolveEmbed } = require('../alfa-providers/embed-resolver');
+const { resolveEmbed, isDirectVideoUrl } = require('../alfa-providers/embed-resolver');
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
@@ -135,7 +135,7 @@ function normalizeStream(stream, source) {
   const title = `${typeEmoji} ${quality} | ${source}`;
 
   const hasInfoHash = !!stream.infoHash;
-  const isDirectMedia = url && /\.(mp4|m3u8|mkv|webm|avi)(\?|$)/i.test(url);
+  const isDirectMedia = url && isDirectVideoUrl(url);
 
   return {
     name, title,
@@ -278,7 +278,7 @@ class StreamPipeline {
     for (let i = 0; i < toResolve.length; i++) {
       if (resolved[i].status === 'fulfilled' && resolved[i].value) {
         const directUrl = resolved[i].value;
-        if (/\.(m3u8|mp4)/i.test(directUrl)) {
+        if (isDirectVideoUrl(directUrl)) {
           toResolve[i].url = directUrl;
           toResolve[i].behaviorHints = { ...toResolve[i].behaviorHints, notWebReady: false };
           count++;

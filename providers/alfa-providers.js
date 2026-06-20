@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-20T13:16:47.414Z
+ * Generated: 2026-06-20T13:41:09.886Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -1320,10 +1320,18 @@ var require_embed_resolver = __commonJS({
         return result;
       });
     }
+    function isDirectVideoUrl(url) {
+      if (!url) return false;
+      if (/\.(m3u8|mp4|mkv|webm|avi|ts|mov)(\?|$)/i.test(url)) return true;
+      if (/mp4upload\.com:\d+\/d\//i.test(url)) return true;
+      if (/\/hls\//i.test(url)) return true;
+      if (/streamtape\.com\/get_video/i.test(url)) return true;
+      return false;
+    }
     function clearCache() {
       embedCache.clear();
     }
-    module2.exports = { resolveEmbed, tryResolveJWPlayer, tryResolveGeneric, clearCache };
+    module2.exports = { resolveEmbed, tryResolveJWPlayer, tryResolveGeneric, clearCache, isDirectVideoUrl };
   }
 });
 
