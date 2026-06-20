@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-20T13:11:14.788Z
+ * Generated: 2026-06-20T13:12:11.999Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -2552,7 +2552,7 @@ var require_engine = __commonJS({
 var require_types = __commonJS({
   "src/anime/types.js"(exports2, module2) {
     var ANIME_SOURCE_PREFIXES = ["animeflv:", "animeav1:", "henaojara:", "tioanime:", "jkanime:"];
-    var ANIME_XREF_PREFIXES = ["anilist:", "kitsu:", "mal:", "anidb:"];
+    var ANIME_XREF_PREFIXES = ["anilist:", "kitsu:", "mal:", "anidb:", "tmdb:"];
     var ANIME_LOCAL_PREFIXES = ["ovn-anime:"];
     var ANIME_PREFIXES = [...ANIME_SOURCE_PREFIXES, ...ANIME_XREF_PREFIXES, ...ANIME_LOCAL_PREFIXES];
     var ANIME_GENRE_ID = 16;

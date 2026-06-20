@@ -1,6 +1,6 @@
 /**
  * content - Built from src/content/
- * Generated: 2026-06-20T13:11:14.847Z
+ * Generated: 2026-06-20T13:12:12.070Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -328,7 +328,7 @@ var require_tmdb = __commonJS({
 var require_types2 = __commonJS({
   "src/anime/types.js"(exports2, module2) {
     var ANIME_SOURCE_PREFIXES = ["animeflv:", "animeav1:", "henaojara:", "tioanime:", "jkanime:"];
-    var ANIME_XREF_PREFIXES = ["anilist:", "kitsu:", "mal:", "anidb:"];
+    var ANIME_XREF_PREFIXES = ["anilist:", "kitsu:", "mal:", "anidb:", "tmdb:"];
     var ANIME_LOCAL_PREFIXES = ["ovn-anime:"];
     var ANIME_PREFIXES = [...ANIME_SOURCE_PREFIXES, ...ANIME_XREF_PREFIXES, ...ANIME_LOCAL_PREFIXES];
     var ANIME_GENRE_ID = 16;
