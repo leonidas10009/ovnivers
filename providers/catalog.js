@@ -1,12 +1,15 @@
 /**
  * catalog - Built from src/catalog/
- * Generated: 2026-06-19T19:27:12.274Z
+ * Generated: 2026-06-20T10:03:39.578Z
  */
+var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
+var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __propIsEnum = Object.prototype.propertyIsEnumerable;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
@@ -25,6 +28,22 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve, reject) => {
     var fulfilled = (value) => {
@@ -305,7 +324,7 @@ var require_tmdb = __commonJS({
     }
     function isJapaneseAnime2(data) {
       if (!data) return false;
-      const hasGenre16 = (data.genres || []).some((g) => g.id === 16);
+      const hasGenre16 = (data.genres || []).some((g) => g.id === 16) || (data.genre_ids || []).includes(16);
       const isJP = (data.origin_country || []).includes("JP") || (data.production_countries || []).some((c) => c.iso_3166_1 === "JP") || data.original_language === "ja";
       return hasGenre16 && isJP;
     }
@@ -327,7 +346,7 @@ var require_tmdb = __commonJS({
 // src/anime/types.js
 var require_types2 = __commonJS({
   "src/anime/types.js"(exports2, module2) {
-    var ANIME_SOURCE_PREFIXES = ["animeflv:", "animeav1:", "henaojara:", "tioanime:"];
+    var ANIME_SOURCE_PREFIXES = ["animeflv:", "animeav1:", "henaojara:", "tioanime:", "jkanime:"];
     var ANIME_XREF_PREFIXES = ["anilist:", "kitsu:", "mal:", "anidb:"];
     var ANIME_LOCAL_PREFIXES = ["ovn-anime:"];
     var ANIME_PREFIXES = [...ANIME_SOURCE_PREFIXES, ...ANIME_XREF_PREFIXES, ...ANIME_LOCAL_PREFIXES];
@@ -1246,6 +1265,7 @@ var require_identifier = __commonJS({
     }
     function classify(rawId, type, mediaType) {
       return __async(this, null, function* () {
+        var _a, _b, _c, _d;
         const byPrefix = classifyByPrefix(rawId);
         if (byPrefix === CONTENT_ANIME) {
           return {
@@ -1268,7 +1288,44 @@ var require_identifier = __commonJS({
             confidence: 0.9
           };
         }
-        const cleanId = rawId.replace(/^(ovn:|tmdb:|tt)/, "");
+        const ttMatch = rawId.match(/^tt:?(\d{2,})(?::\d+(?::\d+)?)?$/);
+        if (ttMatch) {
+          const imdbId = `tt${ttMatch[1]}`;
+          const imdbData = yield tmdb.findByIMDB(imdbId);
+          if (imdbData) {
+            const result = ((_a = mediaType === "tv" ? imdbData.tv_results : imdbData.movie_results) == null ? void 0 : _a[0]) || ((_b = imdbData.tv_results) == null ? void 0 : _b[0]) || ((_c = imdbData.movie_results) == null ? void 0 : _c[0]);
+            if (result) {
+              const isAnime = tmdb.isJapaneseAnime(result);
+              const isMovie = result.media_type === "movie" || !result.seasons;
+              return {
+                contentType: isAnime ? CONTENT_ANIME : isMovie ? CONTENT_MOVIE : CONTENT_SERIES,
+                isAnime,
+                isMovie: !isAnime && isMovie,
+                isSeries: !isAnime && !isMovie,
+                method: "imdb-to-tmdb",
+                confidence: 0.95,
+                tmdbId: result.id,
+                title: result.title || result.name || "",
+                year: tmdb.extractYear(result),
+                genres: (result.genres || []).map((g) => ({ id: g.id, name: g.name })),
+                hasSeasons: !!((_d = result.seasons) == null ? void 0 : _d.length),
+                episodeCount: result.number_of_episodes || 0,
+                seasonCount: result.number_of_seasons || 0,
+                originCountry: result.origin_country || [],
+                originalLanguage: result.original_language || ""
+              };
+            }
+          }
+          return {
+            contentType: byType || (mediaType === "tv" ? CONTENT_SERIES : CONTENT_MOVIE),
+            isAnime: false,
+            isMovie: mediaType !== "tv",
+            isSeries: mediaType === "tv",
+            method: "imdb-fallback",
+            confidence: 0.2
+          };
+        }
+        const cleanId = rawId.replace(/^(ovn:|tmdb:|tt:)/, "");
         if (!cleanId.match(/^\d+$/)) {
           return {
             contentType: byType || CONTENT_MOVIE,
@@ -1279,6 +1336,7 @@ var require_identifier = __commonJS({
             confidence: 0.5
           };
         }
+        const tmdbId = parseInt(cleanId);
         const tmdbResult = yield classifyByTMDB(cleanId, mediaType);
         if (tmdbResult) {
           return {
@@ -1288,12 +1346,15 @@ var require_identifier = __commonJS({
             isSeries: tmdbResult.isSeries,
             method: "tmdb",
             confidence: 0.95,
+            tmdbId,
             title: tmdbResult.title,
             year: tmdbResult.year,
             genres: tmdbResult.genres,
             hasSeasons: tmdbResult.hasSeasons,
             episodeCount: tmdbResult.episodeCount,
-            seasonCount: tmdbResult.seasonCount
+            seasonCount: tmdbResult.seasonCount,
+            originCountry: tmdbResult.originCountry,
+            originalLanguage: tmdbResult.originalLanguage
           };
         }
         return {
@@ -1360,7 +1421,7 @@ var require_episode = __commonJS({
       }
       map.set(key, { value, time: Date.now() });
     }
-    var ANIME_PREFIXES = ["animeflv:", "anilist:", "mal:", "kitsu:", "anidb:", "simkl:", "animeplanet:", "livechart:", "animenewsnetwork:", "anisearch:", "thetvdb:", "myanimelist:", "ovn-anime:"];
+    var ANIME_PREFIXES = ["animeflv:", "animeav1:", "henaojara:", "tioanime:", "jkanime:", "anilist:", "mal:", "kitsu:", "anidb:", "simkl:", "animeplanet:", "livechart:", "animenewsnetwork:", "anisearch:", "thetvdb:", "myanimelist:", "ovn-anime:"];
     function parseEpisodeId(id) {
       let contentId = id;
       let season = 1;
@@ -1733,7 +1794,7 @@ var require_providers = __commonJS({
 var require_animeflv = __commonJS({
   "src/anime/scrapers/animeflv.js"(exports2, module2) {
     var cheerio = require("cheerio-without-node-native") || require("cheerio");
-    var BASE = "https://www3.animeflv.net";
+    var BASE = "https://www4.animeflv.net";
     var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
     function fetchText(url, timeout = 15e3) {
       return __async(this, null, function* () {
@@ -1814,6 +1875,7 @@ var require_animeflv = __commonJS({
       return __async(this, null, function* () {
         const html = yield fetchText(`${BASE}/ver/${slug}-${episode}`);
         if (!html) return [];
+        const isNewFormat = html.includes("var videos = []") || html.includes("initEpisode");
         let videosStr = null;
         const $ = cheerio.load(html);
         $("script").each((_, el) => {
@@ -1821,7 +1883,10 @@ var require_animeflv = __commonJS({
           const m = text.match(/var videos\s*=\s*(\{[^;]+\});/);
           if (m) videosStr = m[1];
         });
-        if (!videosStr) return [];
+        if (!videosStr) {
+          if (isNewFormat) console.log("[animeflv] new format detected for " + slug + ", falling back to Pigamer37");
+          return [];
+        }
         let videos;
         try {
           videos = JSON.parse(videosStr);
@@ -1878,68 +1943,832 @@ ${serverName}`,
   }
 });
 
+// src/puppeteer-resolver.js
+var require_puppeteer_resolver = __commonJS({
+  "src/puppeteer-resolver.js"(exports2, module2) {
+    var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+    var puppeteer = null;
+    var browser = null;
+    var browserPromise = null;
+    function getPuppeteer() {
+      return __async(this, null, function* () {
+        if (puppeteer) return puppeteer;
+        try {
+          puppeteer = (yield import("puppeteer-core")).default || puppeteer;
+          if (puppeteer) return puppeteer;
+          throw new Error("no default export");
+        } catch (e) {
+          console.error("[pptr] puppeteer-core:", e.message);
+          return null;
+        }
+      });
+    }
+    function getChromium() {
+      return __async(this, null, function* () {
+        try {
+          const mod = yield import("@sparticuz/chromium");
+          const Cr = mod.default;
+          const exePath = yield Cr.executablePath();
+          const args = Cr.args || [];
+          console.log("[pptr] chromium ready:", exePath.substring(0, 60));
+          return { executablePath: exePath, args, headless: "shell" };
+        } catch (e) {
+          console.error("[pptr] @sparticuz/chromium:", e.message);
+          return null;
+        }
+      });
+    }
+    function closeBrowser() {
+      return __async(this, null, function* () {
+        if (browser) {
+          try {
+            yield browser.close();
+          } catch (e) {
+          }
+          browser = null;
+          browserPromise = null;
+        }
+      });
+    }
+    var cache = /* @__PURE__ */ new Map();
+    var CACHE_TTL2 = 30 * 60 * 1e3;
+    function resolveEmbedWithBrowser(embedUrl, timeout = 15e3) {
+      return __async(this, null, function* () {
+        const ck = embedUrl;
+        const cached = cache.get(ck);
+        if (cached && Date.now() - cached.time < CACHE_TTL2) return cached.url;
+        let browserInstance = null;
+        let page = null;
+        try {
+          const pptr = yield getPuppeteer();
+          if (!pptr) return null;
+          const chromium = yield getChromium();
+          if (!chromium) return null;
+          browserInstance = yield pptr.launch({
+            args: chromium.args,
+            executablePath: chromium.executablePath,
+            headless: true,
+            defaultViewport: { width: 1280, height: 720 }
+          });
+          console.log("[pptr] browser launched for", embedUrl.substring(0, 40));
+          page = yield browserInstance.newPage();
+          yield page.setUserAgent(UA);
+          let videoUrl = null;
+          const blockedPatterns = ["test-videos.co.uk", "bigbuckbunny", "google.com", "analytics", "cdn.jkdesa", ".css", ".js", "videojs"];
+          yield page.setRequestInterception(true);
+          page.on("request", (req) => {
+            const u = req.url();
+            if (videoUrl) {
+              req.abort();
+              return;
+            }
+            const isVideo = /\.(m3u8|mp4|mkv|ts|webm)(\?|$)/i.test(u) || u.includes("/hls/");
+            const isBlocked = blockedPatterns.some((p) => u.includes(p));
+            if (isVideo && !isBlocked) {
+              videoUrl = u;
+              req.abort();
+            } else {
+              req.continue();
+            }
+          });
+          page.on("response", (resp) => __async(null, null, function* () {
+            if (videoUrl) return;
+            const ct = resp.headers()["content-type"] || "";
+            if ((ct.includes("mpegurl") || ct.includes("video/mp4")) && !blockedPatterns.some((p) => resp.url().includes(p))) {
+              videoUrl = resp.url();
+            }
+          }));
+          try {
+            yield page.goto(embedUrl, { waitUntil: "networkidle2", timeout });
+          } catch (e) {
+          }
+          yield new Promise((r) => setTimeout(r, 8e3));
+          if (!videoUrl) {
+            try {
+              videoUrl = yield page.evaluate(() => {
+                const v = document.querySelector("video");
+                if (v && v.src && !v.src.startsWith("blob:")) return v.src;
+                const sources = document.querySelectorAll("source[src]");
+                for (const s of sources) {
+                  const src = s.getAttribute("src");
+                  if (src && !src.startsWith("blob:") && (src.includes(".m3u8") || src.includes(".mp4"))) return src;
+                }
+                const scripts = document.querySelectorAll("script");
+                for (const s of scripts) {
+                  const c = s.textContent || "";
+                  const m = c.match(/file\s*:\s*["']([^"']+\.(?:m3u8|mp4)[^"']*)["']/);
+                  if (m) return m[1];
+                }
+                for (const s of scripts) {
+                  const c = s.textContent || "";
+                  const m = c.match(/["'](https?:\/\/[^"']+\.(?:m3u8|mp4)[^"']*)["']/);
+                  if (m && !m[1].includes("test-videos") && !m[1].includes("bigbuckbunny")) return m[1];
+                }
+                return null;
+              });
+            } catch (e) {
+            }
+          }
+          if (videoUrl && !blockedPatterns.some((p) => videoUrl.includes(p))) {
+            cache.set(ck, { url: videoUrl, time: Date.now() });
+            if (cache.size > 50) {
+              const first = cache.keys().next().value;
+              cache.delete(first);
+            }
+          }
+          return videoUrl;
+        } catch (e) {
+          console.error("[pptr] resolve error:", e.message);
+          return null;
+        } finally {
+          if (page) try {
+            yield page.close();
+          } catch (e) {
+          }
+          if (browserInstance) try {
+            yield browserInstance.close();
+          } catch (e) {
+          }
+        }
+      });
+    }
+    module2.exports = { resolveEmbedWithBrowser, closeBrowser };
+  }
+});
+
+// src/anime/scrapers/jkanime.js
+var require_jkanime = __commonJS({
+  "src/anime/scrapers/jkanime.js"(exports2, module2) {
+    var cheerio = require("cheerio-without-node-native") || require("cheerio");
+    var puppeteerResolver = require_puppeteer_resolver();
+    var BASE = "https://jkanime.net";
+    var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+    var csrfToken = null;
+    var cookies = "";
+    var lastCookieRefresh = 0;
+    var COOKIE_TTL = 10 * 60 * 1e3;
+    function fetchText(_0) {
+      return __async(this, arguments, function* (url, opts = {}) {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), opts.timeout || 15e3);
+        try {
+          const headers = __spreadValues({
+            "User-Agent": UA,
+            "Accept": opts.json ? "application/json, text/html" : "text/html",
+            "X-Requested-With": opts.ajax ? "XMLHttpRequest" : ""
+          }, opts.headers);
+          if (cookies) headers.Cookie = cookies;
+          if (csrfToken && (opts.method === "POST" || opts.ajax)) {
+            headers["X-CSRF-TOKEN"] = csrfToken;
+          }
+          for (const k of Object.keys(headers)) {
+            if (!headers[k]) delete headers[k];
+          }
+          const res = yield fetch(url, {
+            method: opts.method || "GET",
+            headers,
+            body: opts.body || null,
+            signal: ctrl.signal
+          });
+          clearTimeout(t);
+          const newCookies = res.headers.getSetCookie ? res.headers.getSetCookie() : [];
+          if (newCookies.length) {
+            cookies = newCookies.join("; ");
+            lastCookieRefresh = Date.now();
+          }
+          if (!res.ok) return null;
+          const text = yield res.text();
+          if (opts.json) {
+            try {
+              return JSON.parse(text);
+            } catch (e) {
+              return text;
+            }
+          }
+          return text;
+        } catch (e) {
+          clearTimeout(t);
+          return null;
+        }
+      });
+    }
+    function ensureCsrf() {
+      return __async(this, null, function* () {
+        if (csrfToken && Date.now() - lastCookieRefresh < COOKIE_TTL) return csrfToken;
+        const html = yield fetchText(BASE + "/");
+        if (!html) return null;
+        const m = html.match(/<meta name="csrf-token" content="([^"]+)"/);
+        if (m) csrfToken = m[1];
+        return csrfToken;
+      });
+    }
+    function search(query) {
+      return __async(this, null, function* () {
+        const url = `${BASE}/buscar/${encodeURIComponent(query)}/`;
+        const html = yield fetchText(url);
+        if (!html) return [];
+        const $ = cheerio.load(html);
+        const results = [];
+        $(".anime__item").each((_, el) => {
+          var _a;
+          const a = $(el).find("a").first();
+          const href = a.attr("href") || "";
+          const slug = href.replace(/^\/|\/$/g, "").split("/").pop();
+          const img = $(el).find(".anime__item__pic");
+          const poster = img.attr("data-setbg") || ((_a = img.css("background-image")) == null ? void 0 : _a.replace(/^url\(["']?|["']?\)$/g, "")) || "";
+          const titleEl = $(el).find(".anime__item__text h5, .anime__item__text a, h5 a").first();
+          const title = titleEl.text().trim() || $(el).find("h5").text().trim();
+          if (!slug || !title) return;
+          results.push({ title, slug, href, poster });
+        });
+        return results;
+      });
+    }
+    function getAnimeId(slug) {
+      return __async(this, null, function* () {
+        const html = yield fetchText(`${BASE}/${slug}/`);
+        if (!html) return null;
+        const m = html.match(/data-anime="(\d+)"/);
+        return m ? parseInt(m[1]) : null;
+      });
+    }
+    function getEpisodes(animeId, page = 1) {
+      return __async(this, null, function* () {
+        yield ensureCsrf();
+        const formData = new URLSearchParams();
+        formData.append("pagina", String(page));
+        const data = yield fetchText(`${BASE}/ajax/episodes/${animeId}/`, {
+          method: "POST",
+          body: formData.toString(),
+          ajax: true,
+          json: true,
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          timeout: 15e3
+        });
+        if (!data || !data.data || !Array.isArray(data.data)) return { episodes: [], total: 0, lastPage: 1 };
+        return {
+          episodes: data.data.map((e) => ({
+            id: e.id,
+            number: e.number,
+            title: e.title || `Episodio ${e.number}`
+          })),
+          total: data.total || 0,
+          lastPage: data.last_page || 1
+        };
+      });
+    }
+    function getEpisodePage(slug, episodeNumber) {
+      return __async(this, null, function* () {
+        const url = `${BASE}/${slug}/${episodeNumber}/`;
+        const html = yield fetchText(url);
+        if (!html) return null;
+        return html;
+      });
+    }
+    function extractIframes(html) {
+      const results = [];
+      const iframeRe = /<iframe[^>]+src="([^"]+)"/gi;
+      let m;
+      while ((m = iframeRe.exec(html)) !== null) {
+        const src = m[1];
+        if (src.includes("jkplayer") || src.includes("embed") || src.includes("stream")) {
+          results.push(src.startsWith("http") ? src : BASE + src);
+        }
+      }
+      return results;
+    }
+    function extractServers(html) {
+      const serverMatch = html.match(/var servers\s*=\s*(\[[\s\S]*?\]);/);
+      if (serverMatch) {
+        try {
+          const servers = JSON.parse(serverMatch[1]);
+          const results2 = [];
+          for (const s of servers) {
+            try {
+              const url = Buffer.from(s.remote, "base64").toString("utf-8").trim();
+              if (url && url.startsWith("http")) {
+                results2.push({
+                  server: s.server,
+                  lang: s.lang === 1 ? "SUB" : s.lang === 2 ? "LAT" : s.lang === 3 ? "DUB" : "",
+                  size: s.size || "",
+                  url
+                });
+              }
+            } catch (e) {
+            }
+          }
+          return results2;
+        } catch (e) {
+        }
+      }
+      const $ = cheerio.load(html);
+      const results = [];
+      $("table tbody tr").each((_, el) => {
+        const tds = $(el).find("td");
+        if (tds.length < 4) return;
+        const server = $(tds[0]).text().trim();
+        const size = $(tds[1]).text().trim();
+        const a = $(tds[3]).find("a").first();
+        const href = a.attr("href") || "";
+        if (!server || !href) return;
+        results.push({ server, size, url: href });
+      });
+      return results;
+    }
+    function extractM3U8(html) {
+      const m3u8Re = /(https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*)/gi;
+      const matches = [];
+      let m;
+      while ((m = m3u8Re.exec(html)) !== null) {
+        matches.push(m[1]);
+      }
+      return [...new Set(matches)];
+    }
+    function extractMP4(html) {
+      const mp4Re = /(https?:\/\/[^"'\s<>]+\.mp4[^"'\s<>]*)/gi;
+      const matches = [];
+      let m;
+      while ((m = mp4Re.exec(html)) !== null) {
+        const url = m[1];
+        if (!url.includes("cdn.jkdesa.com") && !url.includes("google")) {
+          matches.push(url);
+        }
+      }
+      return [...new Set(matches)];
+    }
+    function getStreams(slug, episode) {
+      return __async(this, null, function* () {
+        const page = yield getEpisodePage(slug, episode);
+        if (!page) return [];
+        const iframes = extractIframes(page);
+        const servers = extractServers(page);
+        const results = [];
+        const playerNames = ["Desu", "Magi"];
+        for (let idx = 0; idx < iframes.length && idx < 2; idx++) {
+          const iframeUrl = iframes[idx];
+          try {
+            const iframeHtml = yield fetchText(iframeUrl, { timeout: 1e4 });
+            if (!iframeHtml) continue;
+            const m3u8s = extractM3U8(iframeHtml);
+            const mp4s = extractMP4(iframeHtml);
+            const label = playerNames[idx] || "JKPlayer";
+            for (const url of [.../* @__PURE__ */ new Set([...m3u8s, ...mp4s])]) {
+              const host = new URL(url).hostname;
+              results.push({
+                url,
+                server: `${label} (${host})`,
+                name: `JKAnime
+${label}`,
+                title: `${slug} Ep. ${episode}
+\u2699\uFE0F ${label} \xB7 ${host}`,
+                description: "M3U8 Directo",
+                behaviorHints: { notWebReady: false, bingeGroup: `jkanime|${label.toLowerCase()}` }
+              });
+            }
+          } catch (e) {
+          }
+        }
+        for (const s of servers) {
+          const label = s.server + (s.lang ? " " + s.lang : "") + (s.size ? " " + s.size : "");
+          let finalUrl = s.url;
+          let isResolved = false;
+          if (s.url.includes("c1.jkplayers.com") || s.url.includes("jkplayers.com/d/")) {
+            try {
+              const res = yield fetch(s.url, { method: "GET", redirect: "follow", signal: AbortSignal.timeout(8e3) });
+              if (res.ok) {
+                const realUrl = res.url;
+                if (realUrl !== s.url && realUrl.startsWith("http")) finalUrl = realUrl;
+              }
+            } catch (e) {
+            }
+          }
+          if (!/\.(mp4|mkv|m3u8)($|\?)/i.test(finalUrl) && finalUrl.startsWith("http")) {
+            try {
+              const direct = yield puppeteerResolver.resolveEmbedWithBrowser(finalUrl, 12e3);
+              if (direct && direct.startsWith("http")) {
+                finalUrl = direct;
+                isResolved = true;
+              }
+            } catch (e) {
+            }
+          }
+          const isDirect = isResolved || /\.(mp4|mkv|m3u8)($|\?)/i.test(finalUrl);
+          results.push({
+            url: finalUrl,
+            server: s.server,
+            name: `JKAnime
+${s.server}`,
+            title: `${slug} Ep. ${episode}
+\u2699\uFE0F ${label}${isResolved ? " (directo)" : ""}`,
+            description: s.lang || "",
+            behaviorHints: { notWebReady: !isDirect, bingeGroup: `jkanime|${s.server}` }
+          });
+        }
+        return results;
+      });
+    }
+    function getOnAir() {
+      return __async(this, null, function* () {
+        return [];
+      });
+    }
+    module2.exports = { search, getEpisodes, getStreams, getAnimeId, getOnAir, BASE, ensureCsrf };
+  }
+});
+
+// src/anime/scrapers/tioanime.js
+var require_tioanime = __commonJS({
+  "src/anime/scrapers/tioanime.js"(exports2, module2) {
+    var cheerio = require("cheerio-without-node-native") || require("cheerio");
+    var BASE = "https://tioanime.com";
+    var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+    function fetchText(url, timeout = 15e3) {
+      return __async(this, null, function* () {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), timeout);
+        try {
+          const res = yield fetch(url, { headers: { "User-Agent": UA }, signal: ctrl.signal });
+          clearTimeout(t);
+          if (!res.ok) return null;
+          return yield res.text();
+        } catch (e) {
+          clearTimeout(t);
+          return null;
+        }
+      });
+    }
+    function search(query) {
+      return __async(this, null, function* () {
+        const html = yield fetchText(`${BASE}/directorio?q=${encodeURIComponent(query)}`);
+        if (!html) return [];
+        const $ = cheerio.load(html);
+        const results = [];
+        $("article.anime").each((_, el) => {
+          const a = $(el).find("a").first();
+          const href = a.attr("href") || "";
+          const slug = href.replace("/anime/", "").replace(/\/$/, "");
+          const title = $(el).find("h3.title, h4, h5").first().text().trim();
+          const poster = $(el).find("img").attr("src") || "";
+          if (!slug || !title) return;
+          results.push({ title, slug, href, poster });
+        });
+        return results;
+      });
+    }
+    function getStreams(slug, episode) {
+      return __async(this, null, function* () {
+        const html = yield fetchText(`${BASE}/ver/${slug}-${episode}`);
+        if (!html) return [];
+        let videosStr = null;
+        const $ = cheerio.load(html);
+        $("script").each((_, el) => {
+          const text = $(el).html() || "";
+          const m = text.match(/var videos\s*=\s*(\[[\s\S]*?\]);/);
+          if (m) videosStr = m[1];
+        });
+        if (!videosStr) return [];
+        let videos;
+        try {
+          videos = JSON.parse(videosStr);
+        } catch (e) {
+          return [];
+        }
+        if (!Array.isArray(videos)) return [];
+        const results = [];
+        for (const v of videos) {
+          const server = v[0] || "?";
+          const url = (v[1] || "").replace(/\\\//g, "/");
+          if (!url || !url.startsWith("http")) continue;
+          const isDirect = /\.(mp4|mkv|m3u8)($|\?)/i.test(url);
+          const isEmbed = /\/embed\/|embed|e\//.test(url);
+          results.push({
+            url,
+            server,
+            name: `TioAnime
+${server}`,
+            title: `${slug} Ep. ${episode}
+\u2699\uFE0F ${server}`,
+            description: "",
+            behaviorHints: {
+              notWebReady: !isDirect,
+              bingeGroup: `tioanime|${server}`
+            }
+          });
+        }
+        return results;
+      });
+    }
+    function getOnAir() {
+      return __async(this, null, function* () {
+        const html = yield fetchText(BASE);
+        if (!html) return [];
+        const $ = cheerio.load(html);
+        const items = [];
+        $("article.anime").each((_, el) => {
+          const a = $(el).find("a").first();
+          const href = a.attr("href") || "";
+          const slug = href.replace("/anime/", "").replace(/\/$/, "");
+          if (!slug) return;
+          const title = $(el).find("h3.title, h4, h5").first().text().trim();
+          if (!title) return;
+          items.push({
+            id: `tioanime:${slug}`,
+            type: "series",
+            name: title,
+            poster: $(el).find("img").attr("src") || ""
+          });
+        });
+        return items;
+      });
+    }
+    module2.exports = { search, getStreams, getOnAir };
+  }
+});
+
+// src/anime/scrapers/animeav1.js
+var require_animeav1 = __commonJS({
+  "src/anime/scrapers/animeav1.js"(exports2, module2) {
+    var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+    function fetchText(url, timeout = 15e3) {
+      return __async(this, null, function* () {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), timeout);
+        try {
+          const res = yield fetch(url, { headers: { "User-Agent": UA }, signal: ctrl.signal });
+          clearTimeout(t);
+          if (!res.ok) return null;
+          return yield res.text();
+        } catch (e) {
+          clearTimeout(t);
+          return null;
+        }
+      });
+    }
+    function fetchJson(url, timeout = 15e3) {
+      return __async(this, null, function* () {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), timeout);
+        try {
+          const res = yield fetch(url, {
+            headers: { "User-Agent": UA, "Accept": "application/json" },
+            signal: ctrl.signal
+          });
+          clearTimeout(t);
+          if (!res.ok) return null;
+          return yield res.json();
+        } catch (e) {
+          clearTimeout(t);
+          return null;
+        }
+      });
+    }
+    function resolveDevalue(flatData) {
+      function resolve(val) {
+        if (typeof val === "number") return flatData[val];
+        if (Array.isArray(val)) return val.map(resolve);
+        if (val && typeof val === "object") {
+          const out = {};
+          for (const [k, v] of Object.entries(val)) {
+            out[k] = resolve(v);
+          }
+          return out;
+        }
+        return val;
+      }
+      function findServers(data) {
+        const results = { embeds: {}, downloads: {} };
+        if (typeof data !== "object" || !data) return results;
+        for (const [key, val] of Object.entries(data)) {
+          if (typeof key === "string" && ["SUB", "DUB", "LAT"].includes(key) && typeof val === "number") {
+            const arr = flatData[val];
+            if (Array.isArray(arr)) {
+              for (const ref of arr) {
+                if (typeof ref !== "number") continue;
+                const obj = flatData[ref];
+                if (obj && typeof obj === "object" && obj.server && obj.url) {
+                  const server = typeof obj.server === "number" ? flatData[obj.server] : obj.server;
+                  const url = typeof obj.url === "number" ? flatData[obj.url] : obj.url;
+                  if (typeof server === "string" && typeof url === "string" && url.startsWith("http")) {
+                    if (!results.embeds[key]) results.embeds[key] = [];
+                    results.embeds[key].push({ server, url });
+                  }
+                }
+              }
+            }
+          }
+        }
+        return results;
+      }
+      const allValues = {};
+      const resolved = flatData.map((v, i) => {
+        const r = resolve(v);
+        allValues[i] = r;
+        return r;
+      });
+      const servers = { embeds: {}, downloads: {} };
+      for (let i = 0; i < resolved.length; i++) {
+        const val = resolved[i];
+        if (val && typeof val === "object" && !Array.isArray(val)) {
+          for (const [lang, ref] of Object.entries(val)) {
+            if (["SUB", "DUB", "LAT"].includes(lang) && typeof ref === "number") {
+              const serverIds = flatData[ref];
+              if (Array.isArray(serverIds)) {
+                for (const id of serverIds) {
+                  if (typeof id !== "number") continue;
+                  const serverObj = flatData[id];
+                  if (serverObj && serverObj.server && serverObj.url) {
+                    const srv = typeof serverObj.server === "number" ? flatData[serverObj.server] : serverObj.server;
+                    const u = typeof serverObj.url === "number" ? flatData[serverObj.url] : serverObj.url;
+                    if (typeof srv === "string" && typeof u === "string" && u.startsWith("http")) {
+                      servers.embeds[lang] = servers.embeds[lang] || [];
+                      servers.embeds[lang].push({ server: srv, url: u });
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      return servers;
+    }
+    function search(query) {
+      return __async(this, null, function* () {
+        try {
+          const html = yield fetchText(`https://animeav1.com/search?q=${encodeURIComponent(query)}`);
+          if (!html) return [];
+          const cheerio = require("cheerio-without-node-native") || require("cheerio");
+          const $ = cheerio.load(html);
+          const results = [];
+          $('a[href*="/anime/"], a[href*="/media/"]').each((_, el) => {
+            const href = $(el).attr("href") || "";
+            const match = href.match(/^\/(?:anime|media)\/([^/]+)\/?$/);
+            if (!match) return;
+            const slug = match[1];
+            const title = $(el).find("h2, h3, [class*=title]").first().text().trim() || $(el).attr("title") || $(el).text().trim();
+            if (!title || title.length < 2) return;
+            results.push({ title, slug, href, poster: "" });
+          });
+          return [...new Map(results.map((r) => [r.slug, r])).values()];
+        } catch (e) {
+          return [];
+        }
+      });
+    }
+    function getStreams(slug, episode) {
+      return __async(this, null, function* () {
+        try {
+          const data = yield fetchJson(`https://animeav1.com/media/${slug}/${episode}/__data.json`);
+          if (!(data == null ? void 0 : data.nodes)) return [];
+          for (const node of data.nodes) {
+            if ((node == null ? void 0 : node.type) !== "data" || !Array.isArray(node.data)) continue;
+            const servers = resolveDevalue(node.data);
+            const results = [];
+            for (const [lang, serverList] of Object.entries(servers.embeds)) {
+              for (const { server, url } of serverList) {
+                const isDirect = /\.(mp4|mkv|m3u8)($|\?)/i.test(url);
+                let finalUrl = url;
+                if (server === "HLS" && url.includes("zilla-networks.com")) {
+                  try {
+                    const playerHtml = yield fetchText(url, 1e4);
+                    if (playerHtml) {
+                      const m3u8Match = playerHtml.match(/https?:\/\/[^"'\s]+\.m3u8[^"'\s]*/i);
+                      if (m3u8Match) finalUrl = m3u8Match[0];
+                    }
+                  } catch (e) {
+                  }
+                }
+                results.push({
+                  url: finalUrl,
+                  server,
+                  name: `AnimeAV1
+${server}`,
+                  title: `${slug} Ep. ${episode}
+\u2699\uFE0F ${server} [${lang}]`,
+                  description: lang,
+                  behaviorHints: {
+                    notWebReady: !isDirect,
+                    bingeGroup: `animeav1|${server}`
+                  }
+                });
+              }
+            }
+            return results;
+          }
+          return [];
+        } catch (e) {
+          return [];
+        }
+      });
+    }
+    module2.exports = { search, getStreams };
+  }
+});
+
 // src/anime/scrapers/index.js
 var require_scrapers = __commonJS({
   "src/anime/scrapers/index.js"(exports2, module2) {
     var animeflv = require_animeflv();
+    var jkanime = require_jkanime();
+    var tioanime = require_tioanime();
+    var animeav1 = require_animeav1();
+    var animePrefixes = ["animeflv:", "animeav1:", "henaojara:", "tioanime:", "jkanime:"];
     function getStreams(id, season, episode, pigamerGetStreams) {
       return __async(this, null, function* () {
         var _a, _b;
-        const animePrefixes = ["animeflv:", "animeav1:", "henaojara:", "tioanime:"];
         const hasAnimePrefix = animePrefixes.some((p) => id.startsWith(p));
-        if (hasAnimePrefix) {
-          const slug = extractSlug(id);
-          if (!slug || slug.match(/^\d+$/)) {
-          } else {
-            const promises = [];
-            if (id.startsWith("animeflv:")) {
-              promises.push(
-                (() => __async(null, null, function* () {
-                  try {
-                    const streams = yield animeflv.getStreams(slug, episode || 1);
-                    return { provider: "AnimeFLV", streams };
-                  } catch (e) {
-                    return { provider: "AnimeFLV", streams: [] };
-                  }
-                }))()
-              );
-            }
-            const providers = [
-              { prefix: "animeflv:", label: "AnimeFLV" },
-              { prefix: "animeav1:", label: "AnimeAV1" },
-              { prefix: "henaojara:", label: "Henaojara" },
-              { prefix: "tioanime:", label: "TioAnime" }
-            ];
-            for (const { prefix, label } of providers) {
-              if (id.startsWith(prefix)) continue;
-              const providerId = `${prefix}${slug}`;
-              promises.push(
-                (() => __async(null, null, function* () {
-                  try {
-                    const streams = yield pigamerGetStreams(providerId, season, episode);
-                    return { provider: label, streams };
-                  } catch (e) {
-                    return { provider: label, streams: [] };
-                  }
-                }))()
-              );
-            }
-            const results = yield Promise.allSettled(promises);
-            const allStreams = [];
-            for (const r of results) {
-              if (r.status === "fulfilled" && ((_b = (_a = r.value) == null ? void 0 : _a.streams) == null ? void 0 : _b.length)) {
-                allStreams.push(...r.value.streams);
-              }
-            }
-            if (allStreams.length) return { source: "parallel", streams: allStreams };
+        if (!hasAnimePrefix) {
+          try {
+            const streams = yield pigamerGetStreams(id, season, episode);
+            return { source: "pigamer", streams: streams || [] };
+          } catch (e) {
+            return { source: "error", streams: [] };
           }
         }
-        try {
-          const streams = yield pigamerGetStreams(id, season, episode);
-          return { source: "pigamer", streams };
-        } catch (e) {
-          return { source: "error", streams: [] };
+        const slug = extractSlug(id);
+        if (!slug || slug.match(/^\d+$/)) {
+          try {
+            const streams = yield pigamerGetStreams(id, season, episode);
+            return { source: "pigamer", streams: streams || [] };
+          } catch (e) {
+            return { source: "error", streams: [] };
+          }
         }
+        const ep = episode || 1;
+        const promises = [];
+        if (id.startsWith("jkanime:")) {
+          promises.push(
+            (() => __async(null, null, function* () {
+              try {
+                return { provider: "JKAnime", streams: yield jkanime.getStreams(slug, ep) };
+              } catch (e) {
+                return { provider: "JKAnime", streams: [] };
+              }
+            }))()
+          );
+        }
+        if (id.startsWith("tioanime:")) {
+          promises.push(
+            (() => __async(null, null, function* () {
+              try {
+                return { provider: "TioAnime", streams: yield tioanime.getStreams(slug, ep) };
+              } catch (e) {
+                return { provider: "TioAnime", streams: [] };
+              }
+            }))()
+          );
+        }
+        if (id.startsWith("animeflv:")) {
+          promises.push(
+            (() => __async(null, null, function* () {
+              try {
+                return { provider: "AnimeFLV", streams: yield animeflv.getStreams(slug, ep) };
+              } catch (e) {
+                return { provider: "AnimeFLV", streams: [] };
+              }
+            }))()
+          );
+        }
+        if (id.startsWith("animeav1:")) {
+          promises.push(
+            (() => __async(null, null, function* () {
+              try {
+                return { provider: "AnimeAV1", streams: yield animeav1.getStreams(slug, ep) };
+              } catch (e) {
+                return { provider: "AnimeAV1", streams: [] };
+              }
+            }))()
+          );
+        }
+        if (!id.startsWith("jkanime:")) {
+          const pigamerProviders = [
+            { prefix: "animeflv:", label: "AnimeFLV" },
+            { prefix: "animeav1:", label: "AnimeAV1" },
+            { prefix: "henaojara:", label: "Henaojara" },
+            { prefix: "tioanime:", label: "TioAnime" }
+          ];
+          for (const { prefix, label } of pigamerProviders) {
+            if (id.startsWith(prefix)) continue;
+            promises.push(
+              (() => __async(null, null, function* () {
+                try {
+                  const streams = yield pigamerGetStreams(`${prefix}${slug}`, season, episode);
+                  return { provider: label, streams };
+                } catch (e) {
+                  return { provider: label, streams: [] };
+                }
+              }))()
+            );
+          }
+        }
+        const results = yield Promise.allSettled(promises);
+        const allStreams = [];
+        for (const r of results) {
+          if (r.status === "fulfilled" && ((_b = (_a = r.value) == null ? void 0 : _a.streams) == null ? void 0 : _b.length)) {
+            allStreams.push(...r.value.streams);
+          }
+        }
+        return { source: "parallel", streams: allStreams };
       });
     }
     function extractSlug(id) {
@@ -1956,7 +2785,20 @@ var require_scrapers = __commonJS({
         return { metas: [] };
       });
     }
-    module2.exports = { getStreams, getOnAirCatalog, animeflv };
+    function searchCatalog2(providerId, query) {
+      return __async(this, null, function* () {
+        if (providerId === "jkanime|search") {
+          const results = yield jkanime.search(query);
+          return { metas: results.map((r) => ({ id: `jkanime:${r.slug}`, type: "series", name: r.title, poster: r.poster })) };
+        }
+        if (providerId === "tioanime|search") {
+          const results = yield tioanime.search(query);
+          return { metas: results.map((r) => ({ id: `tioanime:${r.slug}`, type: "series", name: r.title, poster: r.poster })) };
+        }
+        return { metas: [] };
+      });
+    }
+    module2.exports = { getStreams, getOnAirCatalog, searchCatalog: searchCatalog2, animeflv, jkanime, tioanime, animeav1 };
   }
 });
 

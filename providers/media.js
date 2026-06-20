@@ -1,6 +1,6 @@
 /**
  * media - Built from src/media/
- * Generated: 2026-06-19T19:27:12.293Z
+ * Generated: 2026-06-20T10:03:39.606Z
  */
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __commonJS = (cb, mod) => function __require() {
@@ -286,7 +286,7 @@ var require_tmdb = __commonJS({
     }
     function isJapaneseAnime(data) {
       if (!data) return false;
-      const hasGenre16 = (data.genres || []).some((g) => g.id === 16);
+      const hasGenre16 = (data.genres || []).some((g) => g.id === 16) || (data.genre_ids || []).includes(16);
       const isJP = (data.origin_country || []).includes("JP") || (data.production_countries || []).some((c) => c.iso_3166_1 === "JP") || data.original_language === "ja";
       return hasGenre16 && isJP;
     }

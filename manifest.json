@@ -2,7 +2,7 @@
   "id": "com.ovnivers.allinone",
   "version": "1.13.0",
   "name": "Ovnivers All-in-One",
-  "description": "62 scrapers + 2 backend scrapers (8 mirrors) + Pigamer37 anime proxy (AnimeFLV/AnimeAV1/TioAnime/Henaojara). Movies, TV, anime, multi-language, up to 4K.",
+  "description": "62 scrapers Hermes + 19 scrapers locales + Alfa bridge + 2 backend scrapers (8 mirrors) + Pigamer37 anime proxy (AnimeFLV/AnimeAV1/TioAnime/Henaojara). Movies, TV, anime, multi-language, up to 4K.",
   "logo": "https://raw.githubusercontent.com/leonidas10009/ovnivers/main/logo.png",
   "resources": [
     {
@@ -228,6 +228,34 @@
     "newEpisodeNotifications": true
   },
   "scrapers": [
+    {
+      "id": "ovnivers-local",
+      "name": "Ovnivers Red Local",
+      "description": "19 scrapers locales optimizados para Android/IP residencial (sin cheerio, regex-based). Movies, series, anime en español. Cloudflare sin Turnstile.",
+      "version": "1.13.0",
+      "author": "ovnivers",
+      "supportedTypes": [
+        "movie",
+        "tv"
+      ],
+      "filename": "providers/local-scrapers.js",
+      "enabled": true,
+      "limited": true,
+      "formats": [
+        "mp4",
+        "mkv",
+        "m3u8"
+      ],
+      "logo": "https://raw.githubusercontent.com/leonidas10009/ovnivers/main/logo.png",
+      "contentLanguage": [
+        "es",
+        "lat",
+        "cast",
+        "vose",
+        "ja",
+        "en"
+      ]
+    },
     {
       "id": "allanime",
       "name": "AllAnime",

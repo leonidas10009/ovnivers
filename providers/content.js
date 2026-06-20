@@ -1,6 +1,6 @@
 /**
  * content - Built from src/content/
- * Generated: 2026-06-19T19:27:12.284Z
+ * Generated: 2026-06-20T10:03:39.592Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -305,7 +305,7 @@ var require_tmdb = __commonJS({
     }
     function isJapaneseAnime(data) {
       if (!data) return false;
-      const hasGenre16 = (data.genres || []).some((g) => g.id === 16);
+      const hasGenre16 = (data.genres || []).some((g) => g.id === 16) || (data.genre_ids || []).includes(16);
       const isJP = (data.origin_country || []).includes("JP") || (data.production_countries || []).some((c) => c.iso_3166_1 === "JP") || data.original_language === "ja";
       return hasGenre16 && isJP;
     }
@@ -327,7 +327,7 @@ var require_tmdb = __commonJS({
 // src/anime/types.js
 var require_types2 = __commonJS({
   "src/anime/types.js"(exports2, module2) {
-    var ANIME_SOURCE_PREFIXES = ["animeflv:", "animeav1:", "henaojara:", "tioanime:"];
+    var ANIME_SOURCE_PREFIXES = ["animeflv:", "animeav1:", "henaojara:", "tioanime:", "jkanime:"];
     var ANIME_XREF_PREFIXES = ["anilist:", "kitsu:", "mal:", "anidb:"];
     var ANIME_LOCAL_PREFIXES = ["ovn-anime:"];
     var ANIME_PREFIXES = [...ANIME_SOURCE_PREFIXES, ...ANIME_XREF_PREFIXES, ...ANIME_LOCAL_PREFIXES];
@@ -1246,6 +1246,7 @@ var require_identifier = __commonJS({
     }
     function classify(rawId, type, mediaType) {
       return __async(this, null, function* () {
+        var _a, _b, _c, _d;
         const byPrefix = classifyByPrefix(rawId);
         if (byPrefix === CONTENT_ANIME) {
           return {
@@ -1268,7 +1269,44 @@ var require_identifier = __commonJS({
             confidence: 0.9
           };
         }
-        const cleanId = rawId.replace(/^(ovn:|tmdb:|tt)/, "");
+        const ttMatch = rawId.match(/^tt:?(\d{2,})(?::\d+(?::\d+)?)?$/);
+        if (ttMatch) {
+          const imdbId = `tt${ttMatch[1]}`;
+          const imdbData = yield tmdb.findByIMDB(imdbId);
+          if (imdbData) {
+            const result = ((_a = mediaType === "tv" ? imdbData.tv_results : imdbData.movie_results) == null ? void 0 : _a[0]) || ((_b = imdbData.tv_results) == null ? void 0 : _b[0]) || ((_c = imdbData.movie_results) == null ? void 0 : _c[0]);
+            if (result) {
+              const isAnime = tmdb.isJapaneseAnime(result);
+              const isMovie = result.media_type === "movie" || !result.seasons;
+              return {
+                contentType: isAnime ? CONTENT_ANIME : isMovie ? CONTENT_MOVIE : CONTENT_SERIES,
+                isAnime,
+                isMovie: !isAnime && isMovie,
+                isSeries: !isAnime && !isMovie,
+                method: "imdb-to-tmdb",
+                confidence: 0.95,
+                tmdbId: result.id,
+                title: result.title || result.name || "",
+                year: tmdb.extractYear(result),
+                genres: (result.genres || []).map((g) => ({ id: g.id, name: g.name })),
+                hasSeasons: !!((_d = result.seasons) == null ? void 0 : _d.length),
+                episodeCount: result.number_of_episodes || 0,
+                seasonCount: result.number_of_seasons || 0,
+                originCountry: result.origin_country || [],
+                originalLanguage: result.original_language || ""
+              };
+            }
+          }
+          return {
+            contentType: byType || (mediaType === "tv" ? CONTENT_SERIES : CONTENT_MOVIE),
+            isAnime: false,
+            isMovie: mediaType !== "tv",
+            isSeries: mediaType === "tv",
+            method: "imdb-fallback",
+            confidence: 0.2
+          };
+        }
+        const cleanId = rawId.replace(/^(ovn:|tmdb:|tt:)/, "");
         if (!cleanId.match(/^\d+$/)) {
           return {
             contentType: byType || CONTENT_MOVIE,
@@ -1279,6 +1317,7 @@ var require_identifier = __commonJS({
             confidence: 0.5
           };
         }
+        const tmdbId = parseInt(cleanId);
         const tmdbResult = yield classifyByTMDB(cleanId, mediaType);
         if (tmdbResult) {
           return {
@@ -1288,12 +1327,15 @@ var require_identifier = __commonJS({
             isSeries: tmdbResult.isSeries,
             method: "tmdb",
             confidence: 0.95,
+            tmdbId,
             title: tmdbResult.title,
             year: tmdbResult.year,
             genres: tmdbResult.genres,
             hasSeasons: tmdbResult.hasSeasons,
             episodeCount: tmdbResult.episodeCount,
-            seasonCount: tmdbResult.seasonCount
+            seasonCount: tmdbResult.seasonCount,
+            originCountry: tmdbResult.originCountry,
+            originalLanguage: tmdbResult.originalLanguage
           };
         }
         return {
@@ -1360,7 +1402,7 @@ var require_episode = __commonJS({
       }
       map.set(key, { value, time: Date.now() });
     }
-    var ANIME_PREFIXES = ["animeflv:", "anilist:", "mal:", "kitsu:", "anidb:", "simkl:", "animeplanet:", "livechart:", "animenewsnetwork:", "anisearch:", "thetvdb:", "myanimelist:", "ovn-anime:"];
+    var ANIME_PREFIXES = ["animeflv:", "animeav1:", "henaojara:", "tioanime:", "jkanime:", "anilist:", "mal:", "kitsu:", "anidb:", "simkl:", "animeplanet:", "livechart:", "animenewsnetwork:", "anisearch:", "thetvdb:", "myanimelist:", "ovn-anime:"];
     function parseEpisodeId(id) {
       let contentId = id;
       let season = 1;

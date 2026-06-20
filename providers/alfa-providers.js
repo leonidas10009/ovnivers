@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-19T19:27:12.234Z
+ * Generated: 2026-06-20T10:03:39.538Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -423,10 +423,8 @@ var require_providers = __commonJS({
         language: ["lat", "cast"],
         active: true,
         adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h3", linkSelector: "a" },
-        // <-- fixed
-        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", defaultQuality: "HD", srcAttr: "src" }
-        // <-- fixed
+        search: { url: "/search?s={query}", itemSelector: "article.card, article.episode-card", titleSelector: "h2.card__title, h3.episode-card__title", linkSelector: "a[href]" },
+        videos: { type: "iframe", containerSelector: ".player-box", iframeSelector: "iframe", defaultQuality: "HD", srcAttr: "src" }
       },
       {
         name: "tubeonline",
@@ -542,10 +540,9 @@ var require_providers = __commonJS({
         baseUrl: "https://www.lacartoons.com",
         categories: ["tvshow"],
         language: ["lat"],
-        active: false,
-        // 404 - site moved or changed URL
+        active: true,
         adult: false,
-        search: { url: "/search/{query}", itemSelector: ".serie-item", titleSelector: ".title", linkSelector: "a" },
+        search: { url: "/?Titulo={query}", itemSelector: 'a[href^="/serie/"]', titleSelector: "p.nombre-serie", linkSelector: "&" },
         episodes: { type: "season-list", seasonSelector: ".temporadas a", episodeSelector: ".episodios a" },
         videos: { type: "iframe", containerSelector: ".player", iframeSelector: "iframe", defaultQuality: "HD" }
       },
@@ -576,13 +573,14 @@ var require_providers = __commonJS({
       {
         name: "animejara",
         title: "AnimeJara",
-        baseUrl: "https://animejara.net",
+        baseUrl: "https://animejara.com",
         categories: ["anime"],
         language: ["cast", "lat", "vose"],
-        active: false,
+        active: true,
         adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "jsvar", varPattern: /var videos = (\[.*?\]);/, defaultQuality: "HD" }
+        search: { url: "/?s={query}", itemSelector: "a.anime-card", titleSelector: ".card-title", linkSelector: "&" },
+        episodes: { type: "url", pattern: "/episode/{slug}-1x{episode}/" },
+        videos: { type: "iframe", containerSelector: ".episodio-reproductor", iframeSelector: "iframe", defaultQuality: "HD" }
       },
       {
         name: "animejl",
@@ -799,7 +797,7 @@ var require_providers = __commonJS({
         language: ["cast", "lat"],
         active: true,
         adult: false,
-        search: { url: "/search/{query}", itemSelector: 'div.col-md-2:has(a[href*="player.php"])', titleSelector: 'a[href*="player.php"]', linkSelector: 'a[href*="player.php"]' },
+        search: { url: "/resultados.php?buscar={query}", itemSelector: "div.w3l-movie-gride-agile", titleSelector: "div.w3l-movie-text h6 a", linkSelector: "a.hvr-shutter-out-horizontal" },
         videos: { type: "iframe", containerSelector: ".player", iframeSelector: "iframe", defaultQuality: "HD" }
       },
       {
@@ -2516,7 +2514,7 @@ var require_engine = __commonJS({
 // src/anime/types.js
 var require_types = __commonJS({
   "src/anime/types.js"(exports2, module2) {
-    var ANIME_SOURCE_PREFIXES = ["animeflv:", "animeav1:", "henaojara:", "tioanime:"];
+    var ANIME_SOURCE_PREFIXES = ["animeflv:", "animeav1:", "henaojara:", "tioanime:", "jkanime:"];
     var ANIME_XREF_PREFIXES = ["anilist:", "kitsu:", "mal:", "anidb:"];
     var ANIME_LOCAL_PREFIXES = ["ovn-anime:"];
     var ANIME_PREFIXES = [...ANIME_SOURCE_PREFIXES, ...ANIME_XREF_PREFIXES, ...ANIME_LOCAL_PREFIXES];
