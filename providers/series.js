@@ -1,6 +1,6 @@
 /**
  * series - Built from src/series/
- * Generated: 2026-06-20T13:41:10.014Z
+ * Generated: 2026-06-20T14:24:02.572Z
  */
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __commonJS = (cb, mod) => function __require() {

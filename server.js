@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.13.2
+ * Ovnivers — Stremio Addon Backend v1.13.3
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
@@ -80,7 +80,7 @@ if (process.env.SCRAPELESS_API_KEY) {
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.13.2';
+const VERSION = '1.13.3';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 // Available languages for filtering
@@ -1349,8 +1349,13 @@ async function handleStream(req, res, type, id) {
   }
 
   if (config.enableLocal) {
-    streamTasks.push(scrapeAlfa(animeProviderId || rawId, mediaType, type, season, episode, config, isAnime));
-    streamTasks.push(scrapeLocalProviders(animeProviderId || rawId, mediaType, type, season, episode, config, isAnime));
+    const hasPuppeteerResolver = isAnime && animeFullId && (
+      animeFullId.startsWith('jkanime:') || animeFullId.startsWith('tioanime:') || animeFullId.startsWith('animeav1:')
+    );
+    if (!hasPuppeteerResolver) {
+      streamTasks.push(scrapeAlfa(animeProviderId || rawId, mediaType, type, season, episode, config, isAnime));
+      streamTasks.push(scrapeLocalProviders(animeProviderId || rawId, mediaType, type, season, episode, config, isAnime));
+    }
   }
 
   streamTasks.push((async () => {
@@ -1475,6 +1480,7 @@ async function handleStream(req, res, type, id) {
   ]);
 
   let unique = media.dedup.dedupeWithPriority(rawStreams, true);
+  unique = media.dedup.dedupeServerAware(unique);
 
   const unresolved = unique.filter(s => s.url && !s.infoHash && s.behaviorHints?.notWebReady);
   if (unresolved.length > 0) {

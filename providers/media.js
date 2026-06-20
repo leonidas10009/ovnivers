@@ -1,6 +1,6 @@
 /**
  * media - Built from src/media/
- * Generated: 2026-06-20T13:41:09.971Z
+ * Generated: 2026-06-20T14:24:02.551Z
  */
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __commonJS = (cb, mod) => function __require() {
@@ -516,7 +516,48 @@ var require_dedup = __commonJS({
       }
       return [...map.values()];
     }
-    module2.exports = { buildKey, dedupeStreams, dedupeWithPriority };
+    function extractServerKey(s) {
+      const nameStr = (s.name || "").toLowerCase();
+      const lines = nameStr.split("\n");
+      let server = "";
+      for (let i = lines.length - 1; i >= 0; i--) {
+        const cleaned = lines[i].replace(/^[⚙️🔗📦🧲\s]+/, "").replace(/[\u{1F1E6}-\u{1F1FF}]{2,}/ug, "").trim();
+        if (cleaned.length >= 2) {
+          server = cleaned;
+          break;
+        }
+      }
+      const quality2 = s.quality || "";
+      const langs = Array.isArray(s.languages) ? s.languages.sort().join(",") : "";
+      return `${server}|${quality2}|${langs}`;
+    }
+    function dedupeServerAware(streams) {
+      const map = /* @__PURE__ */ new Map();
+      for (const s of streams) {
+        const sk = extractServerKey(s);
+        if (!sk || sk.startsWith("|")) {
+          map.set(s.url || s.infoHash || Math.random().toString(36), s);
+          continue;
+        }
+        const existing = map.get(sk);
+        if (!existing) {
+          map.set(sk, s);
+          continue;
+        }
+        const newIsDirect = s.url && s.behaviorHints && !s.behaviorHints.notWebReady;
+        const oldIsDirect = existing.url && existing.behaviorHints && !existing.behaviorHints.notWebReady;
+        if (newIsDirect && !oldIsDirect) {
+          map.set(sk, s);
+        } else if (!newIsDirect && !oldIsDirect) {
+          const qTiers = { "4K": 5, "1080p": 4, "720p": 3, "480p": 2, "HD": 3, "CAM": 0 };
+          const qNew = qTiers[s.quality] || 0;
+          const qOld = qTiers[existing.quality] || 0;
+          if (qNew > qOld) map.set(sk, s);
+        }
+      }
+      return [...map.values()];
+    }
+    module2.exports = { buildKey, dedupeStreams, dedupeWithPriority, dedupeServerAware };
   }
 });
 
