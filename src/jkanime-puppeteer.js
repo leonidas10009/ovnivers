@@ -22,8 +22,61 @@ async function getPuppeteer() {
   catch { return null; }
 }
 
+function findSystemChrome() {
+  // Windows
+  if (process.platform === 'win32') {
+    try {
+      var fs = require('fs');
+      var paths = [
+        process.env['PROGRAMFILES'] + '\\Google\\Chrome\\Application\\chrome.exe',
+        (process.env['PROGRAMFILES(X86)'] || process.env['ProgramFiles(x86)']) + '\\Google\\Chrome\\Application\\chrome.exe',
+        (process.env.LOCALAPPDATA || '') + '\\Google\\Chrome\\Application\\chrome.exe',
+        'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+      ];
+      for (var i = 0; i < paths.length; i++) {
+        try { if (fs.existsSync(paths[i])) return paths[i]; } catch(e) {}
+      }
+      // Try 'where chrome' command
+      try {
+        var result = require('child_process').execSync('where chrome 2>nul', { shell: 'cmd.exe' }).toString().trim().split('\r\n')[0];
+        if (result && !result.includes('INFO:') && result.length > 0) return result;
+      } catch(e) {}
+    } catch(e) {}
+  }
+  // Linux
+  if (process.platform === 'linux') {
+    try {
+      var paths = ['/usr/bin/chromium-browser', '/usr/bin/chromium', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable'];
+      var fs = require('fs');
+      for (var i = 0; i < paths.length; i++) {
+        try { if (fs.existsSync(paths[i])) return paths[i]; } catch(e) {}
+      }
+      // Try 'which' command
+      try {
+        var result = require('child_process').execSync('which chromium-browser || which chromium || which google-chrome || which google-chrome-stable', { shell: '/bin/sh' }).toString().trim().split('\n')[0];
+        if (result && result.length > 0) return result;
+      } catch(e) {}
+    } catch(e) {}
+  }
+  // macOS
+  if (process.platform === 'darwin') {
+    return '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+  }
+  return null;
+}
+
 async function getChromium() {
   if (chromiumCache) return chromiumCache;
+  
+  // Try system Chrome first (Windows/Linux/Mac = 0 RAM extra)
+  var sysChrome = findSystemChrome();
+  if (sysChrome) {
+    chromiumCache = { executablePath: sysChrome, args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'] };
+    return chromiumCache;
+  }
+  
+  // Fallback to @sparticuz/chromium (Render/AWS Lambda)
   try {
     const mod = await import('@sparticuz/chromium');
     const Cr = mod.default;

@@ -157,28 +157,118 @@ async function resolveOkRu(html, url) {
   return null;
 }
 
-async function resolveStreamtape(html, url) {
-  const linkMatch = html.match(/"id="([^"]+robotlink[^"]*)"/i);
-  if (linkMatch) {
-    const linkId = linkMatch[1];
-    const normUrl = linkId.includes('get_video') ? 'https://streamtape.com/' + linkId + '&stream=1' : 'https://streamtape.com/' + linkId;
-    const vHtml = await htmlText(normUrl, { headers: { 'Referer': url } });
+async function resolveMp4Upload(html, url) {
+  // Direct mp4 URL: https://a4.mp4upload.com:183/d/xxxxx
+  const direct = html.match(/https?:\/\/a\d+\.mp4upload\.com:\d+\/d\/[a-zA-Z0-9]+/i);
+  if (direct) return direct[0];
+
+  // Fallback: generic m3u8/mp4 (filter out js/css)
+  const m3u8 = html.match(/https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*/i);
+  if (m3u8 && !m3u8[0].includes('videojs') && !m3u8[0].includes('css') && !m3u8[0].includes('.js')) return m3u8[0];
+
+  return null;
+}
+
+async function resolveStreamtapeV2(html, url) {
+  // Format 1: ideoolink div with direct URL (fetch with session)
+  var ideoDiv = html.match(/id="ideoolink"[^>]*>([^<]+)<\/div>/);
+  if (ideoDiv && ideoDiv[1]) {
+    var path = ideoDiv[1].trim();
+    if (path.startsWith('/')) path = path.substring(1);
+    var fullUrl = 'https://' + path + '&stream=1';
+    var vHtml = await htmlText(fullUrl, {
+      headers: { 'Referer': url },
+      timeout: EMBED_TIMEOUT
+    });
     if (vHtml) {
-      const m = vHtml.match(/https?:\/\/[^"'\s<>]+\.(?:m3u8|mp4)[^"'\s<>]*/i);
+      var m = vHtml.match(/https?:\/\/[^"'\s<>]+\.(?:m3u8|mp4)[^"'\s<>]*/i);
       if (m) return m[0];
-      const link = vHtml.match(/"link"\s*:\s*"([^"]+)"/);
+      var link = vHtml.match(/"link"\s*:\s*"([^"]+)"/);
       if (link) return link[1].replace(/\\\//g, '/');
+    }
+    // Fallback: try without stream=1
+    fullUrl = fullUrl.replace('&stream=1', '');
+    var vHtml2 = await htmlText(fullUrl, {
+      headers: { 'Referer': url },
+      timeout: EMBED_TIMEOUT
+    });
+    if (vHtml2) {
+      var m2 = vHtml2.match(/https?:\/\/[^"'\s<>]+\.(?:m3u8|mp4)[^"'\s<>]*/i);
+      if (m2) return m2[0];
     }
   }
 
-  const token = html.match(/document\.getElementById\('norobotlink'\)\.innerHTML\s*=\s*["']([^"']+)["']/);
-  if (token) {
-    const vHtml = await htmlText('https://streamtape.com/get_video?id=' + token + '&stream=1', { headers: { 'Referer': url } });
+  // Format 2: botlink div
+  var botDiv = html.match(/id="botlink"[^>]*>([^<]+)<\/div>/);
+  if (botDiv && botDiv[1]) {
+    var botPath = botDiv[1].trim();
+    if (botPath.startsWith('/')) botPath = botPath.substring(1);
+    var botVHtml = await htmlText('https://' + botPath, { headers: { 'Referer': url }, timeout: EMBED_TIMEOUT });
+    if (botVHtml) {
+      var botVid = botVHtml.match(/https?:\/\/[^"'\s<>]+\.(?:m3u8|mp4)[^"'\s<>]*/i);
+      if (botVid) return botVid[0];
+    }
+  }
+
+  return null;
+}
+
+async function resolveStreamwishV2(html, url) {
+  // Try extracting data object with encoded URLs
+  const dataMatch = html.match(/const\s+_0x\w*\s*=\s*(\{[^}]+\})/);
+  if (dataMatch) {
+    try {
+      const obj = JSON.parse(dataMatch[1].replace(/'/g, '"').replace(/(\w+):/g, '"$1":'));
+      const keys = Object.values(obj);
+      for (const key of keys) {
+        if (typeof key === 'string' && key.length > 20 && /^[A-Za-z0-9+/=]+$/.test(key) && !key.startsWith('http')) {
+          try { const d = Buffer.from(key, 'base64').toString(); if (d.includes('m3u8') || d.includes('mp4')) return d; } catch {}
+        }
+      }
+    } catch {}
+  }
+
+  // Try eval unpacking
+  const packMatch = html.match(/eval\s*\(\s*function\s*\([^)]*\)\s*\{[^}]*return p\s*\}\([^)]+\)\)/);
+  if (packMatch) {
+    const js = packs ? packs.unpack(packMatch[0]) : null;
+    if (js) {
+      const m = js.match(/https?:\/\/[^"'\\]+\.(?:m3u8|mp4)[^"'\\]*/);
+      if (m) return m[0];
+    }
+  }
+
+  // Direct m3u8/mp4
+  const m3u8 = html.match(/https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*/i);
+  if (m3u8) return m3u8[0];
+
+  const mp4 = html.match(/https?:\/\/[^"'\s<>]+\.mp4[^"'\s<>]*/i);
+  if (mp4) return mp4[0];
+
+  return null;
+}
+
+// New MixDrop V2 handler with MDCore refs
+async function resolveMixdropV2(html, url) {
+  // MDCore.ref pattern (new format)
+  const refMatch = html.match(/MDCore\.ref\s*=\s*["']([^"']+)["']/);
+  if (refMatch) {
+    const ref = refMatch[1];
+    // Construct direct URL
+    const directUrl = 'https://mxcontent.com/e/' + ref;
+    const vHtml = await htmlText(directUrl, { headers: { 'Referer': url } });
     if (vHtml) {
       const m = vHtml.match(/https?:\/\/[^"'\s<>]+\.(?:m3u8|mp4)[^"'\s<>]*/i);
       if (m) return m[0];
     }
   }
+
+  // Old wurl format
+  const wurlMatch = html.match(/"poster"\s*:\s*"[^"]+","wurl"\s*:\s*"([^"]+)"/);
+  if (wurlMatch) return wurlMatch[1].replace(/\\\//g, '/');
+
+  const m3u8 = html.match(/https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*/i);
+  if (m3u8) return m3u8[0];
 
   return null;
 }
@@ -325,21 +415,25 @@ async function resolveEmbed(embedUrl, referer) {
   let result = null;
 
   const hostRules = [
-    { pat: /streamwish|wish\.com|swdyu|sfastwish|wishembed|wishy|watchwish/i, fn: resolveStreamwish, needHtml: true },
+    { pat: /streamwish|wish\.com|swdyu|sfastwish|wishembed|wishy|watchwish/i, fn: resolveStreamwishV2, needHtml: true },
     { pat: /filemoon|filemoon\.sx|kerapoxy|moplay|moon\.sx|moonplayer/i, fn: resolveFilemoon, needHtml: true },
+    { pat: /filelions|filelions\.top/i, fn: tryResolveJWPlayer, needHtml: true },
+    { pat: /uqload|uqload\.com/i, fn: tryResolveJWPlayer, needHtml: true },
     { pat: /dood\.|doodstream|dood\.la|dood\.to|dood\.ws|dood\.wf|dood\.re|dood\.so|dood\.sh|dood\.pm|dood\.yt|dooood|ds2play/i, fn: resolveDoodstream, needHtml: true },
-    { pat: /mixdrop|mixdrop\.co|mixdrop\.ag|mixdrop\.vc|mixdrop\.to|mixdrop\.ch|mixdrop\.gl|mixdrp/i, fn: resolveMixdrop, needHtml: true },
+    { pat: /mixdrop|mixdrop\.co|mixdrop\.ag|mixdrop\.vc|mixdrop\.to|mixdrop\.ch|mixdrop\.gl|mixdrp|mxdrop/i, fn: resolveMixdropV2, needHtml: true },
     { pat: /voe\.sx|voe\.su|vidvodo|voe\.to|voeunblock/i, fn: resolveVoeSx, needHtml: true },
     { pat: /vidhide|vidpro|vidmoly\.to|vidguard|vid2v11/i, fn: resolveVidHide, needHtml: true },
     { pat: /ok\.ru|odnoklassniki/i, fn: resolveOkRu, needHtml: true },
-    { pat: /streamtape|strtape|stape\.with|streamta\.to|stpete|tapecontent|streamtape\.com/i, fn: resolveStreamtape, needHtml: true },
+    { pat: /streamtape|strtape|stape\.with|streamta\.to|stpete|tapecontent|streamtape\.com/i, fn: resolveStreamtapeV2, needHtml: true },
+    { pat: /mp4upload|mp4upload\.com/i, fn: resolveMp4Upload, needHtml: true },
     { pat: /upstream\.to|uptostream|uptobox|upstreamcdn/i, fn: resolveUpstream, needHtml: true },
     { pat: /netu\.tv|netutv|anavids|waaw\.tv|hqq\.tv|waaw1|netuplayer/i, fn: resolveNetuTv, needHtml: true },
     { pat: /vidmoly|vidmoly\.to|vidmoly\.net|moly\.to/i, fn: resolveVidmoly, needHtml: true },
+    { pat: /hgcloud|hgcloud\.to/i, fn: null, needHtml: false },
+    { pat: /krakenfiles|krakenfiles\.com/i, fn: null, needHtml: false },
     { pat: /vidoza|vidoza\.net|vidozahd/i, fn: null, needHtml: false },
     { pat: /vidlox|vidlox\.tv|vidlox\.net/i, fn: null, needHtml: false },
     { pat: /wolfstream|wolfmax|stream\.wolfmax/i, fn: null, needHtml: false },
-    { pat: /mp4upload|mp4upload\.com/i, fn: null, needHtml: false },
     { pat: /streamlare|streamlare\.com/i, fn: null, needHtml: false },
     { pat: /jawcloud|jaw\.cloud/i, fn: null, needHtml: false },
     { pat: /vudeo|vudeo\.net/i, fn: null, needHtml: false },
