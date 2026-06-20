@@ -359,7 +359,8 @@ async function resolveTioAnime(slug, episode) {
       behaviorHints: { notWebReady: true, bingeGroup: 'tioanime|' + s.server.toLowerCase() },
     });
   }
-  return streams;
+  const seen = new Set();
+  return streams.filter(s => { const k = s.url + s.server; if (seen.has(k)) return false; seen.add(k); return true; });
 }
 
 // ═══ AnimeAV1 ═══
@@ -420,7 +421,8 @@ async function resolveAnimeAV1(slug, episode) {
       behaviorHints: { notWebReady: true, bingeGroup: 'animeav1|' + s.server.toLowerCase() },
     });
   }
-  return streams;
+  const seen = new Set();
+  return streams.filter(s => { const k = s.url + s.server; if (seen.has(k)) return false; seen.add(k); return true; });
 }
 
 module.exports = { resolveJKAnime, resolveTioAnime, resolveAnimeAV1 };
