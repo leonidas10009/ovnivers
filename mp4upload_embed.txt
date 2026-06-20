@@ -1,7 +1,7 @@
-<HTML>
+﻿<HTML>
 <HEAD>
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-28834041-1" type="dde19a18e6bd770cc33597b3-text/javascript"></script>
-<script type="dde19a18e6bd770cc33597b3-text/javascript">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-28834041-1" type="db8a899b1ffdfad42d47896f-text/javascript"></script>
+<script type="db8a899b1ffdfad42d47896f-text/javascript">
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
@@ -9,20 +9,20 @@
   gtag('config', 'UA-28834041-1');
 </script>
     <link href="https://www.mp4upload.com/player/videojs/skins/nuevo/videojs.min.css" rel="stylesheet" type="text/css" />
-    <script src="https://www.mp4upload.com/player/videojs/video.min.js" type="dde19a18e6bd770cc33597b3-text/javascript"></script>
-    <script src="https://www.mp4upload.com/player/videojs/plugins/videojs.hotkeys.min.js" type="dde19a18e6bd770cc33597b3-text/javascript"></script>
-    <script src="https://www.mp4upload.com/player/videojs/plugins/vast.vpaid.min.js" type="dde19a18e6bd770cc33597b3-text/javascript"></script>
-    <script src="https://www.mp4upload.com/player/videojs/nuevo.min.js" type="dde19a18e6bd770cc33597b3-text/javascript"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js" type="dde19a18e6bd770cc33597b3-text/javascript"></script>
-    <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1" type="dde19a18e6bd770cc33597b3-text/javascript"></script>
-    <script src="https://www.mp4upload.com/player/videojs/plugins/videojs-chromecast.min.js" type="dde19a18e6bd770cc33597b3-text/javascript"></script>
+    <script src="https://www.mp4upload.com/player/videojs/video.min.js" type="db8a899b1ffdfad42d47896f-text/javascript"></script>
+    <script src="https://www.mp4upload.com/player/videojs/plugins/videojs.hotkeys.min.js" type="db8a899b1ffdfad42d47896f-text/javascript"></script>
+    <script src="https://www.mp4upload.com/player/videojs/plugins/vast.vpaid.min.js" type="db8a899b1ffdfad42d47896f-text/javascript"></script>
+    <script src="https://www.mp4upload.com/player/videojs/nuevo.min.js" type="db8a899b1ffdfad42d47896f-text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js" type="db8a899b1ffdfad42d47896f-text/javascript"></script>
+    <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1" type="db8a899b1ffdfad42d47896f-text/javascript"></script>
+    <script src="https://www.mp4upload.com/player/videojs/plugins/videojs-chromecast.min.js" type="db8a899b1ffdfad42d47896f-text/javascript"></script>
   
   <style>
 #overlayads { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 300px; height: 250px; background-color: transparent; opacity: 1; z-index: 9999; }  
 </style>
 <script data-cfasync="false" async type="text/javascript" src="//fy.slavirappels.com/r13yVtn4LCd/136845"></script>
 <script data-cfasync="false" async type="text/javascript" src="//kd.visageagar.com/szpVJIFEMTfHih/116810"></script>
-<script src="https://milkdelirious.com/aa/55/45/aa5545ca463f4d2e3bfcc5c61a317cd5.js" type="dde19a18e6bd770cc33597b3-text/javascript"></script>
+<script src="https://milkdelirious.com/aa/55/45/aa5545ca463f4d2e3bfcc5c61a317cd5.js" type="db8a899b1ffdfad42d47896f-text/javascript"></script>
 
 </HEAD>
 <BODY topmargin=0 leftmargin=0>
@@ -40,11 +40,11 @@
 
 
 <div class="media-parent"><video id="player" class="video-js vjs-fill responsive" controls preload playsinline webkit-playsinline ></video></div>
-<script type="dde19a18e6bd770cc33597b3-text/javascript">
+<script type="db8a899b1ffdfad42d47896f-text/javascript">
          var player = videojs("player", {}, function(){
         player.src({
             type: "video/mp4",
-            src: "https://a2.mp4upload.com:183/d/xwxxan4xz3b4quuoywre6zsplfyqrn4mnkiwf3ex5jclgl7iauozolkuprpwe3u7bmnnzba4/video.mp4"           
+            src: "https://a2.mp4upload.com:183/d/xwxxan4xz3b4quuoywre6zsplfyqrn4mnkiwf3ex5jclgl7iaxwlaan42rk6v6ypq6cd7h27/video.mp4"           
            });
             if ("https://a2.mp4upload.com/i/02761/54oxxpt6x40z.jpg") {
              player.poster("https://a2.mp4upload.com/i/02761/54oxxpt6x40z.jpg");
@@ -76,7 +76,7 @@
       </script>
 
 
-<script type="dde19a18e6bd770cc33597b3-text/javascript">
+<script type="db8a899b1ffdfad42d47896f-text/javascript">
     var player = videojs('player');
 player.on('ready', function() {
   document.getElementById('overlayads').style.display = 'block';
@@ -90,5 +90,6 @@ player.on('pause', function() {
 });
 </script>
 
-<script src="/cdn-cgi/scripts/7d0fa10a/cloudflare-static/rocket-loader.min.js" data-cf-settings="dde19a18e6bd770cc33597b3-|49" defer></script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"328464446bd34ab3ba7bddcc28c2e3a6","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+<script src="/cdn-cgi/scripts/7d0fa10a/cloudflare-static/rocket-loader.min.js" data-cf-settings="db8a899b1ffdfad42d47896f-|49" defer></script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"328464446bd34ab3ba7bddcc28c2e3a6","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </BODY></HTML>
+

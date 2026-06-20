@@ -1,6 +1,6 @@
 /**
  * stream-pipeline - Built from src/stream-pipeline/
- * Generated: 2026-06-20T14:58:11.580Z
+ * Generated: 2026-06-20T15:02:12.134Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -175,8 +175,10 @@ var require_embed_resolver = __commonJS({
     }
     function resolveMp4Upload(html, url) {
       return __async(this, null, function* () {
-        const direct = html.match(/https?:\/\/a\d+\.mp4upload\.com:\d+\/d\/[a-zA-Z0-9]+/i);
+        const direct = html.match(/https?:\/\/a\d+\.mp4upload\.com:\d+\/d\/[a-zA-Z0-9\/]+\/video\.mp4/i);
         if (direct) return direct[0];
+        const legacy = html.match(/https?:\/\/a\d+\.mp4upload\.com:\d+\/d\/[a-zA-Z0-9]+/i);
+        if (legacy) return legacy[0];
         const m3u8 = html.match(/https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*/i);
         if (m3u8 && !m3u8[0].includes("videojs") && !m3u8[0].includes("css") && !m3u8[0].includes(".js")) return m3u8[0];
         return null;

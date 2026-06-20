@@ -158,9 +158,13 @@ async function resolveOkRu(html, url) {
 }
 
 async function resolveMp4Upload(html, url) {
-  // Direct mp4 URL: https://a4.mp4upload.com:183/d/xxxxx
-  const direct = html.match(/https?:\/\/a\d+\.mp4upload\.com:\d+\/d\/[a-zA-Z0-9]+/i);
+  // Direct mp4 URL v1: https://a4.mp4upload.com:183/d/xxxxx
+  // Direct mp4 URL v2: https://a2.mp4upload.com:183/d/xxxxx.../video.mp4
+  const direct = html.match(/https?:\/\/a\d+\.mp4upload\.com:\d+\/d\/[a-zA-Z0-9\/]+\/video\.mp4/i);
   if (direct) return direct[0];
+
+  const legacy = html.match(/https?:\/\/a\d+\.mp4upload\.com:\d+\/d\/[a-zA-Z0-9]+/i);
+  if (legacy) return legacy[0];
 
   // Fallback: generic m3u8/mp4 (filter out js/css)
   const m3u8 = html.match(/https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*/i);
