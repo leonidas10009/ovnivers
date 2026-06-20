@@ -126,6 +126,26 @@ function cacheSet(map, key, value, max) {
   map.set(key, { value, time: Date.now() });
 }
 
+function getProxyUrl() {
+  return process.env.PROXY_URL || '';
+}
+
+async function fetchViaProxy(url) {
+  const proxy = getProxyUrl();
+  if (!proxy) return null;
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 10000);
+    const res = await fetch(`${proxy}/?url=${encodeURIComponent(url)}`, {
+      headers: { 'User-Agent': UA },
+      signal: ctrl.signal,
+    });
+    clearTimeout(t);
+    if (!res.ok) return null;
+    return await res.text();
+  } catch { return null; }
+}
+
 // ═══ Core resolver ═══
 async function resolveEmbedUrl(b, embedUrl, waitMs = 8000) {
   const cached = cacheGet(embedCache, embedUrl, EMBED_TTL);
@@ -160,7 +180,16 @@ async function resolveEmbedUrl(b, embedUrl, waitMs = 8000) {
       }
     });
 
-    try { await page.goto(embedUrl, { waitUntil: 'networkidle2', timeout: 15000 }); } catch {}
+    const htmlViaProxy = await fetchViaProxy(embedUrl);
+    if (htmlViaProxy) {
+      const baseOrigin = new URL(embedUrl).origin;
+      const htmlWithBase = htmlViaProxy.includes('<base ')
+        ? htmlViaProxy
+        : htmlViaProxy.replace(/<head[^>]*>/i, `$&<base href="${baseOrigin}/">`);
+      try { await page.setContent(htmlWithBase, { waitUntil: 'networkidle2', timeout: 15000 }); } catch {}
+    } else {
+      try { await page.goto(embedUrl, { waitUntil: 'networkidle2', timeout: 15000 }); } catch {}
+    }
     await new Promise(r => setTimeout(r, waitMs));
 
     if (!videoUrl) {
