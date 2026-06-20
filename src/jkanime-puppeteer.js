@@ -296,7 +296,15 @@ async function resolveJKAnime(slug, episode) {
   // Servers → resolve embed
   for (const s of (serverList.servers || [])) {
     if (!s.url || !s.url.startsWith('http')) continue;
-    if (isUnresolvable(s.url)) continue;
+    if (isUnresolvable(s.url)) {
+      streams.push({
+        externalUrl: s.url, server: s.server,
+        name: `JKAnime\n${s.server}`,
+        title: `${slug} Ep. ${episode}\n⚙️ ${s.server}\n🔗 Abrir en navegador`,
+        behaviorHints: { notWebReady: true, bingeGroup: 'jkanime|' + s.server.toLowerCase() },
+      });
+      continue;
+    }
     const label = s.server + (s.lang ? ' ' + s.lang : '') + (s.size ? ' ' + s.size : '');
 
     if (isResolvable(s.url)) {
@@ -347,15 +355,25 @@ async function resolveTioAnime(slug, episode) {
   }
 
   const b = await getBrowser();
-  if (!b) return serverList.servers.map(s => ({
-    url: s.url, server: s.server, name: `TioAnime\n${s.server}`,
-    title: `${slug} Ep. ${episode}\n⚙️ ${s.server}`,
-    behaviorHints: { notWebReady: true, bingeGroup: 'tioanime|' + s.server.toLowerCase() },
+  if (!b) return serverList.servers.map(s => {
+    const base = { server: s.server, name: `TioAnime\n${s.server}`,
+      title: `${slug} Ep. ${episode}\n⚙️ ${s.server}`,
+      behaviorHints: { notWebReady: true, bingeGroup: 'tioanime|' + s.server.toLowerCase() },
+    };
+    return isUnresolvable(s.url) ? { ...base, externalUrl: s.url, title: base.title + '\n🔗 Abrir en navegador' } : { ...base, url: s.url };
   }));
 
   const streams = [];
   for (const s of serverList.servers) {
-    if (isUnresolvable(s.url)) continue;
+    if (isUnresolvable(s.url)) {
+      streams.push({
+        externalUrl: s.url, server: s.server,
+        name: `TioAnime\n${s.server}`,
+        title: `${slug} Ep. ${episode}\n⚙️ ${s.server}\n🔗 Abrir en navegador`,
+        behaviorHints: { notWebReady: true, bingeGroup: 'tioanime|' + s.server.toLowerCase() },
+      });
+      continue;
+    }
     if (isResolvable(s.url)) {
       let direct = await resolveEmbedUrl(b, s.url, 6000);
       if (!direct) direct = await resolveEmbed(s.url);
@@ -410,15 +428,25 @@ async function resolveAnimeAV1(slug, episode) {
   }
 
   const b = await getBrowser();
-  if (!b) return serverList.servers.map(s => ({
-    url: s.url, server: s.server, name: `AnimeAV1\n${s.server}`,
-    title: `${slug} Ep. ${episode}\n⚙️ ${s.server}`,
-    behaviorHints: { notWebReady: true, bingeGroup: 'animeav1|' + s.server.toLowerCase() },
+  if (!b) return serverList.servers.map(s => {
+    const base = { server: s.server, name: `AnimeAV1\n${s.server}`,
+      title: `${slug} Ep. ${episode}\n⚙️ ${s.server}`,
+      behaviorHints: { notWebReady: true, bingeGroup: 'animeav1|' + s.server.toLowerCase() },
+    };
+    return isUnresolvable(s.url) ? { ...base, externalUrl: s.url, title: base.title + '\n🔗 Abrir en navegador' } : { ...base, url: s.url };
   }));
 
   const streams = [];
   for (const s of serverList.servers) {
-    if (isUnresolvable(s.url)) continue;
+    if (isUnresolvable(s.url)) {
+      streams.push({
+        externalUrl: s.url, server: s.server,
+        name: `AnimeAV1\n${s.server}`,
+        title: `${slug} Ep. ${episode}\n⚙️ ${s.server}\n🔗 Abrir en navegador`,
+        behaviorHints: { notWebReady: true, bingeGroup: 'animeav1|' + s.server.toLowerCase() },
+      });
+      continue;
+    }
     if (isResolvable(s.url)) {
       let direct = await resolveEmbedUrl(b, s.url, 6000);
       if (!direct) direct = await resolveEmbed(s.url);
