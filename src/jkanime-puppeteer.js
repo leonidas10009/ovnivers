@@ -361,7 +361,7 @@ async function resolveTioAnime(slug, episode) {
       behaviorHints: { notWebReady: true, bingeGroup: 'tioanime|' + s.server.toLowerCase() },
     };
     return isUnresolvable(s.url) ? { ...base, externalUrl: s.url, title: base.title + '\n🔗 Abrir en navegador' } : { ...base, url: s.url };
-  }));
+  });
 
   const streams = [];
   for (const s of serverList.servers) {
@@ -434,7 +434,7 @@ async function resolveAnimeAV1(slug, episode) {
       behaviorHints: { notWebReady: true, bingeGroup: 'animeav1|' + s.server.toLowerCase() },
     };
     return isUnresolvable(s.url) ? { ...base, externalUrl: s.url, title: base.title + '\n🔗 Abrir en navegador' } : { ...base, url: s.url };
-  }));
+  });
 
   const streams = [];
   for (const s of serverList.servers) {
