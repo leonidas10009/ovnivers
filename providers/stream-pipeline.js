@@ -1,6 +1,6 @@
 /**
  * stream-pipeline - Built from src/stream-pipeline/
- * Generated: 2026-06-20T15:02:12.134Z
+ * Generated: 2026-06-20T15:06:10.485Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;

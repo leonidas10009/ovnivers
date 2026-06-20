@@ -16,6 +16,8 @@ const SERVER_TTL = 30 * 60 * 1000; // 30min
 
 const RESOLVABLE = ['streamwish', 'sfastwish', 'flaswish', 'mp4upload', 'streamtape', 'vidhide', 'callistanise', 'yourupload'];
 
+const UNRESOLVABLE = ['mega', 'megaup', 'mediafire', 'zippyshare', 'drive.google.com', 'mega.nz'];
+
 const BLOCKED_PATTERNS = [
   'cloudflareinsights.com', 'cloudfront.net',
   'googletagmanager', 'google-analytics', 'doubleclick',
@@ -221,6 +223,10 @@ function isResolvable(url) {
   try { return RESOLVABLE.some(h => new URL(url).hostname.includes(h)); } catch { return false; }
 }
 
+function isUnresolvable(url) {
+  try { return UNRESOLVABLE.some(h => new URL(url).hostname.includes(h)); } catch { return true; }
+}
+
 // ═══ JKAnime ═══
 async function resolveJKAnime(slug, episode) {
   const ck = `${slug}:${episode}`;
@@ -290,6 +296,7 @@ async function resolveJKAnime(slug, episode) {
   // Servers → resolve embed
   for (const s of (serverList.servers || [])) {
     if (!s.url || !s.url.startsWith('http')) continue;
+    if (isUnresolvable(s.url)) continue;
     const label = s.server + (s.lang ? ' ' + s.lang : '') + (s.size ? ' ' + s.size : '');
 
     if (isResolvable(s.url)) {
@@ -348,6 +355,7 @@ async function resolveTioAnime(slug, episode) {
 
   const streams = [];
   for (const s of serverList.servers) {
+    if (isUnresolvable(s.url)) continue;
     if (isResolvable(s.url)) {
       let direct = await resolveEmbedUrl(b, s.url, 6000);
       if (!direct) direct = await resolveEmbed(s.url);
@@ -410,6 +418,7 @@ async function resolveAnimeAV1(slug, episode) {
 
   const streams = [];
   for (const s of serverList.servers) {
+    if (isUnresolvable(s.url)) continue;
     if (isResolvable(s.url)) {
       let direct = await resolveEmbedUrl(b, s.url, 6000);
       if (!direct) direct = await resolveEmbed(s.url);
