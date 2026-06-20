@@ -1,8 +1,8 @@
-# Ovnivers — Stream Provider v1.13.0
+# Ovnivers — Stream Provider v1.13.1
 
 Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fuentes.
 
-> **v1.13.0:** Puppeteer integrado al flujo normal — JKAnime (4-6 ExoPlayer), TioAnime (1-2 ExoPlayer), AnimeAV1 (1-2 ExoPlayer). Browser persistente + cache 30min. `@sparticuz/chromium` (~50MB comprimido).
+> **v1.13.1:** Puppeteer multi-plataforma (system Chrome Windows/Linux + @sparticuz/chromium Render). Embed-resolver mejorado (MP4Upload directo, Streamtape V2, MixDrop V2). AnimeJara reactivado (15 streams, 8 servidores). Local scrapers Android-optimizados (7 providers). 8/11 Hermes anime funcionales. Auditoría completa 75 providers.
 
 ## Instalacion
 
@@ -18,12 +18,12 @@ Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fue
 | Funcionalidad | Detalle |
 |---|---|
 | **Torrent indexers** (6 fuentes) | GloDLS, Nyaa.si, SolidTorrents, LimeTorrents, 1337x, EZTV — ~70+ magnets por búsqueda |
-| **Scrapers anime (Puppeteer)** | JKAnime (9 servers → 4 ExoPlayer), TioAnime (12 servers → 1-2 ExoPlayer), AnimeAV1 (14 servers → 1-2 ExoPlayer). Browser persistente, cache 30min. Streamwish/Mp4upload/Vidhide/Streamtape resueltos a m3u8/mp4 directo |
-| **Pigamer37** (proxy anime) | AnimeFLV, AnimeAV1, TioAnime, Henaojara — ~6 mp4 directos (ExoPlayer) |
-| **Alfa Providers** | 42 providers activos (6 funcionales). Selectores corregidos en v1.7.7 |
-| **Hermes scrapers** | 61 scrapers (42 activos, 19 deshabilitados). 9 funcionales via inyección cheerio/CryptoJS |
-| **Backend scrapers** | 2embed+Mirrors (8 mirrors) + PoseidonHD (3 dominios) |
-| **Embed resolver** | 11+ dominios (streamwish, voe, mixdrop, etc.) - requiere JS, no funcional en servidor |
+| **Scrapers anime (Puppeteer)** | JKAnime (10 streams → 5 ExoPlayer), TioAnime (12 streams), AnimeAV1. Browser multi-plataforma: system Chrome en Windows/Linux, @sparticuz/chromium en Render. Cache 30min |
+| **Pigamer37** (proxy anime) | AnimeFLV, AnimeAV1, TioAnime, Henaojara — 6-7 mp4 directos por fuente |
+| **Alfa Providers** | 74 providers (42 activos). 6 funcionales: CineCalidad, CineLibreOnline, PelisPedia, DivXTotal, AnimeJara, JKAnime |
+| **Hermes scrapers** | 58 scrapers en manifest (39 activos, 19 deshabilitados). 8 anime funcionales: animetsu, allwish, anikototv, anime-sama, allanime, animesalt, animeworld, onetouchtv. 3 deshabilitados por 0 streams |
+| **Local scrapers** | 7 providers Android-optimizados (fetch + regex, pool 3 conexiones, max 15 streams). MiraPeliculas, AnimeJara, AnimeJL, HDFull, PelisForte, Zoowomaniacos, EstrenosDoramas |
+| **Embed resolver** | 15+ dominios con resolvers específicos. MP4Upload (URL directa), Streamtape V2, MixDrop V2, Filelions, Uqload, Streamwish, OkRu, JWPlayer y genérico. Sin dependencia de Puppeteer |
 | **notWebReady automático** | m3u8/mp4/torrent → ExoPlayer directo, resto → browser |
 | **Config panel** | `/configure` — tipos, calidad, idiomas, scrapers on/off |
 | **Proxy inteligente** | Cloudflare Worker v2 con cookie jar, bypass list para dominios Anubis |
