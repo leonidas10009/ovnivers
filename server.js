@@ -1308,7 +1308,7 @@ async function handleStream(req, res, type, id) {
           } catch { health.track('animeav1-pptr', false, Date.now() - start); return []; }
         })());
       } else {
-        // Fallback to Pigamer37 for other prefixes
+        // Fallback to Pigamer37 for other prefixes (kitsu:, anilist:, ovn:, etc.)
         streamTasks.push((async () => {
           const start = Date.now();
           try {
