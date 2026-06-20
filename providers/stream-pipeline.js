@@ -1,6 +1,6 @@
 /**
  * stream-pipeline - Built from src/stream-pipeline/
- * Generated: 2026-06-20T14:46:15.393Z
+ * Generated: 2026-06-20T14:53:14.916Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -309,6 +309,19 @@ var require_embed_resolver = __commonJS({
         return null;
       });
     }
+    function resolveYourUpload(html, url) {
+      return __async(this, null, function* () {
+        const direct = html.match(/https?:\/\/[^"'\s<>]+\.yourupload\.com\/[^"'\s<>]+\.(?:mp4|m3u8)[^"'\s<>]*/i);
+        if (direct) return direct[0];
+        const fileMatch = html.match(/(?:file|src|source)\s*[:=]\s*["']([^"']+\.(?:mp4|m3u8|mkv|webm)[^"']*)["']/i);
+        if (fileMatch && fileMatch[1].startsWith("http")) return fileMatch[1];
+        const mp4 = html.match(/https?:\/\/[^"'\s<>]+\.mp4[^"'\s<>]*/i);
+        if (mp4 && !mp4[0].includes("novideo")) return mp4[0];
+        const m3u8 = html.match(/https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*/i);
+        if (m3u8) return m3u8[0];
+        return null;
+      });
+    }
     function tryResolveJWPlayer(html, referer) {
       return __async(this, null, function* () {
         const scripts = [];
@@ -418,6 +431,7 @@ var require_embed_resolver = __commonJS({
           { pat: /upstream\.to|uptostream|uptobox|upstreamcdn/i, fn: resolveUpstream, needHtml: true },
           { pat: /netu\.tv|netutv|anavids|waaw\.tv|hqq\.tv|waaw1|netuplayer/i, fn: resolveNetuTv, needHtml: true },
           { pat: /vidmoly|vidmoly\.to|vidmoly\.net|moly\.to/i, fn: resolveVidmoly, needHtml: true },
+          { pat: /yourupload|youpload/i, fn: resolveYourUpload, needHtml: true },
           { pat: /hgcloud|hgcloud\.to/i, fn: null, needHtml: false },
           { pat: /krakenfiles|krakenfiles\.com/i, fn: null, needHtml: false },
           { pat: /vidoza|vidoza\.net|vidozahd/i, fn: null, needHtml: false },

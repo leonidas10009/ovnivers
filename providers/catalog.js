@@ -1,6 +1,6 @@
 /**
  * catalog - Built from src/catalog/
- * Generated: 2026-06-20T14:46:15.332Z
+ * Generated: 2026-06-20T14:53:14.865Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;

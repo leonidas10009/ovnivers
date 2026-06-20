@@ -14,7 +14,7 @@ const MAX_CACHE = 200;
 const EMBED_TTL = 60 * 60 * 1000;  // 1h
 const SERVER_TTL = 30 * 60 * 1000; // 30min
 
-const RESOLVABLE = ['streamwish', 'sfastwish', 'flaswish', 'mp4upload', 'streamtape', 'vidhide', 'callistanise'];
+const RESOLVABLE = ['streamwish', 'sfastwish', 'flaswish', 'mp4upload', 'streamtape', 'vidhide', 'callistanise', 'yourupload'];
 
 // ═══ Browser management ═══
 async function getPuppeteer() {
