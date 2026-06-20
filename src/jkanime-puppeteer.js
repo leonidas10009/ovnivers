@@ -1,6 +1,7 @@
 // Puppeteer-based anime resolver - optimized for Render (512MB)
 // Keeps one browser alive, caches server lists and embed resolutions
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+const { resolveEmbed, isDirectVideoUrl } = require('./alfa-providers/embed-resolver');
 
 let puppeteer = null;
 let chromiumCache = null;
@@ -238,7 +239,8 @@ async function resolveJKAnime(slug, episode) {
   for (const frameUrl of (serverList.iframes || [])) {
     const name = frameUrl.includes('/um?') ? 'Desu' : frameUrl.includes('/umv?') ? 'Magi' : null;
     if (!name) continue;
-    const m3u8Url = await resolveEmbedUrl(b, frameUrl, 5000);
+    let m3u8Url = await resolveEmbedUrl(b, frameUrl, 5000);
+    if ((!m3u8Url || !m3u8Url.startsWith('http')) && frameUrl.startsWith('http')) m3u8Url = await resolveEmbed(frameUrl);
     if (m3u8Url && m3u8Url.startsWith('http')) {
       streams.push({
         url: m3u8Url, server: name,
@@ -255,8 +257,9 @@ async function resolveJKAnime(slug, episode) {
     const label = s.server + (s.lang ? ' ' + s.lang : '') + (s.size ? ' ' + s.size : '');
 
     if (isResolvable(s.url)) {
-      const direct = await resolveEmbedUrl(b, s.url, 6000);
-      if (direct && direct.startsWith('http')) {
+      let direct = await resolveEmbedUrl(b, s.url, 6000);
+      if (!direct) direct = await resolveEmbed(s.url);
+      if (direct && isDirectVideoUrl(direct)) {
         streams.push({
           url: direct, server: s.server,
           name: `JKAnime\n${s.server}`,
@@ -310,8 +313,9 @@ async function resolveTioAnime(slug, episode) {
   const streams = [];
   for (const s of serverList.servers) {
     if (isResolvable(s.url)) {
-      const direct = await resolveEmbedUrl(b, s.url, 6000);
-      if (direct) {
+      let direct = await resolveEmbedUrl(b, s.url, 6000);
+      if (!direct) direct = await resolveEmbed(s.url);
+      if (direct && isDirectVideoUrl(direct)) {
         streams.push({
           url: direct, server: s.server, name: `TioAnime\n${s.server}`,
           title: `${slug} Ep. ${episode}\n⚙️ ${s.server} (directo)`,
@@ -370,8 +374,9 @@ async function resolveAnimeAV1(slug, episode) {
   const streams = [];
   for (const s of serverList.servers) {
     if (isResolvable(s.url)) {
-      const direct = await resolveEmbedUrl(b, s.url, 6000);
-      if (direct) {
+      let direct = await resolveEmbedUrl(b, s.url, 6000);
+      if (!direct) direct = await resolveEmbed(s.url);
+      if (direct && isDirectVideoUrl(direct)) {
         streams.push({
           url: direct, server: s.server, name: `AnimeAV1\n${s.server}`,
           title: `${slug} Ep. ${episode}\n⚙️ ${s.server} (directo)`,

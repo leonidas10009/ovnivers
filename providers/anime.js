@@ -1,6 +1,6 @@
 /**
  * anime - Built from src/anime/
- * Generated: 2026-06-20T14:24:02.510Z
+ * Generated: 2026-06-20T14:31:02.711Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
