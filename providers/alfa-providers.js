@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-21T11:57:44.592Z
+ * Generated: 2026-06-21T12:06:32.487Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -397,12 +397,12 @@ var require_providers = __commonJS({
         name: "poseidonhd",
         title: "PoseidonHD",
         baseUrl: "https://www.poseidonhd2.co",
-        categories: ["movie", "tvshow", "vos", "direct"],
+        categories: ["movie", "tvshow"],
         language: ["lat"],
         active: true,
         adult: false,
-        search: { url: "/search?q={query}", itemSelector: "__NEXT_DATA__", jsonDataPath: "props.pageProps.movies", titleSelector: "titles.name", linkSelector: "url.slug" },
-        videos: { type: "nextjs", dataPath: "props.pageProps.movieData.players", defaultQuality: "HD" }
+        search: { url: "/search?q={query}", itemSelector: ".TPost", titleSelector: "img", titleAttr: "alt", linkSelector: "a" },
+        videos: { type: "data-attr", containerSelector: "body", itemSelector: ".clili", dataAttr: "data-tr", serverSelector: "span", defaultQuality: "HD" }
       },
       {
         name: "retrotv",
@@ -1974,7 +1974,9 @@ var require_engine = __commonJS({
           const queryWords = titleClean.split(" ").filter((w) => w.length >= 3);
           if (queryWords.length > 0) {
             const itemLower = " " + itemTitle.toLowerCase().replace(/[^a-z0-9]/g, " ") + " ";
-            wordMatch = queryWords.every((qw) => itemLower.includes(" " + qw.toLowerCase() + " "));
+            const matchCount = queryWords.filter((qw) => itemLower.includes(" " + qw.toLowerCase() + " ")).length;
+            const minMatches = queryWords.length <= 3 ? queryWords.length : Math.ceil(queryWords.length / 2);
+            wordMatch = matchCount >= minMatches;
           } else {
             wordMatch = itemClean.includes(titleClean2) || titleClean2.includes(itemClean);
           }
@@ -2007,7 +2009,9 @@ var require_engine = __commonJS({
               }
               if (!itemTitle || !itemLink) continue;
               const itemLower = itemTitle.toLowerCase();
-              const allMatch = queryWords.every((qw) => itemLower.includes(qw));
+              const matchCount = queryWords.filter((qw) => itemLower.includes(qw)).length;
+              const minMatches = queryWords.length <= 3 ? queryWords.length : Math.ceil(queryWords.length / 2);
+              const allMatch = queryWords.length > 0 && matchCount >= minMatches;
               const itemWords = " " + itemLower.replace(/[^a-z0-9]/g, " ") + " ";
               const hasWholeWord = queryWords.some((qw) => itemWords.includes(" " + qw + " "));
               if (allMatch && hasWholeWord) {
@@ -2370,6 +2374,33 @@ var require_engine = __commonJS({
               let url = m[1].replace(/\\\//g, "/");
               url = resolveUrl(url);
               if (url) results2.push({ url, server: detectServer2(url), quality: cfg.defaultQuality || "HD" });
+            }
+          }
+        }
+        if (cfg.type === "data-attr") {
+          const container = cfg.containerSelector ? $(cfg.containerSelector) : $;
+          const items = container.find(cfg.itemSelector || "[data-tr]").toArray();
+          for (const el of items) {
+            const dataUrl = $(el).attr(cfg.dataAttr || "data-tr");
+            if (!dataUrl) continue;
+            const serverText = cfg.serverSelector ? $(el).find(cfg.serverSelector).text().trim() : "";
+            const serverName = serverText || detectServer2(dataUrl);
+            try {
+              const proxyHtml = yield fetchHTML2(dataUrl, { headers: { Referer: pageUrl }, timeout: 8e3 });
+              if (!proxyHtml) continue;
+              const varMatch = proxyHtml.match(/var\s+url\s*=\s*['"]([^'"]+)['"]/);
+              if (varMatch) {
+                const realUrl = resolveUrl(varMatch[1]);
+                if (realUrl) results2.push({ url: realUrl, server: serverName, quality: cfg.defaultQuality || "HD" });
+                continue;
+              }
+              const embedMatch = proxyHtml.match(/(?:streamwish|filemoon|vidhide|voe\.sx|doodstream|streamtape|mixdrop|upstream|vidmoly)[^"'<>]*/i);
+              if (embedMatch) {
+                let fallbackUrl = embedMatch[0];
+                if (!fallbackUrl.startsWith("http")) fallbackUrl = "https://" + fallbackUrl;
+                results2.push({ url: fallbackUrl, server: serverName, quality: cfg.defaultQuality || "HD" });
+              }
+            } catch (e) {
             }
           }
         }

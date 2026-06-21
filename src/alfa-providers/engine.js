@@ -301,16 +301,15 @@ async function searchProvider(provider, title, year, mediaType) {
       if (itemYear && itemYear[0] === year) score += 0.25;
     }
 
-    // Word-level guard: ALL query words (≥3 chars) must appear as whole words
-    // in the result title. If no word is ≥3 chars, require complete title to be a substring.
+    // Word-level guard: for ≤3 query words require ALL, for >3 require majority
     let wordMatch = true;
     const queryWords = titleClean.split(' ').filter(w => w.length >= 3);
     if (queryWords.length > 0) {
       const itemLower = ' ' + itemTitle.toLowerCase().replace(/[^a-z0-9]/g, ' ') + ' ';
-      wordMatch = queryWords.every(qw => itemLower.includes(' ' + qw.toLowerCase() + ' '));
+      const matchCount = queryWords.filter(qw => itemLower.includes(' ' + qw.toLowerCase() + ' ')).length;
+      const minMatches = queryWords.length <= 3 ? queryWords.length : Math.ceil(queryWords.length / 2);
+      wordMatch = matchCount >= minMatches;
     } else {
-      // All query words are <3 chars (short title like "Up", "It", "AI")
-      // Require exact match or substring containment
       wordMatch = itemClean.includes(titleClean2) || titleClean2.includes(itemClean);
     }
 
@@ -341,7 +340,9 @@ async function searchProvider(provider, title, year, mediaType) {
         }
         if (!itemTitle || !itemLink) continue;
         const itemLower = itemTitle.toLowerCase();
-        const allMatch = queryWords.every(qw => itemLower.includes(qw));
+        const matchCount = queryWords.filter(qw => itemLower.includes(qw)).length;
+        const minMatches = queryWords.length <= 3 ? queryWords.length : Math.ceil(queryWords.length / 2);
+        const allMatch = queryWords.length > 0 && matchCount >= minMatches;
         // Also verify at least one word matches as a whole word (word boundary)
         const itemWords = ' ' + itemLower.replace(/[^a-z0-9]/g, ' ') + ' ';
         const hasWholeWord = queryWords.some(qw => itemWords.includes(' ' + qw + ' '));
@@ -686,6 +687,40 @@ async function extractVideos(provider, pageUrl) {
         url = resolveUrl(url);
         if (url) results.push({ url, server: detectServer(url), quality: cfg.defaultQuality || 'HD' });
       }
+    }
+  }
+
+  if (cfg.type === 'data-attr') {
+    // Extract URLs from data attributes, then resolve through proxy pages
+    const container = cfg.containerSelector ? $(cfg.containerSelector) : $;
+    const items = container.find(cfg.itemSelector || '[data-tr]').toArray();
+    for (const el of items) {
+      const dataUrl = $(el).attr(cfg.dataAttr || 'data-tr');
+      if (!dataUrl) continue;
+      const serverText = cfg.serverSelector ? $(el).find(cfg.serverSelector).text().trim() : '';
+      const serverName = serverText || detectServer(dataUrl);
+      
+      try {
+        // Fetch the proxy page to extract the real embed URL
+        const proxyHtml = await fetchHTML(dataUrl, { headers: { Referer: pageUrl }, timeout: 8000 });
+        if (!proxyHtml) continue;
+        
+        // Extract var url = '...' from script
+        const varMatch = proxyHtml.match(/var\s+url\s*=\s*['"]([^'"]+)['"]/);
+        if (varMatch) {
+          const realUrl = resolveUrl(varMatch[1]);
+          if (realUrl) results.push({ url: realUrl, server: serverName, quality: cfg.defaultQuality || 'HD' });
+          continue;
+        }
+        
+        // Fallback: try to find any embed URL in the page
+        const embedMatch = proxyHtml.match(/(?:streamwish|filemoon|vidhide|voe\.sx|doodstream|streamtape|mixdrop|upstream|vidmoly)[^"'<>]*/i);
+        if (embedMatch) {
+          let fallbackUrl = embedMatch[0];
+          if (!fallbackUrl.startsWith('http')) fallbackUrl = 'https://' + fallbackUrl;
+          results.push({ url: fallbackUrl, server: serverName, quality: cfg.defaultQuality || 'HD' });
+        }
+      } catch {}
     }
   }
 

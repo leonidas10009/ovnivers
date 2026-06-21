@@ -338,12 +338,12 @@ module.exports = [
     name: 'poseidonhd',
     title: 'PoseidonHD',
     baseUrl: 'https://www.poseidonhd2.co',
-    categories: ['movie', 'tvshow', 'vos', 'direct'],
+    categories: ['movie', 'tvshow'],
     language: ['lat'],
     active: true,
     adult: false,
-    search: { url: '/search?q={query}', itemSelector: '__NEXT_DATA__', jsonDataPath: 'props.pageProps.movies', titleSelector: 'titles.name', linkSelector: 'url.slug' },
-    videos: { type: 'nextjs', dataPath: 'props.pageProps.movieData.players', defaultQuality: 'HD' }
+    search: { url: '/search?q={query}', itemSelector: '.TPost', titleSelector: 'img', titleAttr: 'alt', linkSelector: 'a' },
+    videos: { type: 'data-attr', containerSelector: 'body', itemSelector: '.clili', dataAttr: 'data-tr', serverSelector: 'span', defaultQuality: 'HD' }
   },
   {
     name: 'retrotv',
