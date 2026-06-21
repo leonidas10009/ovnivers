@@ -27,11 +27,16 @@ process.on('uncaughtException', (err) => {
   // Don't exit — let Render restart if needed
 });
 
-// Memory-aware cache eviction — runs every 5 min
-const MEMORY_HIGH_WATERMARK = 0.7; // 70% of heap
+// Memory watchdog — clears caches at 70%, force restarts at 90%
+const MEMORY_HIGH_WATERMARK = 0.7;
+const MEMORY_CRITICAL = 0.90;
 setInterval(() => {
   const mem = process.memoryUsage();
   const heapUsed = mem.heapUsed / mem.heapTotal;
+  if (heapUsed > MEMORY_CRITICAL) {
+    console.warn(`[memory] CRITICAL heap: ${(heapUsed * 100).toFixed(0)}% — forcing restart, Render will respawn`);
+    process.exit(1);
+  }
   if (heapUsed > MEMORY_HIGH_WATERMARK) {
     const streamSize = streamCache?.size || 0;
     const metaSize = metaCache?.size || 0;
