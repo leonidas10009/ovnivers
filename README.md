@@ -160,11 +160,12 @@ node build.js    # Build de scrapers desde src/
 
 ## Changelog
 
-### v1.14.1 — Search precision overhaul
+### v1.14.1 — Search precision + timing + anime detection
 
-- **Alfa engine**: eliminado "last resort" que devolvía el primer resultado sin verificar. Thresholds subidos: JSON 0.4→0.6, HTML 0.5→0.7. Word guard ahora requiere que TODAS las palabras ≥3 chars coincidan como palabras completas (antes solo 1). Substring bonus: ≥6 chars y ≥50% cobertura (antes ≥5 chars sin ratio). Single-word search fallback: ≥6 chars (antes ≥4).
-- **Torrents**: `MIN_SCORE_THRESHOLD` 0.25→0.40 para filtrar resultados ruidosos.
-- **Anime resolvers**: JKAnime verifica que la URL no redirija a otra página tras carga. TioAnime y AnimeAV1 retornan vacío si no encuentran servidores válidos.
+- **Alfa engine**: eliminado "last resort" que devolvía el primer resultado sin verificar. Thresholds subidos: JSON 0.4→0.6, HTML 0.5→0.7. Word guard ahora requiere TODAS las palabras ≥3 chars como palabras completas. Single-word fallback ≥6 chars.
+- **Torrents**: `MIN_SCORE_THRESHOLD` 0.25→0.40. Anime resolvers con verificación de URL y guards de vacío.
+- **Timing**: scrapeAlfa timeout 10s→30s (tardaba 15-19s). LOCAL_PROVIDER_TIMEOUT 10s→6s, concurrencia 6→8, global 30s→45s.
+- **Anime detection fix**: `tmdb:` ya no está en `ANIME_XREF_PREFIXES`. Todo `tmdb:xxx` se clasificaba como anime incorrectamente. Ahora solo anime real dispara scrapers de anime. Fight Club 7→23 streams, Breaking Bad 0→19 streams.
 
 ### v1.14.0 — Stream-only mode: catálogos eliminados
 
