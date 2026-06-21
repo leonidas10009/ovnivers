@@ -1,6 +1,6 @@
 /**
  * media - Built from src/media/
- * Generated: 2026-06-20T15:23:02.363Z
+ * Generated: 2026-06-21T09:46:54.513Z
  */
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __commonJS = (cb, mod) => function __require() {
@@ -640,7 +640,22 @@ var require_health = __commonJS({
       }
       return ids;
     }
-    module2.exports = { init, track, isHealthy, getReport, getHealthyIds, CONSECUTIVE_FAIL_LIMIT, COOLDOWN_MS };
+    function prune(maxAgeMs = 30 * 60 * 1e3) {
+      const now = Date.now();
+      let pruned = 0;
+      for (const [id, s] of stats) {
+        const lastActivity = Math.max(s.lastOk || 0, s.lastFail || 0);
+        if (lastActivity && now - lastActivity > maxAgeMs && s.total < 10) {
+          stats.delete(id);
+          pruned++;
+        }
+      }
+      return pruned;
+    }
+    function resetAll() {
+      stats.clear();
+    }
+    module2.exports = { init, track, isHealthy, getReport, getHealthyIds, prune, resetAll, CONSECUTIVE_FAIL_LIMIT, COOLDOWN_MS };
   }
 });
 

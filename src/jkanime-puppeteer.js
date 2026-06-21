@@ -242,6 +242,15 @@ async function resolveJKAnime(slug, episode) {
       const page = await b.newPage();
       await page.setUserAgent(UA);
       await page.goto(`https://jkanime.net/${slug}/${episode}/`, { waitUntil: 'networkidle2', timeout: 25000 });
+
+      // Verify page loaded correctly — must still be on the expected slug page
+      const currentUrl = page.url();
+      if (!currentUrl.includes(`/${slug}/`) && !currentUrl.includes(`/${slug}-`)) {
+        console.warn(`[jk-pptr] page redirected away from ${slug}, got ${currentUrl} — skipping`);
+        await page.close();
+        return [];
+      }
+
       await new Promise(r => setTimeout(r, 7000));
 
       serverList = { iframes: [], servers: [] };
@@ -350,6 +359,7 @@ async function resolveTioAnime(slug, episode) {
       serverList = {
         servers: videos.map(v => ({ server: v[0] || '?', url: (v[1] || '').replace(/\\\//g, '/') })).filter(s => s.url.startsWith('http')),
       };
+      if (!serverList.servers.length) return [];
       cacheSet(serverCache, ck, serverList, MAX_CACHE);
     } catch { return []; }
   }
@@ -423,6 +433,7 @@ async function resolveAnimeAV1(slug, episode) {
         }
       }
       serverList = { servers };
+      if (!servers.length) return [];
       cacheSet(serverCache, ck, serverList, MAX_CACHE);
     } catch { return []; }
   }

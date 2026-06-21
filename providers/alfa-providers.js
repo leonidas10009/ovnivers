@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-20T15:23:02.296Z
+ * Generated: 2026-06-21T09:46:53.689Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -1915,11 +1915,11 @@ var require_engine = __commonJS({
         if (!html && titleClean.includes(" ")) {
           const words = titleClean.split(" ");
           const first2 = words.slice(0, 2).join(" ");
-          if (first2.length > 3) html = yield trySearch(first2);
+          if (first2.length >= 6) html = yield trySearch(first2);
         }
         if (!html && titleClean.includes(" ")) {
           const first = titleClean.split(" ")[0];
-          if (first.length > 3) html = yield trySearch(first);
+          if (first.length >= 6) html = yield trySearch(first);
         }
         if (!html) return null;
         if (cfg.jsonDataPath) {
@@ -1936,7 +1936,7 @@ var require_engine = __commonJS({
               if (!itemTitle || !itemLinkRaw) continue;
               const itemLink = itemLinkRaw.startsWith("http") ? itemLinkRaw : itemLinkRaw.startsWith("/") ? new URL(itemLinkRaw, provider.baseUrl).href : `${provider.baseUrl}/${itemLinkRaw}`;
               let score = similarity2(itemTitle, title);
-              if (score > bestScore2 && score > 0.4) {
+              if (score > bestScore2 && score > 0.6) {
                 bestScore2 = score;
                 bestMatch2 = itemLink;
               }
@@ -1973,70 +1973,61 @@ var require_engine = __commonJS({
           let score = similarity2(itemTitle, title);
           const titleClean2 = titleClean.replace(/[^a-z0-9]/g, "");
           const itemClean = itemTitle.toLowerCase().replace(/[^a-z0-9]/g, "");
-          if (itemClean === titleClean2) score = Math.max(score, 0.9);
-          if (titleClean2.length >= 5 && (itemClean.includes(titleClean2) || titleClean2.includes(itemClean))) {
-            score = Math.max(score, 0.75);
+          if (itemClean === titleClean2) score = Math.max(score, 1);
+          if (titleClean2.length >= 6 && (itemClean.includes(titleClean2) || titleClean2.includes(itemClean))) {
+            const ratio = Math.min(itemClean.length, titleClean2.length) / Math.max(itemClean.length, titleClean2.length);
+            score = Math.max(score, ratio >= 0.5 ? 0.85 : 0.75);
           }
           if (year) {
             const itemYear = el.text().match(/\b(19|20)\d{2}\b/);
             if (itemYear && itemYear[0] === year) score += 0.25;
           }
           let wordMatch = true;
-          const queryWords = titleClean.split(" ").filter((w) => w.length >= 4);
+          const queryWords = titleClean.split(" ").filter((w) => w.length >= 3);
           if (queryWords.length > 0) {
             const itemLower = " " + itemTitle.toLowerCase().replace(/[^a-z0-9]/g, " ") + " ";
-            wordMatch = queryWords.some((qw) => itemLower.includes(" " + qw.toLowerCase() + " "));
+            wordMatch = queryWords.every((qw) => itemLower.includes(" " + qw.toLowerCase() + " "));
+          } else {
+            wordMatch = itemClean.includes(titleClean2) || titleClean2.includes(itemClean);
           }
-          if (score > bestScore && score > 0.5 && wordMatch) {
+          if (score > bestScore && score > 0.7 && wordMatch) {
             bestScore = score;
             bestMatch = itemLink;
           }
         }
         if (!bestMatch && items.length > 0) {
           const queryWords = titleClean.toLowerCase().split(" ").filter((w) => w.length >= 3);
-          for (const item of items) {
-            const el = $(item);
-            let itemTitle = "";
-            if (cfg.titleSelector) {
-              const titleEl = cfg.titleSelector === "&" ? el : el.find(cfg.titleSelector).first();
-              itemTitle = cfg.titleAttr ? titleEl.attr(cfg.titleAttr) || "" : titleEl.text().trim();
-            }
-            let itemLink = "";
-            if (cfg.linkSelector) {
-              const linkEl = cfg.linkSelector === "&" ? el : el.find(cfg.linkSelector).first();
-              itemLink = (linkEl.attr("href") || "").trim();
-              if (itemLink && !itemLink.startsWith("http")) {
-                try {
-                  itemLink = new URL(itemLink, provider.baseUrl).href;
-                } catch (e) {
-                  continue;
+          if (queryWords.length > 0) {
+            for (const item of items) {
+              const el = $(item);
+              let itemTitle = "";
+              if (cfg.titleSelector) {
+                const titleEl = cfg.titleSelector === "&" ? el : el.find(cfg.titleSelector).first();
+                itemTitle = cfg.titleAttr ? titleEl.attr(cfg.titleAttr) || "" : titleEl.text().trim();
+              }
+              let itemLink = "";
+              if (cfg.linkSelector) {
+                const linkEl = cfg.linkSelector === "&" ? el : el.find(cfg.linkSelector).first();
+                itemLink = (linkEl.attr("href") || "").trim();
+                if (itemLink && !itemLink.startsWith("http")) {
+                  try {
+                    itemLink = new URL(itemLink, provider.baseUrl).href;
+                  } catch (e) {
+                    continue;
+                  }
                 }
               }
-            }
-            if (!itemTitle || !itemLink) continue;
-            const itemLower = itemTitle.toLowerCase();
-            const allMatch = queryWords.length > 0 && queryWords.every((qw) => itemLower.includes(qw));
-            if (allMatch) {
-              bestMatch = itemLink;
-              break;
-            }
-          }
-        }
-        if (!bestMatch && items.length > 0) {
-          const el = $(items[0]);
-          let itemLink = "";
-          if (cfg.linkSelector) {
-            const linkEl = cfg.linkSelector === "&" ? el : el.find(cfg.linkSelector).first();
-            itemLink = (linkEl.attr("href") || "").trim();
-            if (itemLink && !itemLink.startsWith("http")) {
-              try {
-                itemLink = new URL(itemLink, provider.baseUrl).href;
-              } catch (e) {
-                itemLink = "";
+              if (!itemTitle || !itemLink) continue;
+              const itemLower = itemTitle.toLowerCase();
+              const allMatch = queryWords.every((qw) => itemLower.includes(qw));
+              const itemWords = " " + itemLower.replace(/[^a-z0-9]/g, " ") + " ";
+              const hasWholeWord = queryWords.some((qw) => itemWords.includes(" " + qw + " "));
+              if (allMatch && hasWholeWord) {
+                bestMatch = itemLink;
+                break;
               }
             }
           }
-          if (itemLink) bestMatch = itemLink;
         }
         return bestMatch;
       });

@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.14.0
+# Ovnivers — Stream Provider v1.14.1
 
 Addon **stream-only** para **Stremio / NuvioTV**. Usalo junto con cualquier addon de catálogo (Torrentio, TMDB Community, Kitsu, etc.). Ovnivers solo provee streams — sin catálogos propios, sin conflictos.
 
@@ -159,6 +159,12 @@ node build.js    # Build de scrapers desde src/
 - **URL:** https://ovnivers.onrender.com
 
 ## Changelog
+
+### v1.14.1 — Search precision overhaul
+
+- **Alfa engine**: eliminado "last resort" que devolvía el primer resultado sin verificar. Thresholds subidos: JSON 0.4→0.6, HTML 0.5→0.7. Word guard ahora requiere que TODAS las palabras ≥3 chars coincidan como palabras completas (antes solo 1). Substring bonus: ≥6 chars y ≥50% cobertura (antes ≥5 chars sin ratio). Single-word search fallback: ≥6 chars (antes ≥4).
+- **Torrents**: `MIN_SCORE_THRESHOLD` 0.25→0.40 para filtrar resultados ruidosos.
+- **Anime resolvers**: JKAnime verifica que la URL no redirija a otra página tras carga. TioAnime y AnimeAV1 retornan vacío si no encuentran servidores válidos.
 
 ### v1.14.0 — Stream-only mode: catálogos eliminados
 

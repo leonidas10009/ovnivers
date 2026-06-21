@@ -222,16 +222,18 @@ async function searchProvider(provider, title, year, mediaType) {
     return await fetchHTML(searchUrl, { headers: cfg.headers, timeout: 10000 });
   }
 
-  // Try full title, first 2 words, first 1 word
+  // Try full title, then first 2 words (if title long enough)
   let html = await trySearch(titleClean);
   if (!html && titleClean.includes(' ')) {
     const words = titleClean.split(' ');
     const first2 = words.slice(0, 2).join(' ');
-    if (first2.length > 3) html = await trySearch(first2);
+    if (first2.length >= 6) html = await trySearch(first2);
   }
+  // Single-word fallback: only if word is unique enough (≥6 chars)
+  // Short words like "From", "It", "Up" match too many unrelated shows
   if (!html && titleClean.includes(' ')) {
     const first = titleClean.split(' ')[0];
-    if (first.length > 3) html = await trySearch(first);
+    if (first.length >= 6) html = await trySearch(first);
   }
   if (!html) return null;
 
@@ -253,7 +255,7 @@ async function searchProvider(provider, title, year, mediaType) {
           : (itemLinkRaw.startsWith('/') ? new URL(itemLinkRaw, provider.baseUrl).href
             : `${provider.baseUrl}/${itemLinkRaw}`);
         let score = similarity(itemTitle, title);
-        if (score > bestScore && score > 0.4) { bestScore = score; bestMatch = itemLink; }
+        if (score > bestScore && score > 0.6) { bestScore = score; bestMatch = itemLink; }
       }
       return bestMatch;
     } catch {}
@@ -288,70 +290,68 @@ async function searchProvider(provider, title, year, mediaType) {
     let score = similarity(itemTitle, title);
     const titleClean2 = titleClean.replace(/[^a-z0-9]/g, '');
     const itemClean = itemTitle.toLowerCase().replace(/[^a-z0-9]/g, '');
-    if (itemClean === titleClean2) score = Math.max(score, 0.9);
-    // Substring bonus: only if query is >=5 chars or covers >=40% of title
-    // Prevents common words ("from", "love", "the") from false-matching unrelated shows
-    if (titleClean2.length >= 5 && (itemClean.includes(titleClean2) || titleClean2.includes(itemClean))) {
-      score = Math.max(score, 0.75);
+    if (itemClean === titleClean2) score = Math.max(score, 1.0);
+    // Substring bonus: only if query is >=6 chars or covers >=50% of title
+    if (titleClean2.length >= 6 && (itemClean.includes(titleClean2) || titleClean2.includes(itemClean))) {
+      const ratio = Math.min(itemClean.length, titleClean2.length) / Math.max(itemClean.length, titleClean2.length);
+      score = Math.max(score, ratio >= 0.5 ? 0.85 : 0.75);
     }
     if (year) {
       const itemYear = el.text().match(/\b(19|20)\d{2}\b/);
       if (itemYear && itemYear[0] === year) score += 0.25;
     }
 
-    // Word-level guard (word boundary): at least one query word (≥4 chars) must 
-    // match as a complete word (not just substring) in the result title
+    // Word-level guard: ALL query words (≥3 chars) must appear as whole words
+    // in the result title. If no word is ≥3 chars, require complete title to be a substring.
     let wordMatch = true;
-    const queryWords = titleClean.split(' ').filter(w => w.length >= 4);
+    const queryWords = titleClean.split(' ').filter(w => w.length >= 3);
     if (queryWords.length > 0) {
       const itemLower = ' ' + itemTitle.toLowerCase().replace(/[^a-z0-9]/g, ' ') + ' ';
-      wordMatch = queryWords.some(qw => itemLower.includes(' ' + qw.toLowerCase() + ' '));
+      wordMatch = queryWords.every(qw => itemLower.includes(' ' + qw.toLowerCase() + ' '));
+    } else {
+      // All query words are <3 chars (short title like "Up", "It", "AI")
+      // Require exact match or substring containment
+      wordMatch = itemClean.includes(titleClean2) || titleClean2.includes(itemClean);
     }
 
-    if (score > bestScore && score > 0.5 && wordMatch) {
+    if (score > bestScore && score > 0.7 && wordMatch) {
       bestScore = score;
       bestMatch = itemLink;
     }
   }
 
-  // Fallback: no strong match, try exact word containment
+  // Fallback: no strong match, try ALL words as substrings
   if (!bestMatch && items.length > 0) {
     const queryWords = titleClean.toLowerCase().split(' ').filter(w => w.length >= 3);
-    for (const item of items) {
-      const el = $(item);
-      let itemTitle = '';
-      if (cfg.titleSelector) {
-        const titleEl = cfg.titleSelector === '&' ? el : el.find(cfg.titleSelector).first();
-        itemTitle = cfg.titleAttr ? titleEl.attr(cfg.titleAttr) || '' : titleEl.text().trim();
-      }
-      let itemLink = '';
-      if (cfg.linkSelector) {
-        const linkEl = cfg.linkSelector === '&' ? el : el.find(cfg.linkSelector).first();
-        itemLink = (linkEl.attr('href') || '').trim();
-        if (itemLink && !itemLink.startsWith('http')) {
-          try { itemLink = new URL(itemLink, provider.baseUrl).href; } catch { continue; }
+    if (queryWords.length > 0) {
+      for (const item of items) {
+        const el = $(item);
+        let itemTitle = '';
+        if (cfg.titleSelector) {
+          const titleEl = cfg.titleSelector === '&' ? el : el.find(cfg.titleSelector).first();
+          itemTitle = cfg.titleAttr ? titleEl.attr(cfg.titleAttr) || '' : titleEl.text().trim();
         }
+        let itemLink = '';
+        if (cfg.linkSelector) {
+          const linkEl = cfg.linkSelector === '&' ? el : el.find(cfg.linkSelector).first();
+          itemLink = (linkEl.attr('href') || '').trim();
+          if (itemLink && !itemLink.startsWith('http')) {
+            try { itemLink = new URL(itemLink, provider.baseUrl).href; } catch { continue; }
+          }
+        }
+        if (!itemTitle || !itemLink) continue;
+        const itemLower = itemTitle.toLowerCase();
+        const allMatch = queryWords.every(qw => itemLower.includes(qw));
+        // Also verify at least one word matches as a whole word (word boundary)
+        const itemWords = ' ' + itemLower.replace(/[^a-z0-9]/g, ' ') + ' ';
+        const hasWholeWord = queryWords.some(qw => itemWords.includes(' ' + qw + ' '));
+        if (allMatch && hasWholeWord) { bestMatch = itemLink; break; }
       }
-      if (!itemTitle || !itemLink) continue;
-      const itemLower = itemTitle.toLowerCase();
-      const allMatch = queryWords.length > 0 && queryWords.every(qw => itemLower.includes(qw));
-      if (allMatch) { bestMatch = itemLink; break; }
     }
   }
 
-  // Last resort: return first result
-  if (!bestMatch && items.length > 0) {
-    const el = $(items[0]);
-    let itemLink = '';
-    if (cfg.linkSelector) {
-      const linkEl = cfg.linkSelector === '&' ? el : el.find(cfg.linkSelector).first();
-      itemLink = (linkEl.attr('href') || '').trim();
-      if (itemLink && !itemLink.startsWith('http')) {
-        try { itemLink = new URL(itemLink, provider.baseUrl).href; } catch { itemLink = ''; }
-      }
-    }
-    if (itemLink) bestMatch = itemLink;
-  }
+  // No last-resort fallback — if nothing matched, return null
+  // Returning unverified first result caused wrong-series streams
 
   return bestMatch;
 }

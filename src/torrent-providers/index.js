@@ -487,7 +487,7 @@ async function scrapeEZTV(imdbId) {
 
 // ─── Orchestrator ──────────────────────────
 
-const MIN_SCORE_THRESHOLD = 0.25;
+const MIN_SCORE_THRESHOLD = 0.40;
 
 function isPack(title) {
   const t = title.toLowerCase();

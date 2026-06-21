@@ -1,6 +1,6 @@
 /**
  * torrent-providers - Built from src/torrent-providers/
- * Generated: 2026-06-20T15:23:02.392Z
+ * Generated: 2026-06-21T09:46:54.541Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -514,7 +514,7 @@ function scrapeEZTV(imdbId) {
     }
   });
 }
-var MIN_SCORE_THRESHOLD = 0.25;
+var MIN_SCORE_THRESHOLD = 0.4;
 function isPack(title) {
   const t = title.toLowerCase();
   return /\b(complete|season\s*\d+\s*(complete|pack)|s\d{1,2}\s*(complete|pack)|all\s*episodes|full\s*season)\b/i.test(t);
