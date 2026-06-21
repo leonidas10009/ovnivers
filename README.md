@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.14.1
+# Ovnivers — Stream Provider v1.14.2
 
 Addon **stream-only** para **Stremio / NuvioTV**. Usalo junto con cualquier addon de catálogo (Torrentio, TMDB Community, Kitsu, etc.). Ovnivers solo provee streams — sin catálogos propios, sin conflictos.
 
@@ -159,6 +159,18 @@ node build.js    # Build de scrapers desde src/
 - **URL:** https://ovnivers.onrender.com
 
 ## Changelog
+
+### v1.14.2 — Alfa anime providers fix + dedup + dead scraper cleanup
+
+- **Alfa anime fix**: `resolveTitles()` no extraía IDs `tmdb:` / `ovn:` → 0 títulos → Alfa nunca buscaba. Ahora JKAnime, TioAnime, HenaoJara funcionan para anime. Naruto 6→8 streams, One Piece 12→14.
+- **Torrent dedup**: infoHash ahora se deduplica ignorando el nombre del indexer. Mismo archivo de distintas fuentes colapsa a 1 (mejor calidad/seeds).
+- **Dead scrapers**: 7 Hermes anime deshabilitados (allanime, allwish, anikototv, animesalt, animetsu, animeworld, anime-sama, onetouchtv) — 0 streams consistente. 40→32 módulos cargados.
+- **URL filter**: URLs placeholder como `/embed/novideo.mp4` filtradas.
+- **PoseidonHD**: tipo `data-attr` para resolver proxy `player.php?h=...` → `var url = 'streamwish.to/...'`.
+- **AnimeJara**: resolver Puppeteer `animejara:` (local-only) + tipo `onclick` en engine.
+- **Word guard**: ≤3 palabras → todas deben coincidir, >3 → mayoría.
+- **Language filter**: `?l=cast,es,lat` funciona sin `&c=1`.
+- **Audit tool**: `tests/audit_content.js` muestra servidores, URLs, duplicados por infoHash.
 
 ### v1.14.1 — Search precision + timing + anime detection + language filter + AnimeAV1
 
