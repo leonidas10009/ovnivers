@@ -1,8 +1,8 @@
-# Ovnivers — Stream Provider v1.13.13
+# Ovnivers — Stream Provider v1.14.0
 
-Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fuentes.
+Addon **stream-only** para **Stremio / NuvioTV**. Usalo junto con cualquier addon de catálogo (Torrentio, TMDB Community, Kitsu, etc.). Ovnivers solo provee streams — sin catálogos propios, sin conflictos.
 
-> **v1.13.1:** Puppeteer multi-plataforma (system Chrome Windows/Linux + @sparticuz/chromium Render). Embed-resolver mejorado (MP4Upload directo, Streamtape V2, MixDrop V2). AnimeJara reactivado (15 streams, 8 servidores). Local scrapers Android-optimizados (7 providers). 8/11 Hermes anime funcionales. Auditoría completa 75 providers.
+> **v1.14.0:** Modo stream-only. Eliminados catálogos propios para evitar conflictos de compatibilidad con otros addons. Menos código, menos memoria, más estable.
 
 ## Instalacion
 
@@ -10,38 +10,22 @@ Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fue
 2. Ve al panel de configuracion: [https://ovnivers.onrender.com/configure](https://ovnivers.onrender.com/configure)
 3. Configura preferencias (idiomas, calidad, scrapers) → **Generate Install URL**
 4. Click **Copy URL** y pégalo en Stremio (Install from URL); o usa el botón **Open in Stremio**
-5. Navega películas/series desde cualquier catálogo (TMDB Community, Torrentio, o los catálogos propios del addon)
-6. Los streams aparecen en **Streaming sources** al abrir el detalle de un título
+5. Navega películas/series desde **cualquier addon de catálogo** (Torrentio, TMDB Community, Kitsu Anime, etc.)
+6. Los streams de Ovnivers aparecen en **Streaming sources** al abrir el detalle de un título
 
 ## Features
 
 | Funcionalidad | Detalle |
 |---|---|
 | **Torrent indexers** (6 fuentes) | GloDLS, Nyaa.si, SolidTorrents, LimeTorrents, 1337x, EZTV — ~70+ magnets por búsqueda |
-| **Scrapers anime (Puppeteer)** | JKAnime (10 streams → 5 ExoPlayer), TioAnime (12 streams), AnimeAV1. Browser multi-plataforma: system Chrome en Windows/Linux, @sparticuz/chromium en Render. Cache 30min |
+| **Scrapers anime (Puppeteer)** | JKAnime (10 streams → 5 ExoPlayer), TioAnime (12 streams), AnimeAV1. Browser multi-plataforma: system Chrome Windows/Linux, @sparticuz/chromium Render |
 | **Pigamer37** (proxy anime) | AnimeFLV, AnimeAV1, TioAnime, Henaojara — 6-7 mp4 directos por fuente |
 | **Alfa Providers** | 74 providers (42 activos). 6 funcionales: CineCalidad, CineLibreOnline, PelisPedia, DivXTotal, AnimeJara, JKAnime |
-| **Hermes scrapers** | 58 scrapers en manifest (39 activos, 19 deshabilitados). 8 anime funcionales: animetsu, allwish, anikototv, anime-sama, allanime, animesalt, animeworld, onetouchtv. 3 deshabilitados por 0 streams |
-| **Local scrapers** | 7 providers Android-optimizados (fetch + regex, pool 3 conexiones, max 15 streams). MiraPeliculas, AnimeJara, AnimeJL, HDFull, PelisForte, Zoowomaniacos, EstrenosDoramas |
-| **Embed resolver** | 15+ dominios con resolvers específicos. MP4Upload (URL directa), Streamtape V2, MixDrop V2, Filelions, Uqload, Streamwish, OkRu, JWPlayer y genérico. Sin dependencia de Puppeteer |
+| **Hermes scrapers** | 63 scrapers en manifest. 40 cargados server-side |
+| **Embed resolver** | 15+ dominios con resolvers específicos. MP4Upload, Streamtape V2, MixDrop V2, Streamwish, OkRu, JWPlayer y genérico |
 | **notWebReady automático** | m3u8/mp4/torrent → ExoPlayer directo, resto → browser |
 | **Config panel** | `/configure` — tipos, calidad, idiomas, scrapers on/off |
 | **Proxy inteligente** | Cloudflare Worker v2 con cookie jar, bypass list para dominios Anubis |
-
-## Catalogs
-
-**28 catálogos**: 16 películas + 4 series + 8 anime (TMDB, Kitsu, búsquedas locales).
-
-| Tipo | Cantidad | Ejemplos |
-|------|----------|----------|
-| Películas | 16 | Populares, Mejor Valoradas, Tendencia, Acción, Comedia, Drama, Terror, Ciencia Ficción, Suspenso, Romance, Animación, Anime Movies, Universal |
-| Series | 4 | Populares, Mejor Valoradas, Tendencia, Universal |
-| Anime | 8 | TMDB (Popular/Top/Tendencia/Películas), Kitsu Trending, AnimeFLV OnAir, JKAnime (buscar), TioAnime (buscar) |
-| Búsqueda | 1 | TMDB Search |
-| Anime | 6 | Popular, Mejor Valorado, Tendencia (TMDB), **Anime Kitsu**, Anime en Emisión, Universal |
-| Búsqueda | 1 | Búsqueda global (TMDB + Kitsu) |
-
-IDs: `ovn:`, `ovn-anime:`, `kitsu:`, `tt:`, `tmdb:` para compatibilidad cross-addon.
 
 ## Alfa Providers (74 registrados, 42 activos)
 
@@ -150,20 +134,13 @@ Scrapers legacy del ecosistema Nuvio/Hermes. Mayormente ofuscados (`_0x` obfusca
 
 > Se rotan en orden. El primer mirror que devuelva streams para el pipeline. PoseidonHD rota 3 dominios.
 
-## Catálogos Amatsu
-
-> **Descubrimiento de auditoría:** los 4 catálogos de anime adicionales no son servidos por Pigamer37, sino por el proxy **Amatsu** (`amatsu.ruka.pw`). Pigamer37 se usa para resolver streams/meta de AnimeFLV, AnimeAV1, TioAnime y Henaojara, no para estos catálogos.
-
-4 catálogos de anime adicionales servidos por el proxy Amatsu: `amatsu_seasonal_series`, `amatsu_airing_series`, `amatsu_trending_series`, `amatsu_top_series`.
-
 ## Endpoints
 
 | Endpoint | Descripcion |
 |---|---|
 | `/manifest.json` | Stremio manifest (respeta `?l=es,lat,ja` y otros params de config) |
-| `/stream/:type/:id.json` | Streams (backend + anime proxy + alfa + locals) |
+| `/stream/:type/:id.json` | Streams (torrents + backend + anime proxy + alfa + locals) |
 | `/meta/:type/:id.json` | Metadata (TMDb + anime) |
-| `/catalog/:type/:id.json` | Catálogos TMDB (popular, trending, top-rated, search) |
 | `/health` | Estado de todos los providers (stats, fallos, salud) |
 | `/configure` | Panel de configuracion |
 | `/` | Health check |
@@ -182,6 +159,12 @@ node build.js    # Build de scrapers desde src/
 - **URL:** https://ovnivers.onrender.com
 
 ## Changelog
+
+### v1.14.0 — Stream-only mode: catálogos eliminados
+
+- **Catálogos propios eliminados** del manifest y server.js. Ovnivers ahora es un stream provider puro — lo usás con cualquier addon de catálogo (Torrentio, TMDB Community, Kitsu, etc.).
+- **Rutas `/catalog/*` eliminadas** del backend. Sin conflictos de compatibilidad con catálogos de otros addons.
+- **Menos memoria**: `src/catalog/` ya no se carga, `MAX_CACHE` 500, health stats se purgan automáticamente.
 
 ### v1.13.13 — Memory stability fixes
 

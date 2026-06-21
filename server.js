@@ -1,5 +1,5 @@
 /**
- * Ovnivers — Stremio Addon Backend v1.13.13
+ * Ovnivers — Stremio Addon Backend v1.14.0
  * Backend scrapers + server-side providers + Pigamer37 anime proxy
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
@@ -59,7 +59,6 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
-const catalog = require('./src/catalog/index');
 const torrentIndex = require('./src/torrent-providers/index');
 const { resolveEmbed, isDirectVideoUrl } = require('./src/alfa-providers/embed-resolver');
 const puppeteerResolver = require('./src/puppeteer-resolver');
@@ -80,7 +79,7 @@ if (process.env.SCRAPELESS_API_KEY) {
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-const VERSION = '1.13.13';
+const VERSION = '1.14.0';
 const ADDON_ID = 'com.ovnivers.allinone';
 
 // Available languages for filtering
@@ -1136,52 +1135,18 @@ app.get('/manifest.json', async (req, res) => {
 
   const allPrefixes = [...new Set([...streamPrefixes, ...metaPrefixes])];
 
-  const catalogDefs = catalog.CATEGORIES
-    .filter(c => !c.id.startsWith('tt-popular-')) // added later by getUniversalCatalogDefs
-    .map(c => ({
-    id: c.id,
-    name: c.name,
-    type: c.type,
-    extra: [{ name: 'search', isRequired: false }]
-  }));
-  if (config.enableAnime) {
-    // Kitsu anime catalog (replaces Amatsu)
-    catalogDefs.push(
-      { id: 'kitsu-trending', name: 'Anime Kitsu', type: 'anime', extra: [{ name: 'search', isRequired: false }] },
-    );
-    // Local scraper catalogs (on-air)
-    catalogDefs.push(
-      { id: 'animeflv|onair', name: 'AnimeFLV En Emision', type: 'anime' },
-    );
-    // Search-based catalogs (require search query)
-    catalogDefs.push(
-      { id: 'jkanime|search', name: 'JKAnime (buscar)', type: 'anime', extra: [{ name: 'search', isRequired: true }] },
-      { id: 'tioanime|search', name: 'TioAnime (buscar)', type: 'anime', extra: [{ name: 'search', isRequired: true }] },
-    );
-  }
-  const universalDefs = catalog.getUniversalCatalogDefs(config);
-  catalogDefs.push(...universalDefs);
-  catalogDefs.push({
-    id: 'tmdb-search',
-    name: 'Búsqueda',
-    type: 'movie',
-    extra: [{ name: 'search', isRequired: true }]
-  });
-
-  const catalogTypes = [...new Set(catalogDefs.map(c => c.type))];
   const resources = [
     { name: 'stream', types: enabledTypes, idPrefixes: streamPrefixes },
     { name: 'meta', types: enabledTypes, idPrefixes: metaPrefixes },
-    { name: 'catalog', types: catalogTypes, idPrefixes: ['ovn', 'tmdb', 'tt', 'tmdb-genre:', ...anime.ANIME_PREFIXES] }
   ];
 
   const manifest = {
     id: ADDON_ID,
     version: VERSION,
     name: 'Ovnivers Streams',
-    description: `Stream provider: ${localProviders.length} local + Alfa + ${BACKEND_SCRAPERS.length} backend + Pigamer37 anime. Catálogo en español vía TMDB.`,
+    description: 'Stream-only provider: torrents + Alfa + backend + Pigamer37 anime. Compatible with any catalog addon (Torrentio, TMDB Community, Kitsu, etc.).',
     logo: `${BASE_URL}/logo.png`,
-    catalogs: catalogDefs,
+    catalogs: [],
     resources,
     types: enabledTypes,
     idPrefixes: allPrefixes,
@@ -1520,91 +1485,6 @@ async function handleStream(req, res, type, id) {
   res.json({ streams: filtered });
 }
 
-// ─── Catalog (TMDB en español) ────────────
-
-app.get('/catalog/:type/:id/:extra(*).json', async (req, res) => {
-  const { type, id } = req.params;
-  const extraStr = req.params.extra || '';
-  const extraParams = parsePathExtras(extraStr);
-  req.query = { ...req.query, ...extraParams };
-  handleCatalog(req, res, type, id);
-});
-
-app.get('/catalog/:type/:id.json', async (req, res) => {
-  handleCatalog(req, res, req.params.type, req.params.id);
-});
-
-async function handleCatalog(req, res, type, id) {
-  const config = parseConfig(req);
-  if (!isTypeEnabled(type, config)) return res.json({ metas: [] });
-
-  const search = req.query.search || '';
-  const rawSkip = parseInt(req.query.skip) || 0;
-  const ITEMS_PER_PAGE = 20;
-  const page = parseInt(req.query.page) || (Math.floor(rawSkip / ITEMS_PER_PAGE) + 1);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 'public, max-age=3600');
-
-  try {
-    if (search) {
-      const [tmdbResult, kitsuMetas] = await Promise.all([
-        catalog.searchCatalog(search, page),
-        catalog.searchKitsu(search).catch(() => [])
-      ]);
-      const allMetas = [...tmdbResult.metas, ...kitsuMetas];
-      const seen = new Set();
-      const deduped = [];
-      for (const m of allMetas) {
-        const key = m.id + '|' + m.name;
-        if (!seen.has(key)) { seen.add(key); deduped.push(m); }
-      }
-      const result = { metas: deduped.slice(0, 50) };
-      if (deduped.length >= 50) result.next = `/catalog/${type}/${id}/search=${encodeURIComponent(search)}/skip=${rawSkip + 50}.json`;
-      return res.json(result);
-    }
-    if (id === 'tmdb-search') {
-      return res.json({ metas: [] });
-    }
-    if (/^(animeflv|animeav1|henaojara|tioanime|jkanime)\|/.test(id)) {
-      // Try local scrapers first for on-air catalogs
-      const localResult = await anime.scrapers.getOnAirCatalog(id);
-      if (localResult.metas.length) {
-        return res.json(localResult);
-      }
-      // Try search-based catalogs
-      if (id.endsWith('|search') && search) {
-        const searchResult = await anime.scrapers.searchCatalog(id, search);
-        return res.json(searchResult);
-      }
-      // Fallback to Pigamer37
-      const result = await catalog.getPigamerCatalog(id, page);
-      return res.json(result);
-    }
-    if (id === 'kitsu-trending') {
-      if (search) {
-        const kitsuMetas = await catalog.searchKitsu(search);
-        const result = { metas: kitsuMetas.slice(0, 50) };
-        return res.json(result);
-      }
-      const result = await catalog.getKitsuCatalog(id, page);
-      return res.json(result);
-    }
-    if (id.startsWith('tt-popular-')) {
-      const result = await catalog.getUniversalCatalog(id, page);
-      if (result.next) result.next = `/catalog/${type}/${id}/skip=${rawSkip + ITEMS_PER_PAGE}.json`;
-      return res.json(result);
-    }
-    const result = await catalog.getCatalog(id, page);
-    if (result.next) {
-      result.next = `/catalog/${type}/${id}/skip=${rawSkip + ITEMS_PER_PAGE}.json`;
-    }
-    res.json(result);
-  } catch (e) {
-    console.error('[catalog]', e.message);
-    res.json({ metas: [] });
-  }
-}
-
 // ─── Meta ─────────────────────────────────
 
 app.get('/meta/:type/:id/:extra(*).json', async (req, res) => {
@@ -1747,7 +1627,7 @@ footer a{color:var(--accent2);text-decoration:none}
 <header>
   <div class="logo"><img src="/logo.png" alt="Ovnivers"></div>
   <h1>Ovnivers</h1>
-  <p>Stream provider for external catalogs</p>
+  <p>Stream provider for other addon catalogs</p>
 </header>
 
 <form id="cfgForm" onsubmit="return false">
@@ -1977,7 +1857,6 @@ app.get('/', (req, res) => {
       configure: `${BASE_URL}/configure`,
       health: `${BASE_URL}/health`,
       stream: `${BASE_URL}/stream/:type/:id.json`,
-      catalog: `${BASE_URL}/catalog/:type/:id.json`,
       meta: `${BASE_URL}/meta/:type/:id.json`
     }
   });
@@ -1986,7 +1865,7 @@ app.get('/', (req, res) => {
 app.use(express.static(__dirname));
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`\nOvnivers v${VERSION} ready`);
+  console.log(`\nOvnivers v${VERSION} ready [stream-only mode]`);
   console.log(`Backend:  ${BACKEND_SCRAPERS.map(s => s.name).join(', ')}`);
   console.log(`Anime:    Pigamer37 (AnimeFLV/AnimeAV1/TioAnime/Henaojara)`);
   console.log(`Local:    ${manifestScrapers.length} scrapers`);
