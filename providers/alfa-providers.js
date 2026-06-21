@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-21T13:05:52.467Z
+ * Generated: 2026-06-21T13:31:35.867Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -2729,6 +2729,12 @@ function resolveTitles(id, mediaType) {
           const results2 = data == null ? void 0 : data[mediaType === "tv" ? "tv_results" : "movie_results"];
           if (results2 == null ? void 0 : results2[0]) tmdbId = String(results2[0].id);
         }
+      }
+      if (id.startsWith("tmdb:")) {
+        tmdbId = id.substring(5);
+      }
+      if (id.startsWith("ovn:")) {
+        tmdbId = id.substring(4);
       }
       if (!tmdbId.match(/^\d+$/)) {
         cacheSet(cacheKey, variants);

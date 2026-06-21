@@ -67,6 +67,12 @@ async function resolveTitles(id, mediaType) {
         if (results?.[0]) tmdbId = String(results[0].id);
       }
     }
+    if (id.startsWith('tmdb:')) {
+      tmdbId = id.substring(5); // strip tmdb: prefix
+    }
+    if (id.startsWith('ovn:')) {
+      tmdbId = id.substring(4);
+    }
 
     if (!tmdbId.match(/^\d+$/)) {
       cacheSet(cacheKey, variants);
