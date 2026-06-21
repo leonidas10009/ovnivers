@@ -737,6 +737,38 @@ async function extractVideos(provider, pageUrl) {
         }
       }
     }
+    // Fallback 3: Puppeteer (for JS-loaded content like AnimeJara)
+    if (!results.length && cfg.puppeteerFallback) {
+      try {
+        const pptr = require('../jkanime-puppeteer');
+        const b = await pptr.getBrowser?.();
+        if (b) {
+          const page = await b.newPage();
+          await page.setUserAgent(UA);
+          await page.goto(pageUrl, { waitUntil: 'networkidle2', timeout: 20000 });
+          const servers = await page.evaluate(() => {
+            const found = [];
+            document.querySelectorAll('[onclick*="playVideo"]').forEach(el => {
+              const m = (el.getAttribute('onclick')||'').match(/playVideo\s*\(\s*["\']([^"\']+)["\']\s*\)/);
+              if (m) found.push({ url: m[1].replace(/\\\//g, '/'), server: el.querySelector('.nombre-server, [class*="server"]')?.textContent?.trim() || '' });
+            });
+            document.querySelectorAll('.reproductor-wrapper iframe, .episodio-reproductor iframe').forEach(el => {
+              const src = el.getAttribute('src');
+              if (src) found.push({ url: src, server: '' });
+            });
+            return found;
+          });
+          await page.close();
+          for (const s of servers) {
+            if (s.url.startsWith('//')) s.url = 'https:' + s.url;
+            if (s.url.startsWith('http')) {
+              if (!s.server) s.server = detectServer(s.url);
+              results.push({ url: s.url, server: s.server, quality: cfg.defaultQuality || 'HD' });
+            }
+          }
+        }
+      } catch {}
+    }
   }
 
   if (cfg.type === 'data-attr') {

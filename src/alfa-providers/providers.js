@@ -514,7 +514,7 @@ module.exports = [
     adult: false,
     search: { url: '/catalogo/?q={query}', itemSelector: '.anime-card', titleSelector: '.card-title', linkSelector: '&' },
     episodes: { type: 'url', pattern: '/episode/{slug}-1x{episode}/' },
-    videos: { type: 'onclick', containerSelector: '#lista-server ul', itemSelector: 'li', serverSelector: '.nombre-server', defaultQuality: 'HD' }
+    videos: { type: 'onclick', containerSelector: '#lista-server ul', itemSelector: 'li', serverSelector: '.nombre-server', defaultQuality: 'HD', puppeteerFallback: true }
   },
   {
     name: 'animejl',

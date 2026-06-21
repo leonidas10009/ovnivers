@@ -607,7 +607,7 @@ async function resolveAnimeAV1(slug, episode) {
   return streams.filter(s => { const k = s.url + s.server; if (seen.has(k)) return false; seen.add(k); return true; });
 }
 
-module.exports = { resolveJKAnime, resolveTioAnime, resolveAnimeAV1, resolveAnimeJara };
+module.exports = { resolveJKAnime, resolveTioAnime, resolveAnimeAV1, resolveAnimeJara, getBrowser };
 
 // ═══ AnimeJara ═══
 async function resolveAnimeJara(slug, episode) {
