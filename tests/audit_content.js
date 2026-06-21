@@ -73,25 +73,36 @@ async function auditStreams(path, label) {
     
     console.log(`\n  ▸ ${provider} (${items.length} streams, ${servers.length} servers)`);
     
-    // Group by server within provider
+    // Group by server within provider (track infoHash for torrent dedup)
     const byServer = {};
+    const infoHashSeen = new Set();
     items.forEach(i => {
-      if (!byServer[i.server]) byServer[i.server] = [];
-      byServer[i.server].push(i);
+      const key = i.server === 'Torrent' ? `Torrent|${i.url}` : i.server;
+      if (!byServer[key]) byServer[key] = [];
+      byServer[key].push(i);
+      if (i.url && i.url.startsWith('magnet:')) {
+        const ih = i.url.match(/btih:([a-fA-F0-9]+)/);
+        if (ih) infoHashSeen.add(ih[1].substring(0, 8));
+      }
     });
     
     Object.entries(byServer).forEach(([server, serverItems]) => {
       const dupCount = serverItems.length;
-      const marker = dupCount > 1 ? ` ⚠️ x${dupCount}` : '';
-      const dir = serverItems[0].isDirect ? '📺' : (server === 'Torrent' ? '🧲' : '🌐');
-      console.log(`    ${dir} ${server.padEnd(14)} ${serverItems[0].quality.padEnd(6)} ${serverItems[0].flags} ${serverItems[0].url.substring(0, 45)}${marker}`);
+      const sameHash = server.startsWith('Torrent|') && dupCount > 1;
+      const marker = sameHash ? ` ⚠️ SAME torrent x${dupCount}` : '';
+      const dir = server.startsWith('Torrent') ? '🧲' : (serverItems[0].isDirect ? '📺' : '🌐');
+      const displayServer = server.startsWith('Torrent|') ? 'Torrent' : server;
+      const displayUrl = serverItems[0].url.startsWith('magnet:')
+        ? 'magnet:?xt=urn:btih:' + (serverItems[0].url.match(/btih:([a-fA-F0-9]+)/)?.[1]?.substring(0, 12) || '?') + '...'
+        : serverItems[0].url.substring(0, 45);
+      console.log(`    ${dir} ${displayServer.padEnd(14)} ${serverItems[0].quality.padEnd(6)} ${serverItems[0].flags} ${displayUrl}${marker}`);
     });
     
     totalDirect += directCount;
     totalEmbed += embedCount;
   });
   
-  console.log(`\n  📊 Direct:${streams.filter(s => !s.behaviorHints?.notWebReady).length} | Embed:${streams.filter(s => s.behaviorHints?.notWebReady && !s.infoHash).length} | Torrent:${streams.filter(s => s.infoHash).length} | Browser:${streams.filter(s => s.externalUrl).length}`);
+  console.log(`\n  📊 Direct:${streams.filter(s => !s.behaviorHints?.notWebReady && !s.infoHash).length} | Embed:${streams.filter(s => s.behaviorHints?.notWebReady && !s.infoHash).length} | Torrent:${streams.filter(s => s.infoHash).length} torrents/${infoHashSeen.size} unique | Browser:${streams.filter(s => s.externalUrl).length}`);
 }
 
 async function main() {
