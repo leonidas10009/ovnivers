@@ -555,7 +555,7 @@ module.exports = [
     baseUrl: 'https://henaojara.com',
     categories: ['anime'],
     language: ['cast', 'lat', 'vose'],
-    active: true,
+    active: false, // JS-dependent — site migrated, returns only ad iframes
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h3.Title', linkSelector: 'a' }, // <-- fixed
     videos: { type: 'iframe', containerSelector: 'body', iframeSelector: 'iframe', defaultQuality: 'HD' }

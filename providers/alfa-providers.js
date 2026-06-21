@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-21T11:36:16.524Z
+ * Generated: 2026-06-21T11:52:32.554Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -623,7 +623,8 @@ var require_providers = __commonJS({
         baseUrl: "https://henaojara.com",
         categories: ["anime"],
         language: ["cast", "lat", "vose"],
-        active: true,
+        active: false,
+        // JS-dependent — site migrated, returns only ad iframes
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h3.Title", linkSelector: "a" },
         // <-- fixed
