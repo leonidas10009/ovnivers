@@ -452,18 +452,78 @@ async function resolveAnimeAV1(slug, episode) {
       if (!res.ok) return [];
       const data = await res.json();
       const servers = [];
+      
+      // Find the episode node and extract embeds + downloads
       for (const node of (data.nodes || [])) {
         if (node?.type !== 'data' || !Array.isArray(node.data)) continue;
-        for (let i = 0; i < node.data.length; i++) {
-          const val = node.data[i];
-          if (val && val.server && val.url) {
-            const srv = typeof val.server === 'number' ? node.data[val.server] : val.server;
-            const u = typeof val.url === 'number' ? node.data[val.url] : val.url;
-            if (typeof srv === 'string' && typeof u === 'string' && u.startsWith('http'))
-              servers.push({ server: srv, url: u });
+        
+        // Episode node: data[0] has {episode:X, embeds:Y, downloads:Z}
+        const first = node.data[0];
+        if (!first || typeof first !== 'object') continue;
+        
+        // Extract embeds (streaming servers, organized by SUB/DUB variant)
+        if (first.embeds !== undefined) {
+          const embedsRef = node.data[first.embeds];
+          if (embedsRef && typeof embedsRef === 'object') {
+            for (const [variant, serversIdx] of Object.entries(embedsRef)) {
+              const variantServers = node.data[serversIdx];
+              if (!Array.isArray(variantServers)) continue;
+              for (const entry of variantServers) {
+                // Handle both object-entry and index-reference formats
+                let srvObj = entry;
+                if (typeof entry === 'number') srvObj = node.data[entry];
+                if (!srvObj || typeof srvObj !== 'object') continue;
+                
+                const srv = typeof srvObj.server === 'number' ? node.data[srvObj.server] : srvObj.server;
+                const u = typeof srvObj.url === 'number' ? node.data[srvObj.url] : srvObj.url;
+                if (typeof srv === 'string' && typeof u === 'string' && u.startsWith('http'))
+                  servers.push({ server: srv + (variant !== 'SUB' ? ' ' + variant : ''), url: u, variant });
+              }
+            }
+          }
+        }
+        
+        // Extract downloads (DDL links, may have quality/size metadata)
+        if (first.downloads !== undefined) {
+          const dlRoot = node.data[first.downloads];
+          // Downloads can be flat array or organized by SUB/DUB
+          const dlArrays = Array.isArray(dlRoot) ? { '': dlRoot } :
+            (dlRoot && typeof dlRoot === 'object' ? dlRoot : {});
+          for (const [variant, dlIdxOrArr] of Object.entries(dlArrays)) {
+            const dlArr = typeof dlIdxOrArr === 'number' ? node.data[dlIdxOrArr] : dlIdxOrArr;
+            if (!Array.isArray(dlArr)) continue;
+            for (const entry of dlArr) {
+              let dlObj = entry;
+              if (typeof entry === 'number') dlObj = node.data[entry];
+              if (!dlObj || typeof dlObj !== 'object') continue;
+              
+              const srv = typeof dlObj.server === 'number' ? node.data[dlObj.server] : (dlObj.server || 'DDL');
+              const u = typeof dlObj.url === 'number' ? node.data[dlObj.url] : (dlObj.url || '');
+              const quality = dlObj.quality ? (typeof dlObj.quality === 'number' ? node.data[dlObj.quality] : dlObj.quality) : '';
+              const label = srv + (quality ? ' ' + quality : '') + (variant && variant !== 'SUB' ? ' ' + variant : '');
+              if (typeof srv === 'string' && typeof u === 'string' && u.startsWith('http'))
+                servers.push({ server: label, url: u });
+            }
           }
         }
       }
+      
+      // Fallback: if structured extraction found nothing, try flat scan (old method)
+      if (!servers.length) {
+        for (const node of (data.nodes || [])) {
+          if (node?.type !== 'data' || !Array.isArray(node.data)) continue;
+          for (let i = 0; i < node.data.length; i++) {
+            const val = node.data[i];
+            if (val && val.server && val.url) {
+              const srv = typeof val.server === 'number' ? node.data[val.server] : val.server;
+              const u = typeof val.url === 'number' ? node.data[val.url] : val.url;
+              if (typeof srv === 'string' && typeof u === 'string' && u.startsWith('http'))
+                servers.push({ server: srv, url: u });
+            }
+          }
+        }
+      }
+      
       serverList = { servers };
       if (!servers.length) return [];
       cacheSet(serverCache, ck, serverList, MAX_CACHE);

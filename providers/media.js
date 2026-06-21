@@ -1,6 +1,6 @@
 /**
  * media - Built from src/media/
- * Generated: 2026-06-21T11:32:20.795Z
+ * Generated: 2026-06-21T11:36:16.585Z
  */
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __commonJS = (cb, mod) => function __require() {
@@ -533,6 +533,7 @@ var require_dedup = __commonJS({
     }
     function dedupeServerAware(streams) {
       const map = /* @__PURE__ */ new Map();
+      const serverCounts = /* @__PURE__ */ new Map();
       for (const s of streams) {
         const sk = extractServerKey(s);
         if (!sk || sk.startsWith("|")) {
@@ -540,14 +541,20 @@ var require_dedup = __commonJS({
           continue;
         }
         const existing = map.get(sk);
+        const count = serverCounts.get(sk) || 0;
         if (!existing) {
           map.set(sk, s);
+          serverCounts.set(sk, 1);
           continue;
         }
         const newIsDirect = s.url && s.behaviorHints && !s.behaviorHints.notWebReady;
         const oldIsDirect = existing.url && existing.behaviorHints && !existing.behaviorHints.notWebReady;
         if (newIsDirect && !oldIsDirect) {
           map.set(sk, s);
+        } else if (count < 2) {
+          const variantKey = sk + "|v" + count;
+          map.set(variantKey, s);
+          serverCounts.set(sk, count + 1);
         } else if (!newIsDirect && !oldIsDirect) {
           const qTiers = { "4K": 5, "1080p": 4, "720p": 3, "480p": 2, "HD": 3, "CAM": 0 };
           const qNew = qTiers[s.quality] || 0;

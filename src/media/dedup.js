@@ -74,6 +74,8 @@ function extractServerKey(s) {
 
 function dedupeServerAware(streams) {
   const map = new Map();
+  const serverCounts = new Map(); // track how many per server key
+  
   for (const s of streams) {
     const sk = extractServerKey(s);
     if (!sk || sk.startsWith('|')) {
@@ -81,14 +83,25 @@ function dedupeServerAware(streams) {
       continue;
     }
     const existing = map.get(sk);
+    const count = serverCounts.get(sk) || 0;
+    
     if (!existing) {
       map.set(sk, s);
+      serverCounts.set(sk, 1);
       continue;
     }
+    
+    // Keep up to 2 streams per server (different URLs/files)
     const newIsDirect = s.url && s.behaviorHints && !s.behaviorHints.notWebReady;
     const oldIsDirect = existing.url && existing.behaviorHints && !existing.behaviorHints.notWebReady;
+    
     if (newIsDirect && !oldIsDirect) {
-      map.set(sk, s);
+      map.set(sk, s); // replace embed with direct
+    } else if (count < 2) {
+      // Keep as additional variant (different URL, same server)
+      const variantKey = sk + '|v' + count;
+      map.set(variantKey, s);
+      serverCounts.set(sk, count + 1);
     } else if (!newIsDirect && !oldIsDirect) {
       const qTiers = { '4K': 5, '1080p': 4, '720p': 3, '480p': 2, 'HD': 3, 'CAM': 0 };
       const qNew = qTiers[s.quality] || 0;
