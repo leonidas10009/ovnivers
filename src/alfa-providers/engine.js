@@ -14,11 +14,23 @@ function parseSetCookie(sc) {
 }
 
 async function solveAnubisPoW(randomData, difficulty) {
-  const prefix = '0'.repeat(difficulty);
+  // Anubis v1.25.0: difficulty is in leading zero BITS (not hex chars)
+  const zeroBytes = Math.floor(difficulty / 2);
+  const nibbleCheck = difficulty % 2 !== 0;
   let nonce = 0;
   while (true) {
-    const hash = crypto.createHash('sha256').update(randomData + nonce).digest('hex');
-    if (hash.startsWith(prefix)) return { nonce, hash };
+    const hash = crypto.createHash('sha256').update(randomData + nonce).digest();
+    const bytes = new Uint8Array(hash.buffer, hash.byteOffset, hash.byteLength);
+    let valid = true;
+    for (let i = 0; i < zeroBytes; i++) {
+      if (bytes[i] !== 0) { valid = false; break; }
+    }
+    if (valid && nibbleCheck && (bytes[zeroBytes] & 0xF0) !== 0) valid = false;
+    if (valid) {
+      const hex = Array.from(new Uint8Array(hash.buffer, hash.byteOffset, hash.byteLength))
+        .map(b => b.toString(16).padStart(2, '0')).join('');
+      return { nonce, hash: hex };
+    }
     nonce++;
   }
 }
@@ -30,17 +42,19 @@ async function bypassAnubisChallenge(html, url, verificationCookie) {
 
   const parsed = JSON.parse(chMatch[1].trim());
   const challenge = parsed.challenge;
+  const difficulty = challenge.difficulty || parsed.rules?.difficulty || 5;
   const basePrefix = baseMatch ? JSON.parse(baseMatch[1].trim()) : '';
   const baseUrl = new URL(url).origin;
 
-  const solution = await solveAnubisPoW(challenge.randomData, challenge.difficulty || 5);
+  const startTime = Date.now();
+  const solution = await solveAnubisPoW(challenge.randomData, difficulty);
 
   const params = new URLSearchParams({
     id: challenge.id,
     response: solution.hash,
     nonce: String(solution.nonce),
     redir: '/',
-    elapsedTime: String(Math.floor(Math.random() * 3000 + 1000))
+    elapsedTime: String(Date.now() - startTime)
   });
   const passUrl = `${baseUrl}${basePrefix}/.within.website/x/cmd/anubis/api/pass-challenge?${params}`;
 

@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-21T13:31:35.867Z
+ * Generated: 2026-06-21T13:59:03.069Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -178,12 +178,12 @@ var require_providers = __commonJS({
       {
         name: "dontorrent",
         title: "DonTorrent",
-        baseUrl: "https://dontorrent.support",
+        baseUrl: "https://dontorrent.review",
         categories: ["movie", "tvshow", "vos", "torrent"],
         language: ["cast"],
         active: true,
         adult: false,
-        search: { method: "POST", url: "/buscar", body: "valor={query}", contentType: "application/x-www-form-urlencoded", itemSelector: 'a[href*="/pelicula/"], a[href*="/serie/"]', titleSelector: "&", linkSelector: "&" },
+        search: { url: "/?s={query}", itemSelector: 'a[href*="/pelicula/"], a[href*="/serie/"]', titleSelector: "&", linkSelector: "&" },
         episodes: { type: "dontorrent" },
         videos: { type: "dontorrent", defaultQuality: "HD" }
       },
@@ -1692,31 +1692,47 @@ var require_engine = __commonJS({
     }
     function solveAnubisPoW(randomData, difficulty) {
       return __async(this, null, function* () {
-        const prefix = "0".repeat(difficulty);
+        const zeroBytes = Math.floor(difficulty / 2);
+        const nibbleCheck = difficulty % 2 !== 0;
         let nonce = 0;
         while (true) {
-          const hash = crypto.createHash("sha256").update(randomData + nonce).digest("hex");
-          if (hash.startsWith(prefix)) return { nonce, hash };
+          const hash = crypto.createHash("sha256").update(randomData + nonce).digest();
+          const bytes = new Uint8Array(hash.buffer, hash.byteOffset, hash.byteLength);
+          let valid = true;
+          for (let i = 0; i < zeroBytes; i++) {
+            if (bytes[i] !== 0) {
+              valid = false;
+              break;
+            }
+          }
+          if (valid && nibbleCheck && (bytes[zeroBytes] & 240) !== 0) valid = false;
+          if (valid) {
+            const hex = Array.from(new Uint8Array(hash.buffer, hash.byteOffset, hash.byteLength)).map((b) => b.toString(16).padStart(2, "0")).join("");
+            return { nonce, hash: hex };
+          }
           nonce++;
         }
       });
     }
     function bypassAnubisChallenge(html, url, verificationCookie) {
       return __async(this, null, function* () {
+        var _a;
         const chMatch = html.match(/<script id="anubis_challenge"[^>]*>([\s\S]*?)<\/script>/);
         const baseMatch = html.match(/<script id="anubis_base_prefix"[^>]*>([\s\S]*?)<\/script>/);
         if (!chMatch) return null;
         const parsed = JSON.parse(chMatch[1].trim());
         const challenge = parsed.challenge;
+        const difficulty = challenge.difficulty || ((_a = parsed.rules) == null ? void 0 : _a.difficulty) || 5;
         const basePrefix = baseMatch ? JSON.parse(baseMatch[1].trim()) : "";
         const baseUrl = new URL(url).origin;
-        const solution = yield solveAnubisPoW(challenge.randomData, challenge.difficulty || 5);
+        const startTime = Date.now();
+        const solution = yield solveAnubisPoW(challenge.randomData, difficulty);
         const params = new URLSearchParams({
           id: challenge.id,
           response: solution.hash,
           nonce: String(solution.nonce),
           redir: "/",
-          elapsedTime: String(Math.floor(Math.random() * 3e3 + 1e3))
+          elapsedTime: String(Date.now() - startTime)
         });
         const passUrl = `${baseUrl}${basePrefix}/.within.website/x/cmd/anubis/api/pass-challenge?${params}`;
         const passHeaders = { "User-Agent": UA2 };

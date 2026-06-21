@@ -125,12 +125,12 @@ module.exports = [
   {
     name: 'dontorrent',
     title: 'DonTorrent',
-    baseUrl: 'https://dontorrent.support',
+    baseUrl: 'https://dontorrent.review',
     categories: ['movie', 'tvshow', 'vos', 'torrent'],
     language: ['cast'],
     active: true,
     adult: false,
-    search: { method: 'POST', url: '/buscar', body: 'valor={query}', contentType: 'application/x-www-form-urlencoded', itemSelector: 'a[href*="/pelicula/"], a[href*="/serie/"]', titleSelector: '&', linkSelector: '&' },
+    search: { url: '/?s={query}', itemSelector: 'a[href*="/pelicula/"], a[href*="/serie/"]', titleSelector: '&', linkSelector: '&' },
     episodes: { type: 'dontorrent' },
     videos: { type: 'dontorrent', defaultQuality: 'HD' }
   },
