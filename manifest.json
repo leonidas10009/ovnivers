@@ -119,7 +119,7 @@
         "tv"
       ],
       "filename": "providers/allanime.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "mp4",
         "mkv",
@@ -176,7 +176,7 @@
     {
       "id": "allwish",
       "name": "🌟 All-Wish",
-      "description": "All-Wish TV episodes via All-Wish servers",
+      "description": "All-Wish TV episodes via All-Wish servers [DISABLED: dead domain/0 streams]",
       "version": "1.0.1",
       "author": "Kabir",
       "supportedTypes": [
@@ -184,7 +184,7 @@
         "tv"
       ],
       "filename": "providers/allwish.js",
-      "enabled": true,
+      "enabled": false,
       "limited": true,
       "formats": [
         "mp4",
@@ -221,7 +221,7 @@
     {
       "id": "anikototv",
       "name": "AnikotoTV",
-      "description": "Anime provider for AnikotoTV.to via Mapper API + Native Extractor",
+      "description": "Anime provider for AnikotoTV.to via Mapper API + Native Extractor [DISABLED: dead domain/0 streams]",
       "version": "1.0.5",
       "author": "piratezoro9",
       "supportedTypes": [
@@ -230,7 +230,7 @@
         "anime"
       ],
       "filename": "providers/anikototv.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "mp4"
       ],
@@ -265,7 +265,7 @@
     {
       "id": "animesalt",
       "name": "🧂 AnimeSalt",
-      "description": "AnimeSalt India",
+      "description": "AnimeSalt India [DISABLED: dead domain/0 streams]",
       "version": "1.0.0",
       "author": "piratezoro9",
       "supportedTypes": [
@@ -273,7 +273,7 @@
         "tv"
       ],
       "filename": "providers/animesalt.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "m3u8",
         "mp4"
@@ -288,7 +288,7 @@
     {
       "id": "animetsu",
       "name": "Animetsu",
-      "description": "Lightning fast sub & dub anime streams via Animetsu",
+      "description": "Lightning fast sub & dub anime streams via Animetsu [DISABLED: dead domain/0 streams]",
       "version": "1.0.0",
       "author": "piratezoro9",
       "supportedTypes": [
@@ -297,7 +297,7 @@
         "anime"
       ],
       "filename": "providers/animetsu.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "m3u8"
       ],
@@ -310,7 +310,7 @@
     {
       "id": "animeworld",
       "name": "🗡️ AnimeWorld",
-      "description": "Watch AnimeWorld India",
+      "description": "Watch AnimeWorld India [DISABLED: dead domain/0 streams]",
       "version": "1.0.0",
       "author": "piratezoro9",
       "supportedTypes": [
@@ -318,7 +318,7 @@
         "tv"
       ],
       "filename": "providers/animeworld.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "m3u8"
       ],
@@ -332,7 +332,7 @@
     {
       "id": "anime-sama",
       "name": "🐍 Anime-Sama",
-      "description": "Watch AnimeSama France",
+      "description": "Watch AnimeSama France [DISABLED: dead domain/0 streams]",
       "version": "1.1.27",
       "author": "Gowaru",
       "supportedTypes": [
@@ -340,7 +340,7 @@
         "tv"
       ],
       "filename": "providers/anime-sama.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "mp4",
         "mkv"
@@ -1418,7 +1418,7 @@
     {
       "id": "onetouchtv",
       "name": "OneTouchTV",
-      "description": "Watch Asian Drama & Anime",
+      "description": "Watch Asian Drama & Anime [DISABLED: dead domain/0 streams]",
       "version": "1.0.0",
       "author": "Kabir",
       "supportedTypes": [
@@ -1426,7 +1426,7 @@
         "tv"
       ],
       "filename": "providers/onetouchtv.js",
-      "enabled": true,
+      "enabled": false,
       "formats": [
         "mp4",
         "mkv",

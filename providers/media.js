@@ -1,6 +1,6 @@
 /**
  * media - Built from src/media/
- * Generated: 2026-06-21T12:11:46.471Z
+ * Generated: 2026-06-21T13:05:52.910Z
  */
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __commonJS = (cb, mod) => function __require() {
@@ -496,9 +496,22 @@ var require_dedup = __commonJS({
     }
     function dedupeWithPriority(streams, preferHigherQuality = true) {
       const map = /* @__PURE__ */ new Map();
+      const infoHashMap = /* @__PURE__ */ new Map();
       for (const s of streams) {
+        if (s.infoHash) {
+          const existing2 = infoHashMap.get(s.infoHash);
+          if (!existing2) {
+            infoHashMap.set(s.infoHash, s);
+          } else if (preferHigherQuality) {
+            const qTiers = { "4K": 5, "1080p": 4, "720p": 3, "480p": 2, "HD": 3, "CAM": 0 };
+            const qNew = qTiers[s.quality] || 0;
+            const qOld = qTiers[existing2.quality] || 0;
+            if (qNew > qOld) infoHashMap.set(s.infoHash, s);
+            else if (qNew === qOld && (s.seeds || 0) > (existing2.seeds || 0)) infoHashMap.set(s.infoHash, s);
+          }
+          continue;
+        }
         const baseKey = [
-          s.infoHash || "",
           s.url || s.externalUrl || "",
           (s.name || "").toLowerCase().substring(0, 50)
         ].join("|");
@@ -514,7 +527,7 @@ var require_dedup = __commonJS({
           if (qNew > qOld) map.set(baseKey, s);
         }
       }
-      return [...map.values()];
+      return [...map.values(), ...infoHashMap.values()];
     }
     function extractServerKey(s) {
       const nameStr = (s.name || "").toLowerCase();

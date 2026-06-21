@@ -30,9 +30,25 @@ function dedupeStreams(streams) {
 
 function dedupeWithPriority(streams, preferHigherQuality = true) {
   const map = new Map();
+  const infoHashMap = new Map(); // separate dedup for torrents by infoHash only
+  
   for (const s of streams) {
+    // Torrent dedup: unique by infoHash regardless of source indexer
+    if (s.infoHash) {
+      const existing = infoHashMap.get(s.infoHash);
+      if (!existing) {
+        infoHashMap.set(s.infoHash, s);
+      } else if (preferHigherQuality) {
+        const qTiers = { '4K': 5, '1080p': 4, '720p': 3, '480p': 2, 'HD': 3, 'CAM': 0 };
+        const qNew = qTiers[s.quality] || 0;
+        const qOld = qTiers[existing.quality] || 0;
+        if (qNew > qOld) infoHashMap.set(s.infoHash, s);
+        else if (qNew === qOld && (s.seeds || 0) > (existing.seeds || 0)) infoHashMap.set(s.infoHash, s);
+      }
+      continue;
+    }
+    
     const baseKey = [
-      s.infoHash || '',
       s.url || s.externalUrl || '',
       (s.name || '').toLowerCase().substring(0, 50),
     ].join('|');
@@ -50,7 +66,7 @@ function dedupeWithPriority(streams, preferHigherQuality = true) {
       if (qNew > qOld) map.set(baseKey, s);
     }
   }
-  return [...map.values()];
+  return [...map.values(), ...infoHashMap.values()];
 }
 
 function extractServerKey(s) {

@@ -720,6 +720,9 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
   const hasPlayableTarget = url || stream.externalUrl || stream.infoHash;
   if (!hasPlayableTarget) return null;
   if (url && /youtube\.com|youtu\.be/i.test(url)) return null;
+  // Filter placeholder/invalid URLs that can't possibly work
+  if (url && /\/embed\/novideo/i.test(url)) return null;
+  if (url && url === '/' || url === '#' || url === 'about:blank') return null;
 
   const rawName = stream.name || '';
   const rawTitle = stream.title || '';
