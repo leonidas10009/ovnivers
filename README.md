@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.13.12
+# Ovnivers — Stream Provider v1.13.13
 
 Addon para **Stremio / NuvioTV** con catálogo, meta y streams de múltiples fuentes.
 
@@ -182,6 +182,12 @@ node build.js    # Build de scrapers desde src/
 - **URL:** https://ovnivers.onrender.com
 
 ## Changelog
+
+### v1.13.13 — Memory stability fixes
+
+- **Health stats pruning**: `health.prune()` limpia entradas inactivas >15 min con pocas llamadas. Memory watchdog ahora también limpia el health tracker (antes solo stream/meta caches).
+- **Heap limit explícito**: `--max-old-space-size=400` en `render.yaml`. Node.js ahora sabe que tiene 400MB reales y hace GC antes de que Render mate el proceso por OOM.
+- **Cache reducido**: `MAX_CACHE` 1000 → 500 para disminuir presión en 512MB del free tier.
 
 ### v1.7.7 — Kitsu cross-reference + catálogos simplificados + fixes Alfa
 
