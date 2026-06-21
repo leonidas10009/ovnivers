@@ -124,7 +124,7 @@ if (PROXY_URL) {
 // breaks the cookie chain (Worker receives challenge, backend solves it,
 // but auth cookie stays in backend, not in Worker)
 const PROXY_BYPASS_DOMAINS = new Set(
-  (process.env.PROXY_BYPASS_DOMAINS || 'dontorrent.support,dontorrent.fit,www43.mejortorrent.eu,grantorrent.zip,divxtotal.foo,wolfmax4k.com,pelispanda.org,elitetorrent.biz,mitorrent.mx,hacktorrent.to,bloghorror.com,jkanime.net,tioanime.com,animeav1.com,nika.playmudos.com')
+  (process.env.PROXY_BYPASS_DOMAINS || 'dontorrent.review,dontorrent.fit,www43.mejortorrent.eu,grantorrent.zip,divxtotal.foo,wolfmax4k.com,pelispanda.org,elitetorrent.biz,mitorrent.mx,hacktorrent.to,bloghorror.com,jkanime.net,tioanime.com,animeav1.com,nika.playmudos.com')
     .split(',')
     .map(d => d.trim().toLowerCase())
     .filter(Boolean)
