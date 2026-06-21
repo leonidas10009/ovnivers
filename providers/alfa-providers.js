@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-21T13:59:03.069Z
+ * Generated: 2026-06-21T14:35:43.467Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -578,7 +578,7 @@ var require_providers = __commonJS({
         language: ["cast", "lat", "vose"],
         active: true,
         adult: false,
-        search: { url: "/?s={query}", itemSelector: ".anime-card", titleSelector: ".card-title", linkSelector: "a" },
+        search: { method: "POST", url: "/wp-admin/admin-ajax.php", body: "action=live_search&s={query}", jsonPath: "data.animes", titleAttr: "titulo", linkAttr: "slug" },
         episodes: { type: "url", pattern: "/episode/{slug}-1x{episode}/" },
         videos: { type: "onclick", containerSelector: "#lista-server ul", itemSelector: "li", serverSelector: ".nombre-server", defaultQuality: "HD" }
       },
@@ -1926,6 +1926,31 @@ var require_engine = __commonJS({
           if (first.length >= 6) html = yield trySearch(first);
         }
         if (!html) return null;
+        if (cfg.jsonPath) {
+          try {
+            const data = typeof html === "string" ? JSON.parse(html) : html;
+            let items2 = data;
+            for (const key of cfg.jsonPath.split(".")) items2 = items2 == null ? void 0 : items2[key];
+            if (!Array.isArray(items2) || !items2.length) return null;
+            let bestMatch2 = null;
+            let bestScore2 = 0;
+            const titleField = cfg.titleAttr || "titulo";
+            const linkField = cfg.linkAttr || "slug";
+            for (const item of items2) {
+              const itemTitle = item[titleField] || "";
+              const itemSlug = item[linkField] || "";
+              if (!itemTitle || !itemSlug) continue;
+              const itemLink = `https://animejara.com/anime/${itemSlug}`;
+              let score = similarity2(itemTitle, title);
+              if (score > bestScore2 && score > 0.6) {
+                bestScore2 = score;
+                bestMatch2 = itemLink;
+              }
+            }
+            return bestMatch2;
+          } catch (e) {
+          }
+        }
         if (cfg.jsonDataPath) {
           try {
             const data = JSON.parse(((_a = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/)) == null ? void 0 : _a[1]) || html);

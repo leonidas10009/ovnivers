@@ -512,7 +512,7 @@ module.exports = [
     language: ['cast', 'lat', 'vose'],
     active: true,
     adult: false,
-    search: { url: '/?s={query}', itemSelector: '.anime-card', titleSelector: '.card-title', linkSelector: 'a' },
+    search: { method: 'POST', url: '/wp-admin/admin-ajax.php', body: 'action=live_search&s={query}', jsonPath: 'data.animes', titleAttr: 'titulo', linkAttr: 'slug' },
     episodes: { type: 'url', pattern: '/episode/{slug}-1x{episode}/' },
     videos: { type: 'onclick', containerSelector: '#lista-server ul', itemSelector: 'li', serverSelector: '.nombre-server', defaultQuality: 'HD' }
   },

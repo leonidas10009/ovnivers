@@ -251,6 +251,30 @@ async function searchProvider(provider, title, year, mediaType) {
   }
   if (!html) return null;
 
+  // Direct JSON API search (e.g. AnimeJara live_search)
+  if (cfg.jsonPath) {
+    try {
+      const data = typeof html === 'string' ? JSON.parse(html) : html;
+      let items = data;
+      for (const key of cfg.jsonPath.split('.')) items = items?.[key];
+      if (!Array.isArray(items) || !items.length) return null;
+
+      let bestMatch = null;
+      let bestScore = 0;
+      const titleField = cfg.titleAttr || 'titulo';
+      const linkField = cfg.linkAttr || 'slug';
+      for (const item of items) {
+        const itemTitle = item[titleField] || '';
+        const itemSlug = item[linkField] || '';
+        if (!itemTitle || !itemSlug) continue;
+        const itemLink = `https://animejara.com/anime/${itemSlug}`;
+        let score = similarity(itemTitle, title);
+        if (score > bestScore && score > 0.6) { bestScore = score; bestMatch = itemLink; }
+      }
+      return bestMatch;
+    } catch {}
+  }
+
   // JSON-based search (e.g. PoseidonHD __NEXT_DATA__)
   if (cfg.jsonDataPath) {
     try {
