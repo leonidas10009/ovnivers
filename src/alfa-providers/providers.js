@@ -512,9 +512,9 @@ module.exports = [
     language: ['cast', 'lat', 'vose'],
     active: true,
     adult: false,
-    search: { url: '/?s={query}', itemSelector: 'a.anime-card', titleSelector: '.card-title', linkSelector: '&' },
+    search: { url: '/?s={query}', itemSelector: '.anime-card', titleSelector: '.card-title', linkSelector: 'a' },
     episodes: { type: 'url', pattern: '/episode/{slug}-1x{episode}/' },
-    videos: { type: 'iframe', containerSelector: '.episodio-reproductor', iframeSelector: 'iframe', defaultQuality: 'HD' }
+    videos: { type: 'onclick', containerSelector: '#lista-server ul', itemSelector: 'li', serverSelector: '.nombre-server', defaultQuality: 'HD' }
   },
   {
     name: 'animejl',
@@ -548,17 +548,6 @@ module.exports = [
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'torrent', linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: 'HD' }
-  },
-  {
-    name: 'henaojara',
-    title: 'HenaoJara',
-    baseUrl: 'https://henaojara.com',
-    categories: ['anime'],
-    language: ['cast', 'lat', 'vose'],
-    active: false, // JS-dependent — site migrated, returns only ad iframes
-    adult: false,
-    search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h3.Title', linkSelector: 'a' }, // <-- fixed
-    videos: { type: 'iframe', containerSelector: 'body', iframeSelector: 'iframe', defaultQuality: 'HD' }
   },
   {
     name: 'jkanime',

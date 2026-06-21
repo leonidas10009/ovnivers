@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-21T11:52:32.554Z
+ * Generated: 2026-06-21T11:57:44.592Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -578,9 +578,9 @@ var require_providers = __commonJS({
         language: ["cast", "lat", "vose"],
         active: true,
         adult: false,
-        search: { url: "/?s={query}", itemSelector: "a.anime-card", titleSelector: ".card-title", linkSelector: "&" },
+        search: { url: "/?s={query}", itemSelector: ".anime-card", titleSelector: ".card-title", linkSelector: "a" },
         episodes: { type: "url", pattern: "/episode/{slug}-1x{episode}/" },
-        videos: { type: "iframe", containerSelector: ".episodio-reproductor", iframeSelector: "iframe", defaultQuality: "HD" }
+        videos: { type: "onclick", containerSelector: "#lista-server ul", itemSelector: "li", serverSelector: ".nombre-server", defaultQuality: "HD" }
       },
       {
         name: "animejl",
@@ -616,19 +616,6 @@ var require_providers = __commonJS({
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "torrent", linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: "HD" }
-      },
-      {
-        name: "henaojara",
-        title: "HenaoJara",
-        baseUrl: "https://henaojara.com",
-        categories: ["anime"],
-        language: ["cast", "lat", "vose"],
-        active: false,
-        // JS-dependent — site migrated, returns only ad iframes
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h3.Title", linkSelector: "a" },
-        // <-- fixed
-        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", defaultQuality: "HD" }
       },
       {
         name: "jkanime",
@@ -2359,6 +2346,30 @@ var require_engine = __commonJS({
             const src = (m[1] || "").match(/src=["']([^"']+)["']/);
             if (src) {
               results2.push({ url: src[1], server: detectServer2(src[1]), quality: cfg.defaultQuality || "HD" });
+            }
+          }
+        }
+        if (cfg.type === "onclick") {
+          const container = cfg.containerSelector ? $(cfg.containerSelector) : $;
+          const items = container.find(cfg.itemSelector || 'li[onclick*="playVideo"]').toArray();
+          for (const el of items) {
+            const onclick = $(el).attr("onclick") || "";
+            const urlMatch = onclick.match(/playVideo\s*\(\s*["']([^"']+)["']\s*\)/);
+            if (!urlMatch) continue;
+            let url = urlMatch[1].replace(/\\\//g, "/");
+            url = resolveUrl(url);
+            if (!url) continue;
+            const serverEl = cfg.serverSelector ? $(el).find(cfg.serverSelector).first() : $(el).find('.nombre-server, [class*="server"]').first();
+            const serverName = serverEl.length ? serverEl.text().trim() : detectServer2(url);
+            results2.push({ url, server: serverName, quality: cfg.defaultQuality || "HD" });
+          }
+          if (!results2.length) {
+            const re = /playVideo\s*\(\s*["']([^"']+)["']\s*\)/g;
+            let m;
+            while ((m = re.exec(html)) !== null) {
+              let url = m[1].replace(/\\\//g, "/");
+              url = resolveUrl(url);
+              if (url) results2.push({ url, server: detectServer2(url), quality: cfg.defaultQuality || "HD" });
             }
           }
         }

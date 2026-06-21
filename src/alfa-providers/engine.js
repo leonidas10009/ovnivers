@@ -663,6 +663,32 @@ async function extractVideos(provider, pageUrl) {
     }
   }
 
+  if (cfg.type === 'onclick') {
+    const container = cfg.containerSelector ? $(cfg.containerSelector) : $;
+    const items = container.find(cfg.itemSelector || 'li[onclick*="playVideo"]').toArray();
+    for (const el of items) {
+      const onclick = $(el).attr('onclick') || '';
+      const urlMatch = onclick.match(/playVideo\s*\(\s*["']([^"']+)["']\s*\)/);
+      if (!urlMatch) continue;
+      let url = urlMatch[1].replace(/\\\//g, '/');
+      url = resolveUrl(url);
+      if (!url) continue;
+      const serverEl = cfg.serverSelector ? $(el).find(cfg.serverSelector).first() : $(el).find('.nombre-server, [class*="server"]').first();
+      const serverName = serverEl.length ? serverEl.text().trim() : detectServer(url);
+      results.push({ url, server: serverName, quality: cfg.defaultQuality || 'HD' });
+    }
+    // Fallback: extract from any onclick with playVideo
+    if (!results.length) {
+      const re = /playVideo\s*\(\s*["']([^"']+)["']\s*\)/g;
+      let m;
+      while ((m = re.exec(html)) !== null) {
+        let url = m[1].replace(/\\\//g, '/');
+        url = resolveUrl(url);
+        if (url) results.push({ url, server: detectServer(url), quality: cfg.defaultQuality || 'HD' });
+      }
+    }
+  }
+
   if (cfg.type === 'jkplayer') {
     const re = cfg.varPattern instanceof RegExp ? cfg.varPattern : new RegExp(cfg.varPattern, 'g');
     let m;
