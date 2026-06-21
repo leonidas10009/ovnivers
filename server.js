@@ -175,9 +175,9 @@ if (PROXY_URL) {
   console.log(`[proxy] All fetch() routed through ${mode}: ${PROXY_URL} (${bypassCount} domains bypassed)`);
 }
 
-const LOCAL_PROVIDER_TIMEOUT = Number(process.env.LOCAL_PROVIDER_TIMEOUT || 10000);
-const LOCAL_PROVIDER_CONCURRENCY = Number(process.env.LOCAL_PROVIDER_CONCURRENCY || 6);
-const STREAM_GLOBAL_TIMEOUT = Number(process.env.STREAM_GLOBAL_TIMEOUT || 30000);
+const LOCAL_PROVIDER_TIMEOUT = Number(process.env.LOCAL_PROVIDER_TIMEOUT || 6000);
+const LOCAL_PROVIDER_CONCURRENCY = Number(process.env.LOCAL_PROVIDER_CONCURRENCY || 8);
+const STREAM_GLOBAL_TIMEOUT = Number(process.env.STREAM_GLOBAL_TIMEOUT || 45000);
 const MAX_STREAM_RESULTS = Number(process.env.MAX_STREAM_RESULTS || 80);
 let scrapeAlfaProviders = null;
 const localProviders = [];
@@ -1023,7 +1023,7 @@ async function scrapeAlfa(rawId, mediaType, type, season, episode, config, isAni
   try {
     const data = await withTimeout(
       Promise.resolve(scrapeAlfaProviders(alfaType, String(tmdbId), season, episode)),
-      LOCAL_PROVIDER_TIMEOUT
+      30000
     );
     const streams = (Array.isArray(data) ? data : [])
       .map(stream => normalizeStream(stream, 'alfa-providers', 'Alfa Providers'))
