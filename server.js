@@ -1193,7 +1193,8 @@ async function handleStream(req, res, type, id) {
     ? parsed.animePrefix + parsed.contentId
     : null;
 
-  const detection = await content.identifier.classify(id, type, mediaType);
+  const classifyId = animeFullId || rawId;
+  const detection = await content.identifier.classify(classifyId, type, mediaType);
   const isAnime = detection.isAnime;
   if (detection.method !== 'prefix' && detection.method !== 'id-format') {
     console.log(`[content:identify] ${id} → ${detection.contentType} (${detection.method}, confidence=${detection.confidence})`);
