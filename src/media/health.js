@@ -76,4 +76,21 @@ function getHealthyIds() {
   return ids;
 }
 
-module.exports = { init, track, isHealthy, getReport, getHealthyIds, CONSECUTIVE_FAIL_LIMIT, COOLDOWN_MS };
+function prune(maxAgeMs = 30 * 60 * 1000) {
+  const now = Date.now();
+  let pruned = 0;
+  for (const [id, s] of stats) {
+    const lastActivity = Math.max(s.lastOk || 0, s.lastFail || 0);
+    if (lastActivity && now - lastActivity > maxAgeMs && s.total < 10) {
+      stats.delete(id);
+      pruned++;
+    }
+  }
+  return pruned;
+}
+
+function resetAll() {
+  stats.clear();
+}
+
+module.exports = { init, track, isHealthy, getReport, getHealthyIds, prune, resetAll, CONSECUTIVE_FAIL_LIMIT, COOLDOWN_MS };

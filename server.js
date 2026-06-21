@@ -35,8 +35,8 @@ setInterval(() => {
   if (heapUsed > MEMORY_HIGH_WATERMARK) {
     const streamSize = streamCache?.size || 0;
     const metaSize = metaCache?.size || 0;
-    const healthSize = health?.getReport()?.length || 0;
-    console.warn(`[memory] High heap: ${(heapUsed * 100).toFixed(0)}% — clearing caches (stream:${streamSize}, meta:${metaSize}, health:${healthSize})`);
+    const healthPruned = health?.prune?.(15 * 60 * 1000) || 0;
+    console.warn(`[memory] High heap: ${(heapUsed * 100).toFixed(0)}% — clearing caches (stream:${streamSize}, meta:${metaSize}) + pruned ${healthPruned} stale health entries`);
     if (streamCache) streamCache.clear();
     if (metaCache) metaCache.clear();
     global.gc && global.gc();
@@ -230,7 +230,7 @@ health.init('torrent-indexers');
 
 const streamCache = new Map();
 const CACHE_TTL = 10 * 60 * 1000;
-const MAX_CACHE = 1000;
+const MAX_CACHE = 500;
 const metaCache = new Map();
 const META_TTL = 60 * 60 * 1000;
 
