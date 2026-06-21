@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.14.2
+# Ovnivers — Stream Provider v1.14.3
 
 Addon **stream-only** para **Stremio / NuvioTV**. Usalo junto con cualquier addon de catálogo (Torrentio, TMDB Community, Kitsu, etc.). Ovnivers solo provee streams — sin catálogos propios, sin conflictos.
 
@@ -159,6 +159,14 @@ node build.js    # Build de scrapers desde src/
 - **URL:** https://ovnivers.onrender.com
 
 ## Changelog
+
+### v1.14.3 — AnimeJara, DonTorrent, Puppeteer hybrid, memory restart
+
+- **AnimeJara reactivado**: search por `/catalogo/?q=` (4 resultados filtrados). Videos con triple fallback: cheerio → iframe → Puppeteer. 7 servidores por episodio (filemoon, netu, yourupload, mega, okru, uqload, streamtape).
+- **DonTorrent**: dominio actualizado `dontorrent.review`. Anubis v1.25.0 PoW solver (bits, no hex). Search del sitio roto (JS-dependiente), pero páginas directas de series/pelis funcionan.
+- **Puppeteer hybrid**: `onclick` + `puppeteerFallback` en engine. Si cheerio no encuentra servers, usa Puppeteer para cargar la página y extraer contenido JS.
+- **Memory**: force restart a 90% heap en vez de limpiar caches vacíos.
+- **jsonPath search**: engine soporta búsqueda por API JSON (`live_search` de AnimeJara).
 
 ### v1.14.2 — Alfa anime providers fix + dedup + dead scraper cleanup
 
