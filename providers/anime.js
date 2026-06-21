@@ -1,6 +1,6 @@
 /**
  * anime - Built from src/anime/
- * Generated: 2026-06-21T12:06:32.519Z
+ * Generated: 2026-06-21T12:11:46.442Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -68,7 +68,7 @@ var __async = (__this, __arguments, generator) => {
 // src/anime/types.js
 var require_types = __commonJS({
   "src/anime/types.js"(exports2, module2) {
-    var ANIME_SOURCE_PREFIXES = ["animeflv:", "animeav1:", "henaojara:", "tioanime:", "jkanime:"];
+    var ANIME_SOURCE_PREFIXES = ["animeflv:", "animeav1:", "henaojara:", "tioanime:", "jkanime:", "animejara:"];
     var ANIME_XREF_PREFIXES = ["anilist:", "kitsu:", "mal:", "anidb:"];
     var ANIME_LOCAL_PREFIXES = ["ovn-anime:"];
     var ANIME_PREFIXES = [...ANIME_SOURCE_PREFIXES, ...ANIME_XREF_PREFIXES, ...ANIME_LOCAL_PREFIXES];

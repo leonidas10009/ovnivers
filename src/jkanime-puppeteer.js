@@ -607,4 +607,177 @@ async function resolveAnimeAV1(slug, episode) {
   return streams.filter(s => { const k = s.url + s.server; if (seen.has(k)) return false; seen.add(k); return true; });
 }
 
-module.exports = { resolveJKAnime, resolveTioAnime, resolveAnimeAV1 };
+module.exports = { resolveJKAnime, resolveTioAnime, resolveAnimeAV1, resolveAnimeJara };
+
+// ═══ AnimeJara ═══
+async function resolveAnimeJara(slug, episode) {
+  const ck = `aj:${slug}:${episode}`;
+  const cached = cacheGet(serverCache, ck, SERVER_TTL);
+  let serverList = cached;
+
+  const b = await getBrowser();
+  
+  // Step 1: Get server list from episode page
+  if (!serverList) {
+    if (!b) {
+      // No browser — try fetching HTML statically for onclick servers
+      try {
+        const res = await fetch(`https://animejara.com/episode/${slug}-1x${episode}/`, {
+          headers: { 'User-Agent': UA }
+        });
+        if (!res.ok) return [];
+        const html = await res.text();
+        const servers = [];
+        // Extract onclick="playVideo('...')" URLs
+        const re = /playVideo\s*\(\s*["']([^"']+)["']\s*\)/g;
+        let m;
+        while ((m = re.exec(html)) !== null) {
+          let url = m[1].replace(/\\\//g, '/');
+          if (url.startsWith('//')) url = 'https:' + url;
+          if (url.startsWith('http')) {
+            try { servers.push({ server: new URL(url).hostname.replace('www.','').split('.')[0], url }); }
+            catch { servers.push({ server: 'embed', url }); }
+          }
+        }
+        // Also check for iframes
+        const iframeRe = /<iframe[^>]+src=["']([^"']+)["']/gi;
+        while ((m = iframeRe.exec(html)) !== null) {
+          let url = m[1];
+          if (url.startsWith('//')) url = 'https:' + url;
+          if (url.startsWith('http')) {
+            try { servers.push({ server: new URL(url).hostname.replace('www.','').split('.')[0], url }); }
+            catch { servers.push({ server: 'embed', url }); }
+          }
+        }
+        serverList = { servers };
+        if (!servers.length) return [];
+        cacheSet(serverCache, ck, serverList, MAX_CACHE);
+      } catch { return []; }
+    } else {
+      try {
+        const page = await b.newPage();
+        await page.setUserAgent(UA);
+        await page.goto(`https://animejara.com/episode/${slug}-1x${episode}/`, {
+          waitUntil: 'networkidle2', timeout: 25000
+        });
+
+        // Verify we're on the right page
+        const currentUrl = page.url();
+        if (!currentUrl.includes(`/${slug}-`)) {
+          console.warn(`[animejara] page redirected away from ${slug}, got ${currentUrl}`);
+          await page.close();
+          return [];
+        }
+
+        const servers = await page.evaluate(() => {
+          const results = [];
+          
+          // Template 1: #lista-server with onclick playVideo
+          const listaItems = document.querySelectorAll('#lista-server li[onclick]');
+          listaItems.forEach(li => {
+            const onclick = li.getAttribute('onclick') || '';
+            const urlMatch = onclick.match(/playVideo\s*\(\s*["']([^"']+)["']\s*\)/);
+            if (urlMatch) {
+              const url = urlMatch[1].replace(/\\\//g, '/');
+              const nameEl = li.querySelector('.nombre-server, [class*="server"]');
+              const name = nameEl ? nameEl.textContent.trim() : '';
+              if (url.startsWith('http') || url.startsWith('//'))
+                results.push({ server: name, url: url.startsWith('//') ? 'https:' + url : url });
+            }
+          });
+          
+          // Template 2: .episodio-reproductor iframe
+          const iframes = document.querySelectorAll('.reproductor-wrapper iframe, .episodio-reproductor iframe');
+          iframes.forEach(iframe => {
+            const src = iframe.getAttribute('src') || '';
+            if (src.startsWith('http') || src.startsWith('//'))
+              results.push({ server: '', url: src.startsWith('//') ? 'https:' + src : src });
+          });
+          
+          // Template 3: data-tr from Poseidon-style players
+          const dataItems = document.querySelectorAll('[data-tr]');
+          dataItems.forEach(el => {
+            const url = el.getAttribute('data-tr') || '';
+            const text = el.textContent.trim().substring(0, 30);
+            if (url.startsWith('http'))
+              results.push({ server: text, url });
+          });
+          
+          return results;
+        });
+
+        await page.close();
+        
+        if (!servers.length) return [];
+        
+        // Detect server names from URLs for unnamed servers
+        for (const s of servers) {
+          if (!s.server) {
+            try { s.server = new URL(s.url).hostname.replace('www.','').split('.')[0]; }
+            catch { s.server = 'embed'; }
+          }
+        }
+        
+        serverList = { servers };
+        cacheSet(serverCache, ck, serverList, MAX_CACHE);
+      } catch (e) {
+        console.error('[animejara] page error:', e.message);
+        return [];
+      }
+    }
+  }
+
+  if (!serverList) return [];
+
+  // Step 2: Resolve streams
+  const streams = [];
+  for (const s of serverList.servers) {
+    if (!s.url || !s.url.startsWith('http')) continue;
+    
+    if (isUnresolvable(s.url)) {
+      streams.push({
+        externalUrl: s.url, server: s.server,
+        name: `AnimeJara\n${s.server}`,
+        title: `${slug} Ep. ${episode}\n⚙️ ${s.server}\n🔗 Abrir en navegador`,
+        behaviorHints: { notWebReady: true, bingeGroup: 'animejara|' + s.server.toLowerCase() },
+      });
+      continue;
+    }
+    
+    // Already direct video URL
+    if (isDirectVideoUrl(s.url)) {
+      streams.push({
+        url: s.url, server: s.server, name: `AnimeJara\n${s.server}`,
+        title: `${slug} Ep. ${episode}\n⚙️ ${s.server} (directo)`,
+        behaviorHints: { notWebReady: false, bingeGroup: 'animejara|' + s.server.toLowerCase() },
+      });
+      continue;
+    }
+    
+    // Try to resolve
+    let direct = null;
+    if (b) {
+      try { direct = await resolveEmbedUrl(b, s.url, 6000); } catch {}
+    }
+    if (!direct) {
+      try { direct = await resolveEmbed(s.url); } catch {}
+    }
+    
+    if (direct && isDirectVideoUrl(direct)) {
+      streams.push({
+        url: direct, server: s.server, name: `AnimeJara\n${s.server}`,
+        title: `${slug} Ep. ${episode}\n⚙️ ${s.server} (directo)`,
+        behaviorHints: { notWebReady: false, bingeGroup: 'animejara|' + s.server.toLowerCase() },
+      });
+    } else {
+      streams.push({
+        url: s.url, server: s.server, name: `AnimeJara\n${s.server}`,
+        title: `${slug} Ep. ${episode}\n⚙️ ${s.server}`,
+        behaviorHints: { notWebReady: true, bingeGroup: 'animejara|' + s.server.toLowerCase() },
+      });
+    }
+  }
+
+  const seen = new Set();
+  return streams.filter(s => { const k = s.url + s.server; if (seen.has(k)) return false; seen.add(k); return true; });
+}

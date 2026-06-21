@@ -1,6 +1,6 @@
 /**
  * torrent-providers - Built from src/torrent-providers/
- * Generated: 2026-06-21T12:06:32.578Z
+ * Generated: 2026-06-21T12:11:46.499Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;

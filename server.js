@@ -1275,6 +1275,17 @@ async function handleStream(req, res, type, id) {
             return normalized;
           } catch { health.track('animeav1-pptr', false, Date.now() - start); return []; }
         })());
+      } else if (animeFullId.startsWith('animejara:')) {
+        const slug = animeFullId.substring(10);
+        streamTasks.push((async () => {
+          const start = Date.now();
+          try {
+            const streams = await pptrAnime.resolveAnimeJara(slug, episode || 1);
+            const normalized = streams.map(s => normalizeStream(s, 'animejara-pptr', 'AnimeJara')).filter(Boolean);
+            health.track('animejara-pptr', normalized.length > 0, Date.now() - start);
+            return normalized;
+          } catch { health.track('animejara-pptr', false, Date.now() - start); return []; }
+        })());
       } else {
         // Fallback to Pigamer37 for other prefixes (kitsu:, anilist:, ovn:, etc.)
         streamTasks.push((async () => {
