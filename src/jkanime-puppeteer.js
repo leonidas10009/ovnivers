@@ -366,6 +366,7 @@ async function resolveTioAnime(slug, episode) {
 
   const b = await getBrowser();
   if (!b) {
+    // No browser — try fetch-based resolution, fallback to embed URLs
     const results = [];
     for (const s of serverList.servers) {
       if (isUnresolvable(s.url)) {
@@ -377,6 +378,14 @@ async function resolveTioAnime(slug, episode) {
         });
         continue;
       }
+      if (isDirectVideoUrl(s.url)) {
+        results.push({
+          url: s.url, server: s.server, name: `TioAnime\n${s.server}`,
+          title: `${slug} Ep. ${episode}\n⚙️ ${s.server} (directo)`,
+          behaviorHints: { notWebReady: false, bingeGroup: 'tioanime|' + s.server.toLowerCase() },
+        });
+        continue;
+      }
       let direct = null;
       try { direct = await resolveEmbed(s.url); } catch {}
       if (direct && isDirectVideoUrl(direct)) {
@@ -385,9 +394,9 @@ async function resolveTioAnime(slug, episode) {
           title: `${slug} Ep. ${episode}\n⚙️ ${s.server} (directo)`,
           behaviorHints: { notWebReady: false, bingeGroup: 'tioanime|' + s.server.toLowerCase() },
         });
-      } else if (direct) {
+      } else {
         results.push({
-          url: direct, server: s.server, name: `TioAnime\n${s.server}`,
+          url: s.url, server: s.server, name: `TioAnime\n${s.server}`,
           title: `${slug} Ep. ${episode}\n⚙️ ${s.server}`,
           behaviorHints: { notWebReady: true, bingeGroup: 'tioanime|' + s.server.toLowerCase() },
         });
@@ -463,7 +472,7 @@ async function resolveAnimeAV1(slug, episode) {
 
   const b = await getBrowser();
   if (!b) {
-    // No browser — try fetch-based resolution for all servers
+    // No browser — try fetch-based resolution, fallback to embed URLs
     const results = [];
     for (const s of serverList.servers) {
       if (isUnresolvable(s.url)) {
@@ -475,6 +484,16 @@ async function resolveAnimeAV1(slug, episode) {
         });
         continue;
       }
+      // Check if already a direct video URL (m3u8/mp4 straight from server)
+      if (isDirectVideoUrl(s.url)) {
+        results.push({
+          url: s.url, server: s.server, name: `AnimeAV1\n${s.server}`,
+          title: `${slug} Ep. ${episode}\n⚙️ ${s.server} (directo)`,
+          behaviorHints: { notWebReady: false, bingeGroup: 'animeav1|' + s.server.toLowerCase() },
+        });
+        continue;
+      }
+      // Try to resolve embed → direct URL
       let direct = null;
       try { direct = await resolveEmbed(s.url); } catch {}
       if (direct && isDirectVideoUrl(direct)) {
@@ -483,14 +502,14 @@ async function resolveAnimeAV1(slug, episode) {
           title: `${slug} Ep. ${episode}\n⚙️ ${s.server} (directo)`,
           behaviorHints: { notWebReady: false, bingeGroup: 'animeav1|' + s.server.toLowerCase() },
         });
-      } else if (direct) {
+      } else {
+        // Cannot resolve to direct URL — return embed URL for browser playback
         results.push({
-          url: direct, server: s.server, name: `AnimeAV1\n${s.server}`,
+          url: s.url, server: s.server, name: `AnimeAV1\n${s.server}`,
           title: `${slug} Ep. ${episode}\n⚙️ ${s.server}`,
           behaviorHints: { notWebReady: true, bingeGroup: 'animeav1|' + s.server.toLowerCase() },
         });
       }
-      // If no result from resolveEmbed, skip — don't return unplayable embed URLs
     }
     return results;
   }

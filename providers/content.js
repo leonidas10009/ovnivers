@@ -1,6 +1,6 @@
 /**
  * content - Built from src/content/
- * Generated: 2026-06-21T11:08:53.635Z
+ * Generated: 2026-06-21T11:32:20.750Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
