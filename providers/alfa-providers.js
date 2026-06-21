@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-21T14:35:43.467Z
+ * Generated: 2026-06-21T14:39:48.898Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -578,7 +578,7 @@ var require_providers = __commonJS({
         language: ["cast", "lat", "vose"],
         active: true,
         adult: false,
-        search: { method: "POST", url: "/wp-admin/admin-ajax.php", body: "action=live_search&s={query}", jsonPath: "data.animes", titleAttr: "titulo", linkAttr: "slug" },
+        search: { url: "/catalogo/?q={query}", itemSelector: ".anime-card", titleSelector: ".card-title", linkSelector: "&" },
         episodes: { type: "url", pattern: "/episode/{slug}-1x{episode}/" },
         videos: { type: "onclick", containerSelector: "#lista-server ul", itemSelector: "li", serverSelector: ".nombre-server", defaultQuality: "HD" }
       },
@@ -2415,6 +2415,16 @@ var require_engine = __commonJS({
               let url = m[1].replace(/\\\//g, "/");
               url = resolveUrl(url);
               if (url) results2.push({ url, server: detectServer2(url), quality: cfg.defaultQuality || "HD" });
+            }
+          }
+          if (!results2.length) {
+            const iframes = $('.reproductor-wrapper iframe, .episodio-reproductor iframe, iframe[src*="player"], iframe[src*="embed"]').toArray();
+            for (const el of iframes) {
+              const src = $(el).attr("src") || $(el).attr("data-src");
+              if (src) {
+                const url = resolveUrl(src);
+                if (url) results2.push({ url, server: detectServer2(url), quality: cfg.defaultQuality || "HD" });
+              }
             }
           }
         }

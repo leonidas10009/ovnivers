@@ -726,6 +726,17 @@ async function extractVideos(provider, pageUrl) {
         if (url) results.push({ url, server: detectServer(url), quality: cfg.defaultQuality || 'HD' });
       }
     }
+    // Fallback 2: extract iframes (modern template: .reproductor-wrapper iframe)
+    if (!results.length) {
+      const iframes = $('.reproductor-wrapper iframe, .episodio-reproductor iframe, iframe[src*="player"], iframe[src*="embed"]').toArray();
+      for (const el of iframes) {
+        const src = $(el).attr('src') || $(el).attr('data-src');
+        if (src) {
+          const url = resolveUrl(src);
+          if (url) results.push({ url, server: detectServer(url), quality: cfg.defaultQuality || 'HD' });
+        }
+      }
+    }
   }
 
   if (cfg.type === 'data-attr') {
