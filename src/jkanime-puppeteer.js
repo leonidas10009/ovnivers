@@ -14,9 +14,9 @@ const MAX_CACHE = 200;
 const EMBED_TTL = 60 * 60 * 1000;  // 1h
 const SERVER_TTL = 30 * 60 * 1000; // 30min
 
-const RESOLVABLE = ['streamwish', 'sfastwish', 'flaswish', 'mp4upload', 'streamtape', 'vidhide', 'callistanise', 'yourupload'];
+const RESOLVABLE = ['streamwish', 'sfastwish', 'flaswish', 'mp4upload', 'streamtape', 'vidhide', 'callistanise', 'yourupload', 'pixeldrain', '1fichier', 'zilla-networks'];
 
-const UNRESOLVABLE = ['mega', 'megaup', 'mediafire', 'zippyshare', 'drive.google.com', 'mega.nz'];
+const UNRESOLVABLE = ['mega', 'megaup', 'mediafire', 'zippyshare', 'drive.google.com', 'mega.nz', 'terabox', 'uns.bio'];
 
 const BLOCKED_PATTERNS = [
   'cloudflareinsights.com', 'cloudfront.net',
@@ -365,13 +365,36 @@ async function resolveTioAnime(slug, episode) {
   }
 
   const b = await getBrowser();
-  if (!b) return serverList.servers.map(s => {
-    const base = { server: s.server, name: `TioAnime\n${s.server}`,
-      title: `${slug} Ep. ${episode}\n⚙️ ${s.server}`,
-      behaviorHints: { notWebReady: true, bingeGroup: 'tioanime|' + s.server.toLowerCase() },
-    };
-    return isUnresolvable(s.url) ? { ...base, externalUrl: s.url, title: base.title + '\n🔗 Abrir en navegador' } : { ...base, url: s.url };
-  });
+  if (!b) {
+    const results = [];
+    for (const s of serverList.servers) {
+      if (isUnresolvable(s.url)) {
+        results.push({
+          externalUrl: s.url, server: s.server,
+          name: `TioAnime\n${s.server}`,
+          title: `${slug} Ep. ${episode}\n⚙️ ${s.server}\n🔗 Abrir en navegador`,
+          behaviorHints: { notWebReady: true, bingeGroup: 'tioanime|' + s.server.toLowerCase() },
+        });
+        continue;
+      }
+      let direct = null;
+      try { direct = await resolveEmbed(s.url); } catch {}
+      if (direct && isDirectVideoUrl(direct)) {
+        results.push({
+          url: direct, server: s.server, name: `TioAnime\n${s.server}`,
+          title: `${slug} Ep. ${episode}\n⚙️ ${s.server} (directo)`,
+          behaviorHints: { notWebReady: false, bingeGroup: 'tioanime|' + s.server.toLowerCase() },
+        });
+      } else if (direct) {
+        results.push({
+          url: direct, server: s.server, name: `TioAnime\n${s.server}`,
+          title: `${slug} Ep. ${episode}\n⚙️ ${s.server}`,
+          behaviorHints: { notWebReady: true, bingeGroup: 'tioanime|' + s.server.toLowerCase() },
+        });
+      }
+    }
+    return results;
+  }
 
   const streams = [];
   for (const s of serverList.servers) {
@@ -439,13 +462,38 @@ async function resolveAnimeAV1(slug, episode) {
   }
 
   const b = await getBrowser();
-  if (!b) return serverList.servers.map(s => {
-    const base = { server: s.server, name: `AnimeAV1\n${s.server}`,
-      title: `${slug} Ep. ${episode}\n⚙️ ${s.server}`,
-      behaviorHints: { notWebReady: true, bingeGroup: 'animeav1|' + s.server.toLowerCase() },
-    };
-    return isUnresolvable(s.url) ? { ...base, externalUrl: s.url, title: base.title + '\n🔗 Abrir en navegador' } : { ...base, url: s.url };
-  });
+  if (!b) {
+    // No browser — try fetch-based resolution for all servers
+    const results = [];
+    for (const s of serverList.servers) {
+      if (isUnresolvable(s.url)) {
+        results.push({
+          externalUrl: s.url, server: s.server,
+          name: `AnimeAV1\n${s.server}`,
+          title: `${slug} Ep. ${episode}\n⚙️ ${s.server}\n🔗 Abrir en navegador`,
+          behaviorHints: { notWebReady: true, bingeGroup: 'animeav1|' + s.server.toLowerCase() },
+        });
+        continue;
+      }
+      let direct = null;
+      try { direct = await resolveEmbed(s.url); } catch {}
+      if (direct && isDirectVideoUrl(direct)) {
+        results.push({
+          url: direct, server: s.server, name: `AnimeAV1\n${s.server}`,
+          title: `${slug} Ep. ${episode}\n⚙️ ${s.server} (directo)`,
+          behaviorHints: { notWebReady: false, bingeGroup: 'animeav1|' + s.server.toLowerCase() },
+        });
+      } else if (direct) {
+        results.push({
+          url: direct, server: s.server, name: `AnimeAV1\n${s.server}`,
+          title: `${slug} Ep. ${episode}\n⚙️ ${s.server}`,
+          behaviorHints: { notWebReady: true, bingeGroup: 'animeav1|' + s.server.toLowerCase() },
+        });
+      }
+      // If no result from resolveEmbed, skip — don't return unplayable embed URLs
+    }
+    return results;
+  }
 
   const streams = [];
   for (const s of serverList.servers) {

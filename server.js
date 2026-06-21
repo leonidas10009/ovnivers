@@ -360,6 +360,8 @@ function parseConfig(req) {
   } catch {}
   const q = req.query;
   if (q.m !== undefined) { q.c = '1'; }
+  if (q.l !== undefined) { q.c = '1'; }
+  if (q.q !== undefined) { q.c = '1'; }
   if (q.c === '1' || q.c === 'true') {
     const cfg = {};
     if (q.m !== undefined) cfg.enableMovies = q.m === '1' || q.m === 'true';

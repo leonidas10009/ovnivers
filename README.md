@@ -160,12 +160,14 @@ node build.js    # Build de scrapers desde src/
 
 ## Changelog
 
-### v1.14.1 — Search precision + timing + anime detection
+### v1.14.1 — Search precision + timing + anime detection + language filter + AnimeAV1
 
-- **Alfa engine**: eliminado "last resort" que devolvía el primer resultado sin verificar. Thresholds subidos: JSON 0.4→0.6, HTML 0.5→0.7. Word guard ahora requiere TODAS las palabras ≥3 chars como palabras completas. Single-word fallback ≥6 chars.
-- **Torrents**: `MIN_SCORE_THRESHOLD` 0.25→0.40. Anime resolvers con verificación de URL y guards de vacío.
-- **Timing**: scrapeAlfa timeout 10s→30s (tardaba 15-19s). LOCAL_PROVIDER_TIMEOUT 10s→6s, concurrencia 6→8, global 30s→45s.
-- **Anime detection fix**: `tmdb:` ya no está en `ANIME_XREF_PREFIXES`. Todo `tmdb:xxx` se clasificaba como anime incorrectamente. Ahora solo anime real dispara scrapers de anime. Fight Club 7→23 streams, Breaking Bad 0→19 streams.
+- **Alfa engine**: eliminado "last resort", thresholds subidos (0.4→0.6 JSON, 0.5→0.7 HTML), word guard estricto (ALL words ≥3 chars). Torrents MIN_SCORE 0.25→0.40.
+- **Timing**: scrapeAlfa timeout 10s→30s. LOCAL_PROVIDER_TIMEOUT 10s→6s, concurrencia 6→8, global 30s→45s.
+- **Anime detection fix**: `tmdb:` fuera de ANIME_XREF_PREFIXES — todo `tmdb:xxx` se clasificaba como anime. Fight Club 7→23 streams, Breaking Bad 0→19.
+- **Language filter**: `?l=cast,es,lat` ahora funciona sin `&c=1`. Streams sin idioma detectado ya no pasan el filtro cuando hay preferencias.
+- **Cinemeta compat**: IMDb→TMDB resuelve correctamente. Mismos streams que vía Kitsu/TMDB.
+- **AnimeAV1 fix**: más servidores en RESOLVABLE (pixeldrain, 1fichier, zilla-networks). Sin browser intenta resolveEmbed vía fetch en vez de rendirse. Servidores no resolubles usan externalUrl.
 
 ### v1.14.0 — Stream-only mode: catálogos eliminados
 

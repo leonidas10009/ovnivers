@@ -1,6 +1,6 @@
 /**
  * media - Built from src/media/
- * Generated: 2026-06-21T10:30:53.400Z
+ * Generated: 2026-06-21T11:08:53.686Z
  */
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __commonJS = (cb, mod) => function __require() {
@@ -380,7 +380,7 @@ var require_language = __commonJS({
     }
     function matchesFilter(languages, userLangs) {
       if (!userLangs || !userLangs.length) return true;
-      if (!languages.length) return true;
+      if (!languages.length) return false;
       const normalized = normalizeCodes(languages);
       return normalized.some((l) => userLangs.includes(l));
     }

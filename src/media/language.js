@@ -76,7 +76,7 @@ function computeScore(languages, userLangs) {
 
 function matchesFilter(languages, userLangs) {
   if (!userLangs || !userLangs.length) return true;
-  if (!languages.length) return true;
+  if (!languages.length) return false;
   const normalized = normalizeCodes(languages);
   return normalized.some(l => userLangs.includes(l));
 }
