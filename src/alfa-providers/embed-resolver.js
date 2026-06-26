@@ -1,14 +1,32 @@
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 const EMBED_TIMEOUT = 10000;
 
+let _ai = null;
+function _getAI() {
+  if (!_ai) {
+    try { _ai = require('../intelligent').getSmartAnalyzer(); }
+    catch { _ai = null; }
+  }
+  return _ai;
+}
+
+let _memory = null;
+function _getMemory() {
+  if (!_memory) {
+    try { _memory = require('../intelligent').getSessionMemory(); }
+    catch { _memory = null; }
+  }
+  return _memory;
+}
+
 const embedCache = new Map();
 
-async function fetchWithTimeout(url, opts = {}) {
+async function fetchWithTimeout(url, opts) {
   const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), opts.timeout || EMBED_TIMEOUT);
+  const t = setTimeout(function() { ctrl.abort(); }, (opts && opts.timeout) || EMBED_TIMEOUT);
   try {
     const res = await fetch(url, {
-      headers: { 'User-Agent': UA, ...opts.headers },
+      headers: Object.assign({ 'User-Agent': UA }, (opts && opts.headers) || {}),
       signal: ctrl.signal,
       redirect: 'follow'
     });
@@ -18,21 +36,38 @@ async function fetchWithTimeout(url, opts = {}) {
   }
 }
 
-async function htmlText(url, opts = {}) {
+async function htmlText(url, opts) {
   try {
     const res = await fetchWithTimeout(url, {
-      headers: { 'Accept': 'text/html,application/xhtml+xml,*/*', ...opts.headers },
-      timeout: opts.timeout || EMBED_TIMEOUT
+      headers: Object.assign({ 'Accept': 'text/html,application/xhtml+xml,*/*' }, (opts && opts.headers) || {}),
+      timeout: (opts && opts.timeout) || EMBED_TIMEOUT
     });
     if (!res.ok) return null;
     return await res.text();
   } catch { return null; }
 }
 
-// ─── Domain-specific resolvers ──────────────
+// ─── NEW: SmartAnalyzer-enhanced domain detection ─────────────
+function classifyHostname(hostname) {
+  const ai = _getAI();
+  if (!ai) return null;
+  try {
+    return ai.classifyURL('https://' + hostname + '/');
+  } catch { return null; }
+}
+
+function inferServerName(domain) {
+  const ai = _getAI();
+  if (!ai) return domain;
+  try {
+    return ai.inferServerName(domain);
+  } catch { return domain; }
+}
+
+// ─── Domain-specific resolvers ────────────────────────────────
 
 async function resolveStreamwish(html, url) {
-  const dataMatch = html.match(/const\s+_0xa\w*\s*=\s*(\{[^}]+\})/);
+  const dataMatch = html.match(/const\s+_0x[a-f]*\s*=\s*(\{[^}]+\})/);
   if (dataMatch) {
     try {
       const obj = JSON.parse(dataMatch[1].replace(/'/g, '"').replace(/(\w+):/g, '"$1":'));
@@ -140,7 +175,7 @@ async function resolveOkRu(html, url) {
   if (jsMatch) {
     try {
       const opts = JSON.parse(jsMatch[1].replace(/&quot;/g, '"'));
-      const vLink = opts.flashvars?.metadataUrl || '';
+      const vLink = opts.flashvars && opts.flashvars.metadataUrl || '';
       if (vLink) {
         const vHtml = await htmlText(vLink, { headers: { 'Referer': 'https://ok.ru/' } });
         if (vHtml) {
@@ -158,15 +193,12 @@ async function resolveOkRu(html, url) {
 }
 
 async function resolveMp4Upload(html, url) {
-  // Direct mp4 URL v1: https://a4.mp4upload.com:183/d/xxxxx
-  // Direct mp4 URL v2: https://a2.mp4upload.com:183/d/xxxxx.../video.mp4
   const direct = html.match(/https?:\/\/a\d+\.mp4upload\.com:\d+\/d\/[a-zA-Z0-9\/]+\/video\.mp4/i);
   if (direct) return direct[0];
 
   const legacy = html.match(/https?:\/\/a\d+\.mp4upload\.com:\d+\/d\/[a-zA-Z0-9]+/i);
   if (legacy) return legacy[0];
 
-  // Fallback: generic m3u8/mp4 (filter out js/css)
   const m3u8 = html.match(/https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*/i);
   if (m3u8 && !m3u8[0].includes('videojs') && !m3u8[0].includes('css') && !m3u8[0].includes('.js')) return m3u8[0];
 
@@ -174,7 +206,6 @@ async function resolveMp4Upload(html, url) {
 }
 
 async function resolveStreamtapeV2(html, url) {
-  // Format 1: ideoolink div with direct URL (fetch with session)
   var ideoDiv = html.match(/id="ideoolink"[^>]*>([^<]+)<\/div>/);
   if (ideoDiv && ideoDiv[1]) {
     var path = ideoDiv[1].trim();
@@ -190,7 +221,6 @@ async function resolveStreamtapeV2(html, url) {
       var link = vHtml.match(/"link"\s*:\s*"([^"]+)"/);
       if (link) return link[1].replace(/\\\//g, '/');
     }
-    // Fallback: try without stream=1
     fullUrl = fullUrl.replace('&stream=1', '');
     var vHtml2 = await htmlText(fullUrl, {
       headers: { 'Referer': url },
@@ -202,7 +232,6 @@ async function resolveStreamtapeV2(html, url) {
     }
   }
 
-  // Format 2: botlink div
   var botDiv = html.match(/id="botlink"[^>]*>([^<]+)<\/div>/);
   if (botDiv && botDiv[1]) {
     var botPath = botDiv[1].trim();
@@ -218,8 +247,7 @@ async function resolveStreamtapeV2(html, url) {
 }
 
 async function resolveStreamwishV2(html, url) {
-  // Try extracting data object with encoded URLs
-  const dataMatch = html.match(/const\s+_0x\w*\s*=\s*(\{[^}]+\})/);
+  const dataMatch = html.match(/const\s+_0x[a-f]*\s*=\s*(\{[^}]+\})/);
   if (dataMatch) {
     try {
       const obj = JSON.parse(dataMatch[1].replace(/'/g, '"').replace(/(\w+):/g, '"$1":'));
@@ -232,17 +260,6 @@ async function resolveStreamwishV2(html, url) {
     } catch {}
   }
 
-  // Try eval unpacking
-  const packMatch = html.match(/eval\s*\(\s*function\s*\([^)]*\)\s*\{[^}]*return p\s*\}\([^)]+\)\)/);
-  if (packMatch) {
-    const js = packs ? packs.unpack(packMatch[0]) : null;
-    if (js) {
-      const m = js.match(/https?:\/\/[^"'\\]+\.(?:m3u8|mp4)[^"'\\]*/);
-      if (m) return m[0];
-    }
-  }
-
-  // Direct m3u8/mp4
   const m3u8 = html.match(/https?:\/\/[^"'\s<>]+\.m3u8[^"'\s<>]*/i);
   if (m3u8) return m3u8[0];
 
@@ -252,13 +269,10 @@ async function resolveStreamwishV2(html, url) {
   return null;
 }
 
-// New MixDrop V2 handler with MDCore refs
 async function resolveMixdropV2(html, url) {
-  // MDCore.ref pattern (new format)
   const refMatch = html.match(/MDCore\.ref\s*=\s*["']([^"']+)["']/);
   if (refMatch) {
     const ref = refMatch[1];
-    // Construct direct URL
     const directUrl = 'https://mxcontent.com/e/' + ref;
     const vHtml = await htmlText(directUrl, { headers: { 'Referer': url } });
     if (vHtml) {
@@ -267,7 +281,6 @@ async function resolveMixdropV2(html, url) {
     }
   }
 
-  // Old wurl format
   const wurlMatch = html.match(/"poster"\s*:\s*"[^"]+","wurl"\s*:\s*"([^"]+)"/);
   if (wurlMatch) return wurlMatch[1].replace(/\\\//g, '/');
 
@@ -313,8 +326,6 @@ async function resolveVidmoly(html, url) {
   return null;
 }
 
-// ─── YourUpload ───────────────────────────────
-
 async function resolveYourUpload(html, url) {
   const direct = html.match(/https?:\/\/[^"'\s<>]+\.yourupload\.com\/[^"'\s<>]+\.(?:mp4|m3u8)[^"'\s<>]*/i);
   if (direct) return direct[0];
@@ -330,8 +341,6 @@ async function resolveYourUpload(html, url) {
 
   return null;
 }
-
-// ─── JWPlayer ────────────────────────────────
 
 async function tryResolveJWPlayer(html, referer) {
   const scripts = [];
@@ -357,10 +366,10 @@ async function tryResolveJWPlayer(html, referer) {
             .replace(/'/g, '"')
         );
         if (config.sources && Array.isArray(config.sources)) {
-          const sorted = config.sources.filter(s => s.file).sort((a, b) => {
+          const sorted = config.sources.filter(function(s) { return s.file; }).sort(function(a, b) {
             const aLabel = (a.label || '').match(/(\d+)/);
             const bLabel = (b.label || '').match(/(\d+)/);
-            return (parseInt(bLabel?.[1]) || 0) - (parseInt(aLabel?.[1]) || 0);
+            return (parseInt(bLabel && bLabel[1]) || 0) - (parseInt(aLabel && aLabel[1]) || 0);
           });
           if (sorted.length > 0) return sorted[0].file;
         }
@@ -391,8 +400,6 @@ async function tryResolveJWPlayer(html, referer) {
   return null;
 }
 
-// ─── Generic fallback ────────────────────────
-
 async function tryResolveGeneric(embedUrl, referer) {
   const html = await htmlText(embedUrl, {
     headers: { 'Referer': referer || embedUrl }
@@ -422,7 +429,7 @@ async function tryResolveGeneric(embedUrl, referer) {
   return null;
 }
 
-// ─── Main resolver ───────────────────────────
+// ─── Main resolver (with SmartAnalyzer enhancement) ──────────
 
 function getHostname(url) {
   try { return new URL(url).hostname.toLowerCase(); } catch { return ''; }
@@ -487,6 +494,23 @@ async function resolveEmbed(embedUrl, referer) {
   }
 
   if (result) result = result.startsWith('//') ? 'https:' + result : result;
+
+  // Track in SessionMemory for cross-session learning
+  const mem = _getMemory();
+  if (mem && host) {
+    try {
+      mem.recordAttempt(
+        'host:' + host,
+        'embed',
+        'resolve',
+        !!result,
+        result ? 1 : 0,
+        result ? ['embed', result] : [],
+        host,
+      );
+    } catch { /* non-critical */ }
+  }
+
   embedCache.set(embedUrl, result || null);
   return result;
 }
@@ -504,4 +528,7 @@ function clearCache() {
   embedCache.clear();
 }
 
-module.exports = { resolveEmbed, tryResolveJWPlayer, tryResolveGeneric, clearCache, isDirectVideoUrl };
+module.exports = {
+  resolveEmbed, tryResolveJWPlayer, tryResolveGeneric, clearCache, isDirectVideoUrl,
+  classifyHostname, inferServerName,
+};

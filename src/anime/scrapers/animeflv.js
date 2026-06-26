@@ -1,6 +1,6 @@
 const cheerio = require('cheerio-without-node-native') || require('cheerio');
 
-const BASE = 'https://www4.animeflv.net';
+const BASE = 'https://animeflv.ar';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
 async function fetchText(url, timeout = 15000) {

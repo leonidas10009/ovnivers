@@ -1,15 +1,35 @@
 // utils.js - Shared utilities for local Hermes scrapers
 // Optimized for Android: NO cheerio dependency, regex-only extraction
 // Saves ~100KB+ RAM vs cheerio-based scrapers
+// Enhanced with SmartAnalyzer for intelligent URL classification and server detection
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 const MAX_CONCURRENT = 3;
 const FETCH_TIMEOUT = 8000;
 
-async function fetchText(url, timeout = FETCH_TIMEOUT) {
+// Lazy-load SmartAnalyzer singleton (avoid circular deps)
+let _ai = null;
+function _getAI() {
+  if (!_ai) {
+    try { _ai = require('../intelligent').getSmartAnalyzer(); }
+    catch { _ai = null; }
+  }
+  return _ai;
+}
+
+let _memory = null;
+function _getMemory() {
+  if (!_memory) {
+    try { _memory = require('../intelligent').getSessionMemory(); }
+    catch { _memory = null; }
+  }
+  return _memory;
+}
+
+async function fetchText(url, timeout) {
   try {
     var ctrl = new AbortController();
-    var t = setTimeout(function() { ctrl.abort(); }, timeout);
+    var t = setTimeout(function() { ctrl.abort(); }, timeout || FETCH_TIMEOUT);
     var headers = { 'User-Agent': UA };
     try { headers['Referer'] = new URL(url).origin + '/'; } catch(e) {}
     var res = await fetch(url, { headers: headers, signal: ctrl.signal });
@@ -144,16 +164,13 @@ function scoreMatch(query, title) {
   var tw = splitWords(title);
   if (qw.length === 0 || tw.length === 0) return 0;
 
-  // Exact clean match
   var qClean = qw.join(' ');
   var tClean = tw.join(' ');
   if (qClean === tClean) return 1.0;
   if (tClean.indexOf(qClean) !== -1) return 0.85;
 
-  // Word overlap score
   var overlap = wordOverlap(qw, tw);
 
-  // Title start bonus
   var startBonus = 0;
   if (tw.length >= qw.length) {
     var allStart = true;
@@ -166,9 +183,21 @@ function scoreMatch(query, title) {
   return Math.min(1, overlap + startBonus);
 }
 
+// ─── ENHANCED: Intelligent server detection using SmartAnalyzer ──
 function detectServer(url) {
   try {
-    var h = (new URL(url)).hostname.replace('www.', '').replace(/\./g, ' ').toLowerCase();
+    // Try SmartAnalyzer first (80+ known servers)
+    var ai = _getAI();
+    if (ai) {
+      try {
+        var domain = (new URL(url)).hostname.replace('www.', '');
+        var serverName = ai.inferServerName(domain);
+        if (serverName && serverName !== domain) return serverName;
+      } catch { /* fall through to legacy detection */ }
+    }
+
+    // Legacy detection (fallback)
+    var h = new URL(url).hostname.replace('www.', '').replace(/\./g, ' ').toLowerCase();
     var servers = { streamwish: 'StreamWish', sfastwish: 'StreamWish', flaswish: 'StreamWish',
       filemoon: 'FileMoon', doodstream: 'DoodStream', mixdrop: 'MixDrop', 'voe sx': 'VOE',
       vidhide: 'VidHide', mp4upload: 'MP4Upload', streamtape: 'StreamTape', 'ok ru': 'OK',
@@ -186,6 +215,37 @@ function detectServer(url) {
   } catch (e) { return 'Unknown'; }
 }
 
+// ─── ENHANCED: Intelligent URL classification ──────────────────
+function classifyStreamUrl(url) {
+  var ai = _getAI();
+  if (!ai) return { type: 'unknown', confidence: 20, isContainer: false };
+  try {
+    return ai.classifyURL(url);
+  } catch {
+    return { type: 'unknown', confidence: 20, isContainer: false };
+  }
+}
+
+function isEmbedUrl(url) {
+  var cls = classifyStreamUrl(url);
+  return cls.type === 'embed' || cls.isContainer;
+}
+
+function isDirectVideo(url) {
+  var cls = classifyStreamUrl(url);
+  return cls.type === 'direct-video' || cls.type === 'stream';
+}
+
+function isDownloadUrl(url) {
+  var cls = classifyStreamUrl(url);
+  return cls.type === 'download';
+}
+
+function isSocialUrl(url) {
+  var cls = classifyStreamUrl(url);
+  return cls.type === 'social' || cls.type === 'tracking';
+}
+
 function makeStream(url, sourceName, serverName, quality) {
   return {
     url: url,
@@ -195,6 +255,36 @@ function makeStream(url, sourceName, serverName, quality) {
     server: serverName || detectServer(url),
     quality: quality || 'HD',
     source: sourceName || 'Local'
+  };
+}
+
+// ─── NEW: Smart stream normalization ──────────────────────────
+function normalizeStream(streamUrl, metadata) {
+  if (!streamUrl) return null;
+
+  var serverName = metadata && metadata.serverName || detectServer(streamUrl);
+  var quality = metadata && metadata.quality || 'HD';
+  var sourceName = metadata && metadata.sourceName || 'Intelligent';
+
+  var classification = classifyStreamUrl(streamUrl);
+
+  // Skip social/tracking URLs
+  if (classification.type === 'social' || classification.type === 'tracking' || classification.type === 'unknown') {
+    return null;
+  }
+
+  // Determine if embed needs further resolution
+  var needsResolution = classification.type === 'embed' && classification.isContainer;
+
+  return {
+    url: streamUrl,
+    name: sourceName + '\n' + serverName,
+    title: sourceName + '\n\u2699\uFE0F ' + serverName + '\n' + quality,
+    behaviorHints: { notWebReady: needsResolution || !streamUrl.match(/\.(mp4|mp3|webm|ogg|ogv)(\?|$)/i) },
+    server: serverName,
+    quality: quality,
+    source: sourceName,
+    classification: classification,
   };
 }
 
@@ -234,7 +324,6 @@ function extractServerDivUrls(html) {
 
 function extractOnclickUrls(html) {
   var urls = [];
-  // Match playVideo("url") or playVideo(&quot;url&quot;) — URL may contain & but ends at " or &quot;
   var re = /playVideo\s*\(\s*(?:&quot;|")\s*(https?:\/\/.+?)\s*(?:&quot;|")\s*\)/gi;
   var m;
   while ((m = re.exec(html))) {
@@ -244,6 +333,12 @@ function extractOnclickUrls(html) {
   return urls;
 }
 
-module.exports = { fetchText, stripTags, matchAll, extractIframeSrc, extractAnchors,
+module.exports = {
+  fetchText, stripTags, matchAll, extractIframeSrc, extractAnchors,
   extractM3u8Mp4, extractMagnetLinks, extractTorrentLinks, extractServerDivUrls,
-  extractOnclickUrls, decodeBase64Url, cleanTitle, scoreMatch, detectServer, makeStream, runPool, UA };
+  extractOnclickUrls, decodeBase64Url, cleanTitle, scoreMatch,
+  detectServer, makeStream, runPool, UA,
+  // New intelligent functions
+  classifyStreamUrl, isEmbedUrl, isDirectVideo, isDownloadUrl, isSocialUrl,
+  normalizeStream, _getAI, _getMemory,
+};

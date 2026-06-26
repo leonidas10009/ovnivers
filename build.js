@@ -31,7 +31,21 @@ const EXTERNAL_MODULES = [
     'puppeteer-core',
     'puppeteer',
     '@sparticuz/chromium',
+    // Intelligent scraper system (server-side only, uses Node built-ins)
+    'fs', 'path', 'url', 'http', 'https', 'stream', 'buffer', 'net', 'tls', 'zlib', 'util', 'events',
 ];
+
+// Directories in src/ that are NOT Hermes providers (library modules, internal helpers)
+const SKIP_DIRS = new Set([
+    'intelligent',   // Server-side intelligent scraping library
+    'media',         // Shared media utilities
+    'content',       // Content resolution
+    'movies',        // Movie-specific logic
+    'series',        // Series-specific logic
+    'anime',         // Anime module (used internally by server.js)
+    'stream-pipeline', // Stream pipeline
+    'scrapeless-proxy', // Scrapeless API integration
+]);
 
 // Get provider names from command line or discover all
 function getProvidersToBuild() {
@@ -48,7 +62,7 @@ function getProvidersToBuild() {
     }
 
     return fs.readdirSync(srcDir, { withFileTypes: true })
-        .filter(d => d.isDirectory())
+        .filter(d => d.isDirectory() && !SKIP_DIRS.has(d.name))
         .map(d => d.name);
 }
 

@@ -2,25 +2,70 @@ const animeflv = require('./animeflv');
 const jkanime = require('./jkanime');
 const tioanime = require('./tioanime');
 const animeav1 = require('./animeav1');
+const { enhanceStream, filterStreams } = require('../anime-smart');
 
-const animePrefixes = ['animeflv:', 'animeav1:', 'henaojara:', 'tioanime:', 'jkanime:'];
+const animePrefixes = ['animeflv:', 'animeav1:', 'henaojara:', 'tioanime:', 'jkanime:', 'animejara:'];
 
-async function getStreams(id, season, episode, pigamerGetStreams) {
+async function getStreams(id, season, episode, pigamerGetStreams, searchTitle) {
   const hasAnimePrefix = animePrefixes.some(p => id.startsWith(p));
   if (!hasAnimePrefix) {
-    // tmdb: / numeric IDs → Pigamer37
-    try {
-      const streams = await pigamerGetStreams(id, season, episode);
-      return { source: 'pigamer', streams: streams || [] };
-    } catch { return { source: 'error', streams: [] }; }
+    // tmdb: / numeric IDs — query native scrapers by title
+    const tasks = [];
+
+    // Query native scrapers by title
+    if (searchTitle && searchTitle.length > 2) {
+      tasks.push(
+        (async () => {
+          try {
+            const results = await jkanime.search(searchTitle);
+            const slug = results[0]?.slug;
+            if (!slug) return [];
+            const streams = await jkanime.getStreams(slug, episode || 1);
+            return streams.map(function(s) { return enhanceStream(s, 'JKAnime'); });
+          } catch { return []; }
+        })(),
+        (async () => {
+          try {
+            const results = await tioanime.search(searchTitle);
+            const slug = results[0]?.slug;
+            if (!slug) return [];
+            const streams = await tioanime.getStreams(slug, episode || 1);
+            return streams.map(function(s) { return enhanceStream(s, 'TioAnime'); });
+          } catch { return []; }
+        })(),
+        (async () => {
+          try {
+            const results = await animeflv.search(searchTitle);
+            const slug = results[0]?.slug;
+            if (!slug) return [];
+            const streams = await animeflv.getStreams(slug, episode || 1);
+            return streams.map(function(s) { return enhanceStream(s, 'AnimeFLV'); });
+          } catch { return []; }
+        })(),
+      );
+    }
+
+    const results = await Promise.allSettled(tasks);
+    const allStreams = [];
+    const seenUrls = new Set();
+    for (const r of results) {
+      if (r.status === 'fulfilled' && r.value?.length) {
+        for (const s of r.value) {
+          if (s._filtered) continue;
+          const url = (s.url || s.file || s.src || '').toLowerCase().replace(/\/+$/, '').split('?')[0];
+          if (!url) { allStreams.push(s); continue; }
+          if (seenUrls.has(url)) continue;
+          seenUrls.add(url);
+          allStreams.push(s);
+        }
+      }
+    }
+    return { source: 'native', streams: allStreams };
   }
 
   const slug = extractSlug(id);
   if (!slug || slug.match(/^\d+$/)) {
-    try {
-      const streams = await pigamerGetStreams(id, season, episode);
-      return { source: 'pigamer', streams: streams || [] };
-    } catch { return { source: 'error', streams: [] }; }
+    return { source: 'error', streams: [] };
   }
 
   const ep = episode || 1;
@@ -47,35 +92,25 @@ async function getStreams(id, season, episode, pigamerGetStreams) {
     );
   }
 
-  // Also query Pigamer37 for comparison/deduplication
-  if (!id.startsWith('jkanime:')) {
-    const pigamerProviders = [
-      { prefix: 'animeflv:', label: 'AnimeFLV' },
-      { prefix: 'animeav1:', label: 'AnimeAV1' },
-      { prefix: 'henaojara:', label: 'Henaojara' },
-      { prefix: 'tioanime:', label: 'TioAnime' },
-    ];
-    for (const { prefix, label } of pigamerProviders) {
-      if (id.startsWith(prefix)) continue;
-      promises.push(
-        (async () => {
-          try {
-            const streams = await pigamerGetStreams(`${prefix}${slug}`, season, episode);
-            return { provider: label, streams };
-          } catch { return { provider: label, streams: [] }; }
-        })()
-      );
-    }
-  }
-
+  // Query native scrapers directly (all have dedicated scrapers)
   const results = await Promise.allSettled(promises);
   const allStreams = [];
+  const seenUrls = new Set();
   for (const r of results) {
     if (r.status === 'fulfilled' && r.value?.streams?.length) {
-      allStreams.push(...r.value.streams);
+      for (const s of r.value.streams) {
+        const enhanced = enhanceStream(s, r.value.provider || 'Unknown');
+        if (enhanced._filtered) continue;
+
+        const url = (s.url || s.file || s.src || '').toLowerCase().replace(/\/+$/, '').split('?')[0];
+        if (!url) { allStreams.push(s); continue; }
+        if (seenUrls.has(url)) continue;
+        seenUrls.add(url);
+        allStreams.push(s);
+      }
     }
   }
-  return { source: 'parallel', streams: allStreams };
+  return { source: 'native', streams: allStreams };
 }
 
 function extractSlug(id) {
