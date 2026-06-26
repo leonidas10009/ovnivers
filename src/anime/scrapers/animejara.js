@@ -77,9 +77,9 @@ async function getStreams(slug, episode) {
   const results = [];
   const ep = episode || 1;
 
-  // Extract the correct anime ID from the page to filter URLs
-  const idMatch = html.match(/idanime[=:]\s*(\d+)/);
-  const animeId = idMatch ? idMatch[1] : null;
+  // Extract anime ID from the iframe (authoritative source)
+  const iframeIdMatch = html.match(/iframe-video[^>]+idanime[=:](\d+)/);
+  const animeId = iframeIdMatch ? iframeIdMatch[1] : null;
 
   // Extract streamhj URLs, filter to only current anime ID
   const streamhjRe = /https?:\/\/(?:multiplayer|descargas)\.streamhj\.top\/[^"'\s<>]+/gi;
