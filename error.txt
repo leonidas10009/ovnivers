@@ -1,0 +1,222 @@
+==> Deploying...
+==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+Health:   https://ovnivers-1.onrender.com/
+==> Your service is live 🎉
+==> 
+==> ///////////////////////////////////////////////////////////
+==> 
+==> Available at your primary URL https://ovnivers-1.onrender.com
+==> 
+==> ///////////////////////////////////////////////////////////
+[memory] High heap: 90% — clearing caches (stream:0, meta:0, health:47)
+==> Detected service running on port 10000
+==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+[memory] High heap: 93% — clearing caches (stream:0, meta:0, health:47)
+[memory] High heap: 92% — clearing caches (stream:0, meta:0, health:47)
+==> Deploying...
+==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+==> Running 'npm run start'
+> ovnivers-all-in-one@1.13.0 start
+> node server.js
+Loaded 63 scrapers from manifest.json
+[proxy] All fetch() routed through Cloudflare Worker: https://ovnivers-proxy.calipo10009.workers.dev (15 domains bypassed)
+Loaded Alfa provider bridge
+[DahmerMovies] Initializing Scraper
+[DahmerMovies] Initializing Scraper
+[MoviesMod] Using cheerio-without-node-native for DOM parsing
+Loaded 40 local provider modules
+Ovnivers v1.13.0 ready
+Backend:  2embed+Mirrors, PoseidonHD
+Anime:    Pigamer37 (AnimeFLV/AnimeAV1/TioAnime/Henaojara)
+Local:    63 scrapers
+Manifest: https://ovnivers-1.onrender.com/manifest.json
+Health:   https://ovnivers-1.onrender.com/
+==> Your service is live 🎉
+==> 
+==> ///////////////////////////////////////////////////////////
+==> 
+==> Available at your primary URL https://ovnivers-1.onrender.com
+==> 
+==> ///////////////////////////////////////////////////////////
+[memory] High heap: 89% — clearing caches (stream:0, meta:0, health:44)
+==> Detected service running on port 10000
+==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+[memory] High heap: 91% — clearing caches (stream:0, meta:0, health:44)
+[memory] High heap: 90% — clearing caches (stream:0, meta:0, health:44)
+==> Deploying...
+==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+Health:   https://ovnivers-1.onrender.com/
+==> Your service is live 🎉
+==> 
+==> ///////////////////////////////////////////////////////////
+==> 
+==> Available at your primary URL https://ovnivers-1.onrender.com
+==> 
+==> ///////////////////////////////////////////////////////////
+[memory] High heap: 90% — clearing caches (stream:0, meta:0, health:44)
+==> Detected service running on port 10000
+==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+[memory] High heap: 92% — clearing caches (stream:0, meta:0, health:44)
+[memory] High heap: 91% — clearing caches (stream:0, meta:0, health:44)
+==> Deploying...
+==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+==> Running 'npm run start'
+> ovnivers-all-in-one@1.13.1 start
+> node server.js
+Loaded 63 scrapers from manifest.json
+[proxy] All fetch() routed through Cloudflare Worker: https://ovnivers-proxy.calipo10009.workers.dev (15 domains bypassed)
+Loaded Alfa provider bridge
+[DahmerMovies] Initializing Scraper
+[DahmerMovies] Initializing Scraper
+[MoviesMod] Using cheerio-without-node-native for DOM parsing
+Loaded 40 local provider modules
+Ovnivers v1.13.1 ready
+Backend:  2embed+Mirrors, PoseidonHD
+Anime:    Pigamer37 (AnimeFLV/AnimeAV1/TioAnime/Henaojara)
+Local:    63 scrapers
+Manifest: https://ovnivers-1.onrender.com/manifest.json
+Health:   https://ovnivers-1.onrender.com/
+==> Your service is live 🎉
+==> 
+==> ///////////////////////////////////////////////////////////
+==> 
+==> Available at your primary URL https://ovnivers-1.onrender.com
+==> 
+==> ///////////////////////////////////////////////////////////
+[memory] High heap: 89% — clearing caches (stream:0, meta:0, health:44)
+==> Detected service running on port 10000
+==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+[memory] High heap: 91% — clearing caches (stream:0, meta:0, health:44)
+[memory] High heap: 91% — clearing caches (stream:0, meta:0, health:44)
+==> Deploying...
+==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+Ovnivers v1.13.2 ready
+Backend:  2embed+Mirrors, PoseidonHD
+Anime:    Pigamer37 (AnimeFLV/AnimeAV1/TioAnime/Henaojara)
+Local:    63 scrapers
+Manifest: https://ovnivers-1.onrender.com/manifest.json
+Health:   https://ovnivers-1.onrender.com/
+==> Your service is live 🎉
+==> 
+==> ///////////////////////////////////////////////////////////
+==> 
+==> Available at your primary URL https://ovnivers-1.onrender.com
+==> 
+==> ///////////////////////////////////////////////////////////
+[memory] High heap: 89% — clearing caches (stream:0, meta:0, health:44)
+==> Detected service running on port 10000
+==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+[memory] High heap: 91% — clearing caches (stream:0, meta:0, health:44)
+[memory] High heap: 90% — clearing caches (stream:0, meta:0, health:44)
+==> Deploying...
+==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+==> Running 'npm run start'
+> ovnivers-all-in-one@1.13.3 start
+> node server.js
+Loaded 63 scrapers from manifest.json
+[proxy] All fetch() routed through Cloudflare Worker: https://ovnivers-proxy.calipo10009.workers.dev (15 domains bypassed)
+Loaded Alfa provider bridge
+[DahmerMovies] Initializing Scraper
+[DahmerMovies] Initializing Scraper
+[MoviesMod] Using cheerio-without-node-native for DOM parsing
+Loaded 40 local provider modules
+Ovnivers v1.13.3 ready
+Backend:  2embed+Mirrors, PoseidonHD
+Anime:    Pigamer37 (AnimeFLV/AnimeAV1/TioAnime/Henaojara)
+Local:    63 scrapers
+Manifest: https://ovnivers-1.onrender.com/manifest.json
+Health:   https://ovnivers-1.onrender.com/
+==> Your service is live 🎉
+==> 
+==> ///////////////////////////////////////////////////////////
+==> 
+==> Available at your primary URL https://ovnivers-1.onrender.com
+==> 
+==> ///////////////////////////////////////////////////////////
+[memory] High heap: 91% — clearing caches (stream:0, meta:0, health:44)
+==> Detected service running on port 10000
+==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+==> Deploying...
+==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+> ovnivers-all-in-one@1.13.5 start
+> node server.js
+Loaded 63 scrapers from manifest.json
+[proxy] All fetch() routed through Cloudflare Worker: https://ovnivers-proxy.calipo10009.workers.dev (15 domains bypassed)
+Loaded Alfa provider bridge
+[DahmerMovies] Initializing Scraper
+[DahmerMovies] Initializing Scraper
+[MoviesMod] Using cheerio-without-node-native for DOM parsing
+Loaded 40 local provider modules
+Ovnivers v1.13.5 ready
+Backend:  2embed+Mirrors, PoseidonHD
+Anime:    Pigamer37 (AnimeFLV/AnimeAV1/TioAnime/Henaojara)
+Local:    63 scrapers
+Manifest: https://ovnivers-1.onrender.com/manifest.json
+Health:   https://ovnivers-1.onrender.com/
+==> Your service is live 🎉
+==> 
+==> ///////////////////////////////////////////////////////////
+==> 
+==> Available at your primary URL https://ovnivers-1.onrender.com
+==> 
+==> ///////////////////////////////////////////////////////////
+[memory] High heap: 90% — clearing caches (stream:0, meta:0, health:44)
+==> Detected service running on port 10000
+==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+[memory] High heap: 93% — clearing caches (stream:0, meta:0, health:44)
+==> Deploying...
+==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+==> Running 'npm run start'
+> ovnivers-all-in-one@1.13.11 start
+> node server.js
+==> No open ports detected, continuing to scan...
+==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+[process] uncaughtException: Unexpected token ')'
+==> Application exited early
+==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
+==> Running 'npm run start'
+> ovnivers-all-in-one@1.13.11 start
+> node server.js
+[process] uncaughtException: Unexpected token ')'
+[DahmerMovies] Initializing Scraper
+[DahmerMovies] Initializing Scraper
+[MoviesMod] Using cheerio-without-node-native for DOM parsing
+Loaded 40 local provider modules
+Ovnivers v1.13.5 ready
+Backend:  2embed+Mirrors, PoseidonHD
+Anime:    Pigamer37 (AnimeFLV/AnimeAV1/TioAnime/Henaojara)
+Local:    63 scrapers
+Manifest: https://ovnivers-1.onrender.com/manifest.json
+Health:   https://ovnivers-1.onrender.com/
+[memory] High heap: 90% — clearing caches (stream:0, meta:0, health:44)
+[memory] High heap: 93% — clearing caches (stream:0, meta:0, health:44)
+==> Deploying...
+==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+==> Running 'npm run start'
+> ovnivers-all-in-one@1.13.12 start
+> node server.js
+Loaded 63 scrapers from manifest.json
+[proxy] All fetch() routed through Cloudflare Worker: https://ovnivers-proxy.calipo10009.workers.dev (15 domains bypassed)
+Loaded Alfa provider bridge
+[DahmerMovies] Initializing Scraper
+[DahmerMovies] Initializing Scraper
+[MoviesMod] Using cheerio-without-node-native for DOM parsing
+Loaded 40 local provider modules
+Ovnivers v1.13.12 ready
+Backend:  2embed+Mirrors, PoseidonHD
+Anime:    Pigamer37 (AnimeFLV/AnimeAV1/TioAnime/Henaojara)
+Local:    63 scrapers
+Manifest: https://ovnivers-1.onrender.com/manifest.json
+Health:   https://ovnivers-1.onrender.com/
+==> Your service is live 🎉
+==> 
+==> ///////////////////////////////////////////////////////////
+==> 
+==> Available at your primary URL https://ovnivers-1.onrender.com
+==> 
+==> ///////////////////////////////////////////////////////////
+[memory] High heap: 91% — clearing caches (stream:0, meta:0, health:44)
+==> Detected service running on port 10000
+==> Docs on specifying a port: https://render.com/docs/web-services#port-binding
+[memory] High heap: 91% — clearing caches (stream:0, meta:0, health:44)
+[memory] High heap: 93% — clearing caches (stream:0, meta:0, health:44)

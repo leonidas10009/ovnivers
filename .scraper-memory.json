@@ -1,0 +1,1194 @@
+{
+  "version": 2,
+  "domains": {
+    "nika.playmudos.com": {
+      "domain": "nika.playmudos.com",
+      "successfulClasses": {
+        "playmudos": 5
+      },
+      "successfulTypes": {
+        "unknown": 1,
+        "stream": 4
+      },
+      "failedClasses": {},
+      "containerUrls": [
+        "nika.playmudos.com"
+      ],
+      "avgResponseTime": 0,
+      "visits": 5,
+      "lastVisit": 1782507225036
+    },
+    "mediafire.com": {
+      "domain": "mediafire.com",
+      "successfulClasses": {},
+      "successfulTypes": {
+        "download": 3
+      },
+      "failedClasses": {},
+      "containerUrls": [
+        "mediafire.com"
+      ],
+      "avgResponseTime": 0,
+      "visits": 3,
+      "lastVisit": 1782507225036
+    },
+    "mega.nz": {
+      "domain": "mega.nz",
+      "successfulClasses": {},
+      "successfulTypes": {
+        "download": 6
+      },
+      "failedClasses": {},
+      "containerUrls": [
+        "mega.nz"
+      ],
+      "avgResponseTime": 0,
+      "visits": 6,
+      "lastVisit": 1782507225036
+    },
+    "sfastwish.com": {
+      "domain": "sfastwish.com",
+      "successfulClasses": {},
+      "successfulTypes": {
+        "embed": 3
+      },
+      "failedClasses": {},
+      "containerUrls": [
+        "sfastwish.com"
+      ],
+      "avgResponseTime": 0,
+      "visits": 3,
+      "lastVisit": 1782507225036
+    },
+    "voe.sx": {
+      "domain": "voe.sx",
+      "successfulClasses": {},
+      "successfulTypes": {
+        "embed": 3
+      },
+      "failedClasses": {},
+      "containerUrls": [
+        "voe.sx"
+      ],
+      "avgResponseTime": 0,
+      "visits": 3,
+      "lastVisit": 1782507225036
+    },
+    "dood.ws": {
+      "domain": "dood.ws",
+      "successfulClasses": {},
+      "successfulTypes": {
+        "embed": 1
+      },
+      "failedClasses": {},
+      "containerUrls": [
+        "dood.ws"
+      ],
+      "avgResponseTime": 0,
+      "visits": 1,
+      "lastVisit": 1782506879898
+    },
+    "mixdrop.co": {
+      "domain": "mixdrop.co",
+      "successfulClasses": {},
+      "successfulTypes": {
+        "embed": 1
+      },
+      "failedClasses": {},
+      "containerUrls": [
+        "mixdrop.co"
+      ],
+      "avgResponseTime": 0,
+      "visits": 1,
+      "lastVisit": 1782506879898
+    },
+    "mp4upload.com": {
+      "domain": "mp4upload.com",
+      "successfulClasses": {},
+      "successfulTypes": {
+        "embed": 2
+      },
+      "failedClasses": {},
+      "containerUrls": [
+        "mp4upload.com"
+      ],
+      "avgResponseTime": 0,
+      "visits": 2,
+      "lastVisit": 1782507054944
+    },
+    "streamtape.com": {
+      "domain": "streamtape.com",
+      "successfulClasses": {},
+      "successfulTypes": {
+        "embed": 1,
+        "direct-video": 1
+      },
+      "failedClasses": {},
+      "containerUrls": [
+        "streamtape.com"
+      ],
+      "avgResponseTime": 0,
+      "visits": 2,
+      "lastVisit": 1782507054944
+    },
+    "yourupload.com": {
+      "domain": "yourupload.com",
+      "successfulClasses": {},
+      "successfulTypes": {
+        "embed": 4
+      },
+      "failedClasses": {},
+      "containerUrls": [
+        "yourupload.com"
+      ],
+      "avgResponseTime": 0,
+      "visits": 4,
+      "lastVisit": 1782507224324
+    },
+    "embedsb.com": {
+      "domain": "embedsb.com",
+      "successfulClasses": {},
+      "successfulTypes": {
+        "navigation": 2
+      },
+      "failedClasses": {},
+      "containerUrls": [
+        "embedsb.com"
+      ],
+      "avgResponseTime": 0,
+      "visits": 2,
+      "lastVisit": 1782507224324
+    },
+    "ok.ru": {
+      "domain": "ok.ru",
+      "successfulClasses": {},
+      "successfulTypes": {
+        "embed": 2
+      },
+      "failedClasses": {},
+      "containerUrls": [
+        "ok.ru"
+      ],
+      "avgResponseTime": 0,
+      "visits": 2,
+      "lastVisit": 1782507224324
+    },
+    "v.tioanime.com": {
+      "domain": "v.tioanime.com",
+      "successfulClasses": {},
+      "successfulTypes": {
+        "embed": 6
+      },
+      "failedClasses": {},
+      "containerUrls": [
+        "v.tioanime.com"
+      ],
+      "avgResponseTime": 0,
+      "visits": 6,
+      "lastVisit": 1782507224324
+    },
+    "hqq.tv": {
+      "domain": "hqq.tv",
+      "successfulClasses": {},
+      "successfulTypes": {
+        "embed": 4
+      },
+      "failedClasses": {},
+      "containerUrls": [
+        "hqq.tv"
+      ],
+      "avgResponseTime": 0,
+      "visits": 4,
+      "lastVisit": 1782507224325
+    },
+    "my.mail.ru": {
+      "domain": "my.mail.ru",
+      "successfulClasses": {},
+      "successfulTypes": {
+        "embed": 4
+      },
+      "failedClasses": {},
+      "containerUrls": [
+        "my.mail.ru"
+      ],
+      "avgResponseTime": 0,
+      "visits": 4,
+      "lastVisit": 1782507224325
+    },
+    "vidhidevip.com": {
+      "domain": "vidhidevip.com",
+      "successfulClasses": {},
+      "successfulTypes": {
+        "embed": 2
+      },
+      "failedClasses": {},
+      "containerUrls": [
+        "vidhidevip.com"
+      ],
+      "avgResponseTime": 0,
+      "visits": 2,
+      "lastVisit": 1782507225036
+    },
+    "mdy48tn97.com": {
+      "domain": "mdy48tn97.com",
+      "successfulClasses": {},
+      "successfulTypes": {
+        "navigation": 2
+      },
+      "failedClasses": {},
+      "containerUrls": [
+        "mdy48tn97.com"
+      ],
+      "avgResponseTime": 0,
+      "visits": 2,
+      "lastVisit": 1782507225036
+    },
+    "d-s.io": {
+      "domain": "d-s.io",
+      "successfulClasses": {},
+      "successfulTypes": {
+        "navigation": 1
+      },
+      "failedClasses": {},
+      "containerUrls": [
+        "d-s.io"
+      ],
+      "avgResponseTime": 0,
+      "visits": 1,
+      "lastVisit": 1782507054944
+    },
+    "a4.mp4upload.com": {
+      "domain": "a4.mp4upload.com",
+      "successfulClasses": {},
+      "successfulTypes": {
+        "direct-video": 1
+      },
+      "failedClasses": {},
+      "containerUrls": [
+        "a4.mp4upload.com"
+      ],
+      "avgResponseTime": 0,
+      "visits": 1,
+      "lastVisit": 1782507058046
+    },
+    "vidcache.net": {
+      "domain": "vidcache.net",
+      "successfulClasses": {},
+      "successfulTypes": {
+        "direct-video": 4
+      },
+      "failedClasses": {},
+      "containerUrls": [
+        "vidcache.net"
+      ],
+      "avgResponseTime": 0,
+      "visits": 4,
+      "lastVisit": 1782507058046
+    },
+    "a3.mp4upload.com": {
+      "domain": "a3.mp4upload.com",
+      "successfulClasses": {},
+      "successfulTypes": {
+        "direct-video": 1
+      },
+      "failedClasses": {},
+      "containerUrls": [
+        "a3.mp4upload.com"
+      ],
+      "avgResponseTime": 0,
+      "visits": 1,
+      "lastVisit": 1782507058046
+    },
+    "/embed/novideo.mp4": {
+      "domain": "/embed/novideo.mp4",
+      "successfulClasses": {},
+      "successfulTypes": {
+        "direct-video": 1
+      },
+      "failedClasses": {},
+      "containerUrls": [],
+      "avgResponseTime": 0,
+      "visits": 1,
+      "lastVisit": 1782507058046
+    }
+  },
+  "patterns": [
+    {
+      "selector": "JKAnime:Desu (nika.playmudos.com)",
+      "selectorClass": "playmudos",
+      "elementType": "unknown",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "unknown",
+        "https://nika.playmudos.com/naruto/abc"
+      ],
+      "success": true,
+      "domain": "nika.playmudos.com",
+      "timestamp": 1782506879897
+    },
+    {
+      "selector": "JKAnime:Mediafire",
+      "selectorClass": "",
+      "elementType": "download",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "download",
+        "https://mediafire.com/file/abc"
+      ],
+      "success": true,
+      "domain": "mediafire.com",
+      "timestamp": 1782506879897
+    },
+    {
+      "selector": "JKAnime:Mega",
+      "selectorClass": "",
+      "elementType": "download",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "download",
+        "https://mega.nz/embed/abc"
+      ],
+      "success": true,
+      "domain": "mega.nz",
+      "timestamp": 1782506879897
+    },
+    {
+      "selector": "JKAnime:Streamwish",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://sfastwish.com/e/abc"
+      ],
+      "success": true,
+      "domain": "sfastwish.com",
+      "timestamp": 1782506879898
+    },
+    {
+      "selector": "JKAnime:VOE",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://voe.sx/e/abc"
+      ],
+      "success": true,
+      "domain": "voe.sx",
+      "timestamp": 1782506879898
+    },
+    {
+      "selector": "JKAnime:Doodstream",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://dood.ws/e/abc"
+      ],
+      "success": true,
+      "domain": "dood.ws",
+      "timestamp": 1782506879898
+    },
+    {
+      "selector": "JKAnime:Mixdrop",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://mixdrop.co/e/abc"
+      ],
+      "success": true,
+      "domain": "mixdrop.co",
+      "timestamp": 1782506879898
+    },
+    {
+      "selector": "JKAnime:Mp4upload",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://mp4upload.com/e/abc"
+      ],
+      "success": true,
+      "domain": "mp4upload.com",
+      "timestamp": 1782506879898
+    },
+    {
+      "selector": "JKAnime:Streamtape",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://streamtape.com/e/abc"
+      ],
+      "success": true,
+      "domain": "streamtape.com",
+      "timestamp": 1782506879898
+    },
+    {
+      "selector": "TioAnime:Mega",
+      "selectorClass": "",
+      "elementType": "download",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "download",
+        "https://mega.nz/embed/abc"
+      ],
+      "success": true,
+      "domain": "mega.nz",
+      "timestamp": 1782506879899
+    },
+    {
+      "selector": "TioAnime:Mega",
+      "selectorClass": "",
+      "elementType": "download",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "download",
+        "https://mega.nz/embed/!BTU1DKKR!RLPNcC8ohIh769HwlEZUPfJLH5n3Xsd2CiIZeEU0cBk"
+      ],
+      "success": true,
+      "domain": "mega.nz",
+      "timestamp": 1782507054303
+    },
+    {
+      "selector": "TioAnime:YourUpload",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://www.yourupload.com/embed/D1OgmRtniGT7"
+      ],
+      "success": true,
+      "domain": "yourupload.com",
+      "timestamp": 1782507054303
+    },
+    {
+      "selector": "TioAnime:StreamSB",
+      "selectorClass": "",
+      "elementType": "navigation",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "navigation",
+        "https://embedsb.com/e/b2ylzr2mjmv9.html"
+      ],
+      "success": true,
+      "domain": "embedsb.com",
+      "timestamp": 1782507054303
+    },
+    {
+      "selector": "TioAnime:Okru",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://ok.ru/videoembed/4492069046794"
+      ],
+      "success": true,
+      "domain": "ok.ru",
+      "timestamp": 1782507054303
+    },
+    {
+      "selector": "TioAnime:Amus",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://v.tioanime.com/embed.php?s=amus&v=aUZFTHJld0VxVHN5TENMQktCVkNXbGtNZkV1QmREV3VuQ1VnWXVhZU5KUDJETnMyVE5jUVJnS2psR05CSTRlUDU2ZnN3NlhmSHdmUEJQdXlCUkY0anN5VHNqOVNRZnFqcmswYW9uMUN0TEU9"
+      ],
+      "success": true,
+      "domain": "v.tioanime.com",
+      "timestamp": 1782507054303
+    },
+    {
+      "selector": "TioAnime:Mepu",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://v.tioanime.com/embed.php?s=mepu&v=Y1ozV29vMzJmOWtxSlhGVjVJT0tQNkNpSTlqd3lNTzZ4YmxFRnNCWTdkQT0="
+      ],
+      "success": true,
+      "domain": "v.tioanime.com",
+      "timestamp": 1782507054304
+    },
+    {
+      "selector": "TioAnime:Mepu",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://v.tioanime.com/embed.php?s=mepu&v=RWk5UEIvQWovV0lsanAyYWRzK0Jsd082V2Z4Zi96anhtMm5pWmxOUERRbz0="
+      ],
+      "success": true,
+      "domain": "v.tioanime.com",
+      "timestamp": 1782507054304
+    },
+    {
+      "selector": "TioAnime:YourUpload",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://www.yourupload.com/embed/Apa3qKO06fAW"
+      ],
+      "success": true,
+      "domain": "yourupload.com",
+      "timestamp": 1782507054304
+    },
+    {
+      "selector": "TioAnime:Netu",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://hqq.tv/player/embed_player.php?vid=265236238205211208278225263244206267194271217261258"
+      ],
+      "success": true,
+      "domain": "hqq.tv",
+      "timestamp": 1782507054304
+    },
+    {
+      "selector": "TioAnime:Maru",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://my.mail.ru/video/embed/8995617145282890505#budyak.rus#2825"
+      ],
+      "success": true,
+      "domain": "my.mail.ru",
+      "timestamp": 1782507054304
+    },
+    {
+      "selector": "TioAnime:Maru",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://my.mail.ru/video/embed/8995617145282890506#budyak.rus#2826"
+      ],
+      "success": true,
+      "domain": "my.mail.ru",
+      "timestamp": 1782507054305
+    },
+    {
+      "selector": "TioAnime:Netu",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://hqq.tv/player/embed_player.php?vid=b1RtNVRzVlJwdkpmSG84Z25yd3UrZz09"
+      ],
+      "success": true,
+      "domain": "hqq.tv",
+      "timestamp": 1782507054305
+    },
+    {
+      "selector": "JKAnime:Desu (nika.playmudos.com)",
+      "selectorClass": "playmudos",
+      "elementType": "stream",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "stream",
+        "https://nika.playmudos.com/borutesv2/cHEwZkUrd1VUUEtHMStMM0EvdXIzQmVuYldHSHMwTDdFeXZML2xuNHI3RT0.m3u8?st=Sr1xoTEMbp58W9eUAZmNGg&e=1782517853"
+      ],
+      "success": true,
+      "domain": "nika.playmudos.com",
+      "timestamp": 1782507054940
+    },
+    {
+      "selector": "JKAnime:Magi (nika.playmudos.com)",
+      "selectorClass": "playmudos",
+      "elementType": "stream",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "stream",
+        "https://nika.playmudos.com/borutesv2/cHEwZkUrd1VUUEtHMStMM0EvdXIzQmVuYldHSHMwTDdFeXZML2xuNHI3RT0.m3u8?st=Sr1xoTEMbp58W9eUAZmNGg&e=1782517853"
+      ],
+      "success": true,
+      "domain": "nika.playmudos.com",
+      "timestamp": 1782507054940
+    },
+    {
+      "selector": "JKAnime:Mediafire",
+      "selectorClass": "",
+      "elementType": "download",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "download",
+        "https://mediafire.com/file/iy8emctqvwtjllj/"
+      ],
+      "success": true,
+      "domain": "mediafire.com",
+      "timestamp": 1782507054940
+    },
+    {
+      "selector": "JKAnime:Mega",
+      "selectorClass": "",
+      "elementType": "download",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "download",
+        "https://mega.nz/embed/ZqsnXITa#8U7jthlJ81wWGNDMZ5h87vpPD6WFE8Fyr9G4V9bzMxE"
+      ],
+      "success": true,
+      "domain": "mega.nz",
+      "timestamp": 1782507054940
+    },
+    {
+      "selector": "JKAnime:Streamwish",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://sfastwish.com/e/l7xz9804susv"
+      ],
+      "success": true,
+      "domain": "sfastwish.com",
+      "timestamp": 1782507054940
+    },
+    {
+      "selector": "JKAnime:VOE",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://voe.sx/e/cr09ekqj2ril"
+      ],
+      "success": true,
+      "domain": "voe.sx",
+      "timestamp": 1782507054941
+    },
+    {
+      "selector": "JKAnime:Vidhide",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://vidhidevip.com/embed/t649ficmd5if"
+      ],
+      "success": true,
+      "domain": "vidhidevip.com",
+      "timestamp": 1782507054941
+    },
+    {
+      "selector": "JKAnime:Mixdrop",
+      "selectorClass": "",
+      "elementType": "navigation",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "navigation",
+        "https://mdy48tn97.com/e/gnvrvjo4f66pmd"
+      ],
+      "success": true,
+      "domain": "mdy48tn97.com",
+      "timestamp": 1782507054941
+    },
+    {
+      "selector": "JKAnime:Mp4upload",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://www.mp4upload.com/embed-x34p9qv4b5je.html"
+      ],
+      "success": true,
+      "domain": "mp4upload.com",
+      "timestamp": 1782507054944
+    },
+    {
+      "selector": "JKAnime:Streamtape",
+      "selectorClass": "",
+      "elementType": "direct-video",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "direct-video",
+        "https://streamtape.com/e/lPbmexDDmxCoZ1/01.mp4"
+      ],
+      "success": true,
+      "domain": "streamtape.com",
+      "timestamp": 1782507054944
+    },
+    {
+      "selector": "JKAnime:Doodstream",
+      "selectorClass": "",
+      "elementType": "navigation",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "navigation",
+        "https://d-s.io/e/qbi0vdxc7dak"
+      ],
+      "success": true,
+      "domain": "d-s.io",
+      "timestamp": 1782507054944
+    },
+    {
+      "selector": "Pigamer37:Mp4upload",
+      "selectorClass": "",
+      "elementType": "direct-video",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "direct-video",
+        "https://a4.mp4upload.com:183/d/xkx2lb4wz3b4quuoykrbqkavkr5txwnrzznwrne4otsg3n7o7llxcf64yyjxen32fioior5b/video.mp4"
+      ],
+      "success": true,
+      "domain": "a4.mp4upload.com",
+      "timestamp": 1782507058046
+    },
+    {
+      "selector": "Pigamer37:Vidcache",
+      "selectorClass": "",
+      "elementType": "direct-video",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "direct-video",
+        "https://vidcache.net:8161/a202606265L1Gg3j570A/video.mp4"
+      ],
+      "success": true,
+      "domain": "vidcache.net",
+      "timestamp": 1782507058046
+    },
+    {
+      "selector": "Pigamer37:Mp4upload",
+      "selectorClass": "",
+      "elementType": "direct-video",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "direct-video",
+        "https://a3.mp4upload.com:183/d/xsxqhbuwz3b4quuoykrbansecck2qqglwnvomxhbl7kgix5wuhqk3ye5eupnifwe3ljiuma2/video.mp4"
+      ],
+      "success": true,
+      "domain": "a3.mp4upload.com",
+      "timestamp": 1782507058046
+    },
+    {
+      "selector": "Pigamer37:Vidcache",
+      "selectorClass": "",
+      "elementType": "direct-video",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "direct-video",
+        "https://vidcache.net:8161/a20260626E8Iwnr36wtE/video.mp4"
+      ],
+      "success": true,
+      "domain": "vidcache.net",
+      "timestamp": 1782507058046
+    },
+    {
+      "selector": "Pigamer37:Vidcache",
+      "selectorClass": "",
+      "elementType": "direct-video",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "direct-video",
+        "https://vidcache.net:8161/a202606263F2xD45w7N3/video.mp4"
+      ],
+      "success": true,
+      "domain": "vidcache.net",
+      "timestamp": 1782507058046
+    },
+    {
+      "selector": "Pigamer37:/embed/novideo",
+      "selectorClass": "",
+      "elementType": "direct-video",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "direct-video",
+        "/embed/novideo.mp4"
+      ],
+      "success": true,
+      "domain": "/embed/novideo.mp4",
+      "timestamp": 1782507058046
+    },
+    {
+      "selector": "Pigamer37:Vidcache",
+      "selectorClass": "",
+      "elementType": "direct-video",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "direct-video",
+        "https://vidcache.net:8161/a2026062600a31gpyDOm/video.mp4"
+      ],
+      "success": true,
+      "domain": "vidcache.net",
+      "timestamp": 1782507058046
+    },
+    {
+      "selector": "TioAnime:Mega",
+      "selectorClass": "",
+      "elementType": "download",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "download",
+        "https://mega.nz/embed/!BTU1DKKR!RLPNcC8ohIh769HwlEZUPfJLH5n3Xsd2CiIZeEU0cBk"
+      ],
+      "success": true,
+      "domain": "mega.nz",
+      "timestamp": 1782507224323
+    },
+    {
+      "selector": "TioAnime:YourUpload",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://www.yourupload.com/embed/D1OgmRtniGT7"
+      ],
+      "success": true,
+      "domain": "yourupload.com",
+      "timestamp": 1782507224324
+    },
+    {
+      "selector": "TioAnime:StreamSB",
+      "selectorClass": "",
+      "elementType": "navigation",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "navigation",
+        "https://embedsb.com/e/b2ylzr2mjmv9.html"
+      ],
+      "success": true,
+      "domain": "embedsb.com",
+      "timestamp": 1782507224324
+    },
+    {
+      "selector": "TioAnime:Okru",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://ok.ru/videoembed/4492069046794"
+      ],
+      "success": true,
+      "domain": "ok.ru",
+      "timestamp": 1782507224324
+    },
+    {
+      "selector": "TioAnime:Amus",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://v.tioanime.com/embed.php?s=amus&v=aUZFTHJld0VxVHN5TENMQktCVkNXbGtNZkV1QmREV3VuQ1VnWXVhZU5KUDJETnMyVE5jUVJnS2psR05CSTRlUDU2ZnN3NlhmSHdmUEJQdXlCUkY0amhmcWhHSm55SFc0ekVmYkkwY3ljOFk9"
+      ],
+      "success": true,
+      "domain": "v.tioanime.com",
+      "timestamp": 1782507224324
+    },
+    {
+      "selector": "TioAnime:Mepu",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://v.tioanime.com/embed.php?s=mepu&v=Y1ozV29vMzJmOWtxSlhGVjVJT0tQM0d2MlkzTDAzQ2gwVkNIcWdOQkphOD0="
+      ],
+      "success": true,
+      "domain": "v.tioanime.com",
+      "timestamp": 1782507224324
+    },
+    {
+      "selector": "TioAnime:Mepu",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://v.tioanime.com/embed.php?s=mepu&v=RWk5UEIvQWovV0lsanAyYWRzK0JsenRVUVVRSXpLTklYOTdNdzNGOTluVT0="
+      ],
+      "success": true,
+      "domain": "v.tioanime.com",
+      "timestamp": 1782507224324
+    },
+    {
+      "selector": "TioAnime:YourUpload",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://www.yourupload.com/embed/Apa3qKO06fAW"
+      ],
+      "success": true,
+      "domain": "yourupload.com",
+      "timestamp": 1782507224324
+    },
+    {
+      "selector": "TioAnime:Netu",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://hqq.tv/player/embed_player.php?vid=265236238205211208278225263244206267194271217261258"
+      ],
+      "success": true,
+      "domain": "hqq.tv",
+      "timestamp": 1782507224324
+    },
+    {
+      "selector": "TioAnime:Maru",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://my.mail.ru/video/embed/8995617145282890505#budyak.rus#2825"
+      ],
+      "success": true,
+      "domain": "my.mail.ru",
+      "timestamp": 1782507224324
+    },
+    {
+      "selector": "TioAnime:Maru",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://my.mail.ru/video/embed/8995617145282890506#budyak.rus#2826"
+      ],
+      "success": true,
+      "domain": "my.mail.ru",
+      "timestamp": 1782507224325
+    },
+    {
+      "selector": "TioAnime:Netu",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://hqq.tv/player/embed_player.php?vid=b1RtNVRzVlJwdkpmSG84Z25yd3UrZz09"
+      ],
+      "success": true,
+      "domain": "hqq.tv",
+      "timestamp": 1782507224325
+    },
+    {
+      "selector": "JKAnime:Desu (nika.playmudos.com)",
+      "selectorClass": "playmudos",
+      "elementType": "stream",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "stream",
+        "https://nika.playmudos.com/borutesv2/cHEwZkUrd1VUUEtHMStMM0EvdXIzQmVuYldHSHMwTDdFeXZML2xuNHI3RT0.m3u8?st=v_jxhehBJJ-13A7UtAo_kQ&e=1782518023"
+      ],
+      "success": true,
+      "domain": "nika.playmudos.com",
+      "timestamp": 1782507225035
+    },
+    {
+      "selector": "JKAnime:Magi (nika.playmudos.com)",
+      "selectorClass": "playmudos",
+      "elementType": "stream",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "stream",
+        "https://nika.playmudos.com/borutesv2/cHEwZkUrd1VUUEtHMStMM0EvdXIzQmVuYldHSHMwTDdFeXZML2xuNHI3RT0.m3u8?st=v_jxhehBJJ-13A7UtAo_kQ&e=1782518023"
+      ],
+      "success": true,
+      "domain": "nika.playmudos.com",
+      "timestamp": 1782507225036
+    },
+    {
+      "selector": "JKAnime:Mediafire",
+      "selectorClass": "",
+      "elementType": "download",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "download",
+        "https://mediafire.com/file/iy8emctqvwtjllj/"
+      ],
+      "success": true,
+      "domain": "mediafire.com",
+      "timestamp": 1782507225036
+    },
+    {
+      "selector": "JKAnime:Mega",
+      "selectorClass": "",
+      "elementType": "download",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "download",
+        "https://mega.nz/embed/ZqsnXITa#8U7jthlJ81wWGNDMZ5h87vpPD6WFE8Fyr9G4V9bzMxE"
+      ],
+      "success": true,
+      "domain": "mega.nz",
+      "timestamp": 1782507225036
+    },
+    {
+      "selector": "JKAnime:Streamwish",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://sfastwish.com/e/l7xz9804susv"
+      ],
+      "success": true,
+      "domain": "sfastwish.com",
+      "timestamp": 1782507225036
+    },
+    {
+      "selector": "JKAnime:VOE",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://voe.sx/e/cr09ekqj2ril"
+      ],
+      "success": true,
+      "domain": "voe.sx",
+      "timestamp": 1782507225036
+    },
+    {
+      "selector": "JKAnime:Vidhide",
+      "selectorClass": "",
+      "elementType": "embed",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "embed",
+        "https://vidhidevip.com/embed/t649ficmd5if"
+      ],
+      "success": true,
+      "domain": "vidhidevip.com",
+      "timestamp": 1782507225036
+    },
+    {
+      "selector": "JKAnime:Mixdrop",
+      "selectorClass": "",
+      "elementType": "navigation",
+      "action": "scrape",
+      "urlsFound": 1,
+      "urlTypes": [
+        "navigation",
+        "https://mdy48tn97.com/e/gnvrvjo4f66pmd"
+      ],
+      "success": true,
+      "domain": "mdy48tn97.com",
+      "timestamp": 1782507225036
+    }
+  ],
+  "containerDomains": [
+    "nika.playmudos.com",
+    "mediafire.com",
+    "mega.nz",
+    "sfastwish.com",
+    "voe.sx",
+    "dood.ws",
+    "mixdrop.co",
+    "mp4upload.com",
+    "streamtape.com",
+    "yourupload.com",
+    "embedsb.com",
+    "ok.ru",
+    "v.tioanime.com",
+    "hqq.tv",
+    "my.mail.ru",
+    "vidhidevip.com",
+    "mdy48tn97.com",
+    "d-s.io",
+    "a4.mp4upload.com",
+    "vidcache.net",
+    "a3.mp4upload.com"
+  ],
+  "urlChains": {
+    "jkanime.net|/naruto/1/": [
+      {
+        "fromPattern": "/naruto/1/",
+        "toType": "download",
+        "confidence": 100,
+        "lastSuccess": 1782506864726,
+        "sampleFrom": "https://jkanime.net/naruto/1/",
+        "sampleTo": "https://c1.jkplayers.com/d/C4hd6460fbBaB/"
+      }
+    ]
+  },
+  "totalAttempts": 60,
+  "successCount": 60
+}

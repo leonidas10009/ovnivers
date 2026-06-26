@@ -2,6 +2,7 @@ const animeflv = require('./animeflv');
 const jkanime = require('./jkanime');
 const tioanime = require('./tioanime');
 const animeav1 = require('./animeav1');
+const animejara = require('./animejara');
 const { enhanceStream, filterStreams } = require('../anime-smart');
 
 const animePrefixes = ['animeflv:', 'animeav1:', 'henaojara:', 'tioanime:', 'jkanime:', 'animejara:'];
@@ -16,31 +17,16 @@ async function getStreams(id, season, episode, pigamerGetStreams, searchTitle) {
     if (searchTitle && searchTitle.length > 2) {
       tasks.push(
         (async () => {
-          try {
-            const results = await jkanime.search(searchTitle);
-            const slug = results[0]?.slug;
-            if (!slug) return [];
-            const streams = await jkanime.getStreams(slug, episode || 1);
-            return streams.map(function(s) { return enhanceStream(s, 'JKAnime'); });
-          } catch { return []; }
+          try { const r = await jkanime.search(searchTitle); const s = r[0]?.slug; if (!s) return []; return (await jkanime.getStreams(s, episode || 1)).map(function(x) { return enhanceStream(x, 'JKAnime'); }); } catch { return []; }
         })(),
         (async () => {
-          try {
-            const results = await tioanime.search(searchTitle);
-            const slug = results[0]?.slug;
-            if (!slug) return [];
-            const streams = await tioanime.getStreams(slug, episode || 1);
-            return streams.map(function(s) { return enhanceStream(s, 'TioAnime'); });
-          } catch { return []; }
+          try { const r = await tioanime.search(searchTitle); const s = r[0]?.slug; if (!s) return []; return (await tioanime.getStreams(s, episode || 1)).map(function(x) { return enhanceStream(x, 'TioAnime'); }); } catch { return []; }
         })(),
         (async () => {
-          try {
-            const results = await animeflv.search(searchTitle);
-            const slug = results[0]?.slug;
-            if (!slug) return [];
-            const streams = await animeflv.getStreams(slug, episode || 1);
-            return streams.map(function(s) { return enhanceStream(s, 'AnimeFLV'); });
-          } catch { return []; }
+          try { const r = await animeflv.search(searchTitle); const s = r[0]?.slug; if (!s) return []; return (await animeflv.getStreams(s, episode || 1)).map(function(x) { return enhanceStream(x, 'AnimeFLV'); }); } catch { return []; }
+        })(),
+        (async () => {
+          try { const r = await animejara.search(searchTitle); const s = r[0]?.slug; if (!s) return []; return (await animejara.getStreams(s, episode || 1)).map(function(x) { return enhanceStream(x, 'AnimeJara'); }); } catch { return []; }
         })(),
       );
     }
@@ -89,6 +75,11 @@ async function getStreams(id, season, episode, pigamerGetStreams, searchTitle) {
   if (id.startsWith('animeav1:')) {
     promises.push(
       (async () => { try { return { provider: 'AnimeAV1', streams: await animeav1.getStreams(slug, ep) }; } catch { return { provider: 'AnimeAV1', streams: [] }; } })()
+    );
+  }
+  if (id.startsWith('animejara:')) {
+    promises.push(
+      (async () => { try { return { provider: 'AnimeJara', streams: await animejara.getStreams(slug, ep) }; } catch { return { provider: 'AnimeJara', streams: [] }; } })()
     );
   }
 

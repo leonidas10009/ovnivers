@@ -15,4 +15,4 @@ tmp/
 temp/
 .env
 
-error.txt
+error.txt.scraper-memory.json
