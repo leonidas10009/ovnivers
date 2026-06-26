@@ -1,5 +1,5 @@
 const cheerio = require('cheerio-without-node-native') || require('cheerio');
-const { getSessionMemory } = require('../../intelligent');
+const { getSessionMemory, getSmartAnalyzer } = require('../../intelligent');
 
 const BASE = 'https://animejara.com';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36';
@@ -7,12 +7,14 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/
 const mem = getSessionMemory();
 mem.setCurrentDomain('animejara.com');
 if (!mem.getDomainFingerprint('animejara.com')) {
-  mem.recordAttempt('button.tab-btn', 'clickable', 'click', true, 3, ['embed', 'download', 'navigation'], 'animejara.com');
+  mem.recordAttempt('button.tab-btn', 'clickable', 'click', true, 3, ['embed', 'download'], 'animejara.com');
   mem.recordAttempt('button.tab-btn', 'clickable', 'click', false, 0, [], 'animejara.com');
   mem.recordAttempt('a.btn-dl', 'clickable', 'click', true, 1, ['embed'], 'animejara.com');
   mem.recordAttempt('a.btn-dl', 'clickable', 'click', false, 0, [], 'animejara.com');
   mem.recordAttempt('a.btn-dl', 'clickable', 'click', false, 0, [], 'animejara.com');
 }
+
+const ai = getSmartAnalyzer();
 
 async function fetchText(url, timeout) {
   const ctrl = new AbortController();
@@ -26,31 +28,72 @@ async function fetchText(url, timeout) {
   } catch { clearTimeout(t); return null; }
 }
 
-async function resolveStreamHJ(url) {
-  // PHP endpoints redirect to actual content. Follow redirect to get the real URL.
-  try {
-    const ctrl = new AbortController();
-    const t = setTimeout(function() { ctrl.abort(); }, 10000);
-    const res = await fetch(url, {
-      headers: { 'User-Agent': UA, 'Referer': BASE + '/' },
-      signal: ctrl.signal,
-      redirect: 'follow',
-    });
-    clearTimeout(t);
-    const finalUrl = res.url;
-    // If it redirected to a different domain, that's the real content
-    if (finalUrl !== url && finalUrl.startsWith('http')) {
-      const html = await res.text();
-      // Check for direct download links in the final page
-      const megaRe = /https?:\/\/mega\.nz\/[^"'\s<>]+/gi;
-      const mediafireRe = /https?:\/\/mediafire\.com\/[^"'\s<>]+/gi;
-      const directRe = /https?:\/\/[^"'\s<>]+\.(?:mp4|mkv|zip|rar|7z)[^"'\s<>]*/gi;
-      const allMatches = [...(html.match(megaRe) || []), ...(html.match(mediafireRe) || []), ...(html.match(directRe) || [])];
-      if (allMatches.length > 0) return allMatches[0];
-      return finalUrl;
+// ─── Scrape streamhj container page to extract individual server URLs ───
+async function scrapeServerContainer(containerUrl, slug, ep) {
+  const html = await fetchText(containerUrl, 10000);
+  if (!html) return [];
+
+  const results = [];
+
+  // Extract iframe sources (each server tab loads a different iframe)
+  const iframeRe = /<iframe[^>]+src="([^"]+)"/gi;
+  let m;
+  while ((m = iframeRe.exec(html)) !== null) {
+    let src = m[1].replace(/&amp;/g, '&').replace(/&#038;/g, '&');
+    src = src.replace(/&quot;.*$/, '').replace(/['\s)]+$/, '');
+    if (!src.startsWith('http') || src === 'about:blank') continue;
+    if (/google|facebook|discord|analytics/i.test(src)) continue;
+
+    const serverName = ai.inferServerName(ai.extractDomain(src));
+    if (!results.some(function(r) { return r.url === src; })) {
+      results.push({
+        url: src, server: serverName,
+        name: 'AnimeJara\n' + serverName,
+        title: slug + ' Ep.' + ep + '\n' + serverName,
+        description: '',
+        behaviorHints: { notWebReady: true, bingeGroup: 'animejara|' + serverName.toLowerCase() },
+      });
     }
-    return finalUrl !== url ? finalUrl : null;
-  } catch { return null; }
+  }
+
+  // Extract onclick handler URLs — they use &quot; encoding like:
+  // playVideo(&quot;https://hqq.tv/player/...&quot;)
+  const onclickRe = /playVideo\(&quot;(https?:\/\/[^&]+)&quot;/gi;
+  while ((m = onclickRe.exec(html)) !== null) {
+    const url = m[1].replace(/&amp;/g, '&').replace(/&#038;/g, '&');
+    if (!url.startsWith('http')) continue;
+    if (results.some(function(r) { return r.url === url; })) continue;
+
+    const serverName = ai.inferServerName(ai.extractDomain(url));
+    results.push({
+      url: url, server: serverName,
+      name: 'AnimeJara\n' + serverName,
+      title: slug + ' Ep.' + ep + '\n' + serverName,
+      behaviorHints: { notWebReady: true, bingeGroup: 'animejara|' + serverName.toLowerCase() },
+    });
+  }
+
+  // Extract embed/server URL patterns from text content
+  const urlRe = /https?:\/\/[^"'\s<>]{10,200}/g;
+  const allUrls = html.match(urlRe) || [];
+  const embedDomains = /streamwish|filemoon|uqload|dood|mixdrop|voe|mp4upload|streamtape|yourupload|ok\.ru|mega|mediafire|hqq|netu|swhoi|burstcloud|sbembed|sbplay|fembed|upstream|vidhide|vidmoly|vidoza|cloudvideo|playhydrax|bysekoze|nyuu/i;
+  allUrls.forEach(function(u) {
+    let clean = u.replace(/&amp;/g, '&').replace(/&#038;/g, '&').replace(/\\\//g, '/');
+    clean = clean.replace(/&quot;.*$/, '').replace(/['\s)]+$/, '');
+    if (!embedDomains.test(clean)) return;
+    if (clean.includes('streamhj.top')) return;
+    if (results.some(function(r) { return r.url === clean; })) return;
+
+    const serverName = ai.inferServerName(ai.extractDomain(clean));
+    results.push({
+      url: clean, server: serverName,
+      name: 'AnimeJara\n' + serverName,
+      title: slug + ' Ep.' + ep + '\n' + serverName,
+      behaviorHints: { notWebReady: true, bingeGroup: 'animejara|' + serverName.toLowerCase() },
+    });
+  });
+
+  return results;
 }
 
 async function search(query) {
@@ -74,59 +117,48 @@ async function getStreams(slug, episode) {
   const html = await fetchText(epUrl);
   if (!html) return [];
 
-  const results = [];
   const ep = episode || 1;
+  const results = [];
 
-  // Extract anime ID from the iframe (authoritative source)
-  const iframeIdMatch = html.match(/iframe-video[^>]+idanime[=:](\d+)/);
-  const animeId = iframeIdMatch ? iframeIdMatch[1] : null;
+  // Step 1: Extract iframe src from the episode page
+  const iframeMatch = html.match(/<iframe[^>]+src="(https?:\/\/multiplayer\.streamhj\.top\/[^"]+)"/i);
+  if (!iframeMatch) {
+    // Fallback: Puppeteer
+    try {
+      const pptr = require('../../jkanime-puppeteer');
+      return await pptr.resolveAnimeJara(slug, ep);
+    } catch { return []; }
+  }
 
-  // Extract streamhj URLs, filter to only current anime ID
-  const streamhjRe = /https?:\/\/(?:multiplayer|descargas)\.streamhj\.top\/[^"'\s<>]+/gi;
-  const streamhjMatches = html.match(streamhjRe) || [];
+  const containerUrl = iframeMatch[1].replace(/&amp;/g, '&').replace(/&#038;/g, '&');
 
-  // Resolve each URL to get real content
-  for (const u of streamhjMatches) {
-    const clean = u.replace(/&amp;/g, '&').replace(/&#038;/g, '&').replace(/#$/, '');
+  // Step 2: Scrape the container page to extract individual server URLs
+  const servers = await scrapeServerContainer(containerUrl, slug, ep);
 
-    // Filter: only include URLs for THIS anime
-    if (animeId) {
-      const urlIdMatch = clean.match(/idanime[=:]\s*(\d+)/);
-      if (urlIdMatch && urlIdMatch[1] !== animeId) continue;
-    }
-
-    const isEmbed = clean.includes('embed.php');
-    const label = isEmbed ? 'MultiPlayer' : 'Descargas';
-
-    // Try to resolve PHP endpoint to real content URL
-    let resolvedUrl = clean;
-    if (!isEmbed) {
-      const realUrl = await resolveStreamHJ(clean);
-      if (realUrl) resolvedUrl = realUrl;
-    }
-
-    if (!results.some(function(r) { return r.url === clean; })) {
+  // Step 3: Add download link if present
+  const downloadMatch = html.match(/https?:\/\/descargas\.streamhj\.top\/[^"'\s<>]+/i);
+  if (downloadMatch) {
+    const dlUrl = downloadMatch[0].replace(/&amp;/g, '&').replace(/&#038;/g, '&');
+    if (!results.some(function(r) { return r.url === dlUrl; })) {
       results.push({
-        url: resolvedUrl,
-        server: label,
-        name: 'AnimeJara\n' + label,
-        title: slug + ' Ep.' + ep + '\n' + label,
-        description: isEmbed ? '' : 'Download',
-        behaviorHints: { notWebReady: isEmbed, bingeGroup: 'animejara|' + label.toLowerCase() },
+        url: dlUrl, server: 'Descargas',
+        name: 'AnimeJara\nDescargas',
+        title: slug + ' Ep.' + ep + '\nDescargas',
+        behaviorHints: { notWebReady: true, bingeGroup: 'animejara|descargas' },
       });
     }
   }
 
-  // Fallback: Puppeteer for full server list
-  if (results.length <= 1) {
-    try {
-      const pptrResolver = require('../../jkanime-puppeteer');
-      const pptrStreams = await pptrResolver.resolveAnimeJara(slug, ep);
-      results.push(...pptrStreams);
-    } catch { /* use what we have */ }
-  }
+  results.push(...servers);
 
-  return results;
+  // Final dedup: normalize URLs to catch near-duplicates (with/without &quot;)
+  const seen = new Set();
+  return results.filter(function(s) {
+    const key = (s.url || '').toLowerCase().replace(/\/+$/, '').replace(/&quot;.*$/, '').replace(/['\s)]+$/, '').split('?')[0];
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 module.exports = { search, getStreams, BASE };
