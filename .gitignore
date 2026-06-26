@@ -16,3 +16,5 @@ temp/
 .env
 
 error.txt.scraper-memory.json
+.scraper-memory.json
+error.txt
