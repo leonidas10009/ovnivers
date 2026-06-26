@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.14.3
+# Ovnivers — Stream Provider v1.14.5
 
 Addon **stream-only** para **Stremio / NuvioTV**. Usalo junto con cualquier addon de catálogo (Torrentio, TMDB Community, Kitsu, etc.). Ovnivers solo provee streams — sin catálogos propios, sin conflictos.
 
