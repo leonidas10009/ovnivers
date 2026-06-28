@@ -1,6 +1,6 @@
 /**
  * catalog - Built from src/catalog/
- * Generated: 2026-06-28T16:35:48.977Z
+ * Generated: 2026-06-28T16:38:51.906Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -6241,7 +6241,7 @@ var require_animeav1 = __commonJS({
     function search(query) {
       return __async(this, null, function* () {
         try {
-          const html = yield fetchText(`https://animeav1.com/search?q=${encodeURIComponent(query)}`);
+          const html = yield fetchText(`https://animeav1.com/catalogo?search=${encodeURIComponent(query)}`);
           if (!html) return [];
           const cheerio = require("cheerio-without-node-native") || require("cheerio");
           const $ = cheerio.load(html);

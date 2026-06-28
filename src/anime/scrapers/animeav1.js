@@ -109,7 +109,7 @@ function resolveDevalue(flatData) {
 
 async function search(query) {
   try {
-    const html = await fetchText(`https://animeav1.com/search?q=${encodeURIComponent(query)}`);
+    const html = await fetchText(`https://animeav1.com/catalogo?search=${encodeURIComponent(query)}`);
     if (!html) return [];
     // SvelteKit SSR - search results are rendered server-side
     // Extract links from __data or from HTML
