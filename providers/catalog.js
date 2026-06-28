@@ -1,6 +1,6 @@
 /**
  * catalog - Built from src/catalog/
- * Generated: 2026-06-28T16:42:46.974Z
+ * Generated: 2026-06-28T16:45:47.825Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -5946,6 +5946,7 @@ var require_jkanime = __commonJS({
         const iframes = extractIframes(page);
         const servers2 = extractServers(page);
         const results = [];
+        const seenUrls = /* @__PURE__ */ new Set();
         const playerNames = ["Desu", "Magi"];
         for (let idx = 0; idx < iframes.length && idx < 2; idx++) {
           const iframeUrl = iframes[idx];
@@ -5956,6 +5957,8 @@ var require_jkanime = __commonJS({
             const mp4s = extractMP4(iframeHtml);
             const label = playerNames[idx] || "JKPlayer";
             for (const url of [.../* @__PURE__ */ new Set([...m3u8s, ...mp4s])]) {
+              if (seenUrls.has(url)) continue;
+              seenUrls.add(url);
               const host = new URL(url).hostname;
               results.push({
                 url,

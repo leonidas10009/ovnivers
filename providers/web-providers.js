@@ -1,6 +1,6 @@
 /**
  * web-providers - Built from src/web-providers/
- * Generated: 2026-06-28T16:42:47.062Z
+ * Generated: 2026-06-28T16:45:47.897Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;

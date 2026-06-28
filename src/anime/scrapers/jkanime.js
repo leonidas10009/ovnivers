@@ -202,6 +202,7 @@ async function getStreams(slug, episode) {
   const iframes = extractIframes(page);
   const servers = extractServers(page);
   const results = [];
+  const seenUrls = new Set();
 
   // 1. Extract m3u8/mp4 from JKPlayer iframes (um=Desu + umv=Magi)
   const playerNames = ['Desu', 'Magi'];
@@ -216,6 +217,8 @@ async function getStreams(slug, episode) {
       const label = playerNames[idx] || 'JKPlayer';
 
       for (const url of [...new Set([...m3u8s, ...mp4s])]) {
+        if (seenUrls.has(url)) continue;
+        seenUrls.add(url);
         const host = new URL(url).hostname;
         results.push({
           url,
