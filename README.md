@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.14.5
+# Ovnivers — Stream Provider v1.14.6
 
 Addon **stream-only** para **Stremio / NuvioTV**. Usalo junto con cualquier addon de catálogo (Torrentio, TMDB Community, Kitsu, etc.). Ovnivers solo provee streams — sin catálogos propios, sin conflictos.
 
@@ -185,7 +185,43 @@ node build.js    # Build de scrapers desde src/
 
 ## Changelog
 
-### v1.14.3 — AnimeJara, DonTorrent, Puppeteer hybrid, memory restart
+### v1.14.6 — Multi-engine system + Torrent providers unification + Cardigann engine
+
+**Sistema Multi-Engine (`src/engines/`):**
+- **Static Engine** — cheerio + selectores (~15MB, 200ms). Para WordPress, PHP, APIs JSON.
+- **Dynamic Engine** — Puppeteer + BrowserPool + AutonomousScraper (~200MB, 3-8s). SPAs, Cloudflare bypass, clicks en servidores, network capture.
+- **Intelligent Engine** — StaticScraper + AutonomousScraper. Auto-descubre selectores y servidores sin configuración manual.
+- **Router** — `ProviderMemory` con aprendizaje bayesiano cross-sesión. Decide qué engine usar por provider basado en éxito histórico.
+- **ProviderMemory** (`src/intelligent/provider-memory.js`) — tracking por provider+engine+phase, persiste a `.provider-memory.json`.
+
+**Web Providers (74 total, 43 activos):**
+- **Renombrado**: "Alfa Providers" → "Web Providers" en UI, labels, docs.
+- **+ RepelisPlus** (`repelisplus.my`) — search `/buscar/{query}`, video vía `jaljz` JSON + `watchfun.top`.
+- **Reactivados**: AllCalidad, PelisPanda, WolfMax4K, EliteTorrent, HackTorrent, AnimeJL, DocumentalesOnline.
+- **Desactivados**: AnimeJara, JKAnime, TioAnime, AnimeFLV (redundantes con scrapers nativos de anime).
+- **Corregido**: DonTorrent search (GET → POST `/buscar`), AnimeFLV dominio (`animeflv.ar`), BlogHorror selectores.
+
+**Torrent Providers (8 scrapers + Cardigann engine):**
+- **Integrados al módulo**: DivXTotal, DonTorrent, EliteTorrent como scrapers nativos.
+- **Cardigann Engine** (`src/torrent-providers/cardigann-engine.js`) — parser YML sin dependencias.
+- Compatible con 522+ definiciones de Prowlarr/Jackett. Solo añadir `.yml` en `definitions/`.
+- **Resultado para "Matrix"**: 39 torrents con infoHash de 5 fuentes (GloDLS, SolidTorrents, LimeTorrents, 1337x, DivXTotal).
+
+**Cloudflare Bypass (gratuito):**
+- **Puppeteer Fallback** (`src/puppeteer-fallback.js`) — navegador headless con stealth.
+- Auto-detección de Chrome del sistema (Windows/Linux/macOS) o `@sparticuz/chromium` en Render.
+- Se activa en 3 casos: HTTP 403/503/429, Cloudflare markers + HTML corto, errores de red.
+
+**Scripts de auditoría (9 nuevos):**
+- `audit-all.js`, `deep-search.js`, `final-audit.js`, `revive-providers.js`
+- `test-duplicates.js`, `test-functional.js`, `test-regression.js`, `test-servers.js`, `test-torrent.js`
+
+**Memoria:**
+- **71 MB** idle (todos los módulos cargados)
+- **~270 MB** con Puppeteer activo
+- Cabe holgadamente en Render 512 MB free tier
+
+### v1.14.5 — Stream-only mode consolidado
 
 - **AnimeJara reactivado**: search por `/catalogo/?q=` (4 resultados filtrados). Videos con triple fallback: cheerio → iframe → Puppeteer. 7 servidores por episodio (filemoon, netu, yourupload, mega, okru, uqload, streamtape).
 - **DonTorrent**: dominio actualizado `dontorrent.review`. Anubis v1.25.0 PoW solver (bits, no hex). Search del sitio roto (JS-dependiente), pero páginas directas de series/pelis funcionan.
