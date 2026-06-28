@@ -610,6 +610,49 @@ async function scrapeDonTorrent(query) {
   } catch { return []; }
 }
 
+// ─── EliteTorrent (web provider) ───────────
+// Search works (14+ results) but download links use acortame-esto.com shortener
+// with anti-bot POST forms — needs Puppeteer or engine shortener-resolver for infoHash
+
+async function scrapeEliteTorrent(query) {
+  try {
+    const baseUrl = 'https://www.elitetorrent.com';
+    const html = await fetchHTML(`${baseUrl}/?s=${encodeURIComponent(query)}`);
+    if (!html) return [];
+    const $ = cheerio.load(html);
+    const results = [];
+
+    $('a[href*="/pelicula"]').each((i, el) => {
+      const href = $(el).attr('href') || '';
+      const text = $(el).text().trim();
+      if (!href || !text || text.length < 3) return;
+      // Filter category/nav links
+      if (/\/peliculas-?\d*\/?$/i.test(href)) return;
+      if (/\/pelicula-de-la-television/i.test(href)) return;
+      if (text === 'Películas' || text === 'Peliculas' || text === 'Series') return;
+
+      results.push({
+        name: text, infoHash: '', magnet: '',
+        seeds: 0, leechers: 0, size: 0, sizeFormatted: '?',
+        detailUrl: href.startsWith('http') ? href : `${baseUrl}${href}`,
+        verified: false,
+      });
+    });
+
+    const toResolve = results.slice(0, 5).filter(r => r.detailUrl);
+    if (toResolve.length) {
+      const resolved = await Promise.allSettled(toResolve.map(r => resolveDetailMagnet(r.detailUrl)));
+      for (let i = 0; i < toResolve.length; i++) {
+        if (resolved[i].status === 'fulfilled' && resolved[i].value) {
+          toResolve[i].magnet = resolved[i].value.magnet || '';
+          toResolve[i].infoHash = resolved[i].value.infoHash || '';
+        }
+      }
+    }
+    return results.filter(r => r.infoHash);
+  } catch { return []; }
+}
+
 // ─── Bencode infoHash extractor ─────────────
 function extractInfoHashFromBuffer(buf) {
   try {
@@ -667,6 +710,7 @@ async function search(query, mediaType, imdbId, year, season, episode, isAnime =
     { name: '1337x', fn: () => scrape1337x(searchStr) },
     { name: 'DivXTotal', fn: () => scrapeDivXTotal(query) },
     { name: 'DonTorrent', fn: () => scrapeDonTorrent(query) },
+    { name: 'EliteTorrent', fn: () => scrapeEliteTorrent(query) },
   ];
 
   if (mediaType === 'tv' && imdbId) {

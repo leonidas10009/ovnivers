@@ -1,6 +1,6 @@
 /**
  * torrent-providers - Built from src/torrent-providers/
- * Generated: 2026-06-28T14:56:52.989Z
+ * Generated: 2026-06-28T15:01:35.274Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -636,6 +636,49 @@ function scrapeDonTorrent(query) {
     }
   });
 }
+function scrapeEliteTorrent(query) {
+  return __async(this, null, function* () {
+    try {
+      const baseUrl = "https://www.elitetorrent.com";
+      const html = yield fetchHTML(`${baseUrl}/?s=${encodeURIComponent(query)}`);
+      if (!html) return [];
+      const $ = cheerio.load(html);
+      const results = [];
+      $('a[href*="/pelicula"]').each((i, el) => {
+        const href = $(el).attr("href") || "";
+        const text = $(el).text().trim();
+        if (!href || !text || text.length < 3) return;
+        if (/\/peliculas-?\d*\/?$/i.test(href)) return;
+        if (/\/pelicula-de-la-television/i.test(href)) return;
+        if (text === "Pel\xEDculas" || text === "Peliculas" || text === "Series") return;
+        results.push({
+          name: text,
+          infoHash: "",
+          magnet: "",
+          seeds: 0,
+          leechers: 0,
+          size: 0,
+          sizeFormatted: "?",
+          detailUrl: href.startsWith("http") ? href : `${baseUrl}${href}`,
+          verified: false
+        });
+      });
+      const toResolve = results.slice(0, 5).filter((r) => r.detailUrl);
+      if (toResolve.length) {
+        const resolved = yield Promise.allSettled(toResolve.map((r) => resolveDetailMagnet(r.detailUrl)));
+        for (let i = 0; i < toResolve.length; i++) {
+          if (resolved[i].status === "fulfilled" && resolved[i].value) {
+            toResolve[i].magnet = resolved[i].value.magnet || "";
+            toResolve[i].infoHash = resolved[i].value.infoHash || "";
+          }
+        }
+      }
+      return results.filter((r) => r.infoHash);
+    } catch (e) {
+      return [];
+    }
+  });
+}
 function extractInfoHashFromBuffer(buf) {
   try {
     const str = buf.toString("latin1");
@@ -680,7 +723,8 @@ function search(query, mediaType, imdbId, year, season, episode, isAnime = false
       { name: "LimeTorrents", fn: () => scrapeLimeTorrents(searchStr) },
       { name: "1337x", fn: () => scrape1337x(searchStr) },
       { name: "DivXTotal", fn: () => scrapeDivXTotal(query) },
-      { name: "DonTorrent", fn: () => scrapeDonTorrent(query) }
+      { name: "DonTorrent", fn: () => scrapeDonTorrent(query) },
+      { name: "EliteTorrent", fn: () => scrapeEliteTorrent(query) }
     ];
     if (mediaType === "tv" && imdbId) {
       tasks.push({ name: "EZTV", fn: () => scrapeEZTV(imdbId) });
