@@ -1,7 +1,7 @@
 {
     "name": "ovnivers-all-in-one",
     "version": "1.14.5",
-    "description": "Ovnivers All-in-One addon — torrent indexers + Alfa providers + Pigamer37 anime proxy + TMDB catalogs for Stremio",
+    "description": "Ovnivers All-in-One addon — torrent indexers + Web providers + native anime scrapers for Stremio",
     "scripts": {
         "build": "node build.js",
         "start": "node server.js",

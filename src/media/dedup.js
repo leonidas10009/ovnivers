@@ -111,7 +111,7 @@ function extractServerKey(s) {
   if (lines.length >= 1) {
     server = lines[0]
       .replace(/^[📺🎬🎥🧲🔗📦⚙️\s]+/, '')  // Strip leading emoji
-      .replace(/^alfa:\s*/i, '')              // Strip "Alfa: " prefix
+      .replace(/^(web|alfa):\s*/i, '')              // Strip provider prefix
       .replace(/^backend:\s*/i, '')            // Strip "Backend: " prefix
       .replace(/^pigamer:\s*/i, '')            // Strip "Pigamer: " prefix
       .replace(/^torrent:\s*/i, '')            // Strip "Torrent: " prefix

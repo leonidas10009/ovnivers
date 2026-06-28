@@ -47,4 +47,14 @@ module.exports = {
   // ─── Knowledge bases ────────────────────────────────────────
   KNOWN_SERVERS,
   URL_DOMAIN_KB,
+
+  // ─── Provider strategy memory ───────────────────────────────
+  getProviderMemory: () => {
+    const { getProviderMemory } = require('./provider-memory');
+    return getProviderMemory();
+  },
+  resetProviderMemory: () => {
+    const { resetProviderMemory } = require('./provider-memory');
+    return resetProviderMemory();
+  },
 };

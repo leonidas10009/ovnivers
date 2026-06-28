@@ -2,7 +2,32 @@
 
 Addon **stream-only** para **Stremio / NuvioTV**. Usalo junto con cualquier addon de catálogo (Torrentio, TMDB Community, Kitsu, etc.). Ovnivers solo provee streams — sin catálogos propios, sin conflictos.
 
-> **v1.14.0:** Modo stream-only. Eliminados catálogos propios para evitar conflictos de compatibilidad con otros addons. Menos código, menos memoria, más estable.
+> **v1.14.5:** Sistema multi-engine: static (cheerio) → intelligent (auto-descubrimiento) → dynamic (Puppeteer). ProviderMemory cross-sesion. 74 Web Providers + 5 anime scrapers nativos + 6 torrent indexers.
+
+## Arquitectura Multi-Engine
+
+```
+Stremio Request
+  │
+  ├── src/anime/           → 5 scrapers nativos (Puppeteer + cheerio)
+  ├── src/torrent-providers/ → 6 indexers (API + cheerio)
+  └── src/web-providers/   → 74 scrapers con router multi-engine
+        │
+        ├── Static Engine   (cheerio, ~15MB, 200ms)  — selectores configurados
+        ├── Intelligent Eng (auto-descubrimiento)     — StaticScraper + AutonomousScraper
+        └── Dynamic Engine  (Puppeteer, ~200MB, 3-8s) — JS rendering + Cloudflare bypass
+              │
+        ┌─────▼─────┐
+        │   Router   │  ← ProviderMemory: aprende qué engine funciona mejor
+        │  por provider│    persiste a .provider-memory.json
+        └───────────┘
+```
+
+| Engine | Uso | RAM | Velocidad |
+|--------|-----|-----|-----------|
+| **Static** | WordPress, PHP, APIs JSON | ~15MB | 200-900ms |
+| **Intelligent** | Auto-descubrir selectores | ~15MB / ~200MB | 1-10s |
+| **Dynamic** | Cloudflare, JS-heavy, SPA | ~200MB | 3-8s |
 
 ## Instalacion
 
@@ -17,19 +42,19 @@ Addon **stream-only** para **Stremio / NuvioTV**. Usalo junto con cualquier addo
 
 | Funcionalidad | Detalle |
 |---|---|
-| **Torrent indexers** (6 fuentes) | GloDLS, Nyaa.si, SolidTorrents, LimeTorrents, 1337x, EZTV — ~70+ magnets por búsqueda |
-| **Scrapers anime (Puppeteer)** | JKAnime (10 streams → 5 ExoPlayer), TioAnime (12 streams), AnimeAV1. Browser multi-plataforma: system Chrome Windows/Linux, @sparticuz/chromium Render |
-| **Pigamer37** (proxy anime) | AnimeFLV, AnimeAV1, TioAnime, Henaojara — 6-7 mp4 directos por fuente |
-| **Alfa Providers** | 74 providers (42 activos). 6 funcionales: CineCalidad, CineLibreOnline, PelisPedia, DivXTotal, AnimeJara, JKAnime |
-| **Hermes scrapers** | 63 scrapers en manifest. 40 cargados server-side |
-| **Embed resolver** | 15+ dominios con resolvers específicos. MP4Upload, Streamtape V2, MixDrop V2, Streamwish, OkRu, JWPlayer y genérico |
-| **notWebReady automático** | m3u8/mp4/torrent → ExoPlayer directo, resto → browser |
+| **Sistema Multi-Engine** | 3 motores de scraping: Static (cheerio), Intelligent (auto-descubrimiento), Dynamic (Puppeteer). Router inteligente con aprendizaje cross-sesion |
+| **Torrent indexers** (6 fuentes) | GloDLS, Nyaa.si, SolidTorrents, LimeTorrents, 1337x, EZTV — ~70+ magnets por busqueda |
+| **Scrapers anime nativos** | JKAnime (10 streams), TioAnime (8), AnimeJara (8), AnimeAV1, AnimeFLV. Cheerio + Puppeteer multi-plataforma |
+| **Web Providers** | 74 scrapers (41 activos). Multi-engine: static → intelligent → dynamic |
+| **Embed resolver** | 15+ dominios con resolvers especificos. MP4Upload, Streamtape V2, MixDrop V2, Streamwish, OkRu, JWPlayer y generico |
+| **notWebReady automatico** | m3u8/mp4/torrent → ExoPlayer directo, resto → browser |
 | **Config panel** | `/configure` — tipos, calidad, idiomas, scrapers on/off |
 | **Proxy inteligente** | Cloudflare Worker v2 con cookie jar, bypass list para dominios Anubis |
+| **ProviderMemory** | Aprendizaje bayesiano cross-sesion: recuerda que engine funciona mejor para cada provider |
 
-## Alfa Providers (74 registrados, 42 activos)
+## Web Providers (74 registrados, 47 activos)
 
-Scraper unificado del addon **Alfa** de Kodi. Corre server-side en Node.js.
+Scrapers web unificados. Corre server-side en Node.js.
 Busca con multiples variantes del titulo (EN/ES/JA/slug) en paralelo.
 
 Tras cada fetch de embed, se ejecuta el resolvedor `tryResolveEmbedToDirect()` que extrae URLs directas (`.m3u8`/`.mp4`) del HTML. Si tiene exito, el stream se marca `notWebReady: false` (reproducible en ExoPlayer). Si falla, se conserva la URL embed con `notWebReady: true`.
@@ -58,7 +83,7 @@ Tras cada fetch de embed, se ejecuta el resolvedor `tryResolveEmbedToDirect()` q
 
 ## Hermes Scrapers (61 registrados: 42 activos, 19 deshabilitados)
 
-> **Descubrimiento de auditoría:** `manifest.json` tiene **62** entradas en `scrapers`, pero una de ellas es el bridge `alfa-providers` (que agrupa 74 providers reales). Los **61** restantes son los scrapers Hermes legacy: **42 activos** + **19 deshabilitados**. El conteo "43 activos" que aparecía antes incluía erróneamente el bridge `alfa-providers`.
+> **Descubrimiento de auditoría:** `manifest.json` tiene **63** entradas en `scrapers`, pero una de ellas es el bridge `alfa-providers` (que agrupa 74 providers web reales). Los **61** restantes son los scrapers Hermes legacy: **31 enabled** + **30 disabled**.
 
 Scrapers legacy del ecosistema Nuvio/Hermes. Mayormente ofuscados (`_0x` obfuscation).
 

@@ -1,6 +1,6 @@
 /**
  * Ovnivers — Stremio Addon Backend v1.14.5
- * Backend scrapers + server-side providers + Pigamer37 anime proxy
+ * Backend scrapers + Web providers + native anime scrapers
  * Configurable: language filter, quality preference, enable/disable scrapers
  */
 try { require('dotenv').config(); } catch {}
@@ -192,13 +192,13 @@ try {
   const alfaModule = require('./providers/alfa-providers');
   scrapeAlfaProviders = alfaModule.default || alfaModule;
   if (typeof scrapeAlfaProviders === 'function') {
-    console.log('Loaded Alfa provider bridge');
+    console.log('Loaded Web provider bridge');
   } else {
     scrapeAlfaProviders = null;
-    console.warn('Alfa provider bridge loaded but is not a function');
+    console.warn('Web provider bridge loaded but is not a function');
   }
 } catch (e) {
-  console.warn('Could not load Alfa provider bridge:', e.message);
+  console.warn('Could not load Web provider bridge:', e.message);
 }
 
 for (const scraper of manifestScrapers) {
@@ -815,7 +815,7 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
   if (isPigamer && sourceName && !sourceName.match(/^\d+$/) && sourceName !== quality && sourceName !== providerName) {
     providerLabel = sourceName;
   } else if (isAlfa && sourceName && !sourceName.match(/^\d+$/) && sourceName !== quality && sourceName !== providerName) {
-    providerLabel = `Alfa: ${sourceName}`;
+    providerLabel = sourceName;
   } else if (effectiveSource && !effectiveSource.match(/^\d+$/) && effectiveSource !== quality && effectiveSource !== providerName) {
     providerLabel = effectiveSource;
   } else if (sourceName && !sourceName.match(/^\d+$/) && sourceName !== quality && sourceName !== providerName) {
@@ -1037,7 +1037,7 @@ async function scrapeAlfa(rawId, mediaType, type, season, episode, config, isAni
       30000
     );
     const streams = (Array.isArray(data) ? data : [])
-      .map(stream => normalizeStream(stream, 'alfa-providers', 'Alfa Providers'))
+      .map(stream => normalizeStream(stream, 'alfa-providers', 'Web Providers'))
       .filter(Boolean);
     health.track('alfa-providers', streams.length > 0, Date.now() - start);
     return streams;
@@ -1350,6 +1350,60 @@ async function handleStream(req, res, type, id) {
   if (config.enableLocal) {
     streamTasks.push(scrapeAlfa(animeProviderId || rawId, mediaType, type, season, episode, config, isAnime));
     streamTasks.push(scrapeLocalProviders(animeProviderId || rawId, mediaType, type, season, episode, config, isAnime));
+
+    // ─── Multi-engine router: tries providers that static engine missed ───
+    streamTasks.push((async () => {
+      const start = Date.now();
+      try {
+        const { execute, getProviderMemory } = require('./src/engines');
+        const webProviders = require('./src/alfa-providers/providers');
+        const memory = getProviderMemory();
+
+        // Only run router on providers where static engine historically fails
+        // or on first attempt (no history)
+        const candidates = webProviders.filter(p => {
+          if (!p.active) return false;
+          if (p.categories.includes('anime') && (p.name === 'animejara' || p.name === 'jkanime' || 
+              p.name === 'tioanime' || p.name === 'animeflv')) return false; // Anime goes through native scrapers
+          const stats = memory.getProviderStats(p.name);
+          if (!stats || stats.totalAttempts === 0) return true; // Never tried → try router
+          return stats.successRate < 50; // Low success with static → try other engines
+        }).slice(0, 5); // Limit to 5 extra providers per request
+
+        if (candidates.length === 0) return [];
+
+        const results = [];
+        for (const provider of candidates) {
+          try {
+            // Try router for this provider
+            const { result, engine, success } = await execute(provider, 'search', {
+              query: isAnime ? (await anime.titles.resolveTitles(animeProviderId || rawId))?.searchTitles?.[0] || '' : 'matrix'
+            });
+
+            if (success && result) {
+              // Get episode URL if needed
+              let vUrl = result;
+              if (season && episode && provider.episodes) {
+                try {
+                  const { static: st } = require('./src/engines');
+                  const ep = await st.getEpisodeUrl(provider, vUrl, season, episode);
+                  if (ep) vUrl = ep;
+                } catch {}
+              }
+
+              // Extract videos using router
+              const { result: videos, engine: vEngine } = await execute(provider, 'video', { pageUrl: vUrl });
+              if (videos && videos.length > 0) {
+                const normalized = videos.map(v => normalizeStream(v, provider.name, provider.title)).filter(Boolean);
+                results.push(...normalized);
+              }
+            }
+          } catch {}
+        }
+        health.track('multi-engine-router', results.length > 0, Date.now() - start);
+        return results;
+      } catch { return []; }
+    })());
   }
 
   streamTasks.push((async () => {
@@ -1723,7 +1777,7 @@ footer a{color:var(--accent2);text-decoration:none}
       <label class="toggle"><input type="checkbox" name="enableBackend"${currentConfig.enableBackend ? ' checked' : ''}><span class="track"></span></label>
     </div>
     <div class="toggle-row">
-      <div><div class="label">Local scrapers</div><div class="hint">Alfa providers + device-side scrapers</div></div>
+      <div><div class="label">Local scrapers</div><div class="hint">Web providers + device-side scrapers</div></div>
       <label class="toggle"><input type="checkbox" name="enableLocal"${currentConfig.enableLocal ? ' checked' : ''}><span class="track"></span></label>
     </div>
   </div>

@@ -18,7 +18,7 @@ module.exports = [
     baseUrl: 'https://allpeliculas.se',
     categories: ['movie', 'vos'],
     language: ['lat'],
-    active: false,
+    active: false, // DEAD_DOMAIN: no response
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'ul.cc-list > article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.players', iframeSelector: 'iframe', srcAttr: 'data-src', defaultQuality: 'HD' }
@@ -29,7 +29,7 @@ module.exports = [
     baseUrl: 'https://asialiveaction.com',
     categories: ['movie', 'tvshow', 'vos'],
     language: ['cast', 'lat'],
-    active: false,
+    active: false, // DEAD_DOMAIN: no response
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2.entry-title', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
@@ -84,7 +84,7 @@ module.exports = [
     baseUrl: 'https://ww3.cinemundo.online',
     categories: ['movie'],
     language: ['cast', 'lat', 'vose'],
-    active: false,
+    active: false, // DEAD_DOMAIN: no response
     adult: false,
     search: { url: '/search/{query}', itemSelector: '.movie-card', titleSelector: '.title', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.player-container', iframeSelector: 'iframe', defaultQuality: 'HD' }
@@ -95,7 +95,7 @@ module.exports = [
     baseUrl: 'https://www.cuevana2espanol.net',
     categories: ['movie'],
     language: ['lat', 'cast'],
-    active: false,
+    active: false, // DEAD_DOMAIN: no response
     adult: false,
     search: { url: '/search?q={query}', itemSelector: 'a[href*="/pelicula/"]', titleSelector: 'h2, .title', linkSelector: '&' },
     videos: { type: 'nextjs', dataPath: 'props.pageProps.post.players', defaultQuality: 'HD' }
@@ -128,9 +128,9 @@ module.exports = [
     baseUrl: 'https://dontorrent.review',
     categories: ['movie', 'tvshow', 'vos', 'torrent'],
     language: ['cast'],
-    active: true,
+    active: true, // search usa POST /buscar, Anubis PoW bypass integrado
     adult: false,
-    search: { url: '/?s={query}', itemSelector: 'a[href*="/pelicula/"], a[href*="/serie/"]', titleSelector: '&', linkSelector: '&' },
+    search: { method: 'POST', url: '/buscar', body: 'valor={query}', itemSelector: 'a[href*="/pelicula/"], a[href*="/serie/"]', titleSelector: '&', linkSelector: '&' },
     episodes: { type: 'dontorrent' },
     videos: { type: 'dontorrent', defaultQuality: 'HD' }
   },
@@ -173,7 +173,7 @@ module.exports = [
     baseUrl: 'https://flizzmovies.com',
     categories: ['movie'],
     language: ['cast', 'lat', 'vose'],
-    active: false,
+    active: false, // DEAD_DOMAIN: no response
     adult: false,
     search: { url: '/search/{query}', itemSelector: '.movie-card', titleSelector: '.title', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.player', iframeSelector: 'iframe', defaultQuality: 'HD' }
@@ -217,7 +217,7 @@ module.exports = [
     baseUrl: 'https://hdfull.today',
     categories: ['movie', 'tvshow', 'vos'],
     language: ['cast', 'lat'],
-    active: false,
+    active: false, // JS-dependiente, necesita Puppeteer
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     episodes: { type: 'post', url: null, seasonParam: 'season', episodeParam: 'episode', extraParams: { action: 'season', show: null }, episodeSelector: 'a' },
@@ -251,7 +251,7 @@ module.exports = [
     baseUrl: 'https://mitorrent.mx',
     categories: ['movie', 'tvshow', 'torrent'],
     language: ['lat'],
-    active: false, // disabled: download links route through acortalink.net which uses anti-bot POST shortener
+    active: false, // JS-dependiente, shortener anti-bot
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'div.browse-movie-wrap', titleSelector: 'div.browse-movie-bottom a', linkSelector: 'div.browse-movie-bottom a' },
     videos: { type: 'torrent', linkSelector: 'a[href*="s.php"], a[class*="torrent-modal-download"], a[class*="quality-download"]', defaultQuality: 'HD' }
@@ -262,7 +262,7 @@ module.exports = [
     baseUrl: 'https://osjonosu.xyz',
     categories: ['movie', 'tvshow'],
     language: ['cast'],
-    active: false,
+    active: false, // DEAD_DOMAIN: no response
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
@@ -284,7 +284,7 @@ module.exports = [
     baseUrl: 'https://peliculasflix.co',
     categories: ['movie'],
     language: ['cast', 'lat', 'vose'],
-    active: false,
+    active: false, // DEAD_DOMAIN: no response
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
@@ -295,7 +295,7 @@ module.exports = [
     baseUrl: 'https://pelis182.com',
     categories: ['movie', 'tvshow'],
     language: ['lat'],
-    active: false,
+    active: false, // DEAD_DOMAIN: no response
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
@@ -306,7 +306,7 @@ module.exports = [
     baseUrl: 'https://pelisflix2.bond',
     categories: ['movie', 'vos'],
     language: ['lat', 'cast'],
-    active: false,
+    active: false, // DEAD_DOMAIN: no response
     adult: false,
     search: { url: '/search/{query}', itemSelector: '.movie-card', titleSelector: '.title', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.player', iframeSelector: 'iframe', defaultQuality: 'HD' }
@@ -317,7 +317,7 @@ module.exports = [
     baseUrl: 'https://www1.pelisforte.se',
     categories: ['movie'],
     language: ['lat', 'cast'],
-    active: true,
+    active: true, // CLOUDFLARE_TURNSTILE: necesita Scrapeless API key
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
@@ -351,7 +351,7 @@ module.exports = [
     baseUrl: 'https://retrotv.org',
     categories: ['movie', 'tvshow'],
     language: ['lat'],
-    active: false,
+    active: false, // DEAD_DOMAIN: no response
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
@@ -417,7 +417,7 @@ module.exports = [
     baseUrl: 'https://www.zona-leros.com',
     categories: ['movie', 'tvshow'],
     language: ['lat'],
-    active: false,
+    active: false, // DEAD_DOMAIN: no response (403 Cloudflare)
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
@@ -428,7 +428,7 @@ module.exports = [
     baseUrl: 'https://zoowomaniacos.org',
     categories: ['movie', 'vos'],
     language: ['lat', 'cast'],
-    active: false,
+    active: false, // JS-dependiente, requiere browser
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
@@ -495,10 +495,10 @@ module.exports = [
   {
     name: 'animeflv',
     title: 'AnimeFLV',
-    baseUrl: 'https://www3.animeflv.net',
+    baseUrl: 'https://animeflv.ar',
     categories: ['anime'],
-    language: ['cast', 'lat'],
-    active: true,
+    language: ['cast', 'lat', 'vose'],
+    active: false, // REDUNDANT: ya implementado en src/anime/scrapers/animeflv.js (Puppeteer nativo)
     adult: false,
     episodes: { type: 'url', pattern: '/ver/{slug}-{episode}' },
     search: { url: '/browse?q={query}', itemSelector: 'ul.ListAnimes li', titleSelector: 'h3.Title', linkSelector: 'a' },
@@ -510,7 +510,7 @@ module.exports = [
     baseUrl: 'https://animejara.com',
     categories: ['anime'],
     language: ['cast', 'lat', 'vose'],
-    active: true,
+    active: false, // REDUNDANT: ya implementado en src/anime/scrapers/animejara.js (Puppeteer+Cheerio nativo)
     adult: false,
     search: { url: '/catalogo/?q={query}', itemSelector: '.anime-card', titleSelector: '.card-title', linkSelector: '&' },
     episodes: { type: 'url', pattern: '/episode/{slug}-1x{episode}/' },
@@ -521,10 +521,10 @@ module.exports = [
     title: 'AnimeJL',
     baseUrl: 'https://www.anime-jl.net',
     categories: ['anime'],
-    language: ['cast', 'lat', 'vose'],
-    active: false,
+    language: ['cast', 'lat'],
+    active: true, // reactivado, selectores necesitan update
     adult: false,
-    search: { url: '/?s={query}', itemSelector: 'article.Anime', titleSelector: 'h3.Title', linkSelector: 'a' },
+    search: { url: '/?s={query}', itemSelector: '.anime-card, article.Anime, .card', titleSelector: 'h3, h3.Title, .card-title', linkSelector: 'a' },
     videos: { type: 'jsvar', varPattern: /var videos = (\[.*?\]);/, defaultQuality: 'HD' }
   },
   {
@@ -554,8 +554,8 @@ module.exports = [
     title: 'JKAnime',
     baseUrl: 'https://jkanime.net',
     categories: ['anime'],
-    language: ['cast', 'lat'],
-    active: true,
+    language: ['cast', 'lat', 'vose'],
+    active: false, // REDUNDANT: ya implementado en src/anime/scrapers/jkanime.js (Puppeteer nativo)
     adult: false,
     search: { url: '/buscar/{query}', itemSelector: '.anime__item', titleSelector: 'h5 a', linkSelector: 'a' },
     episodes: { type: 'url', pattern: '/{slug}/{episode}/' },
@@ -567,7 +567,7 @@ module.exports = [
     baseUrl: 'https://la.movie',
     categories: ['anime'],
     language: ['lat', 'cast', 'vose'],
-    active: false,
+    active: false, // DEAD_DOMAIN: no response
     adult: false,
     search: { url: '/search/{query}', itemSelector: '.movie-card', titleSelector: '.title', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.player', iframeSelector: 'iframe', defaultQuality: 'HD' }
@@ -600,7 +600,7 @@ module.exports = [
     baseUrl: 'https://pelispanda.org',
     categories: ['anime', 'vos', 'torrent'],
     language: ['lat'],
-    active: true,
+    active: false, // JS-dependent: 425KB HTML but cheerio finds 0 search items
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'torrent', linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: 'HD' }
@@ -611,7 +611,7 @@ module.exports = [
     baseUrl: 'https://ww3.pelisplus.to',
     categories: ['anime', 'documentary', 'direct'],
     language: ['lat'],
-    active: false,
+    active: false, // TioPlus: search redirects, only 9KB HTML, necesita update de selectores
     adult: false,
     search: { url: '/search?q={query}', itemSelector: 'a[href*="/pelicula/"]', titleSelector: '.title', linkSelector: '&' },
     videos: { type: 'nextjs', dataPath: 'props.pageProps.post.players', defaultQuality: 'HD' }
@@ -643,8 +643,8 @@ module.exports = [
     title: 'TioAnime',
     baseUrl: 'https://tioanime.com',
     categories: ['anime', 'vos'],
-    language: ['*'],
-    active: true,
+    language: ['cast', 'lat', 'vose'],
+    active: false, // REDUNDANT: ya implementado en src/anime/scrapers/tioanime.js (Puppeteer nativo)
     adult: false,
     search: { url: '/directorio?q={query}', itemSelector: 'ul.animes li', titleSelector: 'h3.title', linkSelector: 'a' }, // <-- fixed
     episodes: { type: 'url', pattern: '/ver/{slug}-{episode}' },
@@ -678,7 +678,7 @@ module.exports = [
     baseUrl: 'https://ww3.animeonline.ninja',
     categories: ['anime'],
     language: ['cast', 'lat', 'vose'],
-    active: false,
+    active: false, // DEAD_DOMAIN: no response (403)
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'jsvar', varPattern: /var videos = (\[.*?\]);/, defaultQuality: 'HD' }
@@ -689,7 +689,7 @@ module.exports = [
     baseUrl: 'https://veranimeassistant.com',
     categories: ['anime'],
     language: ['cast', 'lat', 'vose'],
-    active: false,
+    active: false, // DEAD_DOMAIN: no response
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
@@ -700,7 +700,7 @@ module.exports = [
     baseUrl: 'https://veronline.tv',
     categories: ['anime'],
     language: ['cast', 'lat', 'vose'],
-    active: false,
+    active: false, // DEAD_DOMAIN: no response
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
@@ -722,7 +722,7 @@ module.exports = [
     baseUrl: 'https://www.documentales-online.com',
     categories: ['documentary'],
     language: ['cast', 'lat'],
-    active: false, // mostly YouTube embeds + ad iframes, not useful
+    active: true, // JS-dependiente, requiere browser
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2 a', linkSelector: 'h2 a' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
@@ -755,7 +755,7 @@ module.exports = [
     baseUrl: 'https://www.hdfull.it',
     categories: ['movie', 'tvshow'],
     language: ['cast', 'lat'],
-    active: false,
+    active: false, // DEAD_DOMAIN: no response
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
@@ -766,7 +766,7 @@ module.exports = [
     baseUrl: 'https://www26.estrenosdoramas.net',
     categories: ['tvshow', 'vos'],
     language: ['lat', 'vose'],
-    active: false,
+    active: false, // DEAD_DOMAIN: no response
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     episodes: { type: 'season-list', seasonSelector: '.season-list a', episodeSelector: '.episode-list a' },
@@ -778,7 +778,7 @@ module.exports = [
     baseUrl: 'https://www.doramasqueen.com',
     categories: ['anime'],
     language: ['cast', 'lat'],
-    active: false,
+    active: false, // DEAD_DOMAIN: no response
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
@@ -789,7 +789,7 @@ module.exports = [
     baseUrl: 'https://ennovelas.site',
     categories: ['anime', 'vos'],
     language: ['lat'],
-    active: false,
+    active: false, // DEAD_DOMAIN: no response
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
@@ -800,7 +800,7 @@ module.exports = [
     baseUrl: 'https://www.cuevana2.run',
     categories: ['movie', 'tvshow', 'vos'],
     language: ['*'],
-    active: false,
+    active: false, // DEAD_DOMAIN: no response
     adult: false,
     search: { url: '/search?q={query}', itemSelector: 'a[href*="/pelicula/"]', titleSelector: '.title', linkSelector: '&' },
     videos: { type: 'nextjs', dataPath: 'props.pageProps.post.players', defaultQuality: 'HD' }
@@ -811,9 +811,21 @@ module.exports = [
     baseUrl: 'https://www.sinpeli.com',
     categories: ['movie', 'vos'],
     language: ['lat', 'cast'],
-    active: false,
+    active: false, // DEAD_DOMAIN: no response
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: '.entry-content', iframeSelector: 'iframe', defaultQuality: 'HD' }
+  },
+  {
+    name: 'repelisplus',
+    title: 'RepelisPlus',
+    baseUrl: 'https://repelisplus.my',
+    categories: ['movie', 'tvshow'],
+    language: ['lat', 'cast', 'vose'],
+    active: true,
+    adult: false,
+    search: { url: '/buscar/{query}', itemSelector: '.ksaj a[href]', titleSelector: 'h4', linkSelector: '&' },
+    episodes: { type: 'season-list', seasonSelector: '.season-list a, .temporadas a', episodeSelector: '.episode-list a, .episodios a' },
+    videos: { type: 'iframe', containerSelector: '.jajhasb, .mjanz', iframeSelector: 'iframe, a[href*="watchfun.top"]', fallbackLinkSelector: 'a[href*="watchfun.top"]', srcAttr: 'href', defaultQuality: 'HD' }
   }
 ];

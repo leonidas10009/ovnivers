@@ -1,6 +1,6 @@
 /**
- * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-28T12:16:00.490Z
+ * engines - Built from src/engines/
+ * Generated: 2026-06-28T12:16:00.769Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -64,897 +64,6 @@ var __async = (__this, __arguments, generator) => {
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
-
-// src/alfa-providers/providers.js
-var require_providers = __commonJS({
-  "src/alfa-providers/providers.js"(exports2, module2) {
-    module2.exports = [
-      {
-        name: "allcalidad",
-        title: "AllCalidad",
-        baseUrl: "https://allcalidad.re",
-        categories: ["movie", "direct"],
-        language: ["lat"],
-        active: false,
-        // JS-dependent SPA: search results render client-side, no items in static HTML
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", srcAttr: "data-src", defaultQuality: "HD" }
-      },
-      {
-        name: "allpeliculas",
-        title: "AllPeliculas",
-        baseUrl: "https://allpeliculas.se",
-        categories: ["movie", "vos"],
-        language: ["lat"],
-        active: false,
-        // DEAD_DOMAIN: no response
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "ul.cc-list > article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: ".players", iframeSelector: "iframe", srcAttr: "data-src", defaultQuality: "HD" }
-      },
-      {
-        name: "asialiveaction",
-        title: "AsiaLiveAction",
-        baseUrl: "https://asialiveaction.com",
-        categories: ["movie", "tvshow", "vos"],
-        language: ["cast", "lat"],
-        active: false,
-        // DEAD_DOMAIN: no response
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2.entry-title", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "bloghorror",
-        title: "BlogHorror",
-        baseUrl: "https://bloghorror.com",
-        categories: ["movie", "vos", "torrent"],
-        language: ["*"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
-        // <-- fixed
-        videos: { type: "torrent", linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: "HD" }
-      },
-      {
-        name: "cine24h",
-        title: "Cine24H",
-        baseUrl: "https://cine24h.online",
-        categories: ["movie"],
-        language: ["lat", "cast", "vose"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "cinecalidad",
-        title: "CineCalidad",
-        baseUrl: "https://www.cinecalidad.vg",
-        categories: ["movie", "direct", "torrent"],
-        language: ["cast", "lat"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", srcAttr: "data-src", defaultQuality: "HD" }
-      },
-      {
-        name: "cinelibreonline",
-        title: "CineLibreOnline",
-        baseUrl: "https://www.cinelibreonline.com",
-        categories: ["movie", "direct"],
-        language: ["lat"],
-        active: false,
-        // YouTube embeds only + Blogspot format not scrapeable
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2.entry-title a", linkSelector: "h2.entry-title a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "cinemundo",
-        title: "StreamGratis",
-        baseUrl: "https://ww3.cinemundo.online",
-        categories: ["movie"],
-        language: ["cast", "lat", "vose"],
-        active: false,
-        // DEAD_DOMAIN: no response
-        adult: false,
-        search: { url: "/search/{query}", itemSelector: ".movie-card", titleSelector: ".title", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: ".player-container", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "cuevana2espanol",
-        title: "Cuevana2Espanol",
-        baseUrl: "https://www.cuevana2espanol.net",
-        categories: ["movie"],
-        language: ["lat", "cast"],
-        active: false,
-        // DEAD_DOMAIN: no response
-        adult: false,
-        search: { url: "/search?q={query}", itemSelector: 'a[href*="/pelicula/"]', titleSelector: "h2, .title", linkSelector: "&" },
-        videos: { type: "nextjs", dataPath: "props.pageProps.post.players", defaultQuality: "HD" }
-      },
-      {
-        name: "detodopeliculas",
-        title: "DeTodoPeliculas",
-        baseUrl: "https://detodopeliculas.nu",
-        categories: ["movie"],
-        language: ["lat", "cast", "vose"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
-        // <-- fixed
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "divxtotal",
-        title: "DivXTotal",
-        baseUrl: "https://divxtotal.foo",
-        categories: ["movie", "tvshow", "torrent"],
-        language: ["cast"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: 'table tr:has(td a[href*="/peliculas"])', titleSelector: 'td a[href*="/peliculas"]', linkSelector: 'td a[href*="/peliculas"]' },
-        videos: { type: "torrent", linkSelector: 'a[href*="download_tt.php"], a[href*="s.php"], a[class*="linktorrent"], a[class*="opcion"]', defaultQuality: "HD" }
-      },
-      {
-        name: "dontorrent",
-        title: "DonTorrent",
-        baseUrl: "https://dontorrent.review",
-        categories: ["movie", "tvshow", "vos", "torrent"],
-        language: ["cast"],
-        active: true,
-        // search usa POST /buscar, Anubis PoW bypass integrado
-        adult: false,
-        search: { method: "POST", url: "/buscar", body: "valor={query}", itemSelector: 'a[href*="/pelicula/"], a[href*="/serie/"]', titleSelector: "&", linkSelector: "&" },
-        episodes: { type: "dontorrent" },
-        videos: { type: "dontorrent", defaultQuality: "HD" }
-      },
-      {
-        name: "doramasflix",
-        title: "DoramasFlix",
-        baseUrl: "https://doramasflix.co",
-        categories: ["movie", "tvshow"],
-        language: ["cast", "lat", "vose"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "div.embla__slide_carousel", titleSelector: "img[alt]", linkSelector: "a", titleAttr: "alt" },
-        // <-- fixed
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "doramedplay",
-        title: "DoramedPlay",
-        baseUrl: "https://doramedplay.net",
-        categories: ["movie", "tvshow"],
-        language: ["lat"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "li", titleSelector: "h2", linkSelector: "a" },
-        // <-- fixed
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "entrepeliculasyseries",
-        title: "EntrePeliculasYSeries",
-        baseUrl: "https://entrepeliculasyseries.nz",
-        categories: ["movie", "tvshow", "vos"],
-        language: ["lat", "cast"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "flizzmovies",
-        title: "FlizzMovies",
-        baseUrl: "https://flizzmovies.com",
-        categories: ["movie"],
-        language: ["cast", "lat", "vose"],
-        active: false,
-        // DEAD_DOMAIN: no response
-        adult: false,
-        search: { url: "/search/{query}", itemSelector: ".movie-card", titleSelector: ".title", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: ".player", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "genteclic",
-        title: "GenteClic",
-        baseUrl: "https://www.genteclic.com",
-        categories: ["movie", "direct"],
-        language: ["lat"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "div.jeg_content", titleSelector: "img[alt]", linkSelector: "a", titleAttr: "alt" },
-        // <-- fixed
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "gnula",
-        title: "Gnula",
-        baseUrl: "https://gnulahd.nu",
-        categories: ["movie", "vos"],
-        language: ["cast", "lat"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "grantorrent",
-        title: "GranTorrent",
-        baseUrl: "https://grantorrent.zip",
-        categories: ["movie", "tvshow", "vos", "torrent"],
-        language: ["cast", "lat"],
-        active: false,
-        // disabled: download links route through super-enlace.com which uses anti-bot POST shortener
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: 'div.relative a[href*="/"][href*="-"]:not([href*="categoria"]):not([href*="genero"])', titleSelector: "img", titleAttr: "alt", linkSelector: "&" },
-        videos: { type: "torrent", linkSelector: 'a[href*="s.php"], a[class*="linktorrent"], a[class*="descargar"]', defaultQuality: "HD" }
-      },
-      {
-        name: "hdfull",
-        title: "HDFull",
-        baseUrl: "https://hdfull.today",
-        categories: ["movie", "tvshow", "vos"],
-        language: ["cast", "lat"],
-        active: false,
-        // JS-dependiente, necesita Puppeteer
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        episodes: { type: "post", url: null, seasonParam: "season", episodeParam: "episode", extraParams: { action: "season", show: null }, episodeSelector: "a" },
-        videos: { type: "iframe", containerSelector: ".player-container", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "legalmentegratis",
-        title: "LegalmenteGratis",
-        baseUrl: "https://legalmentegratis.com",
-        categories: ["movie", "vos"],
-        language: ["cast"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2.entry-title a", linkSelector: "h2.entry-title a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "mirapeliculas",
-        title: "MiraPeliculas",
-        baseUrl: "https://ww2.dipelis.com",
-        categories: ["movie"],
-        language: ["lat", "cast", "vose"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "a[title]", linkSelector: "a", titleAttr: "title" },
-        // <-- fixed
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "mitorrent",
-        title: "MiTorrent",
-        baseUrl: "https://mitorrent.mx",
-        categories: ["movie", "tvshow", "torrent"],
-        language: ["lat"],
-        active: false,
-        // JS-dependiente, shortener anti-bot
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "div.browse-movie-wrap", titleSelector: "div.browse-movie-bottom a", linkSelector: "div.browse-movie-bottom a" },
-        videos: { type: "torrent", linkSelector: 'a[href*="s.php"], a[class*="torrent-modal-download"], a[class*="quality-download"]', defaultQuality: "HD" }
-      },
-      {
-        name: "osjonosu",
-        title: "OsjoNosu",
-        baseUrl: "https://osjonosu.xyz",
-        categories: ["movie", "tvshow"],
-        language: ["cast"],
-        active: false,
-        // DEAD_DOMAIN: no response
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "pelicinehd",
-        title: "PeliCineHD",
-        baseUrl: "https://pelicinehd.com",
-        categories: ["movie"],
-        language: ["lat", "cast", "vose"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", srcAttr: "data-src", defaultQuality: "HD" }
-      },
-      {
-        name: "peliculasflix",
-        title: "PeliculasFlix",
-        baseUrl: "https://peliculasflix.co",
-        categories: ["movie"],
-        language: ["cast", "lat", "vose"],
-        active: false,
-        // DEAD_DOMAIN: no response
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "pelis182",
-        title: "Pelis182",
-        baseUrl: "https://pelis182.com",
-        categories: ["movie", "tvshow"],
-        language: ["lat"],
-        active: false,
-        // DEAD_DOMAIN: no response
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "pelisflix",
-        title: "PelisFlix",
-        baseUrl: "https://pelisflix2.bond",
-        categories: ["movie", "vos"],
-        language: ["lat", "cast"],
-        active: false,
-        // DEAD_DOMAIN: no response
-        adult: false,
-        search: { url: "/search/{query}", itemSelector: ".movie-card", titleSelector: ".title", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: ".player", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "pelisforte",
-        title: "PelisForte",
-        baseUrl: "https://www1.pelisforte.se",
-        categories: ["movie"],
-        language: ["lat", "cast"],
-        active: true,
-        // CLOUDFLARE_TURNSTILE: necesita Scrapeless API key
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "pelispedia",
-        title: "PelisPedia",
-        baseUrl: "https://pelispedia.is",
-        categories: ["movie", "tvshow", "vos"],
-        language: ["lat", "cast"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        episodes: { type: "post", url: null, seasonParam: "season", episodeParam: "episode", extraParams: { action: "action_select_season" }, episodeSelector: "a" },
-        videos: { type: "iframe-chain", containerSelector: "section.player", iframeSelector: "iframe[data-src]", srcAttr: "data-src", defaultQuality: "HD" }
-      },
-      {
-        name: "poseidonhd",
-        title: "PoseidonHD",
-        baseUrl: "https://www.poseidonhd2.co",
-        categories: ["movie", "tvshow"],
-        language: ["lat"],
-        active: true,
-        adult: false,
-        search: { url: "/search?q={query}", itemSelector: ".TPost", titleSelector: "img", titleAttr: "alt", linkSelector: "a" },
-        videos: { type: "data-attr", containerSelector: "body", itemSelector: ".clili", dataAttr: "data-tr", serverSelector: "span", defaultQuality: "HD" }
-      },
-      {
-        name: "retrotv",
-        title: "RetroTV",
-        baseUrl: "https://retrotv.org",
-        categories: ["movie", "tvshow"],
-        language: ["lat"],
-        active: false,
-        // DEAD_DOMAIN: no response
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "serieskao",
-        title: "SeriesKao",
-        baseUrl: "https://serieskao.top",
-        categories: ["anime"],
-        language: ["lat", "cast"],
-        active: true,
-        adult: false,
-        search: { url: "/search?s={query}", itemSelector: "article.card, article.episode-card", titleSelector: "h2.card__title, h3.episode-card__title", linkSelector: "a[href]" },
-        videos: { type: "iframe", containerSelector: ".player-box", iframeSelector: "iframe", defaultQuality: "HD", srcAttr: "src" }
-      },
-      {
-        name: "tubeonline",
-        title: "TubeOnline",
-        baseUrl: "https://www.tubeonline.net",
-        categories: ["movie", "tvshow"],
-        language: ["lat", "cast", "vose"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
-        // <-- fixed
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "tubepelis",
-        title: "TubePelis",
-        baseUrl: "https://www.tubepelis.com",
-        categories: ["movie"],
-        language: ["lat"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "li.peli_bx", titleSelector: "h2", linkSelector: "a" },
-        // <-- fixed
-        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", defaultQuality: "HD", srcAttr: "data-src" }
-        // <-- fixed
-      },
-      {
-        name: "wolfmax4k",
-        title: "WolfMax4K",
-        baseUrl: "https://wolfmax4k.com",
-        categories: ["movie", "tvshow", "torrent"],
-        language: ["cast"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "div.mb-4", titleSelector: "h3", linkSelector: "a" },
-        // <-- fixed
-        videos: { type: "torrent", linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: "4K" }
-      },
-      {
-        name: "yandispoiler",
-        title: "Yandispoiler",
-        baseUrl: "https://yandispoiler.net",
-        categories: ["movie", "tvshow"],
-        language: ["lat", "cast", "vose"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
-        // <-- fixed
-        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", defaultQuality: "HD", srcAttr: "src" }
-        // <-- fixed
-      },
-      {
-        name: "zonaleros",
-        title: "ZonaLeros",
-        baseUrl: "https://www.zona-leros.com",
-        categories: ["movie", "tvshow"],
-        language: ["lat"],
-        active: false,
-        // DEAD_DOMAIN: no response (403 Cloudflare)
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "zoowomaniacos",
-        title: "Zoowomaniacos",
-        baseUrl: "https://zoowomaniacos.org",
-        categories: ["movie", "vos"],
-        language: ["lat", "cast"],
-        active: false,
-        // JS-dependiente, requiere browser
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "doramasyt",
-        title: "DoramasYT",
-        baseUrl: "https://www.doramasyt.com",
-        categories: ["tvshow", "vos"],
-        language: ["cast", "lat"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h3", linkSelector: "a" },
-        // <-- fixed
-        episodes: { type: "season-list", seasonSelector: ".season-list a", episodeSelector: ".episode-list a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "eztv",
-        title: "EZTV",
-        baseUrl: "https://eztvx.to",
-        categories: ["tvshow", "vos", "torrent"],
-        language: ["*"],
-        active: true,
-        adult: false,
-        search: { url: "/search/{query}", itemSelector: "tr.forum_header_border", titleSelector: "a.epinfo", linkSelector: 'a.magnet, a[href*=".torrent"]' },
-        videos: { type: "torrent", linkSelector: 'a.magnet, a[href*=".torrent"]', defaultQuality: "HD" }
-      },
-      {
-        name: "fullseriehd",
-        title: "FullSerieHD",
-        baseUrl: "https://seriesmega.org",
-        categories: ["tvshow", "vos"],
-        language: ["cast"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        episodes: { type: "season-list", seasonSelector: ".season-list a", episodeSelector: ".episode-list a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "lacartoons",
-        title: "LaCartoons",
-        baseUrl: "https://www.lacartoons.com",
-        categories: ["tvshow"],
-        language: ["lat"],
-        active: true,
-        adult: false,
-        search: { url: "/?Titulo={query}", itemSelector: 'a[href^="/serie/"]', titleSelector: "p.nombre-serie", linkSelector: "&" },
-        episodes: { type: "season-list", seasonSelector: ".temporadas a", episodeSelector: ".episodios a" },
-        videos: { type: "iframe", containerSelector: ".player", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "seriesretro",
-        title: "SeriesRetro",
-        baseUrl: "https://seriesretro.com",
-        categories: ["tvshow"],
-        language: ["lat"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h3.Title", linkSelector: "a" },
-        episodes: { type: "season-list", seasonSelector: ".season-list a", episodeSelector: ".episode-list a" },
-        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "animeflv",
-        title: "AnimeFLV",
-        baseUrl: "https://animeflv.ar",
-        categories: ["anime"],
-        language: ["cast", "lat", "vose"],
-        active: false,
-        // REDUNDANT: ya implementado en src/anime/scrapers/animeflv.js (Puppeteer nativo)
-        adult: false,
-        episodes: { type: "url", pattern: "/ver/{slug}-{episode}" },
-        search: { url: "/browse?q={query}", itemSelector: "ul.ListAnimes li", titleSelector: "h3.Title", linkSelector: "a" },
-        videos: { type: "jsvar", varPattern: /var videos = ([^;]+);/, defaultQuality: "HD" }
-      },
-      {
-        name: "animejara",
-        title: "AnimeJara",
-        baseUrl: "https://animejara.com",
-        categories: ["anime"],
-        language: ["cast", "lat", "vose"],
-        active: false,
-        // REDUNDANT: ya implementado en src/anime/scrapers/animejara.js (Puppeteer+Cheerio nativo)
-        adult: false,
-        search: { url: "/catalogo/?q={query}", itemSelector: ".anime-card", titleSelector: ".card-title", linkSelector: "&" },
-        episodes: { type: "url", pattern: "/episode/{slug}-1x{episode}/" },
-        videos: { type: "onclick", containerSelector: "#lista-server ul", itemSelector: "li", serverSelector: ".nombre-server", defaultQuality: "HD", puppeteerFallback: true }
-      },
-      {
-        name: "animejl",
-        title: "AnimeJL",
-        baseUrl: "https://www.anime-jl.net",
-        categories: ["anime"],
-        language: ["cast", "lat"],
-        active: true,
-        // reactivado, selectores necesitan update
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: ".anime-card, article.Anime, .card", titleSelector: "h3, h3.Title, .card-title", linkSelector: "a" },
-        videos: { type: "jsvar", varPattern: /var videos = (\[.*?\]);/, defaultQuality: "HD" }
-      },
-      {
-        name: "estrenosanime",
-        title: "EstrenosAnime",
-        baseUrl: "https://estrenosanime.net",
-        categories: ["anime"],
-        language: ["*"],
-        active: true,
-        adult: false,
-        search: { url: "/search?keyword={query}", itemSelector: "a.film-poster-ahref", titleSelector: "a[title]", titleAttr: "title", linkSelector: "&" },
-        // <-- fixed
-        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", defaultQuality: "HD", srcAttr: "src" }
-        // <-- fixed
-      },
-      {
-        name: "hacktorrent",
-        title: "HackTorrent",
-        baseUrl: "https://hacktorrent.to",
-        categories: ["anime", "vos", "torrent"],
-        language: ["lat", "cast"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "torrent", linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: "HD" }
-      },
-      {
-        name: "jkanime",
-        title: "JKAnime",
-        baseUrl: "https://jkanime.net",
-        categories: ["anime"],
-        language: ["cast", "lat", "vose"],
-        active: false,
-        // REDUNDANT: ya implementado en src/anime/scrapers/jkanime.js (Puppeteer nativo)
-        adult: false,
-        search: { url: "/buscar/{query}", itemSelector: ".anime__item", titleSelector: "h5 a", linkSelector: "a" },
-        episodes: { type: "url", pattern: "/{slug}/{episode}/" },
-        videos: { type: "jkplayer", varPattern: /video\[\d+\] = '(.*?)';/g, defaultQuality: "HD" }
-      },
-      {
-        name: "lamovie",
-        title: "LaMovie",
-        baseUrl: "https://la.movie",
-        categories: ["anime"],
-        language: ["lat", "cast", "vose"],
-        active: false,
-        // DEAD_DOMAIN: no response
-        adult: false,
-        search: { url: "/search/{query}", itemSelector: ".movie-card", titleSelector: ".title", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: ".player", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "latanime",
-        title: "LatAnime",
-        baseUrl: "https://latanime.org",
-        categories: ["anime"],
-        language: ["cast", "lat", "vose"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "jsvar", varPattern: /var videos = (\[.*?\]);/, defaultQuality: "HD" }
-      },
-      {
-        name: "mundodonghua",
-        title: "MundoDonghua",
-        baseUrl: "https://www.mundodonghua.com",
-        categories: ["anime", "vos"],
-        language: ["*"],
-        active: true,
-        adult: false,
-        search: { url: "/busquedas/?donghua={query}", itemSelector: '.md-card:has(a[href*="/donghua/"])', titleSelector: ".md-card-title", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "pelispanda",
-        title: "PelisPanda",
-        baseUrl: "https://pelispanda.org",
-        categories: ["anime", "vos", "torrent"],
-        language: ["lat"],
-        active: false,
-        // JS-dependent: 425KB HTML but cheerio finds 0 search items
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "torrent", linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: "HD" }
-      },
-      {
-        name: "pelisplus",
-        title: "PelisPlus",
-        baseUrl: "https://ww3.pelisplus.to",
-        categories: ["anime", "documentary", "direct"],
-        language: ["lat"],
-        active: false,
-        // TioPlus: search redirects, only 9KB HTML, necesita update de selectores
-        adult: false,
-        search: { url: "/search?q={query}", itemSelector: 'a[href*="/pelicula/"]', titleSelector: ".title", linkSelector: "&" },
-        videos: { type: "nextjs", dataPath: "props.pageProps.post.players", defaultQuality: "HD" }
-      },
-      {
-        name: "repelishd",
-        title: "RepelisHD",
-        baseUrl: "https://cinehdplus.gratis",
-        categories: ["anime", "vos"],
-        language: ["lat", "cast", "vose"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: ".card", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "sololatino",
-        title: "SoloLatino",
-        baseUrl: "https://sololatino.net",
-        categories: ["anime", "vos"],
-        language: ["lat"],
-        active: true,
-        adult: false,
-        search: { url: "/buscar?q={query}", itemSelector: ".card", titleSelector: ".card__title", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", defaultQuality: "HD", srcAttr: "src" }
-        // <-- fixed
-      },
-      {
-        name: "tioanime",
-        title: "TioAnime",
-        baseUrl: "https://tioanime.com",
-        categories: ["anime", "vos"],
-        language: ["cast", "lat", "vose"],
-        active: false,
-        // REDUNDANT: ya implementado en src/anime/scrapers/tioanime.js (Puppeteer nativo)
-        adult: false,
-        search: { url: "/directorio?q={query}", itemSelector: "ul.animes li", titleSelector: "h3.title", linkSelector: "a" },
-        // <-- fixed
-        episodes: { type: "url", pattern: "/ver/{slug}-{episode}" },
-        videos: { type: "jsvar", varPattern: /var videos = ([^;]+);/, defaultQuality: "HD" }
-      },
-      {
-        name: "tiodonghua",
-        title: "TioDonghua",
-        baseUrl: "https://tiodonghua.com",
-        categories: ["anime", "vos"],
-        language: ["vose"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h3", linkSelector: "a" },
-        // <-- fixed
-        videos: { type: "jsvar", varPattern: /var videos = (\[.*?\]);/, defaultQuality: "HD" }
-      },
-      {
-        name: "tvanime",
-        title: "TVAnime",
-        baseUrl: "https://vww.monoschinos2.net",
-        categories: ["anime", "vos"],
-        language: ["lat", "cast"],
-        active: true,
-        adult: false,
-        search: { url: "/animes?buscar={query}", itemSelector: "div.accordion-item", titleSelector: "h2", titleAttr: "alt", linkSelector: "a" },
-        // <-- fixed
-        videos: { type: "jsvar", varPattern: /var videos = (\[.*?\]);/, defaultQuality: "HD" }
-      },
-      {
-        name: "veranime",
-        title: "VerAnime",
-        baseUrl: "https://ww3.animeonline.ninja",
-        categories: ["anime"],
-        language: ["cast", "lat", "vose"],
-        active: false,
-        // DEAD_DOMAIN: no response (403)
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "jsvar", varPattern: /var videos = (\[.*?\]);/, defaultQuality: "HD" }
-      },
-      {
-        name: "veranimeassistant",
-        title: "VerAnimeAssistant",
-        baseUrl: "https://veranimeassistant.com",
-        categories: ["anime"],
-        language: ["cast", "lat", "vose"],
-        active: false,
-        // DEAD_DOMAIN: no response
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "veronline",
-        title: "VerOnline",
-        baseUrl: "https://veronline.tv",
-        categories: ["anime"],
-        language: ["cast", "lat", "vose"],
-        active: false,
-        // DEAD_DOMAIN: no response
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "areadocumental",
-        title: "AreaDocumental",
-        baseUrl: "https://www.area-documental.com",
-        categories: ["documentary"],
-        language: ["cast", "lat"],
-        active: true,
-        adult: false,
-        search: { url: "/resultados.php?buscar={query}", itemSelector: "div.w3l-movie-gride-agile", titleSelector: "div.w3l-movie-text h6 a", linkSelector: "a.hvr-shutter-out-horizontal" },
-        videos: { type: "iframe", containerSelector: ".player", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "documentalesonline",
-        title: "DocumentalesOnline",
-        baseUrl: "https://www.documentales-online.com",
-        categories: ["documentary"],
-        language: ["cast", "lat"],
-        active: true,
-        // JS-dependiente, requiere browser
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2 a", linkSelector: "h2 a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "elitetorrent",
-        title: "EliteTorrent",
-        baseUrl: "https://elitetorrent.com",
-        categories: ["documentary", "vos", "torrent"],
-        language: ["cast", "lat"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "torrent", linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: "HD" }
-      },
-      {
-        name: "mejortorrent",
-        title: "MejorTorrent",
-        baseUrl: "https://www.mejortorrent.net",
-        categories: ["movie", "tvshow", "torrent"],
-        language: ["cast"],
-        active: true,
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "torrent", linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: "HD" }
-      },
-      {
-        name: "hdfulls",
-        title: "HDFullS",
-        baseUrl: "https://www.hdfull.it",
-        categories: ["movie", "tvshow"],
-        language: ["cast", "lat"],
-        active: false,
-        // DEAD_DOMAIN: no response
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "estrenosdoramas",
-        title: "EstrenoDoramas",
-        baseUrl: "https://www26.estrenosdoramas.net",
-        categories: ["tvshow", "vos"],
-        language: ["lat", "vose"],
-        active: false,
-        // DEAD_DOMAIN: no response
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        episodes: { type: "season-list", seasonSelector: ".season-list a", episodeSelector: ".episode-list a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "doramasqueen",
-        title: "DoramasQueen",
-        baseUrl: "https://www.doramasqueen.com",
-        categories: ["anime"],
-        language: ["cast", "lat"],
-        active: false,
-        // DEAD_DOMAIN: no response
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "ennovelas",
-        title: "Ennovelas",
-        baseUrl: "https://ennovelas.site",
-        categories: ["anime", "vos"],
-        language: ["lat"],
-        active: false,
-        // DEAD_DOMAIN: no response
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "cuevana2",
-        title: "Cuevana2",
-        baseUrl: "https://www.cuevana2.run",
-        categories: ["movie", "tvshow", "vos"],
-        language: ["*"],
-        active: false,
-        // DEAD_DOMAIN: no response
-        adult: false,
-        search: { url: "/search?q={query}", itemSelector: 'a[href*="/pelicula/"]', titleSelector: ".title", linkSelector: "&" },
-        videos: { type: "nextjs", dataPath: "props.pageProps.post.players", defaultQuality: "HD" }
-      },
-      {
-        name: "sinpeli",
-        title: "SinPeli",
-        baseUrl: "https://www.sinpeli.com",
-        categories: ["movie", "vos"],
-        language: ["lat", "cast"],
-        active: false,
-        // DEAD_DOMAIN: no response
-        adult: false,
-        search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
-        videos: { type: "iframe", containerSelector: ".entry-content", iframeSelector: "iframe", defaultQuality: "HD" }
-      },
-      {
-        name: "repelisplus",
-        title: "RepelisPlus",
-        baseUrl: "https://repelisplus.my",
-        categories: ["movie", "tvshow"],
-        language: ["lat", "cast", "vose"],
-        active: true,
-        adult: false,
-        search: { url: "/buscar/{query}", itemSelector: ".ksaj a[href]", titleSelector: "h4", linkSelector: "&" },
-        episodes: { type: "season-list", seasonSelector: ".season-list a, .temporadas a", episodeSelector: ".episode-list a, .episodios a" },
-        videos: { type: "iframe", containerSelector: ".jajhasb, .mjanz", iframeSelector: 'iframe, a[href*="watchfun.top"]', fallbackLinkSelector: 'a[href*="watchfun.top"]', srcAttr: "href", defaultQuality: "HD" }
-      }
-    ];
-  }
-});
 
 // src/intelligent/logger.js
 var require_logger = __commonJS({
@@ -2353,7 +1462,7 @@ var require_static_scraper = __commonJS({
     var { SmartAnalyzer } = require_smart_analyzer();
     var { SessionMemory, textSimilarity } = require_session_memory();
     var { getLogger } = require_logger();
-    var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/125.0.0.0 Safari/537.36";
+    var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/125.0.0.0 Safari/537.36";
     var StaticScraper = class {
       constructor() {
         this.ai = new SmartAnalyzer();
@@ -2397,7 +1506,7 @@ var require_static_scraper = __commonJS({
           try {
             const response = yield fetch(url, {
               headers: {
-                "User-Agent": UA2,
+                "User-Agent": UA,
                 "Accept": "text/html,application/xhtml+xml",
                 "Accept-Language": "es-ES,es;q=0.9,en;q=0.8"
               },
@@ -4250,7 +3359,7 @@ var require_intelligent = __commonJS({
 // src/alfa-providers/embed-resolver.js
 var require_embed_resolver = __commonJS({
   "src/alfa-providers/embed-resolver.js"(exports2, module2) {
-    var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+    var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
     var EMBED_TIMEOUT = 1e4;
     var _ai = null;
     function _getAI() {
@@ -4283,7 +3392,7 @@ var require_embed_resolver = __commonJS({
         }, opts && opts.timeout || EMBED_TIMEOUT);
         try {
           const res = yield fetch(url, {
-            headers: Object.assign({ "User-Agent": UA2 }, opts && opts.headers || {}),
+            headers: Object.assign({ "User-Agent": UA }, opts && opts.headers || {}),
             signal: ctrl.signal,
             redirect: "follow"
           });
@@ -4794,7 +3903,7 @@ var require_torrent_parser = __commonJS({
 var require_shortener_resolver = __commonJS({
   "src/alfa-providers/shortener-resolver.js"(exports2, module2) {
     var { parseTorrentInfoHash } = require_torrent_parser();
-    var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.0.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.0";
+    var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.0.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.0";
     var MAX_REDIRECTS = 5;
     function buildTorrentResult(url, label, quality, buf) {
       const infoHash = buf ? parseTorrentInfoHash(buf) : null;
@@ -4879,7 +3988,7 @@ var require_shortener_resolver = __commonJS({
     }
     function resolveFormShortener(shortUrl, referer) {
       return __async(this, null, function* () {
-        const headers = { "User-Agent": UA2, "Referer": referer };
+        const headers = { "User-Agent": UA, "Referer": referer };
         const html = yield fetchText(shortUrl, headers, 15e3);
         if (!html) return null;
         const formMatch = html.match(/<form[^>]*action=["']([^"']+)["'][^>]*>([\s\S]*?)<\/form>/i);
@@ -4902,7 +4011,7 @@ var require_shortener_resolver = __commonJS({
           const res = yield fetch(postUrl, {
             method: "POST",
             headers: {
-              "User-Agent": UA2,
+              "User-Agent": UA,
               "Referer": shortUrl,
               "Content-Type": "application/x-www-form-urlencoded"
             },
@@ -4915,7 +4024,7 @@ var require_shortener_resolver = __commonJS({
           const final = extractFinalLink(text, postUrl) || res.headers.get("location");
           if (final) {
             if (final.startsWith("http") && final.endsWith(".torrent")) {
-              const buf = yield fetchBuffer(final, { "User-Agent": UA2, "Referer": postUrl }, 15e3);
+              const buf = yield fetchBuffer(final, { "User-Agent": UA, "Referer": postUrl }, 15e3);
               return buildTorrentResult(final, null, null, buf);
             }
             if (final.startsWith("magnet:")) return parseMagnet(final, null, null);
@@ -4933,7 +4042,7 @@ var require_shortener_resolver = __commonJS({
         const t = setTimeout(() => ctrl.abort(), 15e3);
         try {
           const res = yield fetch(url, {
-            headers: { "User-Agent": UA2, "Referer": referer },
+            headers: { "User-Agent": UA, "Referer": referer },
             redirect: "manual",
             signal: ctrl.signal
           });
@@ -4942,7 +4051,7 @@ var require_shortener_resolver = __commonJS({
           if (location) {
             const next = location.startsWith("http") ? location : new URL(location, url).href;
             if (next.endsWith(".torrent")) {
-              const buf = yield fetchBuffer(next, { "User-Agent": UA2, "Referer": url }, 15e3);
+              const buf = yield fetchBuffer(next, { "User-Agent": UA, "Referer": url }, 15e3);
               return buildTorrentResult(next, null, null, buf);
             }
             if (next.startsWith("magnet:")) return parseMagnet(next, null, null);
@@ -4952,7 +4061,7 @@ var require_shortener_resolver = __commonJS({
           const final = extractFinalLink(text, url);
           if (final) {
             if (final.startsWith("http") && final.endsWith(".torrent")) {
-              const buf = yield fetchBuffer(final, { "User-Agent": UA2, "Referer": url }, 15e3);
+              const buf = yield fetchBuffer(final, { "User-Agent": UA, "Referer": url }, 15e3);
               return buildTorrentResult(final, null, null, buf);
             }
             if (final.startsWith("magnet:")) return parseMagnet(final, null, null);
@@ -4978,7 +4087,7 @@ var require_shortener_resolver = __commonJS({
             }
           }
           if (!decoded.startsWith("http") || !decoded.endsWith(".torrent")) return null;
-          const buf = yield fetchBuffer(decoded, { "User-Agent": UA2, "Referer": referer }, 15e3);
+          const buf = yield fetchBuffer(decoded, { "User-Agent": UA, "Referer": referer }, 15e3);
           if (!buf) return null;
           const result = buildTorrentResult(decoded, label, quality, buf);
           result.url = href;
@@ -4997,7 +4106,7 @@ var require_shortener_resolver = __commonJS({
         const downloadTTResult = yield resolveDownloadTTLink(href, label, quality, referer);
         if (downloadTTResult) return downloadTTResult;
         if (href.endsWith(".torrent")) {
-          const buf = yield fetchBuffer(href, { "User-Agent": UA2, "Referer": referer }, 15e3);
+          const buf = yield fetchBuffer(href, { "User-Agent": UA, "Referer": referer }, 15e3);
           return buildTorrentResult(href, label, quality, buf);
         }
         if (/\/s\.php\?i=/.test(href) || /\/s\.php\?u=/.test(href)) {
@@ -5020,7 +4129,7 @@ var require_shortener_resolver = __commonJS({
 var require_scrapeless_proxy = __commonJS({
   "src/scrapeless-proxy/index.js"(exports2, module2) {
     var API_BASE = "https://api.scrapeless.com/api/v2/unlocker/request";
-    var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+    var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
     var apiKey = process.env.SCRAPELESS_API_KEY || "";
     var enabled = !!apiKey;
     function configure(key) {
@@ -5041,7 +4150,7 @@ var require_scrapeless_proxy = __commonJS({
           redirect: options.redirect !== false,
           headers: options.headers || {}
         };
-        if (!input.headers["User-Agent"]) input.headers["User-Agent"] = UA2;
+        if (!input.headers["User-Agent"]) input.headers["User-Agent"] = UA;
         if (!input.headers["Accept"]) input.headers["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
         if (!input.headers["Accept-Language"]) input.headers["Accept-Language"] = "es-ES,es;q=0.9,en;q=0.8";
         const body = JSON.stringify({
@@ -5091,7 +4200,7 @@ var require_scrapeless_proxy = __commonJS({
 var require_puppeteer_fallback = __commonJS({
   "src/puppeteer-fallback.js"(exports2, module2) {
     var { createBrowser, createPage, setupResourceBlocking } = require_intelligent();
-    var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36";
+    var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36";
     var browserInstance = null;
     var browserLastUsed = 0;
     var BROWSER_IDLE_TIMEOUT = 5 * 60 * 1e3;
@@ -5162,7 +4271,7 @@ var require_puppeteer_fallback = __commonJS({
             return fetchWithPuppeteer(url, options);
           }
           const page = yield browser.newPage();
-          yield page.setUserAgent(UA2);
+          yield page.setUserAgent(UA);
           yield page.setViewport({ width: 1366, height: 768 });
           yield page.setRequestInterception(true);
           page.on("request", (req) => {
@@ -5226,7 +4335,7 @@ var require_puppeteer_fallback = __commonJS({
 // src/jkanime-puppeteer.js
 var require_jkanime_puppeteer = __commonJS({
   "src/jkanime-puppeteer.js"(exports2, module2) {
-    var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
+    var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
     var { resolveEmbed, isDirectVideoUrl } = require_embed_resolver();
     var puppeteer = null;
     var chromiumCache = null;
@@ -5235,7 +4344,7 @@ var require_jkanime_puppeteer = __commonJS({
     var BROWSER_IDLE = 5 * 60 * 1e3;
     var serverCache = /* @__PURE__ */ new Map();
     var embedCache = /* @__PURE__ */ new Map();
-    var MAX_CACHE2 = 200;
+    var MAX_CACHE = 200;
     var EMBED_TTL = 60 * 60 * 1e3;
     var SERVER_TTL = 30 * 60 * 1e3;
     var RESOLVABLE = ["streamwish", "sfastwish", "flaswish", "mp4upload", "streamtape", "vidhide", "callistanise", "yourupload", "pixeldrain", "1fichier", "zilla-networks"];
@@ -5371,7 +4480,7 @@ var require_jkanime_puppeteer = __commonJS({
       if (e) map.delete(key);
       return void 0;
     }
-    function cacheSet2(map, key, value, max) {
+    function cacheSet(map, key, value, max) {
       if (map.size >= max) {
         const first = map.keys().next().value;
         map.delete(first);
@@ -5389,7 +4498,7 @@ var require_jkanime_puppeteer = __commonJS({
           const ctrl = new AbortController();
           const t = setTimeout(() => ctrl.abort(), 1e4);
           const res = yield fetch(`${proxy}/?url=${encodeURIComponent(url)}`, {
-            headers: { "User-Agent": UA2 },
+            headers: { "User-Agent": UA },
             signal: ctrl.signal
           });
           clearTimeout(t);
@@ -5405,7 +4514,7 @@ var require_jkanime_puppeteer = __commonJS({
         const cached = cacheGet(embedCache, embedUrl, EMBED_TTL);
         if (cached !== void 0) return cached || null;
         const page = yield b.newPage();
-        yield page.setUserAgent(UA2);
+        yield page.setUserAgent(UA);
         let videoUrl = null;
         try {
           yield page.setRequestInterception(true);
@@ -5469,7 +4578,7 @@ var require_jkanime_puppeteer = __commonJS({
           yield page.close();
         }
         const result = videoUrl && videoUrl.startsWith("http") && !videoUrl.includes("novideo") ? videoUrl : null;
-        cacheSet2(embedCache, embedUrl, result, MAX_CACHE2);
+        cacheSet(embedCache, embedUrl, result, MAX_CACHE);
         return result;
       });
     }
@@ -5497,7 +4606,7 @@ var require_jkanime_puppeteer = __commonJS({
         if (!serverList) {
           try {
             const page = yield b.newPage();
-            yield page.setUserAgent(UA2);
+            yield page.setUserAgent(UA);
             yield page.goto(`https://jkanime.net/${slug}/${episode}/`, { waitUntil: "networkidle2", timeout: 25e3 });
             const currentUrl = page.url();
             if (!currentUrl.includes(`/${slug}/`) && !currentUrl.includes(`/${slug}-`)) {
@@ -5526,7 +4635,7 @@ var require_jkanime_puppeteer = __commonJS({
             } catch (e) {
             }
             yield page.close();
-            cacheSet2(serverCache, ck, serverList, MAX_CACHE2);
+            cacheSet(serverCache, ck, serverList, MAX_CACHE);
           } catch (e) {
             console.error("[jk-pptr] page error:", e.message);
           }
@@ -5608,7 +4717,7 @@ ${s.server}`,
         let serverList = cached;
         if (!serverList) {
           try {
-            const res = yield fetch(`https://tioanime.com/ver/${slug}-${episode}`, { headers: { "User-Agent": UA2 } });
+            const res = yield fetch(`https://tioanime.com/ver/${slug}-${episode}`, { headers: { "User-Agent": UA } });
             if (!res.ok) return [];
             const html = yield res.text();
             const m = html.match(/var videos\s*=\s*(\[[\s\S]*?\]);/);
@@ -5618,7 +4727,7 @@ ${s.server}`,
               servers: videos.map((v) => ({ server: v[0] || "?", url: (v[1] || "").replace(/\\\//g, "/") })).filter((s) => s.url.startsWith("http"))
             };
             if (!serverList.servers.length) return [];
-            cacheSet2(serverCache, ck, serverList, MAX_CACHE2);
+            cacheSet(serverCache, ck, serverList, MAX_CACHE);
           } catch (e) {
             return [];
           }
@@ -5739,7 +4848,7 @@ ${s.server}`,
         if (!serverList) {
           try {
             const res = yield fetch(`https://animeav1.com/media/${slug}/${episode}/__data.json`, {
-              headers: { "User-Agent": UA2, "Accept": "application/json" }
+              headers: { "User-Agent": UA, "Accept": "application/json" }
             });
             if (!res.ok) return [];
             const data = yield res.json();
@@ -5802,7 +4911,7 @@ ${s.server}`,
             }
             serverList = { servers: servers2 };
             if (!servers2.length) return [];
-            cacheSet2(serverCache, ck, serverList, MAX_CACHE2);
+            cacheSet(serverCache, ck, serverList, MAX_CACHE);
           } catch (e) {
             return [];
           }
@@ -5926,7 +5035,7 @@ ${s.server}`,
           if (!b) {
             try {
               const res = yield fetch(`https://animejara.com/episode/${slug}-1x${episode}/`, {
-                headers: { "User-Agent": UA2 }
+                headers: { "User-Agent": UA }
               });
               if (!res.ok) return [];
               const html = yield res.text();
@@ -5958,14 +5067,14 @@ ${s.server}`,
               }
               serverList = { servers: servers2 };
               if (!servers2.length) return [];
-              cacheSet2(serverCache, ck, serverList, MAX_CACHE2);
+              cacheSet(serverCache, ck, serverList, MAX_CACHE);
             } catch (e) {
               return [];
             }
           } else {
             try {
               const page = yield b.newPage();
-              yield page.setUserAgent(UA2);
+              yield page.setUserAgent(UA);
               yield page.goto(`https://animejara.com/episode/${slug}-1x${episode}/`, {
                 waitUntil: "networkidle2",
                 timeout: 25e3
@@ -6017,7 +5126,7 @@ ${s.server}`,
                 }
               }
               serverList = { servers: servers2 };
-              cacheSet2(serverCache, ck, serverList, MAX_CACHE2);
+              cacheSet(serverCache, ck, serverList, MAX_CACHE);
             } catch (e) {
               console.error("[animejara] page error:", e.message);
               return [];
@@ -6160,7 +5269,7 @@ var require_engine = __commonJS({
           elapsedTime: String(Date.now() - startTime)
         });
         const passUrl = `${baseUrl}${basePrefix}/.within.website/x/cmd/anubis/api/pass-challenge?${params}`;
-        const passHeaders = { "User-Agent": UA2 };
+        const passHeaders = { "User-Agent": UA };
         if (verificationCookie) passHeaders["Cookie"] = parseSetCookie(verificationCookie);
         const passRes = yield fetch(passUrl, { headers: passHeaders, redirect: "manual" });
         const cookies = passRes.headers.getSetCookie ? passRes.headers.getSetCookie() : [passRes.headers.get("set-cookie")].filter(Boolean);
@@ -6169,16 +5278,16 @@ var require_engine = __commonJS({
         return null;
       });
     }
-    var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
-    var TMDB_KEY2 = process.env.TMDB_KEY || "d80ba92bc7cefe3359668d30d06f3305";
-    function fetchHTML2(_0) {
+    var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+    var TMDB_KEY = process.env.TMDB_KEY || "d80ba92bc7cefe3359668d30d06f3305";
+    function fetchHTML(_0) {
       return __async(this, arguments, function* (url, opts = {}) {
         try {
           const ctrl = new AbortController();
           const t = setTimeout(() => ctrl.abort(), opts.timeout || 2e4);
           const domain = typeof url === "string" ? new URL(url).hostname : "";
           const cached = anubisCookieCache.get(domain);
-          const headers = __spreadValues({ "User-Agent": UA2, "Accept": "text/html,application/xhtml+xml,*/*" }, opts.headers);
+          const headers = __spreadValues({ "User-Agent": UA, "Accept": "text/html,application/xhtml+xml,*/*" }, opts.headers);
           if (cached) headers["Cookie"] = cached;
           const res = yield fetch(url, { headers, signal: ctrl.signal });
           clearTimeout(t);
@@ -6255,13 +5364,13 @@ var require_engine = __commonJS({
         }
       });
     }
-    function fetchJSON2(_0) {
+    function fetchJSON(_0) {
       return __async(this, arguments, function* (url, opts = {}) {
         try {
           const ctrl = new AbortController();
           const t = setTimeout(() => ctrl.abort(), opts.timeout || 15e3);
           const res = yield fetch(url, {
-            headers: __spreadValues({ "User-Agent": UA2, "Accept": "application/json" }, opts.headers),
+            headers: __spreadValues({ "User-Agent": UA, "Accept": "application/json" }, opts.headers),
             signal: ctrl.signal
           });
           clearTimeout(t);
@@ -6282,7 +5391,7 @@ var require_engine = __commonJS({
       }
       return typeof val === "string" ? val : val != null ? String(val) : "";
     }
-    function similarity2(a, b) {
+    function similarity(a, b) {
       const sa = a.toLowerCase().replace(/[^a-z0-9]/g, "");
       const sb = b.toLowerCase().replace(/[^a-z0-9]/g, "");
       if (sa === sb) return 1;
@@ -6311,13 +5420,13 @@ var require_engine = __commonJS({
         try {
           let tmdbId = id;
           if (id.startsWith("tt")) {
-            const r = yield fetchJSON2(`https://api.themoviedb.org/3/find/${id}?api_key=${TMDB_KEY2}&external_source=imdb_id`);
+            const r = yield fetchJSON(`https://api.themoviedb.org/3/find/${id}?api_key=${TMDB_KEY}&external_source=imdb_id`);
             const results2 = r == null ? void 0 : r[mediaType === "tv" ? "tv_results" : "movie_results"];
             if (results2 == null ? void 0 : results2[0]) tmdbId = results2[0].id;
             else return null;
           }
           const typeStr = mediaType === "tv" ? "tv" : "movie";
-          const data = yield fetchJSON2(`https://api.themoviedb.org/3/${typeStr}/${tmdbId}?api_key=${TMDB_KEY2}&language=en`);
+          const data = yield fetchJSON(`https://api.themoviedb.org/3/${typeStr}/${tmdbId}?api_key=${TMDB_KEY}&language=en`);
           if (!data) return null;
           return {
             title: data.title || data.name || "",
@@ -6330,7 +5439,7 @@ var require_engine = __commonJS({
         }
       });
     }
-    function searchProvider2(provider, title, year, mediaType) {
+    function searchProvider(provider, title, year, mediaType) {
       return __async(this, null, function* () {
         var _a;
         const cfg = provider.search;
@@ -6346,7 +5455,7 @@ var require_engine = __commonJS({
             }
             if (cfg.method === "POST") {
               const domain = new URL(searchUrl).hostname;
-              const initHtml = yield fetchHTML2(searchUrl, { timeout: 1e4 });
+              const initHtml = yield fetchHTML(searchUrl, { timeout: 1e4 });
               if (!initHtml) return null;
               try {
                 const ctrl = new AbortController();
@@ -6354,7 +5463,7 @@ var require_engine = __commonJS({
                 const cookie = anubisCookieCache.get(domain);
                 const res = yield fetch(searchUrl, {
                   method: "POST",
-                  headers: __spreadValues(__spreadValues({ "User-Agent": UA2, "Content-Type": "application/x-www-form-urlencoded" }, cfg.headers || {}), cookie ? { "Cookie": cookie } : {}),
+                  headers: __spreadValues(__spreadValues({ "User-Agent": UA, "Content-Type": "application/x-www-form-urlencoded" }, cfg.headers || {}), cookie ? { "Cookie": cookie } : {}),
                   body: (cfg.body || "query={query}").replace("{query}", encodeURIComponent(query)),
                   signal: ctrl.signal
                 });
@@ -6365,7 +5474,7 @@ var require_engine = __commonJS({
                 return null;
               }
             }
-            return yield fetchHTML2(searchUrl, { headers: cfg.headers, timeout: 1e4 });
+            return yield fetchHTML(searchUrl, { headers: cfg.headers, timeout: 1e4 });
           });
         }
         let html = yield trySearch(titleClean);
@@ -6394,7 +5503,7 @@ var require_engine = __commonJS({
               const itemSlug = item[linkField] || "";
               if (!itemTitle || !itemSlug) continue;
               const itemLink = `https://animejara.com/anime/${itemSlug}`;
-              let score = similarity2(itemTitle, title);
+              let score = similarity(itemTitle, title);
               if (score > bestScore2 && score > 0.6) {
                 bestScore2 = score;
                 bestMatch2 = itemLink;
@@ -6417,7 +5526,7 @@ var require_engine = __commonJS({
               const itemLinkRaw = getNested(item, cfg.linkSelector) || "";
               if (!itemTitle || !itemLinkRaw) continue;
               const itemLink = itemLinkRaw.startsWith("http") ? itemLinkRaw : itemLinkRaw.startsWith("/") ? new URL(itemLinkRaw, provider.baseUrl).href : `${provider.baseUrl}/${itemLinkRaw}`;
-              let score = similarity2(itemTitle, title);
+              let score = similarity(itemTitle, title);
               if (score > bestScore2 && score > 0.6) {
                 bestScore2 = score;
                 bestMatch2 = itemLink;
@@ -6452,7 +5561,7 @@ var require_engine = __commonJS({
             }
           }
           if (!itemTitle || !itemLink) continue;
-          let score = similarity2(itemTitle, title);
+          let score = similarity(itemTitle, title);
           const titleClean2 = titleClean.replace(/[^a-z0-9]/g, "");
           const itemClean = itemTitle.toLowerCase().replace(/[^a-z0-9]/g, "");
           if (itemClean === titleClean2) score = Math.max(score, 1);
@@ -6518,7 +5627,7 @@ var require_engine = __commonJS({
         return bestMatch;
       });
     }
-    function getEpisodeUrl2(provider, seriesUrl, season, episode) {
+    function getEpisodeUrl(provider, seriesUrl, season, episode) {
       return __async(this, null, function* () {
         var _a, _b, _c;
         const cfg = provider.episodes;
@@ -6532,7 +5641,7 @@ var require_engine = __commonJS({
             return seriesUrl;
           }
         }
-        const html = yield fetchHTML2(seriesUrl);
+        const html = yield fetchHTML(seriesUrl);
         if (!html) return null;
         const $ = cheerio.load(html);
         if (cfg.type === "post") {
@@ -6547,7 +5656,7 @@ var require_engine = __commonJS({
           const postUrl = cfg.url || seriesUrl;
           const res = yield fetch(postUrl, {
             method: "POST",
-            headers: __spreadValues({ "User-Agent": UA2, "Content-Type": "application/x-www-form-urlencoded" }, cfg.headers),
+            headers: __spreadValues({ "User-Agent": UA, "Content-Type": "application/x-www-form-urlencoded" }, cfg.headers),
             body: fd.toString(),
             signal: AbortSignal.timeout(12e3)
           });
@@ -6571,7 +5680,7 @@ var require_engine = __commonJS({
             if (sNum === season) {
               const sUrl = $(sel).attr("href");
               if (sUrl) {
-                const sHtml = yield fetchHTML2(new URL(sUrl, provider.baseUrl).href);
+                const sHtml = yield fetchHTML(new URL(sUrl, provider.baseUrl).href);
                 if (sHtml) {
                   const $$ = cheerio.load(sHtml);
                   const epEls = $$(cfg.episodeSelector).toArray();
@@ -6671,14 +5780,14 @@ var require_engine = __commonJS({
             const domain = new URL(seriesUrl).hostname;
             const showBase = seriesUrl.split("/").pop().replace(/-\d+-Temporada.*/i, "").replace(/-/g, " ").trim();
             const searchUrl = provider.baseUrl + "/buscar";
-            const init = yield fetchHTML2(searchUrl, { timeout: 1e4 });
+            const init = yield fetchHTML(searchUrl, { timeout: 1e4 });
             if (!init) return null;
             const cookie = anubisCookieCache.get(domain);
             const ctrl = new AbortController();
             const t = setTimeout(() => ctrl.abort(), 12e3);
             const sRes = yield fetch(searchUrl, {
               method: "POST",
-              headers: __spreadValues({ "User-Agent": UA2, "Content-Type": "application/x-www-form-urlencoded" }, cookie ? { "Cookie": cookie } : {}),
+              headers: __spreadValues({ "User-Agent": UA, "Content-Type": "application/x-www-form-urlencoded" }, cookie ? { "Cookie": cookie } : {}),
               body: "valor=" + encodeURIComponent(showBase),
               signal: ctrl.signal
             });
@@ -6694,7 +5803,7 @@ var require_engine = __commonJS({
                 let seasonUrl = $$(sl).attr("href");
                 if (!seasonUrl) continue;
                 if (!seasonUrl.startsWith("http")) seasonUrl = provider.baseUrl + seasonUrl;
-                const sHtml2 = yield fetchHTML2(seasonUrl, { timeout: 1e4 });
+                const sHtml2 = yield fetchHTML(seasonUrl, { timeout: 1e4 });
                 if (!sHtml2) continue;
                 const $$$ = cheerio.load(sHtml2);
                 const sRows = $$$("table.table tbody tr").toArray();
@@ -6723,12 +5832,12 @@ var require_engine = __commonJS({
         return seriesUrl;
       });
     }
-    function extractVideos2(provider, pageUrl) {
+    function extractVideos(provider, pageUrl) {
       return __async(this, null, function* () {
         var _a, _b, _c, _d, _e, _f, _g, _h, _i;
         const cfg = provider.videos;
         if (!cfg) return [];
-        const html = yield fetchHTML2(pageUrl);
+        const html = yield fetchHTML(pageUrl);
         if (!html) return [];
         const $ = cheerio.load(html);
         const results2 = [];
@@ -6757,7 +5866,7 @@ var require_engine = __commonJS({
           for (const el of targets) {
             const val = $(el).attr(cfg.srcAttr || "src") || $(el).attr("data-src");
             const url = resolveUrl(val);
-            if (url) results2.push({ url, server: detectServer2(url), quality: cfg.defaultQuality || "HD" });
+            if (url) results2.push({ url, server: detectServer(url), quality: cfg.defaultQuality || "HD" });
           }
           if (!results2.length) {
             const attr = cfg.srcAttr || "data-src";
@@ -6765,7 +5874,7 @@ var require_engine = __commonJS({
             for (const el of altTargets) {
               const val = $(el).attr(attr);
               const url = resolveUrl(val);
-              if (url) results2.push({ url, server: detectServer2(url), quality: cfg.defaultQuality || "HD" });
+              if (url) results2.push({ url, server: detectServer(url), quality: cfg.defaultQuality || "HD" });
             }
           }
         }
@@ -6779,13 +5888,13 @@ var require_engine = __commonJS({
           }
           for (const embedUrl of chainUrls) {
             try {
-              const body = yield fetchHTML2(embedUrl, { headers: { Referer: pageUrl }, timeout: 1e4 });
+              const body = yield fetchHTML(embedUrl, { headers: { Referer: pageUrl }, timeout: 1e4 });
               if (!body) continue;
               const $e = cheerio.load(body);
               const realSrc = $e("div.Video iframe, .Video iframe, iframe").first().attr("src");
               if (realSrc) {
                 const finalUrl = realSrc.startsWith("//") ? "https:" + realSrc : realSrc;
-                results2.push({ url: finalUrl, server: detectServer2(finalUrl), quality: cfg.defaultQuality || "HD" });
+                results2.push({ url: finalUrl, server: detectServer(finalUrl), quality: cfg.defaultQuality || "HD" });
               }
             } catch (e) {
             }
@@ -6805,7 +5914,7 @@ var require_engine = __commonJS({
                       const pUrl = p.result || p.url || p.link;
                       if (pUrl) results2.push({
                         url: pUrl,
-                        server: p.cyberlocker || p.server || detectServer2(pUrl),
+                        server: p.cyberlocker || p.server || detectServer(pUrl),
                         quality: p.quality || cfg.defaultQuality || "HD",
                         lang
                       });
@@ -6828,7 +5937,7 @@ var require_engine = __commonJS({
                 const vUrl = Array.isArray(v) ? v[1] : v.url || v.link || v.code;
                 if (vUrl) results2.push({
                   url: vUrl,
-                  server: server || detectServer2(vUrl),
+                  server: server || detectServer(vUrl),
                   quality: v.quality || cfg.defaultQuality || "HD",
                   lang: v.lang || v.idioma || v.audio || ""
                 });
@@ -6843,7 +5952,7 @@ var require_engine = __commonJS({
           while ((m = re.exec(html)) !== null) {
             const src = (m[1] || "").match(/src=["']([^"']+)["']/);
             if (src) {
-              results2.push({ url: src[1], server: detectServer2(src[1]), quality: cfg.defaultQuality || "HD" });
+              results2.push({ url: src[1], server: detectServer(src[1]), quality: cfg.defaultQuality || "HD" });
             }
           }
         }
@@ -6858,7 +5967,7 @@ var require_engine = __commonJS({
             url = resolveUrl(url);
             if (!url) continue;
             const serverEl = cfg.serverSelector ? $(el).find(cfg.serverSelector).first() : $(el).find('.nombre-server, [class*="server"]').first();
-            const serverName = serverEl.length ? serverEl.text().trim() : detectServer2(url);
+            const serverName = serverEl.length ? serverEl.text().trim() : detectServer(url);
             results2.push({ url, server: serverName, quality: cfg.defaultQuality || "HD" });
           }
           if (!results2.length) {
@@ -6867,7 +5976,7 @@ var require_engine = __commonJS({
             while ((m = re.exec(html)) !== null) {
               let url = m[1].replace(/\\\//g, "/");
               url = resolveUrl(url);
-              if (url) results2.push({ url, server: detectServer2(url), quality: cfg.defaultQuality || "HD" });
+              if (url) results2.push({ url, server: detectServer(url), quality: cfg.defaultQuality || "HD" });
             }
           }
           if (!results2.length) {
@@ -6876,7 +5985,7 @@ var require_engine = __commonJS({
               const src = $(el).attr("src") || $(el).attr("data-src");
               if (src) {
                 const url = resolveUrl(src);
-                if (url) results2.push({ url, server: detectServer2(url), quality: cfg.defaultQuality || "HD" });
+                if (url) results2.push({ url, server: detectServer(url), quality: cfg.defaultQuality || "HD" });
               }
             }
           }
@@ -6886,7 +5995,7 @@ var require_engine = __commonJS({
               const b = yield (_a = pptr.getBrowser) == null ? void 0 : _a.call(pptr);
               if (b) {
                 const page = yield b.newPage();
-                yield page.setUserAgent(UA2);
+                yield page.setUserAgent(UA);
                 yield page.goto(pageUrl, { waitUntil: "networkidle2", timeout: 2e4 });
                 const servers2 = yield page.evaluate(() => {
                   const found = [];
@@ -6905,7 +6014,7 @@ var require_engine = __commonJS({
                 for (const s of servers2) {
                   if (s.url.startsWith("//")) s.url = "https:" + s.url;
                   if (s.url.startsWith("http")) {
-                    if (!s.server) s.server = detectServer2(s.url);
+                    if (!s.server) s.server = detectServer(s.url);
                     results2.push({ url: s.url, server: s.server, quality: cfg.defaultQuality || "HD" });
                   }
                 }
@@ -6921,9 +6030,9 @@ var require_engine = __commonJS({
             const dataUrl = $(el).attr(cfg.dataAttr || "data-tr");
             if (!dataUrl) continue;
             const serverText = cfg.serverSelector ? $(el).find(cfg.serverSelector).text().trim() : "";
-            const serverName = serverText || detectServer2(dataUrl);
+            const serverName = serverText || detectServer(dataUrl);
             try {
-              const proxyHtml = yield fetchHTML2(dataUrl, { headers: { Referer: pageUrl }, timeout: 8e3 });
+              const proxyHtml = yield fetchHTML(dataUrl, { headers: { Referer: pageUrl }, timeout: 8e3 });
               if (!proxyHtml) continue;
               const varMatch = proxyHtml.match(/var\s+url\s*=\s*['"]([^'"]+)['"]/);
               if (varMatch) {
@@ -6946,12 +6055,12 @@ var require_engine = __commonJS({
           let m;
           while ((m = re.exec(html)) !== null) {
             const src = (m[1] || "").match(/src=["']([^"']+)["']/);
-            if (src) results2.push({ url: src[1], server: detectServer2(src[1]), quality: cfg.defaultQuality || "HD" });
+            if (src) results2.push({ url: src[1], server: detectServer(src[1]), quality: cfg.defaultQuality || "HD" });
           }
           for (const r of results2) {
             if (!r.url || !r.url.includes("/jkplayer/")) continue;
             try {
-              const body = yield fetchHTML2(r.url);
+              const body = yield fetchHTML(r.url);
               let vm = body.match(/url:\s*'([^']+\.m3u8[^']*)'/);
               if (!vm) {
                 const b64 = body.match(/atob\('([^']+)'\)/);
@@ -6959,7 +6068,7 @@ var require_engine = __commonJS({
               }
               if (vm) {
                 r.url = vm[1];
-                r.server = detectServer2(vm[1]);
+                r.server = detectServer(vm[1]);
               }
             } catch (e) {
             }
@@ -6967,14 +6076,14 @@ var require_engine = __commonJS({
         }
         if (cfg.type === "api") {
           const apiUrl = typeof cfg.apiUrl === "function" ? cfg.apiUrl(provider.baseUrl, pageUrl, html) : provider.baseUrl + cfg.apiUrl;
-          const data = yield fetchJSON2(apiUrl, { headers: cfg.headers });
+          const data = yield fetchJSON(apiUrl, { headers: cfg.headers });
           if (data) {
             const sources = data.sources || data.data || data;
             for (const s of Array.isArray(sources) ? sources : []) {
               const sUrl = s.url || s.file || s.link || s.src;
               if (sUrl) results2.push({
                 url: sUrl,
-                server: s.server || detectServer2(sUrl),
+                server: s.server || detectServer(sUrl),
                 quality: s.quality || s.label || cfg.defaultQuality || "HD"
               });
             }
@@ -7049,7 +6158,7 @@ var require_engine = __commonJS({
                     seen.add(u.url);
                     results2.push({
                       url: u.url,
-                      server: server.name !== "unknown" ? server.name : detectServer2(u.url),
+                      server: server.name !== "unknown" ? server.name : detectServer(u.url),
                       quality: ((_e = provider.videos) == null ? void 0 : _e.defaultQuality) || "HD"
                     });
                   }
@@ -7058,13 +6167,13 @@ var require_engine = __commonJS({
               for (const url of ((_f = analysis.findings) == null ? void 0 : _f.videoUrls) || []) {
                 if (url && !seen.has(url)) {
                   seen.add(url);
-                  results2.push({ url, server: detectServer2(url), quality: ((_g = provider.videos) == null ? void 0 : _g.defaultQuality) || "HD" });
+                  results2.push({ url, server: detectServer(url), quality: ((_g = provider.videos) == null ? void 0 : _g.defaultQuality) || "HD" });
                 }
               }
               for (const url of ((_h = analysis.findings) == null ? void 0 : _h.serverUrls) || []) {
                 if (url && !seen.has(url)) {
                   seen.add(url);
-                  results2.push({ url, server: detectServer2(url), quality: ((_i = provider.videos) == null ? void 0 : _i.defaultQuality) || "HD" });
+                  results2.push({ url, server: detectServer(url), quality: ((_i = provider.videos) == null ? void 0 : _i.defaultQuality) || "HD" });
                 }
               }
             }
@@ -7080,7 +6189,7 @@ var require_engine = __commonJS({
         return resolveEmbed(embedUrl, referer);
       });
     }
-    function detectServer2(url) {
+    function detectServer(url) {
       if (!url) return "direct";
       if (/\.(mp4|m3u8|mkv|webm|avi)(\?|$)/i.test(url)) return "direct";
       if (/magnet:/i.test(url)) return "torrent";
@@ -7131,7 +6240,7 @@ var require_engine = __commonJS({
               const t = setTimeout(() => ctrl.abort(), 15e3);
               const res = yield fetch(origin + "/api_validate_pow.php", {
                 method: "POST",
-                headers: __spreadValues({ "User-Agent": UA2, "Content-Type": "application/json" }, cookie ? { "Cookie": cookie } : {}),
+                headers: __spreadValues({ "User-Agent": UA, "Content-Type": "application/json" }, cookie ? { "Cookie": cookie } : {}),
                 body: JSON.stringify(body),
                 signal: ctrl.signal
               });
@@ -7149,7 +6258,7 @@ var require_engine = __commonJS({
           const ctrl3 = new AbortController();
           const t3 = setTimeout(() => ctrl3.abort(), 2e4);
           const dlRes = yield fetch(dlUrl, {
-            headers: __spreadValues({ "User-Agent": UA2 }, cookie ? { "Cookie": cookie } : {}),
+            headers: __spreadValues({ "User-Agent": UA }, cookie ? { "Cookie": cookie } : {}),
             signal: ctrl3.signal
           });
           clearTimeout(t3);
@@ -7165,294 +6274,650 @@ var require_engine = __commonJS({
       });
     }
     module2.exports = {
-      fetchHTML: fetchHTML2,
-      fetchJSON: fetchJSON2,
-      similarity: similarity2,
+      fetchHTML,
+      fetchJSON,
+      similarity,
       resolveTMDB,
-      searchProvider: searchProvider2,
-      getEpisodeUrl: getEpisodeUrl2,
-      extractVideos: extractVideos2,
-      detectServer: detectServer2,
+      searchProvider,
+      getEpisodeUrl,
+      extractVideos,
+      detectServer,
       tryResolveEmbedToDirect
     };
   }
 });
 
-// src/anime/types.js
-var require_types = __commonJS({
-  "src/anime/types.js"(exports2, module2) {
-    var ANIME_SOURCE_PREFIXES = ["animeflv:", "animeav1:", "henaojara:", "tioanime:", "jkanime:", "animejara:"];
-    var ANIME_XREF_PREFIXES = ["anilist:", "kitsu:", "mal:", "anidb:"];
-    var ANIME_LOCAL_PREFIXES = ["ovn-anime:"];
-    var ANIME_PREFIXES = [...ANIME_SOURCE_PREFIXES, ...ANIME_XREF_PREFIXES, ...ANIME_LOCAL_PREFIXES];
-    var ANIME_GENRE_ID = 16;
-    var ANIME_ORIGIN_COUNTRY = "JP";
-    var PIGAMER_BASE = process.env.PIGAMER_BASE || "https://pigamer37.alwaysdata.net";
-    var AMATSU_BASE2 = "https://amatsu.ruka.pw";
-    var ANIME_PROVIDER_IDS = /* @__PURE__ */ new Set([
-      "allanime",
-      "animekai",
-      "animepahe",
-      "animesalt",
-      "animetsu",
-      "animeworld",
-      "anime-sama",
-      "hianime",
-      "allwish",
-      "anikototv",
-      "onetouchtv"
-    ]);
-    var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
-    function isAnimeId2(id) {
-      return ANIME_PREFIXES.some((p) => id.startsWith(p) || id.startsWith(p.replace(":", "|")));
+// src/engines/static-engine.js
+var require_static_engine = __commonJS({
+  "src/engines/static-engine.js"(exports2, module2) {
+    var engine = require_engine();
+    var cheerio = require("cheerio");
+    var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+    function search(provider, query) {
+      return __async(this, null, function* () {
+        return engine.searchProvider(provider, query, null, _mapCategory(provider));
+      });
     }
-    function isAnimeSourceId(id) {
-      return ANIME_SOURCE_PREFIXES.some((p) => id.startsWith(p) || id.startsWith(p.replace(":", "|")));
+    function extractVideos(provider, pageUrl) {
+      return __async(this, null, function* () {
+        return engine.extractVideos(provider, pageUrl);
+      });
     }
-    function isAnimeXrefId(id) {
-      return ANIME_XREF_PREFIXES.some((p) => id.startsWith(p) || id.startsWith(p.replace(":", "|")));
+    function getEpisodeUrl(provider, seriesUrl, season, episode) {
+      return __async(this, null, function* () {
+        return engine.getEpisodeUrl(provider, seriesUrl, season, episode);
+      });
     }
-    function extractSlug2(id) {
-      const parts = id.split(":");
-      return parts.length >= 2 ? parts[1] : id;
+    function validateSearch(provider, query) {
+      return __async(this, null, function* () {
+        try {
+          const searchUrl = provider.baseUrl + provider.search.url.replace("{query}", encodeURIComponent(query));
+          const res = yield fetch(searchUrl, {
+            headers: { "User-Agent": UA, "Accept": "text/html" },
+            signal: AbortSignal.timeout(1e4)
+          });
+          if (!res.ok) return { ok: false, error: `HTTP ${res.status}`, items: 0 };
+          const html = yield res.text();
+          if (html.length < 500) return { ok: false, error: "Short response", items: 0 };
+          const $ = cheerio.load(html);
+          const itemSel = provider.search.itemSelector;
+          let items;
+          try {
+            items = itemSel === "&" ? $(provider.search.linkSelector) : $(itemSel);
+          } catch (e) {
+            items = $();
+          }
+          const titles = [];
+          const titleSel = provider.search.titleSelector;
+          items.slice(0, 5).each((i, el) => {
+            let t;
+            if (titleSel === "&") t = $(el).text().trim();
+            else if (provider.search.titleAttr) t = $(el).find(titleSel).attr(provider.search.titleAttr) || "";
+            else t = $(el).find(titleSel).first().text().trim() || $(el).text().trim();
+            if (t) titles.push(t.substring(0, 60));
+          });
+          return {
+            ok: items.length > 0 && titles.some((t) => t.toLowerCase().includes(query.toLowerCase())),
+            items: items.length,
+            sampleTitles: titles,
+            htmlSize: html.length
+          };
+        } catch (e) {
+          return { ok: false, error: e.message, items: 0 };
+        }
+      });
     }
-    function isAnimeProvider(providerId) {
-      return ANIME_PROVIDER_IDS.has(providerId);
+    function _mapCategory(provider) {
+      const cat = provider.categories[0] || "movie";
+      if (cat === "tvshow") return "tv";
+      if (cat === "anime") return "anime";
+      if (cat === "documentary") return "other";
+      return "movie";
     }
-    module2.exports = {
-      ANIME_SOURCE_PREFIXES,
-      ANIME_XREF_PREFIXES,
-      ANIME_PREFIXES,
-      ANIME_GENRE_ID,
-      ANIME_ORIGIN_COUNTRY,
-      PIGAMER_BASE,
-      AMATSU_BASE: AMATSU_BASE2,
-      ANIME_PROVIDER_IDS,
-      UA: UA2,
-      isAnimeId: isAnimeId2,
-      isAnimeSourceId,
-      isAnimeXrefId,
-      extractSlug: extractSlug2,
-      isAnimeProvider
-    };
+    module2.exports = { search, extractVideos, getEpisodeUrl, validateSearch };
   }
 });
 
-// src/alfa-providers/index.js
-var providers = require_providers();
-var { fetchHTML, fetchJSON, similarity, searchProvider, getEpisodeUrl, extractVideos, detectServer } = require_engine();
-var { isAnimeId, extractSlug, AMATSU_BASE, UA: ANIME_UA } = require_types();
-var TMDB_KEY = process.env.TMDB_KEY || "d80ba92bc7cefe3359668d30d06f3305";
-var UA = ANIME_UA;
-var titleCache = /* @__PURE__ */ new Map();
-var MAX_CACHE = 500;
-function cacheSet(key, value) {
-  if (titleCache.size >= MAX_CACHE) {
-    const firstKey = titleCache.keys().next().value;
-    titleCache.delete(firstKey);
-  }
-  titleCache.set(key, value);
-}
-function resolveTitles(id, mediaType) {
-  return __async(this, null, function* () {
-    const cacheKey = `titles:${mediaType}:${id}`;
-    if (titleCache.has(cacheKey)) return titleCache.get(cacheKey);
-    const variants = [];
-    const seen = /* @__PURE__ */ new Set();
-    function addVariant(title, year) {
-      const t = (title || "").trim();
-      if (t && !seen.has(t.toLowerCase())) {
-        variants.push({ title: t, year: year || "" });
-        seen.add(t.toLowerCase());
+// src/engines/dynamic-engine.js
+var require_dynamic_engine = __commonJS({
+  "src/engines/dynamic-engine.js"(exports2, module2) {
+    var {
+      AutonomousScraper,
+      BrowserPool,
+      StaticScraper,
+      SmartAnalyzer,
+      PageTypeClassifier,
+      createBrowser,
+      createPage,
+      setupResourceBlocking,
+      getSessionMemory
+    } = require_intelligent();
+    var { resolveEmbed, isDirectVideoUrl } = require_embed_resolver();
+    var pool = null;
+    function getPool() {
+      if (!pool) {
+        pool = new BrowserPool(
+          () => createBrowser({ headless: true, stealth: true, timeout: 3e4 }),
+          { min: 0, max: 1, idleTimeoutMs: 5 * 60 * 1e3 }
+        );
       }
+      return pool;
     }
-    if (isAnimeId(id)) {
-      const slug = extractSlug(id);
-      addVariant(slug.replace(/-/g, " "), "");
-      if (slug.includes("-")) addVariant(slug, "");
-      if (id.startsWith("anilist:")) {
-        try {
-          const ac = new AbortController();
-          setTimeout(() => ac.abort(), 4e3);
-          const r = yield fetch(`${AMATSU_BASE}/meta/anime/${id}.json`, { headers: { "User-Agent": UA }, signal: ac.signal });
-          if (r.ok) {
-            const data = yield r.json();
-            if (data == null ? void 0 : data.meta) {
-              if (data.meta.name) addVariant(data.meta.name, "");
-              if (data.meta.englishName && data.meta.englishName !== data.meta.name) addVariant(data.meta.englishName, "");
-              if (data.meta.altName && data.meta.altName !== data.meta.name) addVariant(data.meta.altName, "");
-              if (Array.isArray(data.meta.synonyms)) {
-                for (const syn of data.meta.synonyms) addVariant(syn, "");
+    var DynamicEngine = class {
+      constructor(options = {}) {
+        this.maxDepth = options.maxDepth || 2;
+        this.maxRequests = options.maxRequests || 30;
+        this.timeout = options.timeout || 25e3;
+        this.waitMs = options.waitMs || 4e3;
+        this.memory = getSessionMemory();
+      }
+      /**
+       * Search a provider's site for content matching the query
+       * Uses AutonomousScraper to handle JS rendering, SPA navigation, Cloudflare
+       * 
+       * @param {object} provider - Provider config
+       * @param {string} query - Search query
+       * @returns {Promise<string|null>} Best matching page URL
+       */
+      search(provider, query) {
+        return __async(this, null, function* () {
+          var _a, _b;
+          const searchUrl = provider.baseUrl + provider.search.url.replace("{query}", encodeURIComponent(query));
+          const pool2 = getPool();
+          const instance2 = yield pool2.acquire();
+          try {
+            const page = yield createPage(instance2.browser, { stealth: true });
+            yield setupResourceBlocking(page);
+            const scraper = new AutonomousScraper(page, {
+              searchTerm: query,
+              maxRequests: this.maxRequests,
+              maxDepth: 1,
+              contentGoal: "auto"
+            });
+            const investigation = yield scraper.quickExtract(searchUrl);
+            const classifier = new PageTypeClassifier();
+            const pageType = classifier.analyze([], searchUrl, investigation.title || "");
+            console.log(`[dynamic:search] ${provider.name} \u2192 ${pageType.type} (${pageType.confidence}%)`);
+            const candidates = [
+              ...((_a = investigation.findings) == null ? void 0 : _a.navigationUrls) || [],
+              ...((_b = investigation.findings) == null ? void 0 : _b.serverUrls) || []
+            ].filter((u) => {
+              const lower = u.toLowerCase();
+              const querySlug = query.toLowerCase().replace(/\s+/g, "-");
+              return lower.includes(querySlug) || query.toLowerCase().split(/\s+/).every((w) => lower.includes(w));
+            });
+            yield page.close().catch(() => {
+            });
+            yield pool2.release(instance2);
+            if (candidates.length > 0) {
+              candidates.sort((a, b) => a.length - b.length);
+              return candidates[0];
+            }
+            for (const server of investigation.serverCatalog || []) {
+              for (const u of server.urls) {
+                if (u.url && u.type === "navigation") {
+                  return u.url;
+                }
               }
             }
-          }
-        } catch (e) {
-        }
-      }
-    }
-    try {
-      let tmdbId = id;
-      if (id.startsWith("tt")) {
-        const findRes = yield fetch(`https://api.themoviedb.org/3/find/${id}?api_key=${TMDB_KEY}&external_source=imdb_id`, {
-          headers: { "User-Agent": UA }
-        });
-        if (findRes.ok) {
-          const data = yield findRes.json();
-          const results2 = data == null ? void 0 : data[mediaType === "tv" ? "tv_results" : "movie_results"];
-          if (results2 == null ? void 0 : results2[0]) tmdbId = String(results2[0].id);
-        }
-      }
-      if (id.startsWith("tmdb:")) {
-        tmdbId = id.substring(5);
-      }
-      if (id.startsWith("ovn:")) {
-        tmdbId = id.substring(4);
-      }
-      if (!tmdbId.match(/^\d+$/)) {
-        cacheSet(cacheKey, variants);
-        return variants;
-      }
-      function tmdbFetch(lang) {
-        return __async(this, null, function* () {
-          try {
-            const ac = new AbortController();
-            setTimeout(() => ac.abort(), 6e3);
-            const r = yield fetch(`https://api.themoviedb.org/3/${mediaType === "tv" ? "tv" : "movie"}/${tmdbId}?api_key=${TMDB_KEY}&language=${lang}`, { headers: { "User-Agent": UA }, signal: ac.signal });
-            return r.ok ? r.json() : null;
+            return null;
           } catch (e) {
+            console.warn(`[dynamic:search] ${provider.name} failed: ${e.message}`);
+            try {
+              yield pool2.release(instance2);
+            } catch (e2) {
+            }
             return null;
           }
         });
       }
-      const [enData, esData, jaData] = yield Promise.all([tmdbFetch("en"), tmdbFetch("es"), tmdbFetch("ja")]);
-      let firstYear = "";
-      if (enData) {
-        firstYear = (enData.release_date || enData.first_air_date || "").substring(0, 4);
-        addVariant(enData.title || enData.name || "", firstYear);
-        if (enData.original_title && enData.original_title !== (enData.title || enData.name)) {
-          addVariant(enData.original_title, firstYear);
-        }
-        if (enData.original_name && enData.original_name !== (enData.name || enData.title)) {
-          addVariant(enData.original_name, firstYear);
-        }
-      }
-      if (esData) {
-        addVariant(esData.title || esData.name || "", firstYear);
-      }
-      if (jaData) {
-        const jaTitle = jaData.title || jaData.name || "";
-        if (jaTitle && !seen.has(jaTitle.toLowerCase())) {
-          addVariant(jaTitle, firstYear);
-        }
-      }
-      if (firstYear) {
-        for (const v of variants) {
-          if (!v.year) v.year = firstYear;
-        }
-      }
-    } catch (e) {
-    }
-    if (variants.length === 0 && !id.match(/^\d+$/)) {
-      variants.push({ title: id, year: "" });
-    }
-    cacheSet(cacheKey, variants);
-    return variants;
-  });
-}
-function mapTypeToCategory(type) {
-  if (type === "movie") return "movie";
-  if (type === "series" || type === "tv") return "tvshow";
-  if (type === "anime") return "anime";
-  return "movie";
-}
-function mapTypeToTMDB(type) {
-  if (type === "series" || type === "tv" || type === "anime") return "tv";
-  return "movie";
-}
-function scrapeAlfaProviders(type, id, season, episode) {
-  return __async(this, null, function* () {
-    const category = mapTypeToCategory(type);
-    const mediaType = mapTypeToTMDB(type);
-    const titleVariants = yield resolveTitles(id, mediaType);
-    if (!titleVariants.length || !titleVariants[0].title) return [];
-    const activeProviders = providers.filter((p) => {
-      if (!p.active || p.adult) return false;
-      return p.categories.includes(category);
-    }).sort((a, b) => {
-      const ta = a.videos.type === "torrent" || a.videos.type === "dontorrent";
-      const tb = b.videos.type === "torrent" || b.videos.type === "dontorrent";
-      if (ta && !tb) return -1;
-      if (!ta && tb) return 1;
-      return 0;
-    });
-    if (!activeProviders.length) return [];
-    const results2 = [];
-    const chunks = chunkArray(activeProviders, 4);
-    const PER_PROVIDER_TIMEOUT = 1e4;
-    for (const chunk of chunks) {
-      const chunkResults = yield Promise.allSettled(
-        chunk.map((provider) => __async(null, null, function* () {
-          const providerTimer = new Promise(
-            (_, reject) => setTimeout(() => reject(new Error("provider timeout")), PER_PROVIDER_TIMEOUT)
-          );
+      /**
+       * Extract video streams from a content page
+       * Uses AutonomousScraper.investigate for full exploration:
+       *   - Clicks server buttons
+       *   - Captures network responses (video/mp4/m3u8)
+       *   - Extracts iframe sources
+       *   - Discovers embed links
+       *   - Resolves embeds to direct URLs
+       * 
+       * @param {object} provider - Provider config
+       * @param {string} pageUrl - Content page URL
+       * @returns {Promise<Array>} Array of { url, server, quality } objects
+       */
+      extractVideos(provider, pageUrl) {
+        return __async(this, null, function* () {
+          var _a, _b, _c, _d, _e, _f, _g, _h;
+          const pool2 = getPool();
+          const instance2 = yield pool2.acquire();
           try {
-            const result = yield Promise.race([
-              (() => __async(null, null, function* () {
-                let pageUrl = null;
-                const validVariants = titleVariants.filter((tv) => tv.title);
-                if (validVariants.length === 1) {
-                  pageUrl = yield searchProvider(provider, validVariants[0].title, validVariants[0].year, mediaType);
-                } else if (validVariants.length > 1) {
-                  const searchResults = yield Promise.allSettled(
-                    validVariants.map((tv) => searchProvider(provider, tv.title, tv.year, mediaType))
-                  );
-                  for (const r of searchResults) {
-                    if (r.status === "fulfilled" && r.value) {
-                      pageUrl = r.value;
-                      break;
-                    }
+            const page = yield createPage(instance2.browser, { stealth: true });
+            yield setupResourceBlocking(page);
+            const capturedVideos = /* @__PURE__ */ new Set();
+            page.on("response", (response) => {
+              const ct = response.headers()["content-type"] || "";
+              if (ct.includes("video") || ct.includes("mpegurl")) {
+                capturedVideos.add(response.url());
+              }
+            });
+            const scraper = new AutonomousScraper(page, {
+              maxRequests: this.maxRequests,
+              maxDepth: this.maxDepth,
+              contentGoal: "video"
+            });
+            const investigation = yield scraper.investigate(pageUrl);
+            yield page.close().catch(() => {
+            });
+            yield pool2.release(instance2);
+            const results2 = [];
+            const seen = /* @__PURE__ */ new Set();
+            for (const url of capturedVideos) {
+              if (!seen.has(url)) {
+                seen.add(url);
+                results2.push({ url, server: "direct", quality: ((_a = provider.videos) == null ? void 0 : _a.defaultQuality) || "HD" });
+              }
+            }
+            for (const server of investigation.serverCatalog || []) {
+              for (const u of server.urls) {
+                if (u.url && !seen.has(u.url) && u.type !== "cdn" && u.type !== "tracking" && u.type !== "social") {
+                  seen.add(u.url);
+                  results2.push({
+                    url: u.url,
+                    server: server.name !== "unknown" ? server.name : this._detectServer(u.url),
+                    quality: ((_b = provider.videos) == null ? void 0 : _b.defaultQuality) || "HD"
+                  });
+                }
+              }
+            }
+            for (const url of ((_c = investigation.findings) == null ? void 0 : _c.videoUrls) || []) {
+              if (url && !seen.has(url)) {
+                seen.add(url);
+                results2.push({ url, server: "direct", quality: ((_d = provider.videos) == null ? void 0 : _d.defaultQuality) || "HD" });
+              }
+            }
+            for (const url of ((_e = investigation.findings) == null ? void 0 : _e.serverUrls) || []) {
+              if (url && !seen.has(url)) {
+                seen.add(url);
+                results2.push({ url, server: this._detectServer(url), quality: ((_f = provider.videos) == null ? void 0 : _f.defaultQuality) || "HD" });
+              }
+            }
+            for (const r of results2) {
+              if (r.server !== "direct" && !r.url.includes(".mp4") && !r.url.includes(".m3u8")) {
+                try {
+                  const direct = yield resolveEmbed(r.url, pageUrl);
+                  if (direct && isDirectVideoUrl(direct)) {
+                    r.url = direct;
+                    r.server = "direct";
                   }
+                } catch (e) {
                 }
-                if (!pageUrl) return [];
-                let targetUrl = pageUrl;
-                if ((category === "tvshow" || category === "anime") && season && episode) {
-                  const epUrl = yield getEpisodeUrl(provider, pageUrl, season, episode);
-                  if (epUrl) targetUrl = epUrl;
-                }
-                const videos = yield extractVideos(provider, targetUrl);
-                if (!videos.length) return [];
-                return videos.map((v) => __spreadProps(__spreadValues(__spreadValues(__spreadValues({
-                  name: `${provider.title}
-${v.server || detectServer(v.url)}`,
-                  title: `${v.quality || "HD"}
-\u2699\uFE0F ${v.server || detectServer(v.url)}
-\u{1F517} ${provider.title}`,
-                  description: v.lang || (category === "anime" && !(Array.isArray(provider.language) && provider.language.includes("*")) ? [.../* @__PURE__ */ new Set([...Array.isArray(provider.language) ? provider.language : [], "ja"])].join(",") : Array.isArray(provider.language) ? provider.language.join(",") : "")
-                }, v.url && !v.infoHash ? { url: v.url } : {}), v.infoHash ? { infoHash: v.infoHash } : {}), v.sources ? { sources: v.sources } : {}), {
-                  behaviorHints: __spreadValues({
-                    notWebReady: !v.infoHash && v.server !== "direct",
-                    bingeGroup: `alfa|${provider.name}|${v.server || detectServer(v.url)}`
-                  }, v.filename ? { filename: v.filename } : {})
-                }));
-              }))(),
-              providerTimer
-            ]);
-            return result;
+              }
+            }
+            console.log(`[dynamic:video] ${provider.name} \u2192 ${results2.length} videos from ${((_g = investigation.serverCatalog) == null ? void 0 : _g.length) || 0} servers (${((_h = investigation.steps) == null ? void 0 : _h.length) || 0} steps, ${investigation.durationMs}ms)`);
+            return results2;
           } catch (e) {
+            console.warn(`[dynamic:video] ${provider.name} failed: ${e.message}`);
+            try {
+              yield pool2.release(instance2);
+            } catch (e2) {
+            }
             return [];
           }
-        }))
-      );
-      for (const r of chunkResults) {
-        if (r.status === "fulfilled") results2.push(...r.value);
+        });
+      }
+      /**
+       * Validate if a provider's site is accessible via dynamic engine
+       */
+      validate(provider) {
+        return __async(this, null, function* () {
+          try {
+            const url = yield this.search(provider, "test");
+            return { accessible: !!url, url };
+          } catch (e) {
+            return { accessible: false };
+          }
+        });
+      }
+      _detectServer(url) {
+        if (!url) return "unknown";
+        if (/\.(mp4|m3u8|mkv|webm)(\?|$)/i.test(url)) return "direct";
+        if (/magnet:/i.test(url)) return "torrent";
+        const servers2 = [
+          "streamwish",
+          "filemoon",
+          "doodstream",
+          "streamtape",
+          "mixdrop",
+          "upstream",
+          "voe",
+          "okru",
+          "vidhide",
+          "vidpro",
+          "netu",
+          "yourupload",
+          "uqload",
+          "mega",
+          "jawcloud",
+          "fembed",
+          "gvideo",
+          "goodstream",
+          "vimeos",
+          "fastream"
+        ];
+        const lower = url.toLowerCase();
+        for (const s of servers2) if (lower.includes(s)) return s;
+        return "embed";
+      }
+    };
+    var instance = null;
+    function getDynamicEngine() {
+      if (!instance) instance = new DynamicEngine();
+      return instance;
+    }
+    module2.exports = {
+      DynamicEngine,
+      getDynamicEngine,
+      // Shorthand for router compatibility
+      search: (provider, query) => getDynamicEngine().search(provider, query),
+      extractVideos: (provider, pageUrl) => getDynamicEngine().extractVideos(provider, pageUrl)
+    };
+  }
+});
+
+// src/engines/intelligent-engine.js
+var require_intelligent_engine = __commonJS({
+  "src/engines/intelligent-engine.js"(exports2, module2) {
+    var cheerio = require("cheerio");
+    var { StaticScraper, AutonomousScraper, SessionMemory, SmartAnalyzer, createBrowser, createPage, setupResourceBlocking } = require_intelligent();
+    var { resolveEmbed, isDirectVideoUrl } = require_embed_resolver();
+    function search(provider, query) {
+      return __async(this, null, function* () {
+        var _a, _b, _c, _d;
+        const searchUrl = provider.baseUrl + provider.search.url.replace("{query}", encodeURIComponent(query));
+        const ss = new StaticScraper();
+        const analysis = yield ss.analyze(searchUrl);
+        if (analysis.urlsFound === 0) return null;
+        const querySlug = query.toLowerCase().replace(/\s+/g, "-");
+        const allUrls = [
+          ...((_a = analysis.findings) == null ? void 0 : _a.navigationUrls) || [],
+          ...((_b = analysis.findings) == null ? void 0 : _b.serverUrls) || []
+        ];
+        const candidates = allUrls.filter((u) => {
+          const lower = u.toLowerCase();
+          return lower.includes(querySlug) || query.toLowerCase().split(/\s+/).every((w) => lower.includes(w));
+        });
+        if (candidates.length > 0) {
+          candidates.sort((a, b) => a.length - b.length);
+          return candidates[0];
+        }
+        try {
+          const browser = yield createBrowser({ headless: true, stealth: true, timeout: 2e4 });
+          const page = yield createPage(browser);
+          yield setupResourceBlocking(page);
+          const autonomous = new AutonomousScraper(page, {
+            searchTerm: query,
+            maxRequests: 20,
+            maxDepth: 1
+          });
+          const investigation = yield autonomous.quickExtract(searchUrl);
+          yield browser.close().catch(() => {
+          });
+          const discoveredUrls = [
+            ...((_c = investigation.findings) == null ? void 0 : _c.navigationUrls) || [],
+            ...((_d = investigation.findings) == null ? void 0 : _d.serverUrls) || []
+          ];
+          const matches = discoveredUrls.filter((u) => {
+            const lower = u.toLowerCase();
+            return lower.includes(querySlug) || query.toLowerCase().split(/\s+/).every((w) => lower.includes(w));
+          });
+          if (matches.length > 0) {
+            matches.sort((a, b) => a.length - b.length);
+            return matches[0];
+          }
+          return null;
+        } catch (e) {
+          console.warn(`[intelligent] Browser search failed: ${e.message}`);
+          return null;
+        }
+      });
+    }
+    function extractVideos(provider, pageUrl) {
+      return __async(this, null, function* () {
+        var _a, _b, _c, _d, _e, _f, _g, _h;
+        const results2 = [];
+        const seen = /* @__PURE__ */ new Set();
+        const ss = new StaticScraper();
+        const analysis = yield ss.analyze(pageUrl);
+        if (analysis.urlsFound === 0) return [];
+        for (const server of analysis.serverCatalog || []) {
+          for (const u of server.urls) {
+            if (u.url && !seen.has(u.url) && u.type !== "unknown" && u.type !== "cdn" && u.type !== "tracking") {
+              seen.add(u.url);
+              results2.push({
+                url: u.url,
+                server: server.name !== "unknown" ? server.name : _detectServer(u.url),
+                quality: ((_a = provider.videos) == null ? void 0 : _a.defaultQuality) || "HD"
+              });
+            }
+          }
+        }
+        for (const url of ((_b = analysis.findings) == null ? void 0 : _b.videoUrls) || []) {
+          if (url && !seen.has(url)) {
+            seen.add(url);
+            results2.push({ url, server: _detectServer(url), quality: ((_c = provider.videos) == null ? void 0 : _c.defaultQuality) || "HD" });
+          }
+        }
+        for (const url of ((_d = analysis.findings) == null ? void 0 : _d.serverUrls) || []) {
+          if (url && !seen.has(url)) {
+            seen.add(url);
+            results2.push({ url, server: _detectServer(url), quality: ((_e = provider.videos) == null ? void 0 : _e.defaultQuality) || "HD" });
+          }
+        }
+        if (results2.length === 0) {
+          try {
+            const browser = yield createBrowser({ headless: true, stealth: true, timeout: 2e4 });
+            const page = yield createPage(browser);
+            yield setupResourceBlocking(page);
+            const autonomous = new AutonomousScraper(page, {
+              maxRequests: 15,
+              maxDepth: 1
+            });
+            const investigation = yield autonomous.investigate(pageUrl);
+            yield browser.close().catch(() => {
+            });
+            for (const server of investigation.serverCatalog || []) {
+              for (const u of server.urls) {
+                if (u.url && !seen.has(u.url)) {
+                  seen.add(u.url);
+                  results2.push({
+                    url: u.url,
+                    server: server.name !== "unknown" ? server.name : _detectServer(u.url),
+                    quality: ((_f = provider.videos) == null ? void 0 : _f.defaultQuality) || "HD"
+                  });
+                }
+              }
+            }
+            for (const url of ((_g = investigation.findings) == null ? void 0 : _g.videoUrls) || []) {
+              if (url && !seen.has(url)) {
+                seen.add(url);
+                results2.push({ url, server: _detectServer(url), quality: ((_h = provider.videos) == null ? void 0 : _h.defaultQuality) || "HD" });
+              }
+            }
+          } catch (e) {
+            console.warn(`[intelligent] Browser video extraction failed: ${e.message}`);
+          }
+        }
+        for (const r of results2) {
+          if (!r.url.includes(".mp4") && !r.url.includes(".m3u8") && r.url.startsWith("http")) {
+            try {
+              const direct = yield resolveEmbed(r.url, pageUrl);
+              if (direct && isDirectVideoUrl(direct)) {
+                r.url = direct;
+                r.server = "direct";
+              }
+            } catch (e) {
+            }
+          }
+        }
+        return results2;
+      });
+    }
+    function _detectServer(url) {
+      if (!url) return "unknown";
+      if (/\.(mp4|m3u8|mkv|webm)(\?|$)/i.test(url)) return "direct";
+      if (/magnet:/i.test(url)) return "torrent";
+      const patterns = [
+        "streamwish",
+        "filemoon",
+        "doodstream",
+        "streamtape",
+        "mixdrop",
+        "upstream",
+        "voe",
+        "okru",
+        "vidhide",
+        "vidpro",
+        "netu",
+        "yourupload",
+        "uqload",
+        "mega",
+        "jawcloud",
+        "fembed",
+        "gvideo"
+      ];
+      const lower = url.toLowerCase();
+      for (const p of patterns) if (lower.includes(p)) return p;
+      return "embed";
+    }
+    module2.exports = { search, extractVideos };
+  }
+});
+
+// src/engines/router.js
+var require_router = __commonJS({
+  "src/engines/router.js"(exports2, module2) {
+    var { getProviderMemory } = require_provider_memory();
+    var StaticEngine;
+    var DynamicEngine;
+    var IntelligentEngine;
+    function _loadEngines() {
+      if (!StaticEngine) {
+        StaticEngine = require_static_engine();
+        DynamicEngine = require_dynamic_engine();
+        IntelligentEngine = require_intelligent_engine();
       }
     }
-    return results2.slice(0, 60);
-  });
-}
-function chunkArray(arr, size) {
-  const chunks = [];
-  for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
-  return chunks;
-}
-module.exports = scrapeAlfaProviders;
+    function execute(_0, _1) {
+      return __async(this, arguments, function* (provider, phase, params = {}) {
+        _loadEngines();
+        const memory = getProviderMemory();
+        const providerName = provider.name;
+        let engineOrder = memory.getEngineOrder(providerName);
+        const stats = memory.getProviderStats(providerName);
+        if (!stats || stats.totalAttempts < 3) {
+          engineOrder = ["static", "intelligent", "dynamic"];
+        }
+        console.log(`[router] ${providerName}/${phase} \u2192 order: ${engineOrder.join(" \u2192 ")}`);
+        let lastError = null;
+        let lastResult = null;
+        for (const engine of engineOrder) {
+          const start = Date.now();
+          let result = null;
+          try {
+            switch (engine) {
+              case "static":
+                result = yield _executeStatic(provider, phase, params);
+                break;
+              case "dynamic":
+                result = yield _executeDynamic(provider, phase, params);
+                break;
+              case "intelligent":
+                result = yield _executeIntelligent(provider, phase, params);
+                break;
+              default:
+                continue;
+            }
+            const duration = Date.now() - start;
+            const success = _isResultValid(result, phase);
+            memory.recordEngineAttempt(
+              providerName,
+              engine,
+              phase,
+              success,
+              duration,
+              _countResults(result, phase)
+            );
+            if (success) {
+              console.log(`[router] ${providerName}/${phase} \u2713 ${engine} (${duration}ms)`);
+              return { result, engine, duration, success: true };
+            }
+            console.log(`[router] ${providerName}/${phase} \u2717 ${engine} (${duration}ms) \u2192 falling back`);
+            lastResult = result;
+          } catch (e) {
+            lastError = e;
+            const duration = Date.now() - start;
+            memory.recordEngineAttempt(providerName, engine, phase, false, duration, 0);
+            console.log(`[router] ${providerName}/${phase} \u2717 ${engine} error: ${e.message}`);
+          }
+        }
+        memory.recordEngineAttempt(providerName, "all", phase, false, 0, 0);
+        return {
+          result: lastResult || (phase === "search" ? null : []),
+          engine: "none",
+          duration: 0,
+          success: false
+        };
+      });
+    }
+    function _executeStatic(provider, phase, params) {
+      return __async(this, null, function* () {
+        if (phase === "search") {
+          return StaticEngine.search(provider, params.query);
+        } else if (phase === "video") {
+          return StaticEngine.extractVideos(provider, params.pageUrl);
+        }
+        return null;
+      });
+    }
+    function _executeDynamic(provider, phase, params) {
+      return __async(this, null, function* () {
+        if (phase === "search") {
+          return DynamicEngine.search(provider, params.query);
+        } else if (phase === "video") {
+          return DynamicEngine.extractVideos(provider, params.pageUrl);
+        }
+        return null;
+      });
+    }
+    function _executeIntelligent(provider, phase, params) {
+      return __async(this, null, function* () {
+        if (phase === "search") {
+          return IntelligentEngine.search(provider, params.query);
+        } else if (phase === "video") {
+          return IntelligentEngine.extractVideos(provider, params.pageUrl);
+        }
+        return null;
+      });
+    }
+    function _isResultValid(result, phase) {
+      if (!result) return false;
+      if (phase === "search") {
+        return typeof result === "string" && result.length > 10 && result.startsWith("http");
+      } else if (phase === "video") {
+        return Array.isArray(result) && result.length > 0;
+      }
+      return false;
+    }
+    function _countResults(result, phase) {
+      if (phase === "search") return result ? 1 : 0;
+      if (phase === "video") return Array.isArray(result) ? result.length : 0;
+      return 0;
+    }
+    module2.exports = {
+      execute,
+      getProviderMemory
+      // Expose for health checks
+    };
+  }
+});
+
+// src/engines/index.js
+var staticEngine = require_static_engine();
+var dynamicEngine = require_dynamic_engine();
+var intelligentEngine = require_intelligent_engine();
+var router = require_router();
+module.exports = {
+  // ─── Individual engines ────────────────────────────────────
+  static: staticEngine,
+  dynamic: dynamicEngine,
+  intelligent: intelligentEngine,
+  // ─── Smart router (recommended) ────────────────────────────
+  execute: router.execute,
+  getProviderMemory: router.getProviderMemory,
+  // ─── Direct engine access (for testing/specific use) ───────
+  searchStatic: staticEngine.search,
+  extractStatic: staticEngine.extractVideos,
+  searchDynamic: dynamicEngine.search,
+  extractDynamic: dynamicEngine.extractVideos,
+  searchIntelligent: intelligentEngine.search,
+  extractIntelligent: intelligentEngine.extractVideos
+};

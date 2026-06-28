@@ -84,21 +84,47 @@ async function fetchHTML(url, opts = {}) {
     const res = await fetch(url, { headers, signal: ctrl.signal });
     clearTimeout(t);
     if (!res.ok) {
-      // Fallback to Scrapeless if direct fetch fails
+      // Fallback to Scrapeless if direct fetch fails (403, 503, etc.)
       if (scrapeless.isEnabled()) {
         const scraped = await scrapeless.scrape(url, { timeout: opts.timeout || 30000 });
         if (scraped) return scraped;
+      }
+      // Fallback to Puppeteer (own browser) for HTTP errors (Cloudflare 403, etc.)
+      if ([403, 503, 429, 502].includes(res.status)) {
+        try {
+          console.log(`[engine] HTTP ${res.status} on ${domain}, trying Puppeteer bypass...`);
+          const { fetchWithPuppeteer } = require('../puppeteer-fallback');
+          const rendered = await fetchWithPuppeteer(url, { waitMs: 4000, timeout: 20000 });
+          if (rendered && rendered.length > 500) return rendered;
+        } catch(e) {
+          console.warn(`[engine] Puppeteer fallback HTTP ${res.status} failed: ${e.message}`);
+        }
       }
       return null;
     }
     let html = await res.text();
 
-    // Cloudflare challenge detected — fallback to Scrapeless
-    if ((html.includes('challenge-platform') || html.includes('turnstile') || html.includes('Just a moment')) && html.length < 10000) {
+    // Cloudflare/Turnstile block detection — only trigger if page is genuinely blocked
+    // (Many sites include CF scripts but still render content server-side)
+    const isReallyBlocked = (html.length < 1000) || 
+      (html.includes('Just a moment') && html.length < 5000) ||
+      (html.includes('Verifying you are human') && html.length < 5000);
+    const hasCF = html.includes('challenge-platform') || html.includes('turnstile') || html.includes('cf-browser-verify');
+    
+    if (hasCF && isReallyBlocked) {
       if (scrapeless.isEnabled()) {
-        console.log(`[engine] Cloudflare detected on ${domain}, trying Scrapeless...`);
+        console.log(`[engine] Cloudflare block on ${domain}, trying Scrapeless...`);
         const scraped = await scrapeless.scrape(url, { timeout: opts.timeout || 30000 });
         if (scraped) return scraped;
+      }
+      // Fallback to Puppeteer (own browser — free, bypasses Turnstile)
+      try {
+        console.log(`[engine] Cloudflare block on ${domain}, trying Puppeteer bypass...`);
+        const { fetchWithPuppeteer } = require('../puppeteer-fallback');
+        const rendered = await fetchWithPuppeteer(url, { waitMs: 4000, timeout: 20000 });
+        if (rendered && rendered.length > 500) return rendered;
+      } catch(e) {
+        console.warn(`[engine] Puppeteer fallback failed for ${domain}: ${e.message}`);
       }
     }
 
@@ -121,13 +147,23 @@ async function fetchHTML(url, opts = {}) {
     }
 
     return html;
-  } catch {
-    // Network error — fallback to Scrapeless
+  } catch (e) {
+    // Network error — try Scrapeless first, then Puppeteer
     if (scrapeless.isEnabled()) {
       try {
         const scraped = await scrapeless.scrape(url, { timeout: opts.timeout || 30000 });
         if (scraped) return scraped;
       } catch {}
+    }
+    // Try Puppeteer as last resort for network errors
+    try {
+      const domain = typeof url === 'string' ? new URL(url).hostname : '';
+      console.log(`[engine] Network error on ${domain}, trying Puppeteer...`);
+      const { fetchWithPuppeteer } = require('../puppeteer-fallback');
+      const rendered = await fetchWithPuppeteer(url, { waitMs: 4000, timeout: 20000 });
+      if (rendered && rendered.length > 500) return rendered;
+    } catch(e2) {
+      // All fallbacks exhausted
     }
     return null;
   }
@@ -903,6 +939,51 @@ async function extractVideos(provider, pageUrl) {
     if (res.status === 'fulfilled' && res.value) {
       embeds[i].url = res.value;
       embeds[i].server = 'direct';
+    }
+  }
+
+  // ─── Intelligent fallback: if cheerio extraction found nothing, try StaticScraper ───
+  if (results.length === 0 && provider.videos?.type !== 'torrent' && provider.videos?.type !== 'dontorrent') {
+    try {
+      const { StaticScraper } = require('../intelligent');
+      const ss = new StaticScraper();
+      const analysis = await ss.analyze(pageUrl);
+      if (analysis && analysis.urlsFound > 0) {
+        const seen = new Set();
+        
+        // 1. Server catalog: known embed domains with valid URLs
+        for (const server of (analysis.serverCatalog || [])) {
+          for (const u of server.urls) {
+            if (u.url && !seen.has(u.url) && 
+                (u.type === 'embed' || u.type === 'direct-video' || u.type === 'stream')) {
+              seen.add(u.url);
+              results.push({
+                url: u.url,
+                server: server.name !== 'unknown' ? server.name : detectServer(u.url),
+                quality: provider.videos?.defaultQuality || 'HD',
+              });
+            }
+          }
+        }
+        
+        // 2. Direct video URLs from findings (.mp4, .m3u8, etc.)
+        for (const url of (analysis.findings?.videoUrls || [])) {
+          if (url && !seen.has(url)) {
+            seen.add(url);
+            results.push({ url, server: detectServer(url), quality: provider.videos?.defaultQuality || 'HD' });
+          }
+        }
+        
+        // 3. Server/embed URLs from findings (classified by SmartAnalyzer)
+        for (const url of (analysis.findings?.serverUrls || [])) {
+          if (url && !seen.has(url)) {
+            seen.add(url);
+            results.push({ url, server: detectServer(url), quality: provider.videos?.defaultQuality || 'HD' });
+          }
+        }
+      }
+    } catch(e) {
+      // Intelligent fallback failed silently — keep original empty results
     }
   }
 

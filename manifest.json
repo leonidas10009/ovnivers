@@ -2,7 +2,7 @@
   "id": "com.ovnivers.allinone",
   "version": "1.14.5",
   "name": "Ovnivers All-in-One",
-  "description": "Stream provider: 62 scrapers + Alfa bridge + backend scrapers + Pigamer37 anime proxy (AnimeFLV/AnimeAV1/TioAnime/Henaojara). Movies, TV, anime, multi-language.",
+  "description": "Stream provider: 74 web scrapers + Hermes bridge + backend scrapers + native anime (JKAnime/TioAnime/AnimeAV1/AnimeJara). Movies, TV, anime, multi-language.",
   "logo": "https://raw.githubusercontent.com/leonidas10009/ovnivers/main/logo.png",
   "resources": [
     {
@@ -83,7 +83,7 @@
     {
       "id": "ovnivers-local",
       "name": "Ovnivers Red Local",
-      "description": "19 scrapers locales optimizados para Android/IP residencial (sin cheerio, regex-based). Movies, series, anime en español. Cloudflare sin Turnstile.",
+      "description": "19 local scrapers optimized for Android/residential IP (regex-based, no cheerio). Movies, series, anime in Spanish. No Turnstile.",
       "version": "1.13.0",
       "author": "ovnivers",
       "supportedTypes": [
@@ -1466,8 +1466,8 @@
     },
     {
       "id": "alfa-providers",
-      "name": "Alfa Providers (74)",
-      "description": "74 scrapers from Alfa Kodi addon: movies, series, anime, documentaries, torrents. Multi-language (ES, LAT, VOSE).",
+      "name": "Web Providers (74)",
+      "description": "74 web scrapers: movies, series, anime, documentaries, torrents. Multi-language (ES, LAT, VOSE).",
       "version": "1.0.0",
       "author": "Ovnivers Team",
       "supportedTypes": [
