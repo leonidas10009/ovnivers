@@ -713,6 +713,26 @@ async function search(query, mediaType, imdbId, year, season, episode, isAnime =
     { name: 'EliteTorrent', fn: () => scrapeEliteTorrent(query) },
   ];
 
+  // ─── Cardigann engine: 522+ tracker definitions (optional) ───
+  // Place YML files in src/torrent-providers/definitions/ to activate
+  try {
+    const { loadDefinitions, searchCardigann } = require('./cardigann-engine');
+    const defsDir = require('path').join(__dirname, 'definitions');
+    const cardigannDefs = loadDefinitions(defsDir);
+    if (cardigannDefs.length > 0) {
+      // Add top trackers as additional tasks
+      const topTrackers = cardigannDefs
+        .filter(d => d.type === 'public')
+        .slice(0, 10); // Limit to avoid overwhelming
+      for (const def of topTrackers) {
+        tasks.push({
+          name: def.name,
+          fn: () => searchCardigann(def, query, mediaType),
+        });
+      }
+    }
+  } catch { /* Cardigann optional */ }
+
   if (mediaType === 'tv' && imdbId) {
     tasks.push({ name: 'EZTV', fn: () => scrapeEZTV(imdbId) });
   }

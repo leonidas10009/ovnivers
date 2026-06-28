@@ -1,10 +1,11 @@
 /**
  * torrent-providers - Built from src/torrent-providers/
- * Generated: 2026-06-28T15:01:35.274Z
+ * Generated: 2026-06-28T15:05:59.935Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
 var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
+var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __propIsEnum = Object.prototype.propertyIsEnumerable;
@@ -21,6 +22,9 @@ var __spreadValues = (a, b) => {
   return a;
 };
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
+var __commonJS = (cb, mod) => function __require() {
+  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+};
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve, reject) => {
     var fulfilled = (value) => {
@@ -41,6 +45,257 @@ var __async = (__this, __arguments, generator) => {
     step((generator = generator.apply(__this, __arguments)).next());
   });
 };
+
+// src/torrent-providers/cardigann-engine.js
+var require_cardigann_engine = __commonJS({
+  "src/torrent-providers/cardigann-engine.js"(exports2, module2) {
+    var cheerio2 = require("cheerio");
+    var fs = require("fs");
+    var path = require("path");
+    var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/125.0.0.0 Safari/537.36";
+    function parseDefinition(ymlContent) {
+      const def = _parseSimpleYaml(ymlContent);
+      if (!def.id || !def.search) return null;
+      const config = {
+        id: def.id,
+        name: def.name || def.id,
+        description: def.description || "",
+        type: def.type || "public",
+        language: def.language || "en-US",
+        mirrors: def.links || [],
+        categories: _parseCategories(def.caps),
+        search: _parseSearch(def.search),
+        download: _parseDownload(def.download),
+        settings: def.settings || []
+      };
+      return config;
+    }
+    function searchCardigann(config, query, mediaType) {
+      return __async(this, null, function* () {
+        const results = [];
+        const mirrors = config.mirrors.slice(0, 3);
+        for (const mirror of mirrors) {
+          if (results.length > 0) break;
+          const searchCfg = config.search;
+          if (!searchCfg || !searchCfg.rows) continue;
+          const searchUrl = _buildSearchUrl(mirror, searchCfg, query, mediaType);
+          if (!searchUrl) continue;
+          try {
+            const res = yield fetch(searchUrl, {
+              headers: { "User-Agent": UA2, "Accept": "text/html,application/xhtml+xml" },
+              signal: AbortSignal.timeout(12e3)
+            });
+            if (!res.ok) continue;
+            const html = yield res.text();
+            const $ = cheerio2.load(html);
+            const rows = $(searchCfg.rows);
+            if (!rows.length) continue;
+            rows.each((i, row) => {
+              if (i > 50) return false;
+              const item = _extractFields($, row, searchCfg.fields, config.download);
+              if (item && item.title && (item.magnet || item.infoHash || item.downloadUrl)) {
+                item.indexer = config.name;
+                item.mirror = mirror;
+                results.push(item);
+              }
+            });
+          } catch (e) {
+            continue;
+          }
+        }
+        return results;
+      });
+    }
+    function _parseSimpleYaml(content) {
+      const lines = content.split("\n");
+      const root = {};
+      const stack = [{ obj: root, indent: -1 }];
+      for (const line of lines) {
+        if (!line.trim() || line.trim().startsWith("#")) continue;
+        const indent = line.search(/\S/);
+        const trimmed = line.trim();
+        while (stack.length > 1 && indent <= stack[stack.length - 1].indent) {
+          stack.pop();
+        }
+        const current = stack[stack.length - 1].obj;
+        const isArray = Array.isArray(current);
+        const kvMatch = trimmed.match(/^([\w_-]+)\s*:\s*(.*)/);
+        if (kvMatch) {
+          const key = kvMatch[1];
+          let val = kvMatch[2].trim();
+          if (val.startsWith('"') && val.endsWith('"') || val.startsWith("'") && val.endsWith("'")) {
+            val = val.slice(1, -1);
+          }
+          if (val === "") {
+            current[key] = {};
+          } else if (val === "[]") {
+            current[key] = [];
+          } else if (!isNaN(Number(val)) && val !== "") {
+            current[key] = Number(val);
+          } else if (val === "true") current[key] = true;
+          else if (val === "false") current[key] = false;
+          else current[key] = val;
+          continue;
+        }
+        const listMatch = trimmed.match(/^-\s*(.*)/);
+        if (listMatch) {
+          if (!isArray) {
+            const parentKey = Object.keys(current).pop();
+            if (parentKey && typeof current[parentKey] === "object" && !Array.isArray(current[parentKey])) {
+            }
+          }
+          const itemVal = listMatch[1].trim();
+          const itemKv = itemVal.match(/^([\w_-]+)\s*:\s*(.*)/);
+          if (itemKv) {
+            const itemObj = {};
+            let v = itemKv[2].trim();
+            if (v.startsWith('"') && v.endsWith('"') || v.startsWith("'") && v.endsWith("'")) v = v.slice(1, -1);
+            itemObj[itemKv[1]] = v || "";
+            if (isArray) current.push(itemObj);
+            else {
+              current[lastKey] = current[lastKey] || [];
+              current[lastKey].push(itemObj);
+            }
+          } else if (itemVal) {
+            if (isArray) current.push(itemVal);
+            else current[lastKey] = (current[lastKey] || []).concat([itemVal]);
+          }
+        }
+      }
+      return root;
+    }
+    function _parseCategories(caps) {
+      if (!caps || !caps.categorymappings) return ["movie", "tv"];
+      const cats = /* @__PURE__ */ new Set();
+      for (const m of caps.categorymappings) {
+        const cat = m.cat || "";
+        if (cat.includes("Movies")) cats.add("movie");
+        if (cat.includes("TV")) cats.add("tv");
+        if (cat.includes("Anime")) cats.add("anime");
+      }
+      return cats.size > 0 ? [...cats] : ["movie", "tv"];
+    }
+    function _parseSearch(search2) {
+      var _a;
+      if (!search2) return null;
+      const paths = search2.paths || [];
+      const searchPath = paths.find((p) => p.path && p.path.includes(".Keywords")) || paths[0];
+      const keywordPath = searchPath ? searchPath.path : "/search/{query}/1/";
+      return {
+        pathTemplate: keywordPath,
+        rows: ((_a = search2.rows) == null ? void 0 : _a.selector) || "tr",
+        fields: search2.fields || {},
+        keywordsfilters: search2.keywordsfilters || []
+      };
+    }
+    function _parseDownload(download) {
+      if (!download) return { selectors: [] };
+      return {
+        selectors: download.selectors || [],
+        before: download.before || null
+      };
+    }
+    function _buildSearchUrl(mirror, searchCfg, query, mediaType) {
+      let path2 = searchCfg.pathTemplate;
+      path2 = path2.replace(/\{\{\s*\.Keywords\s*\}\}/g, encodeURIComponent(query));
+      path2 = path2.replace(/\{\{.*?\.Config\.\w+\s*\}\}/g, "");
+      path2 = path2.replace(/\{\{.*?\.False\s*\}\}/g, "");
+      path2 = path2.replace(/\{\{.*?\.True\s*\}\}/g, "");
+      path2 = path2.replace(/\{\{.*?\}\}/g, "");
+      path2 = path2.replace(/\/+/g, "/");
+      path2 = path2.replace(/^\//, "");
+      return `${mirror.replace(/\/+$/, "")}/${path2}`;
+    }
+    function _extractFields($, row, fields, downloadCfg) {
+      var _a, _b, _c, _d;
+      const item = {};
+      item.title = _getField($, row, fields.title, "text") || _getField($, row, fields.title_default, "text") || "";
+      item.detailsUrl = _getField($, row, fields.details, "href") || _getField($, row, fields.download, "href") || "";
+      const magnet = _getField($, row, fields.download, "href") || "";
+      if (magnet) {
+        if (magnet.startsWith("magnet:")) {
+          item.magnet = magnet;
+          const infoHash = (_b = (_a = magnet.match(/btih:([a-fA-F0-9]{40})/i)) == null ? void 0 : _a[1]) == null ? void 0 : _b.toLowerCase();
+          if (infoHash) item.infoHash = infoHash;
+        } else if (magnet.startsWith("http")) {
+          item.downloadUrl = magnet;
+        }
+      }
+      if (!item.magnet && downloadCfg && downloadCfg.selectors) {
+        for (const ds of downloadCfg.selectors) {
+          const sel = ds.selector || "";
+          const el = sel ? $(row).find(sel).first() : $();
+          if (el.length && el.attr("href")) {
+            const href = el.attr("href");
+            if (href.startsWith("magnet:")) {
+              item.magnet = href;
+              const ih = (_d = (_c = href.match(/btih:([a-fA-F0-9]{40})/i)) == null ? void 0 : _c[1]) == null ? void 0 : _d.toLowerCase();
+              if (ih) item.infoHash = ih;
+              break;
+            }
+          }
+        }
+      }
+      const seedStr = _getField($, row, fields.seeders, "text") || _getField($, row, fields.seeds, "text") || "0";
+      item.seeds = parseInt(seedStr.replace(/,/g, "")) || 0;
+      const leechStr = _getField($, row, fields.leechers, "text") || _getField($, row, fields.leeches, "text") || "0";
+      item.leechers = parseInt(leechStr.replace(/,/g, "")) || 0;
+      item.sizeFormatted = _getField($, row, fields.size, "text") || "";
+      item.size = _parseSize(item.sizeFormatted);
+      item.date = _getField($, row, fields.date, "text") || "";
+      item.category = _getField($, row, fields.category, "text") || "";
+      return item;
+    }
+    function _getField($, row, fieldDef, attr) {
+      if (!fieldDef) return "";
+      const selector = fieldDef.selector;
+      if (!selector) {
+        const text = fieldDef.text || "";
+        if (text && !text.includes("{{")) return text;
+        return "";
+      }
+      const el = $(row).find(selector).first();
+      if (!el.length) return "";
+      if (attr === "href") return (el.attr("href") || "").trim();
+      if (attr === "text") return el.text().trim();
+      return el.text().trim() || (el.attr("href") || "").trim();
+    }
+    function _parseSize(text) {
+      if (!text) return 0;
+      const t = text.toUpperCase().trim();
+      const match = t.match(/([\d.,]+)\s*(GB|MB|TB|KB|B)/);
+      if (!match) return 0;
+      const num = parseFloat(match[1].replace(/,/g, ""));
+      const unit = match[2];
+      if (unit === "TB") return num * 1099511627776;
+      if (unit === "GB") return num * 1073741824;
+      if (unit === "MB") return num * 1048576;
+      if (unit === "KB") return num * 1024;
+      return num;
+    }
+    function loadDefinitions(dirPath) {
+      const definitions = [];
+      if (!fs.existsSync(dirPath)) return definitions;
+      const files = fs.readdirSync(dirPath).filter((f) => f.endsWith(".yml"));
+      for (const file of files) {
+        try {
+          const content = fs.readFileSync(path.join(dirPath, file), "utf-8");
+          const config = parseDefinition(content);
+          if (config && config.type === "public") {
+            definitions.push(config);
+          }
+        } catch (e) {
+        }
+      }
+      return definitions;
+    }
+    module2.exports = {
+      parseDefinition,
+      searchCardigann,
+      loadDefinitions
+    };
+  }
+});
 
 // src/torrent-providers/index.js
 var cheerio = require("cheerio-without-node-native") || require("cheerio");
@@ -726,6 +981,21 @@ function search(query, mediaType, imdbId, year, season, episode, isAnime = false
       { name: "DonTorrent", fn: () => scrapeDonTorrent(query) },
       { name: "EliteTorrent", fn: () => scrapeEliteTorrent(query) }
     ];
+    try {
+      const { loadDefinitions, searchCardigann } = require_cardigann_engine();
+      const defsDir = require("path").join(__dirname, "definitions");
+      const cardigannDefs = loadDefinitions(defsDir);
+      if (cardigannDefs.length > 0) {
+        const topTrackers = cardigannDefs.filter((d) => d.type === "public").slice(0, 10);
+        for (const def of topTrackers) {
+          tasks.push({
+            name: def.name,
+            fn: () => searchCardigann(def, query, mediaType)
+          });
+        }
+      }
+    } catch (e) {
+    }
     if (mediaType === "tv" && imdbId) {
       tasks.push({ name: "EZTV", fn: () => scrapeEZTV(imdbId) });
     }
