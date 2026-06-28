@@ -1,7 +1,7 @@
 // audit-all.js — Full audit: search + video extraction on ALL active providers
-const { searchProvider, getEpisodeUrl, extractVideos, fetchHTML } = require('../src/alfa-providers/engine');
+const { searchProvider, getEpisodeUrl, extractVideos, fetchHTML } = require('../src/web-providers/engine');
 const { StaticScraper } = require('../src/intelligent');
-const providers = require('../src/alfa-providers/providers');
+const providers = require('../src/web-providers/providers');
 
 const QUERIES = { movie: 'matrix', tvshow: 'breaking bad', anime: 'naruto', documentary: 'matrix', torrent: 'matrix' };
 

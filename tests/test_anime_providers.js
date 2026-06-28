@@ -5,7 +5,7 @@
 const path = require('path');
 
 // Cargar Alfa providers
-const scrapeAlfaProviders = require('./providers/alfa-providers');
+const scrapeAlfaProviders = require('./providers/web-providers');
 
 // Probar con un anime conocido desde diferentes IDs
 async function run() {

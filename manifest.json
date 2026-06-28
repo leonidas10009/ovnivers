@@ -1465,7 +1465,7 @@
       ]
     },
     {
-      "id": "alfa-providers",
+      "id": "web-providers",
       "name": "Web Providers (74)",
       "description": "74 web scrapers: movies, series, anime, documentaries, torrents. Multi-language (ES, LAT, VOSE).",
       "version": "1.0.0",
@@ -1475,7 +1475,7 @@
         "tv",
         "anime"
       ],
-      "filename": "providers/alfa-providers.js",
+      "filename": "providers/web-providers.js",
       "enabled": true,
       "formats": [
         "mp4",

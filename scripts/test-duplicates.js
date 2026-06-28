@@ -1,6 +1,6 @@
 // test-duplicates.js — Check for duplicate servers within same provider/page
-const { fetchHTML, searchProvider, getEpisodeUrl, extractVideos } = require('../src/alfa-providers/engine');
-const providers = require('../src/alfa-providers/providers');
+const { fetchHTML, searchProvider, getEpisodeUrl, extractVideos } = require('../src/web-providers/engine');
+const providers = require('../src/web-providers/providers');
 
 const TEST = [
   { name: 'cinecalidad', query: 'matrix' },

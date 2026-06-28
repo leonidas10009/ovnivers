@@ -1,6 +1,6 @@
 // Final comprehensive test of ALL embed resolver handlers
-delete require.cache[require.resolve('../src/alfa-providers/embed-resolver')];
-var { resolveEmbed, clearCache } = require('../src/alfa-providers/embed-resolver');
+delete require.cache[require.resolve('../src/web-providers/embed-resolver')];
+var { resolveEmbed, clearCache } = require('../src/web-providers/embed-resolver');
 clearCache();
 
 var TESTS = [

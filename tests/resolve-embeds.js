@@ -12,7 +12,7 @@
  * Use this for testing before integrating scrapers that need JS rendering.
  */
 
-const { resolveEmbed } = require('../src/alfa-providers/embed-resolver');
+const { resolveEmbed } = require('../src/web-providers/embed-resolver');
 
 const TEST_CASES = [
   // JKAnime servers

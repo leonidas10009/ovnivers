@@ -1,5 +1,5 @@
-const { searchProvider, getEpisodeUrl, extractVideos } = require('./src/alfa-providers/engine');
-const providers = require('./src/alfa-providers/providers');
+const { searchProvider, getEpisodeUrl, extractVideos } = require('./src/web-providers/engine');
+const providers = require('./src/web-providers/providers');
 
 const TMDB_KEY = 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';

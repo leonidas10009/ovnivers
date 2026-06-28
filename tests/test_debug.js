@@ -2,8 +2,8 @@
  * Test con debug para entender dónde falla el flujo
  */
 const cheerio = require('cheerio');
-const providers = require('./src/alfa-providers/providers');
-const { fetchHTML, similarity, searchProvider } = require('./src/alfa-providers/engine');
+const providers = require('./src/web-providers/providers');
+const { fetchHTML, similarity, searchProvider } = require('./src/web-providers/engine');
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
 

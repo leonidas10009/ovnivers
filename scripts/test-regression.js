@@ -1,6 +1,6 @@
 // test-regression.js — Verify existing functionality is not broken
 const { searchStatic, extractStatic } = require('../src/engines');
-const providers = require('../src/alfa-providers/providers');
+const providers = require('../src/web-providers/providers');
 
 async function main() {
   let ok = true;
@@ -10,8 +10,8 @@ async function main() {
   console.log('1. Testing imports...');
   const imports = [
     ['torrent indexers', () => require('../src/torrent-providers/index')],
-    ['embed resolver', () => require('../src/alfa-providers/embed-resolver')],
-    ['alfa providers bundle', () => require('../providers/alfa-providers')],
+    ['embed resolver', () => require('../src/web-providers/embed-resolver')],
+    ['web providers bundle', () => require('../providers/web-providers')],
     ['intelligent system', () => require('../src/intelligent')],
     ['engines system', () => require('../src/engines')],
     ['puppeteer fallback', () => require('../src/puppeteer-fallback')],

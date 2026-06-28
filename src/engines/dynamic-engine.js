@@ -7,7 +7,7 @@ const {
   createPage, setupResourceBlocking,
 } = require('../intelligent');
 const { getSharedPool } = require('../intelligent/browser-pool-singleton');
-const { resolveEmbed, isDirectVideoUrl } = require('../alfa-providers/embed-resolver');
+const { resolveEmbed, isDirectVideoUrl } = require('../web-providers/embed-resolver');
 
 class DynamicEngine {
   constructor(options = {}) {

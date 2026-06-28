@@ -3,8 +3,8 @@
  * and check if tryResolveEmbedToDirect can extract direct URLs.
  * Run: node tests/test_embed_debug.js
  */
-const { searchProvider, extractVideos, tryResolveEmbedToDirect } = require('../src/alfa-providers/engine');
-const providers = require('../src/alfa-providers/providers');
+const { searchProvider, extractVideos, tryResolveEmbedToDirect } = require('../src/web-providers/engine');
+const providers = require('../src/web-providers/providers');
 
 const TMDB_KEY = process.env.TMDB_KEY || 'd80ba92bc7cefe3359668d30d06f3305';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';

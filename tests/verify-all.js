@@ -20,8 +20,8 @@ async function main() {
   try { var m = require('../src/local-scrapers/utils'); check('utils.js', true, Object.keys(m).length + ' exports'); } catch(e) { check('utils.js', false, e.message); }
   try { var s = require('../src/local-scrapers/sites'); check('sites.js', true, s.SITES.length + ' providers'); } catch(e) { check('sites.js', false, e.message); }
   try { var idx = require('../src/local-scrapers/index'); check('index.js (local)', true, typeof idx.search + '/' + typeof idx.getStreams + '/' + typeof idx.extractVideos); } catch(e) { check('index.js (local)', false, e.message); }
-  try { var alfa = require('../src/alfa-providers/providers'); check('alfa-providers.js', true, Array.isArray(alfa) ? alfa.length + ' providers' : 'not array'); } catch(e) { check('alfa-providers.js', false, e.message); }
-  try { var emb = require('../src/alfa-providers/embed-resolver'); check('embed-resolver.js', true, typeof emb.resolveEmbed); } catch(e) { check('embed-resolver.js', false, e.message); }
+  try { var alfa = require('../src/web-providers/providers'); check('alfa-providers.js', true, Array.isArray(alfa) ? alfa.length + ' providers' : 'not array'); } catch(e) { check('alfa-providers.js', false, e.message); }
+  try { var emb = require('../src/web-providers/embed-resolver'); check('embed-resolver.js', true, typeof emb.resolveEmbed); } catch(e) { check('embed-resolver.js', false, e.message); }
   try { var pptr = require('../src/jkanime-puppeteer'); check('jkanime-puppeteer.js', true, Object.keys(pptr).join(',')); } catch(e) { check('jkanime-puppeteer.js', false, e.message); }
   try { var pig = require('../src/anime/pigamer'); check('pigamer.js', true, typeof pig.getStreams); } catch(e) { check('pigamer.js', false, e.message); }
   try { var scr = require('../src/anime/scrapers'); check('anime/scrapers', true, Object.keys(scr).join(',')); } catch(e) { check('anime/scrapers', false, e.message); }
@@ -29,7 +29,7 @@ async function main() {
   // ─── 2. Built modules ──────────────────
   console.log('\n=== 2. Built modules ===');
   try { var bLocal = require('../providers/local-scrapers'); check('local-scrapers.js (built)', true, bLocal.SITES.length + ' providers'); } catch(e) { check('local-scrapers.js (built)', false, e.message); }
-  try { var bAlfa = require('../providers/alfa-providers'); check('alfa-providers.js (built)', true, typeof bAlfa.default == 'function' ? 'bridge OK' : typeof bAlfa); } catch(e) { check('alfa-providers.js (built)', false, e.message); }
+  try { var bAlfa = require('../providers/web-providers'); check('alfa-providers.js (built)', true, typeof bAlfa.default == 'function' ? 'bridge OK' : typeof bAlfa); } catch(e) { check('alfa-providers.js (built)', false, e.message); }
   try { var bAnime = require('../providers/anime'); check('anime.js (built)', true, 'OK'); } catch(e) { check('anime.js (built)', false, e.message); }
 
   // ─── 3. Manifest ──────────────────

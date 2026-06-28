@@ -1,15 +1,12 @@
 /**
  * engines - Built from src/engines/
- * Generated: 2026-06-28T15:55:19.456Z
+ * Generated: 2026-06-28T16:16:27.733Z
  */
-var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getOwnPropSymbols = Object.getOwnPropertySymbols;
-var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __propIsEnum = Object.prototype.propertyIsEnumerable;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
@@ -28,22 +25,6 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
 var __async = (__this, __arguments, generator) => {
   return new Promise((resolve, reject) => {
     var fulfilled = (value) => {
@@ -1665,21 +1646,21 @@ var require_static_scraper = __commonJS({
         return result;
       }
       _buildCatalog(urls) {
-        const servers2 = /* @__PURE__ */ new Map();
+        const servers = /* @__PURE__ */ new Map();
         const self = this;
         for (const url of urls) {
           const domain = this.ai.extractDomain(url);
           const name = this.ai.inferServerName(domain);
           const cls = this.ai.classifyURL(url);
           if (cls.type === "tracking" || cls.type === "social") continue;
-          if (!servers2.has(name)) servers2.set(name, []);
-          servers2.get(name).push({
+          if (!servers.has(name)) servers.set(name, []);
+          servers.get(name).push({
             url,
             type: cls.type,
             label: domain.slice(0, 40)
           });
         }
-        return [...servers2.entries()].map(function([name, urls2]) {
+        return [...servers.entries()].map(function([name, urls2]) {
           var _a;
           return { name, domain: self.ai.extractDomain(((_a = urls2[0]) == null ? void 0 : _a.url) || ""), urls: urls2.slice(0, 8) };
         }).sort(function(a, b) {
@@ -2934,22 +2915,22 @@ var require_autonomous_scraper = __commonJS({
       }
       // ─── Build server catalog ──────────────────────────────────
       _buildServerCatalog() {
-        const servers2 = /* @__PURE__ */ new Map();
+        const servers = /* @__PURE__ */ new Map();
         const self = this;
         for (let i = 0; i < this.urlCollector.length; i++) {
           const entry = this.urlCollector[i];
           const domain = this.ai.extractDomain(entry.url);
           const serverName = this.ai.inferServerName(domain);
-          if (!servers2.has(serverName)) {
-            servers2.set(serverName, []);
+          if (!servers.has(serverName)) {
+            servers.set(serverName, []);
           }
-          const list = servers2.get(serverName);
+          const list = servers.get(serverName);
           const cls = this.ai.classifyURL(entry.url, entry.source);
           const type = cls.type === "unknown" ? "other" : cls.type;
           list.push({ url: entry.url, type, label: entry.source.split("|")[0].trim().slice(0, 40) });
         }
         const catalog = [];
-        servers2.forEach(function(urls, name) {
+        servers.forEach(function(urls, name) {
           const unique = self._deduplicateUrls(urls);
           catalog.push({ name, domain: name, urls: unique });
         });
@@ -3356,9 +3337,9 @@ var require_intelligent = __commonJS({
   }
 });
 
-// src/alfa-providers/embed-resolver.js
+// src/web-providers/embed-resolver.js
 var require_embed_resolver = __commonJS({
-  "src/alfa-providers/embed-resolver.js"(exports2, module2) {
+  "src/web-providers/embed-resolver.js"(exports2, module2) {
     var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
     var EMBED_TIMEOUT = 1e4;
     var _ai = null;
@@ -3860,9 +3841,9 @@ var require_embed_resolver = __commonJS({
   }
 });
 
-// src/alfa-providers/torrent-parser.js
+// src/web-providers/torrent-parser.js
 var require_torrent_parser = __commonJS({
-  "src/alfa-providers/torrent-parser.js"(exports2, module2) {
+  "src/web-providers/torrent-parser.js"(exports2, module2) {
     var crypto = require("crypto");
     function parseTorrentInfoHash(buf) {
       try {
@@ -3899,9 +3880,9 @@ var require_torrent_parser = __commonJS({
   }
 });
 
-// src/alfa-providers/shortener-resolver.js
+// src/web-providers/shortener-resolver.js
 var require_shortener_resolver = __commonJS({
-  "src/alfa-providers/shortener-resolver.js"(exports2, module2) {
+  "src/web-providers/shortener-resolver.js"(exports2, module2) {
     var { parseTorrentInfoHash } = require_torrent_parser();
     var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.0.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.0";
     var MAX_REDIRECTS = 5;
@@ -4196,960 +4177,9 @@ var require_scrapeless_proxy = __commonJS({
   }
 });
 
-// src/intelligent/browser-pool-singleton.js
-var require_browser_pool_singleton = __commonJS({
-  "src/intelligent/browser-pool-singleton.js"(exports2, module2) {
-    var { BrowserPool, createBrowser } = require_intelligent();
-    var pool = null;
-    function getSharedPool() {
-      if (!pool) {
-        pool = new BrowserPool(
-          () => createBrowser({ headless: true, stealth: true, timeout: 3e4 }),
-          {
-            min: 0,
-            max: 1,
-            // Single browser — prevents resource storms
-            idleTimeoutMs: 5 * 60 * 1e3
-            // 5 min idle → close
-          }
-        );
-        console.log("[browser] Shared pool created (max: 1, idle: 5min)");
-      }
-      return pool;
-    }
-    process.on("beforeExit", () => __async(null, null, function* () {
-      if (pool) {
-        console.log("[browser] Closing shared pool...");
-        yield pool.closeAll();
-        pool = null;
-      }
-    }));
-    module2.exports = { getSharedPool };
-  }
-});
-
-// src/puppeteer-fallback.js
-var require_puppeteer_fallback = __commonJS({
-  "src/puppeteer-fallback.js"(exports2, module2) {
-    var { getSharedPool } = require_browser_pool_singleton();
-    var { createPage, setupResourceBlocking } = require_intelligent();
-    function fetchWithPuppeteer(_0) {
-      return __async(this, arguments, function* (url, options = {}) {
-        const waitMs = options.waitMs || 4e3;
-        const timeout = options.timeout || 2e4;
-        const pool = getSharedPool();
-        let instance;
-        try {
-          instance = yield pool.acquire();
-          const page = yield createPage(instance.browser, { stealth: true });
-          yield setupResourceBlocking(page);
-          yield page.goto(url, { waitUntil: "networkidle2", timeout });
-          yield new Promise((r) => setTimeout(r, waitMs));
-          const html = yield page.content();
-          yield page.close().catch(() => {
-          });
-          console.log(`[puppeteer-fallback] \u2713 ${url} (${(html.length / 1024).toFixed(0)}KB)`);
-          return html;
-        } catch (e) {
-          console.warn(`[puppeteer-fallback] Failed for ${url}: ${e.message}`);
-          return null;
-        } finally {
-          if (instance) yield pool.release(instance).catch(() => {
-          });
-        }
-      });
-    }
-    function isCloudflareBlock(html) {
-      if (!html) return false;
-      if (html.length < 1e3) return true;
-      const markers = ["challenge-platform", "turnstile", "cf-browser-verify", "cf-challenge", "Just a moment", "Checking your browser"];
-      const lower = html.substring(0, 2e3).toLowerCase();
-      return markers.some((m) => lower.includes(m.toLowerCase()));
-    }
-    module2.exports = { fetchWithPuppeteer, isCloudflareBlock };
-  }
-});
-
-// src/jkanime-puppeteer.js
-var require_jkanime_puppeteer = __commonJS({
-  "src/jkanime-puppeteer.js"(exports2, module2) {
-    var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
-    var { resolveEmbed, isDirectVideoUrl } = require_embed_resolver();
-    var puppeteer = null;
-    var chromiumCache = null;
-    var browser = null;
-    var browserLastUse = 0;
-    var BROWSER_IDLE = 5 * 60 * 1e3;
-    var serverCache = /* @__PURE__ */ new Map();
-    var embedCache = /* @__PURE__ */ new Map();
-    var MAX_CACHE = 200;
-    var EMBED_TTL = 60 * 60 * 1e3;
-    var SERVER_TTL = 30 * 60 * 1e3;
-    var RESOLVABLE = ["streamwish", "sfastwish", "flaswish", "mp4upload", "streamtape", "vidhide", "callistanise", "yourupload", "pixeldrain", "1fichier", "zilla-networks"];
-    var UNRESOLVABLE = ["mega", "megaup", "mediafire", "zippyshare", "drive.google.com", "mega.nz", "terabox", "uns.bio"];
-    var BLOCKED_PATTERNS = [
-      "cloudflareinsights.com",
-      "cloudfront.net",
-      "googletagmanager",
-      "google-analytics",
-      "doubleclick",
-      "facebook.com/tr",
-      "hotjar.com",
-      "newrelic.com"
-    ];
-    function getPuppeteer() {
-      return __async(this, null, function* () {
-        if (puppeteer) return puppeteer;
-        try {
-          puppeteer = (yield import("puppeteer-core")).default;
-          return puppeteer;
-        } catch (e) {
-          return null;
-        }
-      });
-    }
-    function findSystemChrome() {
-      if (process.platform === "win32") {
-        try {
-          var fs = require("fs");
-          var paths = [
-            process.env["PROGRAMFILES"] + "\\Google\\Chrome\\Application\\chrome.exe",
-            (process.env["PROGRAMFILES(X86)"] || process.env["ProgramFiles(x86)"]) + "\\Google\\Chrome\\Application\\chrome.exe",
-            (process.env.LOCALAPPDATA || "") + "\\Google\\Chrome\\Application\\chrome.exe",
-            "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-            "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe"
-          ];
-          for (var i = 0; i < paths.length; i++) {
-            try {
-              if (fs.existsSync(paths[i])) return paths[i];
-            } catch (e) {
-            }
-          }
-          try {
-            var result = require("child_process").execSync("where chrome 2>nul", { shell: "cmd.exe" }).toString().trim().split("\r\n")[0];
-            if (result && !result.includes("INFO:") && result.length > 0) return result;
-          } catch (e) {
-          }
-        } catch (e) {
-        }
-      }
-      if (process.platform === "linux") {
-        try {
-          var paths = ["/usr/bin/chromium-browser", "/usr/bin/chromium", "/usr/bin/google-chrome", "/usr/bin/google-chrome-stable"];
-          var fs = require("fs");
-          for (var i = 0; i < paths.length; i++) {
-            try {
-              if (fs.existsSync(paths[i])) return paths[i];
-            } catch (e) {
-            }
-          }
-          try {
-            var result = require("child_process").execSync("which chromium-browser || which chromium || which google-chrome || which google-chrome-stable", { shell: "/bin/sh" }).toString().trim().split("\n")[0];
-            if (result && result.length > 0) return result;
-          } catch (e) {
-          }
-        } catch (e) {
-        }
-      }
-      if (process.platform === "darwin") {
-        return "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-      }
-      return null;
-    }
-    function getChromium() {
-      return __async(this, null, function* () {
-        if (chromiumCache) return chromiumCache;
-        var sysChrome = findSystemChrome();
-        if (sysChrome) {
-          chromiumCache = { executablePath: sysChrome, args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu"] };
-          return chromiumCache;
-        }
-        try {
-          const mod = yield import("@sparticuz/chromium");
-          const Cr = mod.default;
-          chromiumCache = { executablePath: yield Cr.executablePath(), args: Cr.args || [] };
-          return chromiumCache;
-        } catch (e) {
-          return null;
-        }
-      });
-    }
-    function getBrowser() {
-      return __async(this, null, function* () {
-        const now = Date.now();
-        if (browser) {
-          try {
-            browser.isConnected();
-            browserLastUse = now;
-            return browser;
-          } catch (e) {
-            browser = null;
-          }
-        }
-        const pptr = yield getPuppeteer();
-        if (!pptr) return null;
-        const c = yield getChromium();
-        if (!c) return null;
-        browser = yield pptr.launch({
-          args: c.args,
-          executablePath: c.executablePath,
-          headless: true,
-          defaultViewport: { width: 1280, height: 720 }
-        });
-        browserLastUse = now;
-        return browser;
-      });
-    }
-    function closeIfIdle() {
-      return __async(this, null, function* () {
-        if (browser && Date.now() - browserLastUse > BROWSER_IDLE) {
-          try {
-            yield browser.close();
-          } catch (e) {
-          }
-          browser = null;
-        }
-      });
-    }
-    setInterval(closeIfIdle, BROWSER_IDLE).unref();
-    function cacheGet(map, key, ttl) {
-      const e = map.get(key);
-      if (e && Date.now() - e.time < ttl) return e.value;
-      if (e) map.delete(key);
-      return void 0;
-    }
-    function cacheSet(map, key, value, max) {
-      if (map.size >= max) {
-        const first = map.keys().next().value;
-        map.delete(first);
-      }
-      map.set(key, { value, time: Date.now() });
-    }
-    function getProxyUrl() {
-      return process.env.PROXY_URL || "";
-    }
-    function fetchViaProxy(url) {
-      return __async(this, null, function* () {
-        const proxy = getProxyUrl();
-        if (!proxy) return null;
-        try {
-          const ctrl = new AbortController();
-          const t = setTimeout(() => ctrl.abort(), 1e4);
-          const res = yield fetch(`${proxy}/?url=${encodeURIComponent(url)}`, {
-            headers: { "User-Agent": UA },
-            signal: ctrl.signal
-          });
-          clearTimeout(t);
-          if (!res.ok) return null;
-          return yield res.text();
-        } catch (e) {
-          return null;
-        }
-      });
-    }
-    function resolveEmbedUrl(b, embedUrl, waitMs = 8e3) {
-      return __async(this, null, function* () {
-        const cached = cacheGet(embedCache, embedUrl, EMBED_TTL);
-        if (cached !== void 0) return cached || null;
-        const page = yield b.newPage();
-        yield page.setUserAgent(UA);
-        let videoUrl = null;
-        try {
-          yield page.setRequestInterception(true);
-          page.on("request", (req) => {
-            const u = req.url();
-            if (videoUrl) {
-              req.abort();
-              return;
-            }
-            if (BLOCKED_PATTERNS.some((p) => u.includes(p))) {
-              req.abort();
-              return;
-            }
-            if ((/\.(m3u8|mp4|mkv|ts|webm)(\?|$)/i.test(u) || /mp4upload\.com:\d+\/d\//i.test(u) || /\/hls\//i.test(u)) && !u.includes(".css") && !u.includes(".js") && !u.includes("videojs") && !u.includes("test-videos") && !u.includes("novideo")) {
-              videoUrl = u;
-              req.abort();
-            } else req.continue();
-          });
-          page.on("response", (resp) => {
-            if (videoUrl) return;
-            const ct = resp.headers()["content-type"] || "";
-            if (ct.includes("mpegurl") || ct.includes("video/mp4") || ct.includes("video/webm")) {
-              const u = resp.url();
-              if (!u.includes(".css") && !u.includes(".js") && !u.includes("novideo")) {
-                videoUrl = u;
-              }
-            }
-          });
-          const htmlViaProxy = yield fetchViaProxy(embedUrl);
-          if (htmlViaProxy) {
-            const baseOrigin = new URL(embedUrl).origin;
-            const htmlWithBase = htmlViaProxy.includes("<base ") ? htmlViaProxy : htmlViaProxy.replace(/<head[^>]*>/i, `$&<base href="${baseOrigin}/">`);
-            try {
-              yield page.setContent(htmlWithBase, { waitUntil: "networkidle2", timeout: 15e3 });
-            } catch (e) {
-            }
-          } else {
-            try {
-              yield page.goto(embedUrl, { waitUntil: "networkidle2", timeout: 15e3 });
-            } catch (e) {
-            }
-          }
-          yield new Promise((r) => setTimeout(r, waitMs));
-          if (!videoUrl) {
-            try {
-              videoUrl = yield page.evaluate(() => {
-                const v = document.querySelector("video");
-                if ((v == null ? void 0 : v.src) && !v.src.startsWith("blob:")) return v.src;
-                const s = document.querySelector("source[src]");
-                if (s) {
-                  const src = s.getAttribute("src");
-                  if (src && !src.startsWith("blob:")) return src;
-                }
-                return null;
-              });
-            } catch (e) {
-            }
-          }
-        } catch (e) {
-        } finally {
-          yield page.close();
-        }
-        const result = videoUrl && videoUrl.startsWith("http") && !videoUrl.includes("novideo") ? videoUrl : null;
-        cacheSet(embedCache, embedUrl, result, MAX_CACHE);
-        return result;
-      });
-    }
-    function isResolvable(url) {
-      try {
-        return RESOLVABLE.some((h) => new URL(url).hostname.includes(h));
-      } catch (e) {
-        return false;
-      }
-    }
-    function isUnresolvable(url) {
-      try {
-        return UNRESOLVABLE.some((h) => new URL(url).hostname.includes(h));
-      } catch (e) {
-        return true;
-      }
-    }
-    function resolveJKAnime(slug, episode) {
-      return __async(this, null, function* () {
-        const ck = `${slug}:${episode}`;
-        const cached = cacheGet(serverCache, ck, SERVER_TTL);
-        let serverList = cached;
-        const b = yield getBrowser();
-        if (!b) return [];
-        if (!serverList) {
-          try {
-            const page = yield b.newPage();
-            yield page.setUserAgent(UA);
-            yield page.goto(`https://jkanime.net/${slug}/${episode}/`, { waitUntil: "networkidle2", timeout: 25e3 });
-            const currentUrl = page.url();
-            if (!currentUrl.includes(`/${slug}/`) && !currentUrl.includes(`/${slug}-`)) {
-              console.warn(`[jk-pptr] page redirected away from ${slug}, got ${currentUrl} \u2014 skipping`);
-              yield page.close();
-              return [];
-            }
-            yield new Promise((r) => setTimeout(r, 7e3));
-            serverList = { iframes: [], servers: [] };
-            serverList.iframes = yield page.evaluate(
-              () => Array.from(document.querySelectorAll("iframe")).map((f) => f.src).filter((s) => s && s.startsWith("http") && s.includes("jkplayer"))
-            );
-            try {
-              const raw = yield page.evaluate(() => {
-                if (typeof servers !== "undefined") return JSON.stringify(servers);
-                return null;
-              });
-              if (raw) {
-                serverList.servers = JSON.parse(raw).map((s) => ({
-                  server: s.server,
-                  size: s.size || "",
-                  lang: s.lang === 1 ? "SUB" : s.lang === 2 ? "LAT" : "",
-                  url: Buffer.from(s.remote, "base64").toString("utf-8").trim()
-                })).filter((s) => s.url);
-              }
-            } catch (e) {
-            }
-            yield page.close();
-            cacheSet(serverCache, ck, serverList, MAX_CACHE);
-          } catch (e) {
-            console.error("[jk-pptr] page error:", e.message);
-          }
-        }
-        if (!serverList) return [];
-        const streams = [];
-        for (const frameUrl of serverList.iframes || []) {
-          const name = frameUrl.includes("/um?") ? "Desu" : frameUrl.includes("/umv?") ? "Magi" : null;
-          if (!name) continue;
-          let m3u8Url = yield resolveEmbedUrl(b, frameUrl, 5e3);
-          if ((!m3u8Url || !m3u8Url.startsWith("http")) && frameUrl.startsWith("http")) m3u8Url = yield resolveEmbed(frameUrl);
-          if (m3u8Url && m3u8Url.startsWith("http")) {
-            streams.push({
-              url: m3u8Url,
-              server: name,
-              name: `JKAnime
-${name}`,
-              title: `${slug} Ep. ${episode}
-\u2699\uFE0F ${name} (m3u8)`,
-              behaviorHints: { notWebReady: false, bingeGroup: `jkanime|${name.toLowerCase()}` }
-            });
-          }
-        }
-        for (const s of serverList.servers || []) {
-          if (!s.url || !s.url.startsWith("http")) continue;
-          if (isUnresolvable(s.url)) {
-            streams.push({
-              externalUrl: s.url,
-              server: s.server,
-              name: `JKAnime
-${s.server}`,
-              title: `${slug} Ep. ${episode}
-\u2699\uFE0F ${s.server}
-\u{1F517} Abrir en navegador`,
-              behaviorHints: { notWebReady: true, bingeGroup: "jkanime|" + s.server.toLowerCase() }
-            });
-            continue;
-          }
-          const label = s.server + (s.lang ? " " + s.lang : "") + (s.size ? " " + s.size : "");
-          if (isResolvable(s.url)) {
-            let direct = yield resolveEmbedUrl(b, s.url, 6e3);
-            if (!direct) direct = yield resolveEmbed(s.url);
-            if (direct && isDirectVideoUrl(direct)) {
-              streams.push({
-                url: direct,
-                server: s.server,
-                name: `JKAnime
-${s.server}`,
-                title: `${slug} Ep. ${episode}
-\u2699\uFE0F ${s.server} (directo)`,
-                behaviorHints: { notWebReady: false, bingeGroup: "jkanime|" + s.server.toLowerCase() }
-              });
-              continue;
-            }
-          }
-          streams.push({
-            url: s.url,
-            server: s.server,
-            name: `JKAnime
-${s.server}`,
-            title: `${slug} Ep. ${episode}
-\u2699\uFE0F ${label}`,
-            behaviorHints: { notWebReady: true, bingeGroup: "jkanime|" + s.server.toLowerCase() }
-          });
-        }
-        const seen = /* @__PURE__ */ new Set();
-        return streams.filter((s) => {
-          const k = s.url + s.server;
-          if (seen.has(k)) return false;
-          seen.add(k);
-          return true;
-        });
-      });
-    }
-    function resolveTioAnime(slug, episode) {
-      return __async(this, null, function* () {
-        const ck = `tio:${slug}:${episode}`;
-        const cached = cacheGet(serverCache, ck, SERVER_TTL);
-        let serverList = cached;
-        if (!serverList) {
-          try {
-            const res = yield fetch(`https://tioanime.com/ver/${slug}-${episode}`, { headers: { "User-Agent": UA } });
-            if (!res.ok) return [];
-            const html = yield res.text();
-            const m = html.match(/var videos\s*=\s*(\[[\s\S]*?\]);/);
-            if (!m) return [];
-            const videos = JSON.parse(m[1]);
-            serverList = {
-              servers: videos.map((v) => ({ server: v[0] || "?", url: (v[1] || "").replace(/\\\//g, "/") })).filter((s) => s.url.startsWith("http"))
-            };
-            if (!serverList.servers.length) return [];
-            cacheSet(serverCache, ck, serverList, MAX_CACHE);
-          } catch (e) {
-            return [];
-          }
-        }
-        const b = yield getBrowser();
-        if (!b) {
-          const results2 = [];
-          for (const s of serverList.servers) {
-            if (isUnresolvable(s.url)) {
-              results2.push({
-                externalUrl: s.url,
-                server: s.server,
-                name: `TioAnime
-${s.server}`,
-                title: `${slug} Ep. ${episode}
-\u2699\uFE0F ${s.server}
-\u{1F517} Abrir en navegador`,
-                behaviorHints: { notWebReady: true, bingeGroup: "tioanime|" + s.server.toLowerCase() }
-              });
-              continue;
-            }
-            if (isDirectVideoUrl(s.url)) {
-              results2.push({
-                url: s.url,
-                server: s.server,
-                name: `TioAnime
-${s.server}`,
-                title: `${slug} Ep. ${episode}
-\u2699\uFE0F ${s.server} (directo)`,
-                behaviorHints: { notWebReady: false, bingeGroup: "tioanime|" + s.server.toLowerCase() }
-              });
-              continue;
-            }
-            let direct = null;
-            try {
-              direct = yield resolveEmbed(s.url);
-            } catch (e) {
-            }
-            if (direct && isDirectVideoUrl(direct)) {
-              results2.push({
-                url: direct,
-                server: s.server,
-                name: `TioAnime
-${s.server}`,
-                title: `${slug} Ep. ${episode}
-\u2699\uFE0F ${s.server} (directo)`,
-                behaviorHints: { notWebReady: false, bingeGroup: "tioanime|" + s.server.toLowerCase() }
-              });
-            } else {
-              results2.push({
-                url: s.url,
-                server: s.server,
-                name: `TioAnime
-${s.server}`,
-                title: `${slug} Ep. ${episode}
-\u2699\uFE0F ${s.server}`,
-                behaviorHints: { notWebReady: true, bingeGroup: "tioanime|" + s.server.toLowerCase() }
-              });
-            }
-          }
-          return results2;
-        }
-        const streams = [];
-        for (const s of serverList.servers) {
-          if (isUnresolvable(s.url)) {
-            streams.push({
-              externalUrl: s.url,
-              server: s.server,
-              name: `TioAnime
-${s.server}`,
-              title: `${slug} Ep. ${episode}
-\u2699\uFE0F ${s.server}
-\u{1F517} Abrir en navegador`,
-              behaviorHints: { notWebReady: true, bingeGroup: "tioanime|" + s.server.toLowerCase() }
-            });
-            continue;
-          }
-          if (isResolvable(s.url)) {
-            let direct = yield resolveEmbedUrl(b, s.url, 6e3);
-            if (!direct) direct = yield resolveEmbed(s.url);
-            if (direct && isDirectVideoUrl(direct)) {
-              streams.push({
-                url: direct,
-                server: s.server,
-                name: `TioAnime
-${s.server}`,
-                title: `${slug} Ep. ${episode}
-\u2699\uFE0F ${s.server} (directo)`,
-                behaviorHints: { notWebReady: false, bingeGroup: "tioanime|" + s.server.toLowerCase() }
-              });
-              continue;
-            }
-          }
-          streams.push({
-            url: s.url,
-            server: s.server,
-            name: `TioAnime
-${s.server}`,
-            title: `${slug} Ep. ${episode}
-\u2699\uFE0F ${s.server}`,
-            behaviorHints: { notWebReady: true, bingeGroup: "tioanime|" + s.server.toLowerCase() }
-          });
-        }
-        const seen = /* @__PURE__ */ new Set();
-        return streams.filter((s) => {
-          const k = s.url + s.server;
-          if (seen.has(k)) return false;
-          seen.add(k);
-          return true;
-        });
-      });
-    }
-    function resolveAnimeAV1(slug, episode) {
-      return __async(this, null, function* () {
-        const ck = `av1:${slug}:${episode}`;
-        const cached = cacheGet(serverCache, ck, SERVER_TTL);
-        let serverList = cached;
-        if (!serverList) {
-          try {
-            const res = yield fetch(`https://animeav1.com/media/${slug}/${episode}/__data.json`, {
-              headers: { "User-Agent": UA, "Accept": "application/json" }
-            });
-            if (!res.ok) return [];
-            const data = yield res.json();
-            const servers2 = [];
-            for (const node of data.nodes || []) {
-              if ((node == null ? void 0 : node.type) !== "data" || !Array.isArray(node.data)) continue;
-              const first = node.data[0];
-              if (!first || typeof first !== "object") continue;
-              if (first.embeds !== void 0) {
-                const embedsRef = node.data[first.embeds];
-                if (embedsRef && typeof embedsRef === "object") {
-                  for (const [variant, serversIdx] of Object.entries(embedsRef)) {
-                    const variantServers = node.data[serversIdx];
-                    if (!Array.isArray(variantServers)) continue;
-                    for (const entry of variantServers) {
-                      let srvObj = entry;
-                      if (typeof entry === "number") srvObj = node.data[entry];
-                      if (!srvObj || typeof srvObj !== "object") continue;
-                      const srv = typeof srvObj.server === "number" ? node.data[srvObj.server] : srvObj.server;
-                      const u = typeof srvObj.url === "number" ? node.data[srvObj.url] : srvObj.url;
-                      if (typeof srv === "string" && typeof u === "string" && u.startsWith("http"))
-                        servers2.push({ server: srv + (variant !== "SUB" ? " " + variant : ""), url: u, variant });
-                    }
-                  }
-                }
-              }
-              if (first.downloads !== void 0) {
-                const dlRoot = node.data[first.downloads];
-                const dlArrays = Array.isArray(dlRoot) ? { "": dlRoot } : dlRoot && typeof dlRoot === "object" ? dlRoot : {};
-                for (const [variant, dlIdxOrArr] of Object.entries(dlArrays)) {
-                  const dlArr = typeof dlIdxOrArr === "number" ? node.data[dlIdxOrArr] : dlIdxOrArr;
-                  if (!Array.isArray(dlArr)) continue;
-                  for (const entry of dlArr) {
-                    let dlObj = entry;
-                    if (typeof entry === "number") dlObj = node.data[entry];
-                    if (!dlObj || typeof dlObj !== "object") continue;
-                    const srv = typeof dlObj.server === "number" ? node.data[dlObj.server] : dlObj.server || "DDL";
-                    const u = typeof dlObj.url === "number" ? node.data[dlObj.url] : dlObj.url || "";
-                    const quality = dlObj.quality ? typeof dlObj.quality === "number" ? node.data[dlObj.quality] : dlObj.quality : "";
-                    const label = srv + (quality ? " " + quality : "") + (variant && variant !== "SUB" ? " " + variant : "");
-                    if (typeof srv === "string" && typeof u === "string" && u.startsWith("http"))
-                      servers2.push({ server: label, url: u });
-                  }
-                }
-              }
-            }
-            if (!servers2.length) {
-              for (const node of data.nodes || []) {
-                if ((node == null ? void 0 : node.type) !== "data" || !Array.isArray(node.data)) continue;
-                for (let i = 0; i < node.data.length; i++) {
-                  const val = node.data[i];
-                  if (val && val.server && val.url) {
-                    const srv = typeof val.server === "number" ? node.data[val.server] : val.server;
-                    const u = typeof val.url === "number" ? node.data[val.url] : val.url;
-                    if (typeof srv === "string" && typeof u === "string" && u.startsWith("http"))
-                      servers2.push({ server: srv, url: u });
-                  }
-                }
-              }
-            }
-            serverList = { servers: servers2 };
-            if (!servers2.length) return [];
-            cacheSet(serverCache, ck, serverList, MAX_CACHE);
-          } catch (e) {
-            return [];
-          }
-        }
-        const b = yield getBrowser();
-        if (!b) {
-          const results2 = [];
-          for (const s of serverList.servers) {
-            if (isUnresolvable(s.url)) {
-              results2.push({
-                externalUrl: s.url,
-                server: s.server,
-                name: `AnimeAV1
-${s.server}`,
-                title: `${slug} Ep. ${episode}
-\u2699\uFE0F ${s.server}
-\u{1F517} Abrir en navegador`,
-                behaviorHints: { notWebReady: true, bingeGroup: "animeav1|" + s.server.toLowerCase() }
-              });
-              continue;
-            }
-            if (isDirectVideoUrl(s.url)) {
-              results2.push({
-                url: s.url,
-                server: s.server,
-                name: `AnimeAV1
-${s.server}`,
-                title: `${slug} Ep. ${episode}
-\u2699\uFE0F ${s.server} (directo)`,
-                behaviorHints: { notWebReady: false, bingeGroup: "animeav1|" + s.server.toLowerCase() }
-              });
-              continue;
-            }
-            let direct = null;
-            try {
-              direct = yield resolveEmbed(s.url);
-            } catch (e) {
-            }
-            if (direct && isDirectVideoUrl(direct)) {
-              results2.push({
-                url: direct,
-                server: s.server,
-                name: `AnimeAV1
-${s.server}`,
-                title: `${slug} Ep. ${episode}
-\u2699\uFE0F ${s.server} (directo)`,
-                behaviorHints: { notWebReady: false, bingeGroup: "animeav1|" + s.server.toLowerCase() }
-              });
-            } else {
-              results2.push({
-                url: s.url,
-                server: s.server,
-                name: `AnimeAV1
-${s.server}`,
-                title: `${slug} Ep. ${episode}
-\u2699\uFE0F ${s.server}`,
-                behaviorHints: { notWebReady: true, bingeGroup: "animeav1|" + s.server.toLowerCase() }
-              });
-            }
-          }
-          return results2;
-        }
-        const streams = [];
-        for (const s of serverList.servers) {
-          if (isUnresolvable(s.url)) {
-            streams.push({
-              externalUrl: s.url,
-              server: s.server,
-              name: `AnimeAV1
-${s.server}`,
-              title: `${slug} Ep. ${episode}
-\u2699\uFE0F ${s.server}
-\u{1F517} Abrir en navegador`,
-              behaviorHints: { notWebReady: true, bingeGroup: "animeav1|" + s.server.toLowerCase() }
-            });
-            continue;
-          }
-          if (isResolvable(s.url)) {
-            let direct = yield resolveEmbedUrl(b, s.url, 6e3);
-            if (!direct) direct = yield resolveEmbed(s.url);
-            if (direct && isDirectVideoUrl(direct)) {
-              streams.push({
-                url: direct,
-                server: s.server,
-                name: `AnimeAV1
-${s.server}`,
-                title: `${slug} Ep. ${episode}
-\u2699\uFE0F ${s.server} (directo)`,
-                behaviorHints: { notWebReady: false, bingeGroup: "animeav1|" + s.server.toLowerCase() }
-              });
-              continue;
-            }
-          }
-          streams.push({
-            url: s.url,
-            server: s.server,
-            name: `AnimeAV1
-${s.server}`,
-            title: `${slug} Ep. ${episode}
-\u2699\uFE0F ${s.server}`,
-            behaviorHints: { notWebReady: true, bingeGroup: "animeav1|" + s.server.toLowerCase() }
-          });
-        }
-        const seen = /* @__PURE__ */ new Set();
-        return streams.filter((s) => {
-          const k = s.url + s.server;
-          if (seen.has(k)) return false;
-          seen.add(k);
-          return true;
-        });
-      });
-    }
-    module2.exports = { resolveJKAnime, resolveTioAnime, resolveAnimeAV1, resolveAnimeJara, getBrowser };
-    function resolveAnimeJara(slug, episode) {
-      return __async(this, null, function* () {
-        const ck = `aj:${slug}:${episode}`;
-        const cached = cacheGet(serverCache, ck, SERVER_TTL);
-        let serverList = cached;
-        const b = yield getBrowser();
-        if (!serverList) {
-          if (!b) {
-            try {
-              const res = yield fetch(`https://animejara.com/episode/${slug}-1x${episode}/`, {
-                headers: { "User-Agent": UA }
-              });
-              if (!res.ok) return [];
-              const html = yield res.text();
-              const servers2 = [];
-              const re = /playVideo\s*\(\s*["']([^"']+)["']\s*\)/g;
-              let m;
-              while ((m = re.exec(html)) !== null) {
-                let url = m[1].replace(/\\\//g, "/");
-                if (url.startsWith("//")) url = "https:" + url;
-                if (url.startsWith("http")) {
-                  try {
-                    servers2.push({ server: new URL(url).hostname.replace("www.", "").split(".")[0], url });
-                  } catch (e) {
-                    servers2.push({ server: "embed", url });
-                  }
-                }
-              }
-              const iframeRe = /<iframe[^>]+src=["']([^"']+)["']/gi;
-              while ((m = iframeRe.exec(html)) !== null) {
-                let url = m[1];
-                if (url.startsWith("//")) url = "https:" + url;
-                if (url.startsWith("http")) {
-                  try {
-                    servers2.push({ server: new URL(url).hostname.replace("www.", "").split(".")[0], url });
-                  } catch (e) {
-                    servers2.push({ server: "embed", url });
-                  }
-                }
-              }
-              serverList = { servers: servers2 };
-              if (!servers2.length) return [];
-              cacheSet(serverCache, ck, serverList, MAX_CACHE);
-            } catch (e) {
-              return [];
-            }
-          } else {
-            try {
-              const page = yield b.newPage();
-              yield page.setUserAgent(UA);
-              yield page.goto(`https://animejara.com/episode/${slug}-1x${episode}/`, {
-                waitUntil: "networkidle2",
-                timeout: 25e3
-              });
-              const currentUrl = page.url();
-              if (!currentUrl.includes(`/${slug}-`)) {
-                console.warn(`[animejara] page redirected away from ${slug}, got ${currentUrl}`);
-                yield page.close();
-                return [];
-              }
-              const servers2 = yield page.evaluate(() => {
-                const results2 = [];
-                const listaItems = document.querySelectorAll("#lista-server li[onclick]");
-                listaItems.forEach((li) => {
-                  const onclick = li.getAttribute("onclick") || "";
-                  const urlMatch = onclick.match(/playVideo\s*\(\s*["']([^"']+)["']\s*\)/);
-                  if (urlMatch) {
-                    const url = urlMatch[1].replace(/\\\//g, "/");
-                    const nameEl = li.querySelector('.nombre-server, [class*="server"]');
-                    const name = nameEl ? nameEl.textContent.trim() : "";
-                    if (url.startsWith("http") || url.startsWith("//"))
-                      results2.push({ server: name, url: url.startsWith("//") ? "https:" + url : url });
-                  }
-                });
-                const iframes = document.querySelectorAll(".reproductor-wrapper iframe, .episodio-reproductor iframe");
-                iframes.forEach((iframe) => {
-                  const src = iframe.getAttribute("src") || "";
-                  if (src.startsWith("http") || src.startsWith("//"))
-                    results2.push({ server: "", url: src.startsWith("//") ? "https:" + src : src });
-                });
-                const dataItems = document.querySelectorAll("[data-tr]");
-                dataItems.forEach((el) => {
-                  const url = el.getAttribute("data-tr") || "";
-                  const text = el.textContent.trim().substring(0, 30);
-                  if (url.startsWith("http"))
-                    results2.push({ server: text, url });
-                });
-                return results2;
-              });
-              yield page.close();
-              if (!servers2.length) return [];
-              for (const s of servers2) {
-                if (!s.server) {
-                  try {
-                    s.server = new URL(s.url).hostname.replace("www.", "").split(".")[0];
-                  } catch (e) {
-                    s.server = "embed";
-                  }
-                }
-              }
-              serverList = { servers: servers2 };
-              cacheSet(serverCache, ck, serverList, MAX_CACHE);
-            } catch (e) {
-              console.error("[animejara] page error:", e.message);
-              return [];
-            }
-          }
-        }
-        if (!serverList) return [];
-        const streams = [];
-        for (const s of serverList.servers) {
-          if (!s.url || !s.url.startsWith("http")) continue;
-          if (isUnresolvable(s.url)) {
-            streams.push({
-              externalUrl: s.url,
-              server: s.server,
-              name: `AnimeJara
-${s.server}`,
-              title: `${slug} Ep. ${episode}
-\u2699\uFE0F ${s.server}
-\u{1F517} Abrir en navegador`,
-              behaviorHints: { notWebReady: true, bingeGroup: "animejara|" + s.server.toLowerCase() }
-            });
-            continue;
-          }
-          if (isDirectVideoUrl(s.url)) {
-            streams.push({
-              url: s.url,
-              server: s.server,
-              name: `AnimeJara
-${s.server}`,
-              title: `${slug} Ep. ${episode}
-\u2699\uFE0F ${s.server} (directo)`,
-              behaviorHints: { notWebReady: false, bingeGroup: "animejara|" + s.server.toLowerCase() }
-            });
-            continue;
-          }
-          let direct = null;
-          if (b) {
-            try {
-              direct = yield resolveEmbedUrl(b, s.url, 6e3);
-            } catch (e) {
-            }
-          }
-          if (!direct) {
-            try {
-              direct = yield resolveEmbed(s.url);
-            } catch (e) {
-            }
-          }
-          if (direct && isDirectVideoUrl(direct)) {
-            streams.push({
-              url: direct,
-              server: s.server,
-              name: `AnimeJara
-${s.server}`,
-              title: `${slug} Ep. ${episode}
-\u2699\uFE0F ${s.server} (directo)`,
-              behaviorHints: { notWebReady: false, bingeGroup: "animejara|" + s.server.toLowerCase() }
-            });
-          } else {
-            streams.push({
-              url: s.url,
-              server: s.server,
-              name: `AnimeJara
-${s.server}`,
-              title: `${slug} Ep. ${episode}
-\u2699\uFE0F ${s.server}`,
-              behaviorHints: { notWebReady: true, bingeGroup: "animejara|" + s.server.toLowerCase() }
-            });
-          }
-        }
-        const seen = /* @__PURE__ */ new Set();
-        return streams.filter((s) => {
-          const k = s.url + s.server;
-          if (seen.has(k)) return false;
-          seen.add(k);
-          return true;
-        });
-      });
-    }
-  }
-});
-
-// src/alfa-providers/engine.js
+// src/web-providers/engine.js
 var require_engine = __commonJS({
-  "src/alfa-providers/engine.js"(exports2, module2) {
+  "src/web-providers/engine.js"(exports2, module2) {
     var cheerio = require("cheerio-without-node-native") || require("cheerio");
     var crypto = require("crypto");
     var { resolveEmbed } = require_embed_resolver();
@@ -5237,7 +4267,7 @@ var require_engine = __commonJS({
             if ([403, 503, 429, 502].includes(res.status)) {
               try {
                 console.log(`[engine] HTTP ${res.status} on ${domain}, trying Puppeteer bypass...`);
-                const { fetchWithPuppeteer } = require_puppeteer_fallback();
+                const { fetchWithPuppeteer } = require(require("path").join(__dirname, "..", "src", "puppeteer-fallback"));
                 const rendered = yield fetchWithPuppeteer(url, { waitMs: 4e3, timeout: 2e4 });
                 if (rendered && rendered.length > 500) return rendered;
               } catch (e) {
@@ -5257,7 +4287,7 @@ var require_engine = __commonJS({
             }
             try {
               console.log(`[engine] Cloudflare block on ${domain}, trying Puppeteer bypass...`);
-              const { fetchWithPuppeteer } = require_puppeteer_fallback();
+              const { fetchWithPuppeteer } = require(require("path").join(__dirname, "..", "src", "puppeteer-fallback"));
               const rendered = yield fetchWithPuppeteer(url, { waitMs: 4e3, timeout: 2e4 });
               if (rendered && rendered.length > 500) return rendered;
             } catch (e) {
@@ -5293,7 +4323,7 @@ var require_engine = __commonJS({
           try {
             const domain = typeof url === "string" ? new URL(url).hostname : "";
             console.log(`[engine] Network error on ${domain}, trying Puppeteer...`);
-            const { fetchWithPuppeteer } = require_puppeteer_fallback();
+            const { fetchWithPuppeteer } = require(require("path").join(__dirname, "..", "src", "puppeteer-fallback"));
             const rendered = yield fetchWithPuppeteer(url, { waitMs: 4e3, timeout: 2e4 });
             if (rendered && rendered.length > 500) return rendered;
           } catch (e2) {
@@ -5765,14 +4795,13 @@ var require_engine = __commonJS({
             }
           } catch (e) {
           }
-          return null;
         }
         return seriesUrl;
       });
     }
     function extractVideos(provider, pageUrl) {
       return __async(this, null, function* () {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _i;
+        var _a, _b, _c, _d, _e, _f, _g, _h;
         const cfg = provider.videos;
         if (!cfg) return [];
         const html = yield fetchHTML(pageUrl);
@@ -5928,36 +4957,40 @@ var require_engine = __commonJS({
             }
           }
           if (!results2.length && cfg.puppeteerFallback) {
+            let pool, instance;
             try {
-              const pptr = require_jkanime_puppeteer();
-              const b = yield (_a = pptr.getBrowser) == null ? void 0 : _a.call(pptr);
-              if (b) {
-                const page = yield b.newPage();
-                yield page.setUserAgent(UA);
-                yield page.goto(pageUrl, { waitUntil: "networkidle2", timeout: 2e4 });
-                const servers2 = yield page.evaluate(() => {
-                  const found = [];
-                  document.querySelectorAll('[onclick*="playVideo"]').forEach((el) => {
-                    var _a2, _b2;
-                    const m = (el.getAttribute("onclick") || "").match(/playVideo\s*\(\s*["\']([^"\']+)["\']\s*\)/);
-                    if (m) found.push({ url: m[1].replace(/\\\//g, "/"), server: ((_b2 = (_a2 = el.querySelector('.nombre-server, [class*="server"]')) == null ? void 0 : _a2.textContent) == null ? void 0 : _b2.trim()) || "" });
-                  });
-                  document.querySelectorAll(".reproductor-wrapper iframe, .episodio-reproductor iframe").forEach((el) => {
-                    const src = el.getAttribute("src");
-                    if (src) found.push({ url: src, server: "" });
-                  });
-                  return found;
+              const { getSharedPool } = require(require("path").join(__dirname, "..", "src", "intelligent", "browser-pool-singleton"));
+              pool = getSharedPool();
+              instance = yield pool.acquire();
+              const b = instance.browser;
+              const page = yield b.newPage();
+              yield page.setUserAgent(UA);
+              yield page.goto(pageUrl, { waitUntil: "networkidle2", timeout: 2e4 });
+              const servers = yield page.evaluate(() => {
+                const found = [];
+                document.querySelectorAll('[onclick*="playVideo"]').forEach((el) => {
+                  var _a2, _b2;
+                  const m = (el.getAttribute("onclick") || "").match(/playVideo\s*\(\s*["\']([^"\']+)["\']\s*\)/);
+                  if (m) found.push({ url: m[1].replace(/\\\//g, "/"), server: ((_b2 = (_a2 = el.querySelector('.nombre-server, [class*="server"]')) == null ? void 0 : _a2.textContent) == null ? void 0 : _b2.trim()) || "" });
                 });
-                yield page.close();
-                for (const s of servers2) {
-                  if (s.url.startsWith("//")) s.url = "https:" + s.url;
-                  if (s.url.startsWith("http")) {
-                    if (!s.server) s.server = detectServer(s.url);
-                    results2.push({ url: s.url, server: s.server, quality: cfg.defaultQuality || "HD" });
-                  }
+                document.querySelectorAll(".reproductor-wrapper iframe, .episodio-reproductor iframe").forEach((el) => {
+                  const src = el.getAttribute("src");
+                  if (src) found.push({ url: src, server: "" });
+                });
+                return found;
+              });
+              yield page.close();
+              for (const s of servers) {
+                if (s.url.startsWith("//")) s.url = "https:" + s.url;
+                if (s.url.startsWith("http")) {
+                  if (!s.server) s.server = detectServer(s.url);
+                  results2.push({ url: s.url, server: s.server, quality: cfg.defaultQuality || "HD" });
                 }
               }
             } catch (e) {
+            } finally {
+              if (instance && pool) yield pool.release(instance).catch(() => {
+              });
             }
           }
         }
@@ -6049,7 +5082,7 @@ var require_engine = __commonJS({
           } catch (e) {
           }
           if (contentId && tabla) {
-            episodeLabel = (_b = $("table.table tbody tr").first().find("td").first().text().trim().match(/x(\d+)/)) == null ? void 0 : _b[1];
+            episodeLabel = (_a = $("table.table tbody tr").first().find("td").first().text().trim().match(/x(\d+)/)) == null ? void 0 : _a[1];
           }
           if (!contentId || !tabla) {
             const btn = $(".protected-download").first();
@@ -6083,9 +5116,9 @@ var require_engine = __commonJS({
             embeds[i].server = "direct";
           }
         }
-        if (results2.length === 0 && ((_c = provider.videos) == null ? void 0 : _c.type) !== "torrent" && ((_d = provider.videos) == null ? void 0 : _d.type) !== "dontorrent") {
+        if (results2.length === 0 && ((_b = provider.videos) == null ? void 0 : _b.type) !== "torrent" && ((_c = provider.videos) == null ? void 0 : _c.type) !== "dontorrent") {
           try {
-            const { StaticScraper } = require_intelligent();
+            const { StaticScraper } = require(require("path").join(__dirname, "..", "src", "intelligent"));
             const ss = new StaticScraper();
             const analysis = yield ss.analyze(pageUrl);
             if (analysis && analysis.urlsFound > 0) {
@@ -6097,21 +5130,21 @@ var require_engine = __commonJS({
                     results2.push({
                       url: u.url,
                       server: server.name !== "unknown" ? server.name : detectServer(u.url),
-                      quality: ((_e = provider.videos) == null ? void 0 : _e.defaultQuality) || "HD"
+                      quality: ((_d = provider.videos) == null ? void 0 : _d.defaultQuality) || "HD"
                     });
                   }
                 }
               }
-              for (const url of ((_f = analysis.findings) == null ? void 0 : _f.videoUrls) || []) {
+              for (const url of ((_e = analysis.findings) == null ? void 0 : _e.videoUrls) || []) {
                 if (url && !seen.has(url)) {
                   seen.add(url);
-                  results2.push({ url, server: detectServer(url), quality: ((_g = provider.videos) == null ? void 0 : _g.defaultQuality) || "HD" });
+                  results2.push({ url, server: detectServer(url), quality: ((_f = provider.videos) == null ? void 0 : _f.defaultQuality) || "HD" });
                 }
               }
-              for (const url of ((_h = analysis.findings) == null ? void 0 : _h.serverUrls) || []) {
+              for (const url of ((_g = analysis.findings) == null ? void 0 : _g.serverUrls) || []) {
                 if (url && !seen.has(url)) {
                   seen.add(url);
-                  results2.push({ url, server: detectServer(url), quality: ((_i = provider.videos) == null ? void 0 : _i.defaultQuality) || "HD" });
+                  results2.push({ url, server: detectServer(url), quality: ((_h = provider.videos) == null ? void 0 : _h.defaultQuality) || "HD" });
                 }
               }
             }
@@ -6296,6 +5329,38 @@ var require_static_engine = __commonJS({
   }
 });
 
+// src/intelligent/browser-pool-singleton.js
+var require_browser_pool_singleton = __commonJS({
+  "src/intelligent/browser-pool-singleton.js"(exports2, module2) {
+    var { BrowserPool, createBrowser } = require_intelligent();
+    var pool = null;
+    function getSharedPool() {
+      if (!pool) {
+        pool = new BrowserPool(
+          () => createBrowser({ headless: true, stealth: true, timeout: 3e4 }),
+          {
+            min: 0,
+            max: 1,
+            // Single browser — prevents resource storms
+            idleTimeoutMs: 5 * 60 * 1e3
+            // 5 min idle → close
+          }
+        );
+        console.log("[browser] Shared pool created (max: 1, idle: 5min)");
+      }
+      return pool;
+    }
+    process.on("beforeExit", () => __async(null, null, function* () {
+      if (pool) {
+        console.log("[browser] Closing shared pool...");
+        yield pool.closeAll();
+        pool = null;
+      }
+    }));
+    module2.exports = { getSharedPool };
+  }
+});
+
 // src/engines/dynamic-engine.js
 var require_dynamic_engine = __commonJS({
   "src/engines/dynamic-engine.js"(exports2, module2) {
@@ -6439,9 +5504,9 @@ var require_dynamic_engine = __commonJS({
       _detectServer(url) {
         if (!url) return "unknown";
         if (/\.(mp4|m3u8|mkv|webm)(\?|$)/i.test(url)) return "direct";
-        const servers2 = ["streamwish", "filemoon", "doodstream", "streamtape", "mixdrop", "upstream", "voe", "okru", "vidhide", "netu", "yourupload", "uqload", "mega"];
+        const servers = ["streamwish", "filemoon", "doodstream", "streamtape", "mixdrop", "upstream", "voe", "okru", "vidhide", "netu", "yourupload", "uqload", "mega"];
         const lower = url.toLowerCase();
-        for (const s of servers2) if (lower.includes(s)) return s;
+        for (const s of servers) if (lower.includes(s)) return s;
         return "embed";
       }
     };

@@ -18,7 +18,7 @@ setLogLevel('info');
 const log = getLogger();
 
 // ─── Load providers ──────────────────────────
-const providers = require('../src/alfa-providers/providers');
+const providers = require('../src/web-providers/providers');
 const USE_BROWSER = process.argv.includes('--browser');
 const TARGET = process.argv.find(a => a.startsWith('--provider='))?.split('=')[1];
 

@@ -93,7 +93,7 @@ async function fetchHTML(url, opts = {}) {
       if ([403, 503, 429, 502].includes(res.status)) {
         try {
           console.log(`[engine] HTTP ${res.status} on ${domain}, trying Puppeteer bypass...`);
-          const { fetchWithPuppeteer } = require('../puppeteer-fallback');
+          const { fetchWithPuppeteer } = require(require('path').join(__dirname, '..', 'src', 'puppeteer-fallback'));
           const rendered = await fetchWithPuppeteer(url, { waitMs: 4000, timeout: 20000 });
           if (rendered && rendered.length > 500) return rendered;
         } catch(e) {
@@ -120,7 +120,7 @@ async function fetchHTML(url, opts = {}) {
       // Fallback to Puppeteer (own browser — free, bypasses Turnstile)
       try {
         console.log(`[engine] Cloudflare block on ${domain}, trying Puppeteer bypass...`);
-        const { fetchWithPuppeteer } = require('../puppeteer-fallback');
+        const { fetchWithPuppeteer } = require(require('path').join(__dirname, '..', 'src', 'puppeteer-fallback'));
         const rendered = await fetchWithPuppeteer(url, { waitMs: 4000, timeout: 20000 });
         if (rendered && rendered.length > 500) return rendered;
       } catch(e) {
@@ -159,7 +159,7 @@ async function fetchHTML(url, opts = {}) {
     try {
       const domain = typeof url === 'string' ? new URL(url).hostname : '';
       console.log(`[engine] Network error on ${domain}, trying Puppeteer...`);
-      const { fetchWithPuppeteer } = require('../puppeteer-fallback');
+      const { fetchWithPuppeteer } = require(require('path').join(__dirname, '..', 'src', 'puppeteer-fallback'));
       const rendered = await fetchWithPuppeteer(url, { waitMs: 4000, timeout: 20000 });
       if (rendered && rendered.length > 500) return rendered;
     } catch(e2) {
@@ -609,8 +609,7 @@ async function getEpisodeUrl(provider, seriesUrl, season, episode) {
         }
       }
     } catch {}
-    return null;
-  }
+    }
 
   return seriesUrl;
 }
@@ -775,35 +774,37 @@ async function extractVideos(provider, pageUrl) {
     }
     // Fallback 3: Puppeteer (for JS-loaded content like AnimeJara)
     if (!results.length && cfg.puppeteerFallback) {
+      let pool, instance;
       try {
-        const pptr = require('../jkanime-puppeteer');
-        const b = await pptr.getBrowser?.();
-        if (b) {
-          const page = await b.newPage();
-          await page.setUserAgent(UA);
-          await page.goto(pageUrl, { waitUntil: 'networkidle2', timeout: 20000 });
-          const servers = await page.evaluate(() => {
-            const found = [];
-            document.querySelectorAll('[onclick*="playVideo"]').forEach(el => {
-              const m = (el.getAttribute('onclick')||'').match(/playVideo\s*\(\s*["\']([^"\']+)["\']\s*\)/);
-              if (m) found.push({ url: m[1].replace(/\\\//g, '/'), server: el.querySelector('.nombre-server, [class*="server"]')?.textContent?.trim() || '' });
-            });
-            document.querySelectorAll('.reproductor-wrapper iframe, .episodio-reproductor iframe').forEach(el => {
-              const src = el.getAttribute('src');
-              if (src) found.push({ url: src, server: '' });
-            });
-            return found;
+        const { getSharedPool } = require(require('path').join(__dirname, '..', 'src', 'intelligent', 'browser-pool-singleton'));
+        pool = getSharedPool();
+        instance = await pool.acquire();
+        const b = instance.browser;
+        const page = await b.newPage();
+        await page.setUserAgent(UA);
+        await page.goto(pageUrl, { waitUntil: 'networkidle2', timeout: 20000 });
+        const servers = await page.evaluate(() => {
+          const found = [];
+          document.querySelectorAll('[onclick*="playVideo"]').forEach(el => {
+            const m = (el.getAttribute('onclick')||'').match(/playVideo\s*\(\s*["\']([^"\']+)["\']\s*\)/);
+            if (m) found.push({ url: m[1].replace(/\\\//g, '/'), server: el.querySelector('.nombre-server, [class*="server"]')?.textContent?.trim() || '' });
           });
-          await page.close();
-          for (const s of servers) {
-            if (s.url.startsWith('//')) s.url = 'https:' + s.url;
-            if (s.url.startsWith('http')) {
-              if (!s.server) s.server = detectServer(s.url);
-              results.push({ url: s.url, server: s.server, quality: cfg.defaultQuality || 'HD' });
-            }
+          document.querySelectorAll('.reproductor-wrapper iframe, .episodio-reproductor iframe').forEach(el => {
+            const src = el.getAttribute('src');
+            if (src) found.push({ url: src, server: '' });
+          });
+          return found;
+        });
+        await page.close();
+        for (const s of servers) {
+          if (s.url.startsWith('//')) s.url = 'https:' + s.url;
+          if (s.url.startsWith('http')) {
+            if (!s.server) s.server = detectServer(s.url);
+            results.push({ url: s.url, server: s.server, quality: cfg.defaultQuality || 'HD' });
           }
         }
       } catch {}
+      finally { if (instance && pool) await pool.release(instance).catch(() => {}); }
     }
   }
 
@@ -945,7 +946,7 @@ async function extractVideos(provider, pageUrl) {
   // ─── Intelligent fallback: if cheerio extraction found nothing, try StaticScraper ───
   if (results.length === 0 && provider.videos?.type !== 'torrent' && provider.videos?.type !== 'dontorrent') {
     try {
-      const { StaticScraper } = require('../intelligent');
+      const { StaticScraper } = require(require('path').join(__dirname, '..', 'src', 'intelligent'));
       const ss = new StaticScraper();
       const analysis = await ss.analyze(pageUrl);
       if (analysis && analysis.urlsFound > 0) {

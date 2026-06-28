@@ -65,7 +65,7 @@ const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
 const torrentIndex = require('./src/torrent-providers/index');
-const { resolveEmbed, isDirectVideoUrl } = require('./src/alfa-providers/embed-resolver');
+const { resolveEmbed, isDirectVideoUrl } = require('./src/web-providers/embed-resolver');
 const puppeteerResolver = require('./src/puppeteer-resolver');
 const pptrAnime = require('./src/jkanime-puppeteer');
 const { StreamPipeline } = require('./src/stream-pipeline/index');
@@ -189,7 +189,7 @@ let scrapeAlfaProviders = null;
 const localProviders = [];
 
 try {
-  const alfaModule = require('./providers/alfa-providers');
+  const alfaModule = require('./providers/web-providers');
   scrapeAlfaProviders = alfaModule.default || alfaModule;
   if (typeof scrapeAlfaProviders === 'function') {
     console.log('Loaded Web provider bridge');
@@ -203,7 +203,7 @@ try {
 
 for (const scraper of manifestScrapers) {
   if (!scraper?.enabled || !scraper.filename) continue;
-  if (scraper.filename.replace(/\\/g, '/').endsWith('/alfa-providers.js')) continue;
+  if (scraper.filename.replace(/\\/g, '/').endsWith('/web-providers.js')) continue;
   try {
     const filename = path.normalize(scraper.filename);
     const fullPath = path.resolve(__dirname, filename);
@@ -228,7 +228,7 @@ console.log(`Loaded ${localProviders.length} local provider modules`);
 const health = media.health;
 
 localProviders.forEach(p => health.init(p.id));
-health.init('alfa-providers');
+health.init('web-providers');
 health.init('backend-scrapers');
 health.init('pigamer37');
 health.init('torrent-indexers');
@@ -810,7 +810,7 @@ function normalizeStream(stream, providerId, providerName, opts = {}) {
 
   // Provider label
   const isPigamer = providerId === 'pigamer37';
-  const isAlfa = providerId === 'alfa-providers';
+  const isAlfa = providerId === 'web-providers';
   let providerLabel;
   if (isPigamer && sourceName && !sourceName.match(/^\d+$/) && sourceName !== quality && sourceName !== providerName) {
     providerLabel = sourceName;
@@ -1037,12 +1037,12 @@ async function scrapeAlfa(rawId, mediaType, type, season, episode, config, isAni
       30000
     );
     const streams = (Array.isArray(data) ? data : [])
-      .map(stream => normalizeStream(stream, 'alfa-providers', 'Web Providers'))
+      .map(stream => normalizeStream(stream, 'web-providers', 'Web Providers'))
       .filter(Boolean);
-    health.track('alfa-providers', streams.length > 0, Date.now() - start);
+    health.track('web-providers', streams.length > 0, Date.now() - start);
     return streams;
   } catch (e) {
-    health.track('alfa-providers', false, Date.now() - start);
+    health.track('web-providers', false, Date.now() - start);
     console.warn(`[alfa] ${e.message}`);
     return [];
   }
@@ -1359,7 +1359,7 @@ async function handleStream(req, res, type, id) {
         const start = Date.now();
         try {
           const { execute, getProviderMemory } = require('./src/engines');
-          const webProviders = require('./src/alfa-providers/providers');
+          const webProviders = require('./src/web-providers/providers');
           const memory = getProviderMemory();
 
           // Get search title

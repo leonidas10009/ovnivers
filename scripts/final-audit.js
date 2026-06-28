@@ -1,6 +1,6 @@
 // final-audit.js — Audit ALL active providers: search + real video URLs + valid servers
-const { searchProvider, getEpisodeUrl, extractVideos } = require('../src/alfa-providers/engine');
-const providers = require('../src/alfa-providers/providers');
+const { searchProvider, getEpisodeUrl, extractVideos } = require('../src/web-providers/engine');
+const providers = require('../src/web-providers/providers');
 
 const QUERIES = { movie: 'matrix', tvshow: 'breaking bad', anime: 'naruto', documentary: 'matrix', torrent: 'matrix' };
 

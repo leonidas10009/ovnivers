@@ -3,8 +3,8 @@
  * Run: node tests/test_full_audit.js
  */
 const http = require('http');
-const { searchProvider, getEpisodeUrl, extractVideos, tryResolveEmbedToDirect } = require('../src/alfa-providers/engine');
-const providers = require('../src/alfa-providers/providers');
+const { searchProvider, getEpisodeUrl, extractVideos, tryResolveEmbedToDirect } = require('../src/web-providers/engine');
+const providers = require('../src/web-providers/providers');
 
 const BASE = 'http://localhost:3000';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';

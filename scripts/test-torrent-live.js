@@ -3,7 +3,7 @@ const { searchStatic, extractStatic } = require('../src/engines');
 const { getDynamicEngine } = require('../src/engines/dynamic-engine');
 const { getProviderMemory } = require('../src/intelligent/provider-memory');
 const torrentIndex = require('../src/torrent-providers/index');
-const webProviders = require('../src/alfa-providers/providers');
+const webProviders = require('../src/web-providers/providers');
 
 const QUERY = 'matrix';
 const memory = getProviderMemory();

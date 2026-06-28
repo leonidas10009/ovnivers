@@ -4,7 +4,7 @@
 
 const cheerio = require('cheerio');
 const { StaticScraper, AutonomousScraper, SessionMemory, SmartAnalyzer, createBrowser, createPage, setupResourceBlocking } = require('../intelligent');
-const { resolveEmbed, isDirectVideoUrl } = require('../alfa-providers/embed-resolver');
+const { resolveEmbed, isDirectVideoUrl } = require('../web-providers/embed-resolver');
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/125.0.0.0 Safari/537.36';
 

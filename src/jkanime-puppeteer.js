@@ -1,7 +1,7 @@
 // Puppeteer-based anime resolver - optimized for Render (512MB)
 // Keeps one browser alive, caches server lists and embed resolutions
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
-const { resolveEmbed, isDirectVideoUrl } = require('./alfa-providers/embed-resolver');
+const { resolveEmbed, isDirectVideoUrl } = require('./web-providers/embed-resolver');
 
 let puppeteer = null;
 let chromiumCache = null;

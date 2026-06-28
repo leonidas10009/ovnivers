@@ -1,6 +1,6 @@
 // deep-search.js — Diagnose WHY search fails for each provider
 const cheerio = require('cheerio');
-const providers = require('../src/alfa-providers/providers');
+const providers = require('../src/web-providers/providers');
 
 const FAILING = [
   'bloghorror','detodopeliculas','doramasflix','doramedplay','entrepeliculasyseries',

@@ -1,6 +1,6 @@
 // test-functional.js — Verify search selectors for active providers
 const cheerio = require('cheerio');
-const providers = require('../src/alfa-providers/providers');
+const providers = require('../src/web-providers/providers');
 
 const FUNCTIONAL = ['cinecalidad','pelispedia','divxtotal','serieskao','animejara','jkanime','repelisplus',
   'tioanime','animeflv','pelispanda','doramasflix','sololatino',

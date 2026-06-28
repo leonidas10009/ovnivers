@@ -1,6 +1,6 @@
 /**
  * catalog - Built from src/catalog/
- * Generated: 2026-06-28T15:55:19.433Z
+ * Generated: 2026-06-28T16:16:27.696Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -5234,9 +5234,9 @@ var require_intelligent = __commonJS({
   }
 });
 
-// src/alfa-providers/embed-resolver.js
+// src/web-providers/embed-resolver.js
 var require_embed_resolver = __commonJS({
-  "src/alfa-providers/embed-resolver.js"(exports2, module2) {
+  "src/web-providers/embed-resolver.js"(exports2, module2) {
     var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
     var EMBED_TIMEOUT = 1e4;
     var _ai = null;

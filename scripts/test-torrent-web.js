@@ -1,6 +1,6 @@
 // test-torrent-web.js — Test all web providers that handle torrents
-const { searchProvider, extractVideos } = require('../src/alfa-providers/engine');
-const providers = require('../src/alfa-providers/providers');
+const { searchProvider, extractVideos } = require('../src/web-providers/engine');
+const providers = require('../src/web-providers/providers');
 
 // Filter torrent-type providers
 var torrentProviders = providers.filter(function(p) {

@@ -1,8 +1,8 @@
 // test-servers.js — Full pipeline test: search → extract videos → verify servers
 const cheerio = require('cheerio');
-const providers = require('../src/alfa-providers/providers');
-const { fetchHTML, searchProvider, getEpisodeUrl, extractVideos } = require('../src/alfa-providers/engine');
-const { resolveEmbed } = require('../src/alfa-providers/embed-resolver');
+const providers = require('../src/web-providers/providers');
+const { fetchHTML, searchProvider, getEpisodeUrl, extractVideos } = require('../src/web-providers/engine');
+const { resolveEmbed } = require('../src/web-providers/embed-resolver');
 
 const TEST = [
   { name: 'cinecalidad', query: 'matrix' },
