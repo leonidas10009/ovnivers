@@ -80,24 +80,41 @@ function resolveDevalue(flatData) {
   const servers = { embeds: {}, downloads: {} };
   for (let i = 0; i < resolved.length; i++) {
     const val = resolved[i];
-    if (val && typeof val === 'object' && !Array.isArray(val)) {
-      // Check if this object has embeds/downloads with numeric keys that point to arrays
-      for (const [lang, ref] of Object.entries(val)) {
-        if (['SUB', 'DUB', 'LAT'].includes(lang) && typeof ref === 'number') {
-          const serverIds = flatData[ref];
+    if (!val || typeof val !== 'object' || Array.isArray(val)) continue;
+
+    // First: check if this object has 'embeds' or 'downloads' wrapper
+    // After resolve(), embeds/downloads are resolved to objects { SUB: [...], DUB: [...] }
+    // If NOT resolved (shouldn't happen), fall back to raw flatData number reference
+    for (const wrapper of ['embeds', 'downloads']) {
+      let wrapperObj = val[wrapper];
+      if (typeof wrapperObj === 'number') {
+        wrapperObj = flatData[wrapperObj];
+      }
+      if (wrapperObj && typeof wrapperObj === 'object' && !Array.isArray(wrapperObj)) {
+        for (const [lang, refOrArr] of Object.entries(wrapperObj)) {
+          if (!['SUB', 'DUB', 'LAT'].includes(lang)) continue;
+          let serverIds;
+          if (typeof refOrArr === 'number') {
+            serverIds = flatData[refOrArr];
+          } else if (Array.isArray(refOrArr)) {
+            serverIds = refOrArr;
+          }
           if (Array.isArray(serverIds)) {
             for (const id of serverIds) {
-              if (typeof id !== 'number') continue;
-              const serverObj = flatData[id];
-              if (serverObj && serverObj.server && serverObj.url) {
-                const srv = typeof serverObj.server === 'number' ? flatData[serverObj.server] : serverObj.server;
-                const u = typeof serverObj.url === 'number' ? flatData[serverObj.url] : serverObj.url;
-                if (typeof srv === 'string' && typeof u === 'string' && u.startsWith('http')) {
-                  servers.embeds[lang] = servers.embeds[lang] || [];
-                  servers.embeds[lang].push({ server: srv, url: u });
-                }
-              }
+              _extractServer(flatData, id, lang, servers, wrapper);
             }
+          }
+        }
+      }
+    }
+
+    // Second: check for direct language keys (old format)
+    for (const [lang, ref] of Object.entries(val)) {
+      if (['SUB', 'DUB', 'LAT'].includes(lang) && typeof ref === 'number') {
+        const serverIds = flatData[ref];
+        if (Array.isArray(serverIds)) {
+          for (const id of serverIds) {
+            _extractServer(flatData, id, lang, servers, 'embeds');
           }
         }
       }
@@ -105,6 +122,19 @@ function resolveDevalue(flatData) {
   }
 
   return servers;
+}
+
+function _extractServer(flatData, id, lang, servers, group) {
+  if (typeof id !== 'number') return;
+  const serverObj = flatData[id];
+  if (!serverObj || !serverObj.server || !serverObj.url) return;
+  const srv = typeof serverObj.server === 'number' ? flatData[serverObj.server] : serverObj.server;
+  const u = typeof serverObj.url === 'number' ? flatData[serverObj.url] : serverObj.url;
+  if (typeof srv === 'string' && typeof u === 'string' && u.startsWith('http')) {
+    const target = group === 'downloads' ? servers.downloads : servers.embeds;
+    target[lang] = target[lang] || [];
+    target[lang].push({ server: srv, url: u });
+  }
 }
 
 async function search(query) {
@@ -134,12 +164,12 @@ async function getStreams(slug, episode) {
     const data = await fetchJson(`https://animeav1.com/media/${slug}/${episode}/__data.json`);
     if (!data?.nodes) return [];
 
+    const allResults = [];
     for (const node of data.nodes) {
-      if (node?.type !== 'data' || !Array.isArray(node.data)) continue;
+      if (!node || node?.type !== 'data' || !Array.isArray(node.data)) continue;
       const servers = resolveDevalue(node.data);
-      const results = [];
+      if (!servers.embeds || Object.keys(servers.embeds).length === 0) continue;
 
-      // Also parse downloads for direct links (Mega direct, MP4Upload direct, 1Fichier)
       for (const [lang, serverList] of Object.entries(servers.embeds)) {
         for (const { server, url } of serverList) {
           const isDirect = /\.(mp4|mkv|m3u8)($|\?)/i.test(url);
@@ -156,7 +186,7 @@ async function getStreams(slug, episode) {
             } catch {}
           }
 
-          results.push({
+          allResults.push({
             url: finalUrl,
             server,
             name: `AnimeAV1\n${server}`,
@@ -170,9 +200,8 @@ async function getStreams(slug, episode) {
           });
         }
       }
-
-      return results;
     }
+    return allResults;
     return [];
   } catch { return []; }
 }

@@ -1,6 +1,6 @@
 /**
  * catalog - Built from src/catalog/
- * Generated: 2026-06-28T16:38:51.906Z
+ * Generated: 2026-06-28T16:42:46.974Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -6214,29 +6214,53 @@ var require_animeav1 = __commonJS({
       const servers2 = { embeds: {}, downloads: {} };
       for (let i = 0; i < resolved.length; i++) {
         const val = resolved[i];
-        if (val && typeof val === "object" && !Array.isArray(val)) {
-          for (const [lang, ref] of Object.entries(val)) {
-            if (["SUB", "DUB", "LAT"].includes(lang) && typeof ref === "number") {
-              const serverIds = flatData[ref];
+        if (!val || typeof val !== "object" || Array.isArray(val)) continue;
+        for (const wrapper of ["embeds", "downloads"]) {
+          let wrapperObj = val[wrapper];
+          if (typeof wrapperObj === "number") {
+            wrapperObj = flatData[wrapperObj];
+          }
+          if (wrapperObj && typeof wrapperObj === "object" && !Array.isArray(wrapperObj)) {
+            for (const [lang, refOrArr] of Object.entries(wrapperObj)) {
+              if (!["SUB", "DUB", "LAT"].includes(lang)) continue;
+              let serverIds;
+              if (typeof refOrArr === "number") {
+                serverIds = flatData[refOrArr];
+              } else if (Array.isArray(refOrArr)) {
+                serverIds = refOrArr;
+              }
               if (Array.isArray(serverIds)) {
                 for (const id of serverIds) {
-                  if (typeof id !== "number") continue;
-                  const serverObj = flatData[id];
-                  if (serverObj && serverObj.server && serverObj.url) {
-                    const srv = typeof serverObj.server === "number" ? flatData[serverObj.server] : serverObj.server;
-                    const u = typeof serverObj.url === "number" ? flatData[serverObj.url] : serverObj.url;
-                    if (typeof srv === "string" && typeof u === "string" && u.startsWith("http")) {
-                      servers2.embeds[lang] = servers2.embeds[lang] || [];
-                      servers2.embeds[lang].push({ server: srv, url: u });
-                    }
-                  }
+                  _extractServer(flatData, id, lang, servers2, wrapper);
                 }
+              }
+            }
+          }
+        }
+        for (const [lang, ref] of Object.entries(val)) {
+          if (["SUB", "DUB", "LAT"].includes(lang) && typeof ref === "number") {
+            const serverIds = flatData[ref];
+            if (Array.isArray(serverIds)) {
+              for (const id of serverIds) {
+                _extractServer(flatData, id, lang, servers2, "embeds");
               }
             }
           }
         }
       }
       return servers2;
+    }
+    function _extractServer(flatData, id, lang, servers2, group) {
+      if (typeof id !== "number") return;
+      const serverObj = flatData[id];
+      if (!serverObj || !serverObj.server || !serverObj.url) return;
+      const srv = typeof serverObj.server === "number" ? flatData[serverObj.server] : serverObj.server;
+      const u = typeof serverObj.url === "number" ? flatData[serverObj.url] : serverObj.url;
+      if (typeof srv === "string" && typeof u === "string" && u.startsWith("http")) {
+        const target = group === "downloads" ? servers2.downloads : servers2.embeds;
+        target[lang] = target[lang] || [];
+        target[lang].push({ server: srv, url: u });
+      }
     }
     function search(query) {
       return __async(this, null, function* () {
@@ -6266,10 +6290,11 @@ var require_animeav1 = __commonJS({
         try {
           const data = yield fetchJson(`https://animeav1.com/media/${slug}/${episode}/__data.json`);
           if (!(data == null ? void 0 : data.nodes)) return [];
+          const allResults = [];
           for (const node of data.nodes) {
-            if ((node == null ? void 0 : node.type) !== "data" || !Array.isArray(node.data)) continue;
+            if (!node || (node == null ? void 0 : node.type) !== "data" || !Array.isArray(node.data)) continue;
             const servers2 = resolveDevalue(node.data);
-            const results = [];
+            if (!servers2.embeds || Object.keys(servers2.embeds).length === 0) continue;
             for (const [lang, serverList] of Object.entries(servers2.embeds)) {
               for (const { server, url } of serverList) {
                 const isDirect = /\.(mp4|mkv|m3u8)($|\?)/i.test(url);
@@ -6284,7 +6309,7 @@ var require_animeav1 = __commonJS({
                   } catch (e) {
                   }
                 }
-                results.push({
+                allResults.push({
                   url: finalUrl,
                   server,
                   name: `AnimeAV1
@@ -6300,8 +6325,8 @@ ${server}`,
                 });
               }
             }
-            return results;
           }
+          return allResults;
           return [];
         } catch (e) {
           return [];
