@@ -1,6 +1,6 @@
 /**
  * catalog - Built from src/catalog/
- * Generated: 2026-06-28T16:16:27.696Z
+ * Generated: 2026-06-28T16:29:26.434Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -1908,6 +1908,7 @@ ${serverName}`,
               title: `${slug} Ep. ${episode}
 \u2699\uFE0F ${serverName}`,
               description: lang === "ja" ? "SUB" : lang === "lat" ? "LAT" : "DUB",
+              languages: ["ja"],
               behaviorHints: { notWebReady: true, bingeGroup: `animeflv|${serverName}` }
             });
           }
@@ -5964,6 +5965,7 @@ ${label}`,
                 title: `${slug} Ep. ${episode}
 \u2699\uFE0F ${label} \xB7 ${host}`,
                 description: "M3U8 Directo",
+                languages: ["ja"],
                 behaviorHints: { notWebReady: false, bingeGroup: `jkanime|${label.toLowerCase()}` }
               });
             }
@@ -6003,6 +6005,7 @@ ${s.server}`,
             title: `${slug} Ep. ${episode}
 \u2699\uFE0F ${label}${isResolved ? " (directo)" : ""}`,
             description: s.lang || "",
+            languages: ["ja"],
             behaviorHints: { notWebReady: !isDirect, bingeGroup: `jkanime|${s.server}` }
           });
         }
@@ -6091,6 +6094,7 @@ ${server}`,
             title: `${slug} Ep. ${episode}
 \u2699\uFE0F ${server}`,
             description: "",
+            languages: ["ja"],
             behaviorHints: {
               notWebReady: !isDirect,
               bingeGroup: `tioanime|${server}`
@@ -6288,6 +6292,7 @@ ${server}`,
                   title: `${slug} Ep. ${episode}
 \u2699\uFE0F ${server} [${lang}]`,
                   description: lang,
+                  languages: ["ja"],
                   behaviorHints: {
                     notWebReady: !isDirect,
                     bingeGroup: `animeav1|${server}`
@@ -7241,6 +7246,7 @@ var require_animejara = __commonJS({
               name: "AnimeJara\n" + serverName,
               title: slug + " Ep." + ep + "\n" + serverName,
               description: "",
+              languages: ["ja"],
               behaviorHints: { notWebReady: true, bingeGroup: "animejara|" + serverName.toLowerCase() }
             });
           }
@@ -7330,6 +7336,7 @@ var require_animejara = __commonJS({
               server: "Descargas",
               name: "AnimeJara\nDescargas",
               title: slug + " Ep." + ep + "\nDescargas",
+              languages: ["ja"],
               behaviorHints: { notWebReady: true, bingeGroup: "animejara|descargas" }
             });
           }

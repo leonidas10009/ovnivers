@@ -162,6 +162,7 @@ async function getStreams(slug, episode) {
             name: `AnimeAV1\n${server}`,
             title: `${slug} Ep. ${episode}\n⚙️ ${server} [${lang}]`,
             description: lang,
+            languages: ['ja'],
             behaviorHints: {
               notWebReady: !isDirect,
               bingeGroup: `animeav1|${server}`,

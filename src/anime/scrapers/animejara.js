@@ -51,6 +51,7 @@ async function scrapeServerContainer(containerUrl, slug, ep) {
         name: 'AnimeJara\n' + serverName,
         title: slug + ' Ep.' + ep + '\n' + serverName,
         description: '',
+        languages: ['ja'],
         behaviorHints: { notWebReady: true, bingeGroup: 'animejara|' + serverName.toLowerCase() },
       });
     }
@@ -144,6 +145,7 @@ async function getStreams(slug, episode) {
         url: dlUrl, server: 'Descargas',
         name: 'AnimeJara\nDescargas',
         title: slug + ' Ep.' + ep + '\nDescargas',
+        languages: ['ja'],
         behaviorHints: { notWebReady: true, bingeGroup: 'animejara|descargas' },
       });
     }

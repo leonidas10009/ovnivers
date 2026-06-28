@@ -64,6 +64,7 @@ async function getStreams(slug, episode) {
       name: `TioAnime\n${server}`,
       title: `${slug} Ep. ${episode}\n⚙️ ${server}`,
       description: '',
+      languages: ['ja'],
       behaviorHints: {
         notWebReady: !isDirect,
         bingeGroup: `tioanime|${server}`,

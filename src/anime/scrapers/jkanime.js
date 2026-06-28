@@ -223,6 +223,7 @@ async function getStreams(slug, episode) {
           name: `JKAnime\n${label}`,
           title: `${slug} Ep. ${episode}\n⚙️ ${label} · ${host}`,
           description: 'M3U8 Directo',
+          languages: ['ja'],
           behaviorHints: { notWebReady: false, bingeGroup: `jkanime|${label.toLowerCase()}` },
         });
       }
@@ -261,7 +262,8 @@ async function getStreams(slug, episode) {
       name: `JKAnime\n${s.server}`,
       title: `${slug} Ep. ${episode}\n⚙️ ${label}${isResolved ? ' (directo)' : ''}`,
       description: s.lang || '',
-      behaviorHints: { notWebReady: !isDirect, bingeGroup: `jkanime|${s.server}` },
+        languages: ['ja'],
+        behaviorHints: { notWebReady: !isDirect, bingeGroup: `jkanime|${s.server}` },
     });
   }
 

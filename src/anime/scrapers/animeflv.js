@@ -125,6 +125,7 @@ async function getStreams(slug, episode) {
         name: `AnimeFLV\n${serverName}`,
         title: `${slug} Ep. ${episode}\n⚙️ ${serverName}`,
         description: lang === 'ja' ? 'SUB' : (lang === 'lat' ? 'LAT' : 'DUB'),
+        languages: ['ja'],
         behaviorHints: { notWebReady: true, bingeGroup: `animeflv|${serverName}` },
       });
     }
