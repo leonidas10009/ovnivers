@@ -1,6 +1,6 @@
 /**
  * engines - Built from src/engines/
- * Generated: 2026-06-28T15:48:39.467Z
+ * Generated: 2026-06-28T15:55:19.456Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -4196,139 +4196,77 @@ var require_scrapeless_proxy = __commonJS({
   }
 });
 
+// src/intelligent/browser-pool-singleton.js
+var require_browser_pool_singleton = __commonJS({
+  "src/intelligent/browser-pool-singleton.js"(exports2, module2) {
+    var { BrowserPool, createBrowser } = require_intelligent();
+    var pool = null;
+    function getSharedPool() {
+      if (!pool) {
+        pool = new BrowserPool(
+          () => createBrowser({ headless: true, stealth: true, timeout: 3e4 }),
+          {
+            min: 0,
+            max: 1,
+            // Single browser — prevents resource storms
+            idleTimeoutMs: 5 * 60 * 1e3
+            // 5 min idle → close
+          }
+        );
+        console.log("[browser] Shared pool created (max: 1, idle: 5min)");
+      }
+      return pool;
+    }
+    process.on("beforeExit", () => __async(null, null, function* () {
+      if (pool) {
+        console.log("[browser] Closing shared pool...");
+        yield pool.closeAll();
+        pool = null;
+      }
+    }));
+    module2.exports = { getSharedPool };
+  }
+});
+
 // src/puppeteer-fallback.js
 var require_puppeteer_fallback = __commonJS({
   "src/puppeteer-fallback.js"(exports2, module2) {
-    var { createBrowser, createPage, setupResourceBlocking } = require_intelligent();
-    var UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36";
-    var browserInstance = null;
-    var browserLastUsed = 0;
-    var BROWSER_IDLE_TIMEOUT = 5 * 60 * 1e3;
-    var pageCount = 0;
-    var MAX_PAGES_BEFORE_RESTART = 20;
-    function getBrowser() {
-      return __async(this, null, function* () {
-        const now = Date.now();
-        if (browserInstance) {
-          try {
-            yield browserInstance.version();
-            browserLastUsed = now;
-            return browserInstance;
-          } catch (e) {
-            try {
-              yield browserInstance.close();
-            } catch (e2) {
-            }
-            browserInstance = null;
-          }
-        }
-        console.log("[puppeteer-fallback] Launching headless Chrome...");
-        browserInstance = yield createBrowser({
-          headless: true,
-          stealth: true,
-          timeout: 3e4,
-          args: [
-            "--no-sandbox",
-            "--disable-setuid-sandbox",
-            "--disable-dev-shm-usage",
-            "--disable-web-security",
-            "--disable-features=IsolateOrigins,site-per-process",
-            "--disable-blink-features=AutomationControlled",
-            "--window-size=1366,768"
-          ]
-        });
-        browserLastUsed = now;
-        pageCount = 0;
-        console.log("[puppeteer-fallback] Browser ready");
-        return browserInstance;
-      });
-    }
-    setInterval(() => __async(null, null, function* () {
-      if (browserInstance && Date.now() - browserLastUsed > BROWSER_IDLE_TIMEOUT) {
-        console.log("[puppeteer-fallback] Closing idle browser");
-        try {
-          yield browserInstance.close();
-        } catch (e) {
-        }
-        browserInstance = null;
-      }
-    }), 6e4).unref();
+    var { getSharedPool } = require_browser_pool_singleton();
+    var { createPage, setupResourceBlocking } = require_intelligent();
     function fetchWithPuppeteer(_0) {
       return __async(this, arguments, function* (url, options = {}) {
-        var _a, _b;
-        const waitMs = options.waitMs || 3e3;
+        const waitMs = options.waitMs || 4e3;
         const timeout = options.timeout || 2e4;
+        const pool = getSharedPool();
+        let instance;
         try {
-          const browser = yield getBrowser();
-          pageCount++;
-          if (pageCount > MAX_PAGES_BEFORE_RESTART) {
-            console.log("[puppeteer-fallback] Restarting browser (page limit)");
-            try {
-              yield browser.close();
-            } catch (e) {
-            }
-            browserInstance = null;
-            return fetchWithPuppeteer(url, options);
-          }
-          const page = yield browser.newPage();
-          yield page.setUserAgent(UA);
-          yield page.setViewport({ width: 1366, height: 768 });
-          yield page.setRequestInterception(true);
-          page.on("request", (req) => {
-            const type = req.resourceType();
-            if (["image", "media", "font", "stylesheet"].includes(type)) {
-              req.abort();
-            } else {
-              req.continue();
-            }
-          });
-          yield page.goto(url, {
-            waitUntil: "networkidle2",
-            timeout
-          });
+          instance = yield pool.acquire();
+          const page = yield createPage(instance.browser, { stealth: true });
+          yield setupResourceBlocking(page);
+          yield page.goto(url, { waitUntil: "networkidle2", timeout });
           yield new Promise((r) => setTimeout(r, waitMs));
           const html = yield page.content();
-          const bodyText = yield page.evaluate(() => {
-            var _a2;
-            return ((_a2 = document.body) == null ? void 0 : _a2.innerText) || "";
-          });
           yield page.close().catch(() => {
           });
-          browserLastUsed = Date.now();
-          if (html.length < 500 || bodyText.length < 50) {
-            console.warn(`[puppeteer-fallback] Got short response (${html.length}B) for ${url}`);
-          }
-          console.log(`[puppeteer-fallback] \u2713 ${url} (${(html.length / 1024).toFixed(0)}KB, ${bodyText.length} chars)`);
+          console.log(`[puppeteer-fallback] \u2713 ${url} (${(html.length / 1024).toFixed(0)}KB)`);
           return html;
         } catch (e) {
           console.warn(`[puppeteer-fallback] Failed for ${url}: ${e.message}`);
-          if (((_a = e.message) == null ? void 0 : _a.includes("Target closed")) || ((_b = e.message) == null ? void 0 : _b.includes("Session closed"))) {
-            browserInstance = null;
-          }
           return null;
+        } finally {
+          if (instance) yield pool.release(instance).catch(() => {
+          });
         }
       });
     }
     function isCloudflareBlock(html) {
       if (!html) return false;
       if (html.length < 1e3) return true;
-      const markers = [
-        "challenge-platform",
-        "turnstile",
-        "cf-browser-verify",
-        "cf-challenge",
-        "cf_captcha",
-        "Just a moment",
-        "Checking your browser",
-        "Verifying you are human",
-        "Please enable JavaScript",
-        "attention required",
-        "cloudflare"
-      ];
+      const markers = ["challenge-platform", "turnstile", "cf-browser-verify", "cf-challenge", "Just a moment", "Checking your browser"];
       const lower = html.substring(0, 2e3).toLowerCase();
       return markers.some((m) => lower.includes(m.toLowerCase()));
     }
-    module2.exports = { fetchWithPuppeteer, isCloudflareBlock, getBrowser };
+    module2.exports = { fetchWithPuppeteer, isCloudflareBlock };
   }
 });
 
@@ -6363,49 +6301,27 @@ var require_dynamic_engine = __commonJS({
   "src/engines/dynamic-engine.js"(exports2, module2) {
     var {
       AutonomousScraper,
-      BrowserPool,
-      StaticScraper,
-      SmartAnalyzer,
       PageTypeClassifier,
-      createBrowser,
       createPage,
-      setupResourceBlocking,
-      getSessionMemory
+      setupResourceBlocking
     } = require_intelligent();
+    var { getSharedPool } = require_browser_pool_singleton();
     var { resolveEmbed, isDirectVideoUrl } = require_embed_resolver();
-    var pool = null;
-    function getPool() {
-      if (!pool) {
-        pool = new BrowserPool(
-          () => createBrowser({ headless: true, stealth: true, timeout: 3e4 }),
-          { min: 0, max: 1, idleTimeoutMs: 5 * 60 * 1e3 }
-        );
-      }
-      return pool;
-    }
     var DynamicEngine = class {
       constructor(options = {}) {
         this.maxDepth = options.maxDepth || 2;
         this.maxRequests = options.maxRequests || 30;
         this.timeout = options.timeout || 25e3;
         this.waitMs = options.waitMs || 4e3;
-        this.memory = getSessionMemory();
       }
-      /**
-       * Search a provider's site for content matching the query
-       * Uses AutonomousScraper to handle JS rendering, SPA navigation, Cloudflare
-       * 
-       * @param {object} provider - Provider config
-       * @param {string} query - Search query
-       * @returns {Promise<string|null>} Best matching page URL
-       */
       search(provider, query) {
         return __async(this, null, function* () {
           var _a, _b;
           const searchUrl = provider.baseUrl + provider.search.url.replace("{query}", encodeURIComponent(query));
-          const pool2 = getPool();
-          const instance2 = yield pool2.acquire();
+          const pool = getSharedPool();
+          let instance2;
           try {
+            instance2 = yield pool.acquire();
             const page = yield createPage(instance2.browser, { stealth: true });
             yield setupResourceBlocking(page);
             const scraper = new AutonomousScraper(page, {
@@ -6428,56 +6344,38 @@ var require_dynamic_engine = __commonJS({
             });
             yield page.close().catch(() => {
             });
-            yield pool2.release(instance2);
             if (candidates.length > 0) {
               candidates.sort((a, b) => a.length - b.length);
               return candidates[0];
             }
             for (const server of investigation.serverCatalog || []) {
               for (const u of server.urls) {
-                if (u.url && u.type === "navigation") {
-                  return u.url;
-                }
+                if (u.url && u.type === "navigation") return u.url;
               }
             }
             return null;
           } catch (e) {
             console.warn(`[dynamic:search] ${provider.name} failed: ${e.message}`);
-            try {
-              yield pool2.release(instance2);
-            } catch (e2) {
-            }
             return null;
+          } finally {
+            if (instance2) yield pool.release(instance2).catch(() => {
+            });
           }
         });
       }
-      /**
-       * Extract video streams from a content page
-       * Uses AutonomousScraper.investigate for full exploration:
-       *   - Clicks server buttons
-       *   - Captures network responses (video/mp4/m3u8)
-       *   - Extracts iframe sources
-       *   - Discovers embed links
-       *   - Resolves embeds to direct URLs
-       * 
-       * @param {object} provider - Provider config
-       * @param {string} pageUrl - Content page URL
-       * @returns {Promise<Array>} Array of { url, server, quality } objects
-       */
       extractVideos(provider, pageUrl) {
         return __async(this, null, function* () {
-          var _a, _b, _c, _d, _e, _f, _g, _h;
-          const pool2 = getPool();
-          const instance2 = yield pool2.acquire();
+          var _a, _b, _c, _d, _e, _f, _g;
+          const pool = getSharedPool();
+          let instance2;
           try {
+            instance2 = yield pool.acquire();
             const page = yield createPage(instance2.browser, { stealth: true });
             yield setupResourceBlocking(page);
             const capturedVideos = /* @__PURE__ */ new Set();
             page.on("response", (response) => {
               const ct = response.headers()["content-type"] || "";
-              if (ct.includes("video") || ct.includes("mpegurl")) {
-                capturedVideos.add(response.url());
-              }
+              if (ct.includes("video") || ct.includes("mpegurl")) capturedVideos.add(response.url());
             });
             const scraper = new AutonomousScraper(page, {
               maxRequests: this.maxRequests,
@@ -6487,7 +6385,6 @@ var require_dynamic_engine = __commonJS({
             const investigation = yield scraper.investigate(pageUrl);
             yield page.close().catch(() => {
             });
-            yield pool2.release(instance2);
             const results2 = [];
             const seen = /* @__PURE__ */ new Set();
             for (const url of capturedVideos) {
@@ -6500,11 +6397,7 @@ var require_dynamic_engine = __commonJS({
               for (const u of server.urls) {
                 if (u.url && !seen.has(u.url) && u.type !== "cdn" && u.type !== "tracking" && u.type !== "social") {
                   seen.add(u.url);
-                  results2.push({
-                    url: u.url,
-                    server: server.name !== "unknown" ? server.name : this._detectServer(u.url),
-                    quality: ((_b = provider.videos) == null ? void 0 : _b.defaultQuality) || "HD"
-                  });
+                  results2.push({ url: u.url, server: server.name !== "unknown" ? server.name : _detectServer(u.url), quality: ((_b = provider.videos) == null ? void 0 : _b.defaultQuality) || "HD" });
                 }
               }
             }
@@ -6517,7 +6410,7 @@ var require_dynamic_engine = __commonJS({
             for (const url of ((_e = investigation.findings) == null ? void 0 : _e.serverUrls) || []) {
               if (url && !seen.has(url)) {
                 seen.add(url);
-                results2.push({ url, server: this._detectServer(url), quality: ((_f = provider.videos) == null ? void 0 : _f.defaultQuality) || "HD" });
+                results2.push({ url, server: _detectServer(url), quality: ((_f = provider.videos) == null ? void 0 : _f.defaultQuality) || "HD" });
               }
             }
             for (const r of results2) {
@@ -6532,57 +6425,21 @@ var require_dynamic_engine = __commonJS({
                 }
               }
             }
-            console.log(`[dynamic:video] ${provider.name} \u2192 ${results2.length} videos from ${((_g = investigation.serverCatalog) == null ? void 0 : _g.length) || 0} servers (${((_h = investigation.steps) == null ? void 0 : _h.length) || 0} steps, ${investigation.durationMs}ms)`);
+            console.log(`[dynamic:video] ${provider.name} \u2192 ${results2.length} videos (${((_g = investigation.serverCatalog) == null ? void 0 : _g.length) || 0} servers, ${investigation.durationMs}ms)`);
             return results2;
           } catch (e) {
             console.warn(`[dynamic:video] ${provider.name} failed: ${e.message}`);
-            try {
-              yield pool2.release(instance2);
-            } catch (e2) {
-            }
             return [];
-          }
-        });
-      }
-      /**
-       * Validate if a provider's site is accessible via dynamic engine
-       */
-      validate(provider) {
-        return __async(this, null, function* () {
-          try {
-            const url = yield this.search(provider, "test");
-            return { accessible: !!url, url };
-          } catch (e) {
-            return { accessible: false };
+          } finally {
+            if (instance2) yield pool.release(instance2).catch(() => {
+            });
           }
         });
       }
       _detectServer(url) {
         if (!url) return "unknown";
         if (/\.(mp4|m3u8|mkv|webm)(\?|$)/i.test(url)) return "direct";
-        if (/magnet:/i.test(url)) return "torrent";
-        const servers2 = [
-          "streamwish",
-          "filemoon",
-          "doodstream",
-          "streamtape",
-          "mixdrop",
-          "upstream",
-          "voe",
-          "okru",
-          "vidhide",
-          "vidpro",
-          "netu",
-          "yourupload",
-          "uqload",
-          "mega",
-          "jawcloud",
-          "fembed",
-          "gvideo",
-          "goodstream",
-          "vimeos",
-          "fastream"
-        ];
+        const servers2 = ["streamwish", "filemoon", "doodstream", "streamtape", "mixdrop", "upstream", "voe", "okru", "vidhide", "netu", "yourupload", "uqload", "mega"];
         const lower = url.toLowerCase();
         for (const s of servers2) if (lower.includes(s)) return s;
         return "embed";
@@ -6593,13 +6450,7 @@ var require_dynamic_engine = __commonJS({
       if (!instance) instance = new DynamicEngine();
       return instance;
     }
-    module2.exports = {
-      DynamicEngine,
-      getDynamicEngine,
-      // Shorthand for router compatibility
-      search: (provider, query) => getDynamicEngine().search(provider, query),
-      extractVideos: (provider, pageUrl) => getDynamicEngine().extractVideos(provider, pageUrl)
-    };
+    module2.exports = { DynamicEngine, getDynamicEngine, search: (p, q) => getDynamicEngine().search(p, q), extractVideos: (p, u) => getDynamicEngine().extractVideos(p, u) };
   }
 });
 
@@ -6674,7 +6525,7 @@ var require_intelligent_engine = __commonJS({
               seen.add(u.url);
               results2.push({
                 url: u.url,
-                server: server.name !== "unknown" ? server.name : _detectServer(u.url),
+                server: server.name !== "unknown" ? server.name : _detectServer2(u.url),
                 quality: ((_a = provider.videos) == null ? void 0 : _a.defaultQuality) || "HD"
               });
             }
@@ -6683,13 +6534,13 @@ var require_intelligent_engine = __commonJS({
         for (const url of ((_b = analysis.findings) == null ? void 0 : _b.videoUrls) || []) {
           if (url && !seen.has(url)) {
             seen.add(url);
-            results2.push({ url, server: _detectServer(url), quality: ((_c = provider.videos) == null ? void 0 : _c.defaultQuality) || "HD" });
+            results2.push({ url, server: _detectServer2(url), quality: ((_c = provider.videos) == null ? void 0 : _c.defaultQuality) || "HD" });
           }
         }
         for (const url of ((_d = analysis.findings) == null ? void 0 : _d.serverUrls) || []) {
           if (url && !seen.has(url)) {
             seen.add(url);
-            results2.push({ url, server: _detectServer(url), quality: ((_e = provider.videos) == null ? void 0 : _e.defaultQuality) || "HD" });
+            results2.push({ url, server: _detectServer2(url), quality: ((_e = provider.videos) == null ? void 0 : _e.defaultQuality) || "HD" });
           }
         }
         if (results2.length === 0) {
@@ -6710,7 +6561,7 @@ var require_intelligent_engine = __commonJS({
                   seen.add(u.url);
                   results2.push({
                     url: u.url,
-                    server: server.name !== "unknown" ? server.name : _detectServer(u.url),
+                    server: server.name !== "unknown" ? server.name : _detectServer2(u.url),
                     quality: ((_f = provider.videos) == null ? void 0 : _f.defaultQuality) || "HD"
                   });
                 }
@@ -6719,7 +6570,7 @@ var require_intelligent_engine = __commonJS({
             for (const url of ((_g = investigation.findings) == null ? void 0 : _g.videoUrls) || []) {
               if (url && !seen.has(url)) {
                 seen.add(url);
-                results2.push({ url, server: _detectServer(url), quality: ((_h = provider.videos) == null ? void 0 : _h.defaultQuality) || "HD" });
+                results2.push({ url, server: _detectServer2(url), quality: ((_h = provider.videos) == null ? void 0 : _h.defaultQuality) || "HD" });
               }
             }
           } catch (e) {
@@ -6741,7 +6592,7 @@ var require_intelligent_engine = __commonJS({
         return results2;
       });
     }
-    function _detectServer(url) {
+    function _detectServer2(url) {
       if (!url) return "unknown";
       if (/\.(mp4|m3u8|mkv|webm)(\?|$)/i.test(url)) return "direct";
       if (/magnet:/i.test(url)) return "torrent";

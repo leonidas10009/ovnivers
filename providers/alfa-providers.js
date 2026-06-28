@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-28T15:48:39.188Z
+ * Generated: 2026-06-28T15:55:19.393Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -5089,139 +5089,77 @@ var require_scrapeless_proxy = __commonJS({
   }
 });
 
+// src/intelligent/browser-pool-singleton.js
+var require_browser_pool_singleton = __commonJS({
+  "src/intelligent/browser-pool-singleton.js"(exports2, module2) {
+    var { BrowserPool, createBrowser } = require_intelligent();
+    var pool = null;
+    function getSharedPool() {
+      if (!pool) {
+        pool = new BrowserPool(
+          () => createBrowser({ headless: true, stealth: true, timeout: 3e4 }),
+          {
+            min: 0,
+            max: 1,
+            // Single browser — prevents resource storms
+            idleTimeoutMs: 5 * 60 * 1e3
+            // 5 min idle → close
+          }
+        );
+        console.log("[browser] Shared pool created (max: 1, idle: 5min)");
+      }
+      return pool;
+    }
+    process.on("beforeExit", () => __async(null, null, function* () {
+      if (pool) {
+        console.log("[browser] Closing shared pool...");
+        yield pool.closeAll();
+        pool = null;
+      }
+    }));
+    module2.exports = { getSharedPool };
+  }
+});
+
 // src/puppeteer-fallback.js
 var require_puppeteer_fallback = __commonJS({
   "src/puppeteer-fallback.js"(exports2, module2) {
-    var { createBrowser, createPage, setupResourceBlocking } = require_intelligent();
-    var UA2 = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36";
-    var browserInstance = null;
-    var browserLastUsed = 0;
-    var BROWSER_IDLE_TIMEOUT = 5 * 60 * 1e3;
-    var pageCount = 0;
-    var MAX_PAGES_BEFORE_RESTART = 20;
-    function getBrowser() {
-      return __async(this, null, function* () {
-        const now = Date.now();
-        if (browserInstance) {
-          try {
-            yield browserInstance.version();
-            browserLastUsed = now;
-            return browserInstance;
-          } catch (e) {
-            try {
-              yield browserInstance.close();
-            } catch (e2) {
-            }
-            browserInstance = null;
-          }
-        }
-        console.log("[puppeteer-fallback] Launching headless Chrome...");
-        browserInstance = yield createBrowser({
-          headless: true,
-          stealth: true,
-          timeout: 3e4,
-          args: [
-            "--no-sandbox",
-            "--disable-setuid-sandbox",
-            "--disable-dev-shm-usage",
-            "--disable-web-security",
-            "--disable-features=IsolateOrigins,site-per-process",
-            "--disable-blink-features=AutomationControlled",
-            "--window-size=1366,768"
-          ]
-        });
-        browserLastUsed = now;
-        pageCount = 0;
-        console.log("[puppeteer-fallback] Browser ready");
-        return browserInstance;
-      });
-    }
-    setInterval(() => __async(null, null, function* () {
-      if (browserInstance && Date.now() - browserLastUsed > BROWSER_IDLE_TIMEOUT) {
-        console.log("[puppeteer-fallback] Closing idle browser");
-        try {
-          yield browserInstance.close();
-        } catch (e) {
-        }
-        browserInstance = null;
-      }
-    }), 6e4).unref();
+    var { getSharedPool } = require_browser_pool_singleton();
+    var { createPage, setupResourceBlocking } = require_intelligent();
     function fetchWithPuppeteer(_0) {
       return __async(this, arguments, function* (url, options = {}) {
-        var _a, _b;
-        const waitMs = options.waitMs || 3e3;
+        const waitMs = options.waitMs || 4e3;
         const timeout = options.timeout || 2e4;
+        const pool = getSharedPool();
+        let instance;
         try {
-          const browser = yield getBrowser();
-          pageCount++;
-          if (pageCount > MAX_PAGES_BEFORE_RESTART) {
-            console.log("[puppeteer-fallback] Restarting browser (page limit)");
-            try {
-              yield browser.close();
-            } catch (e) {
-            }
-            browserInstance = null;
-            return fetchWithPuppeteer(url, options);
-          }
-          const page = yield browser.newPage();
-          yield page.setUserAgent(UA2);
-          yield page.setViewport({ width: 1366, height: 768 });
-          yield page.setRequestInterception(true);
-          page.on("request", (req) => {
-            const type = req.resourceType();
-            if (["image", "media", "font", "stylesheet"].includes(type)) {
-              req.abort();
-            } else {
-              req.continue();
-            }
-          });
-          yield page.goto(url, {
-            waitUntil: "networkidle2",
-            timeout
-          });
+          instance = yield pool.acquire();
+          const page = yield createPage(instance.browser, { stealth: true });
+          yield setupResourceBlocking(page);
+          yield page.goto(url, { waitUntil: "networkidle2", timeout });
           yield new Promise((r) => setTimeout(r, waitMs));
           const html = yield page.content();
-          const bodyText = yield page.evaluate(() => {
-            var _a2;
-            return ((_a2 = document.body) == null ? void 0 : _a2.innerText) || "";
-          });
           yield page.close().catch(() => {
           });
-          browserLastUsed = Date.now();
-          if (html.length < 500 || bodyText.length < 50) {
-            console.warn(`[puppeteer-fallback] Got short response (${html.length}B) for ${url}`);
-          }
-          console.log(`[puppeteer-fallback] \u2713 ${url} (${(html.length / 1024).toFixed(0)}KB, ${bodyText.length} chars)`);
+          console.log(`[puppeteer-fallback] \u2713 ${url} (${(html.length / 1024).toFixed(0)}KB)`);
           return html;
         } catch (e) {
           console.warn(`[puppeteer-fallback] Failed for ${url}: ${e.message}`);
-          if (((_a = e.message) == null ? void 0 : _a.includes("Target closed")) || ((_b = e.message) == null ? void 0 : _b.includes("Session closed"))) {
-            browserInstance = null;
-          }
           return null;
+        } finally {
+          if (instance) yield pool.release(instance).catch(() => {
+          });
         }
       });
     }
     function isCloudflareBlock(html) {
       if (!html) return false;
       if (html.length < 1e3) return true;
-      const markers = [
-        "challenge-platform",
-        "turnstile",
-        "cf-browser-verify",
-        "cf-challenge",
-        "cf_captcha",
-        "Just a moment",
-        "Checking your browser",
-        "Verifying you are human",
-        "Please enable JavaScript",
-        "attention required",
-        "cloudflare"
-      ];
+      const markers = ["challenge-platform", "turnstile", "cf-browser-verify", "cf-challenge", "Just a moment", "Checking your browser"];
       const lower = html.substring(0, 2e3).toLowerCase();
       return markers.some((m) => lower.includes(m.toLowerCase()));
     }
-    module2.exports = { fetchWithPuppeteer, isCloudflareBlock, getBrowser };
+    module2.exports = { fetchWithPuppeteer, isCloudflareBlock };
   }
 });
 

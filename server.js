@@ -1418,6 +1418,7 @@ async function handleStream(req, res, type, id) {
         } catch { return []; }
       })());
     }
+  }
 
   streamTasks.push((async () => {
     const startTorrent = Date.now();
