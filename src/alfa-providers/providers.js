@@ -7,7 +7,7 @@ module.exports = [
     baseUrl: 'https://allcalidad.re',
     categories: ['movie', 'direct'],
     language: ['lat'],
-    active: false, // JS-dependent SPA: search results render client-side, no items in static HTML
+    active: true, // SPA React → dynamic engine (Puppeteer)
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'iframe', containerSelector: 'body', iframeSelector: 'iframe', srcAttr: 'data-src', defaultQuality: 'HD' }
@@ -42,7 +42,7 @@ module.exports = [
     language: ['*'],
     active: true,
     adult: false,
-    search: { url: '/?s={query}', itemSelector: 'li', titleSelector: 'a[href]', linkSelector: 'a' }, // <-- fixed
+    search: { url: '/?s={query}', itemSelector: 'article, li:has(a[href*="/pelicula"]), li:has(a[href*="/serie"])', titleSelector: 'h2, a[href]', linkSelector: 'a' },
     videos: { type: 'torrent', linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: 'HD' }
   },
   {
@@ -394,8 +394,8 @@ module.exports = [
     title: 'WolfMax4K',
     baseUrl: 'https://wolfmax4k.com',
     categories: ['movie', 'tvshow', 'torrent'],
-    language: ['cast'],
-    active: true,
+    language: ['cast', 'lat'],
+    active: true, // no search endpoint — necesita intelligent engine (category scraping)
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'div.mb-4', titleSelector: 'h3', linkSelector: 'a' }, // <-- fixed
     videos: { type: 'torrent', linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: '4K' }
@@ -543,8 +543,8 @@ module.exports = [
     title: 'HackTorrent',
     baseUrl: 'https://hacktorrent.to',
     categories: ['anime', 'vos', 'torrent'],
-    language: ['lat', 'cast'],
-    active: true,
+    language: ['cast', 'lat'],
+    active: true, // JS-dependent → dynamic engine (Puppeteer)
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'torrent', linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: 'HD' }
@@ -600,7 +600,7 @@ module.exports = [
     baseUrl: 'https://pelispanda.org',
     categories: ['anime', 'vos', 'torrent'],
     language: ['lat'],
-    active: false, // JS-dependent: 425KB HTML but cheerio finds 0 search items
+    active: true, // JS-dependent → dynamic engine (Puppeteer)
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'torrent', linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: 'HD' }
@@ -733,7 +733,7 @@ module.exports = [
     baseUrl: 'https://elitetorrent.com',
     categories: ['documentary', 'vos', 'torrent'],
     language: ['cast', 'lat'],
-    active: true,
+    active: true, // 58KB HTML con contenido real, selectores mal → intelligent engine
     adult: false,
     search: { url: '/?s={query}', itemSelector: 'article', titleSelector: 'h2', linkSelector: 'a' },
     videos: { type: 'torrent', linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: 'HD' }

@@ -1351,7 +1351,7 @@ async function handleStream(req, res, type, id) {
     streamTasks.push(scrapeAlfa(animeProviderId || rawId, mediaType, type, season, episode, config, isAnime));
     streamTasks.push(scrapeLocalProviders(animeProviderId || rawId, mediaType, type, season, episode, config, isAnime));
 
-    // ─── Multi-engine router: tries providers that static engine missed ───
+    // ─── Multi-engine router: handles providers that static engine misses ───
     streamTasks.push((async () => {
       const start = Date.now();
       try {
@@ -1359,47 +1359,63 @@ async function handleStream(req, res, type, id) {
         const webProviders = require('./src/alfa-providers/providers');
         const memory = getProviderMemory();
 
-        // Only run router on providers where static engine historically fails
-        // or on first attempt (no history)
+        // Get the search title for this request
+        let searchTitle = '';
+        if (isAnime) {
+          try {
+            const titles = await anime.titles.resolveTitles(animeProviderId || rawId);
+            searchTitle = titles?.searchTitles?.[0] || titles?.titleEN || '';
+          } catch {}
+        }
+        if (!searchTitle) {
+          try {
+            const metaEN = await fetchAPI(`https://api.themoviedb.org/3/${mediaType==='tv'?'tv':'movie'}/${rawId}?api_key=${TMDB_KEY}&language=en`);
+            if (metaEN) searchTitle = metaEN.title || metaEN.name || '';
+          } catch {}
+        }
+        if (!searchTitle || searchTitle.length < 2) return [];
+
+        // Try providers where static engine historically fails or never tried
         const candidates = webProviders.filter(p => {
           if (!p.active) return false;
-          if (p.categories.includes('anime') && (p.name === 'animejara' || p.name === 'jkanime' || 
-              p.name === 'tioanime' || p.name === 'animeflv')) return false; // Anime goes through native scrapers
+          // Skip anime providers handled by native scrapers
+          if (p.name === 'animejara' || p.name === 'jkanime' || 
+              p.name === 'tioanime' || p.name === 'animeflv') return false;
           const stats = memory.getProviderStats(p.name);
-          if (!stats || stats.totalAttempts === 0) return true; // Never tried → try router
-          return stats.successRate < 50; // Low success with static → try other engines
-        }).slice(0, 5); // Limit to 5 extra providers per request
+          if (!stats || stats.totalAttempts < 2) return true; // New → give it a chance
+          return stats.successRate < 70; // Low/medium success → try other engines
+        }).slice(0, 8); // Max 8 per request (dynamic engine is heavy)
 
         if (candidates.length === 0) return [];
 
         const results = [];
-        for (const provider of candidates) {
-          try {
-            // Try router for this provider
-            const { result, engine, success } = await execute(provider, 'search', {
-              query: isAnime ? (await anime.titles.resolveTitles(animeProviderId || rawId))?.searchTitles?.[0] || '' : 'matrix'
-            });
+        // Run with shorter timeout since this is a bonus layer
+        const timeout = new Promise(r => setTimeout(() => r('timeout'), 15000));
 
-            if (success && result) {
-              // Get episode URL if needed
+        const work = (async () => {
+          for (const provider of candidates) {
+            try {
+              const { result, engine, success } = await execute(provider, 'search', { query: searchTitle });
+              if (!success || !result) continue;
+
               let vUrl = result;
               if (season && episode && provider.episodes) {
                 try {
-                  const { static: st } = require('./src/engines');
-                  const ep = await st.getEpisodeUrl(provider, vUrl, season, episode);
+                  const ep = await engine.getEpisodeUrl(provider, vUrl, season, episode);
                   if (ep) vUrl = ep;
                 } catch {}
               }
 
-              // Extract videos using router
               const { result: videos, engine: vEngine } = await execute(provider, 'video', { pageUrl: vUrl });
               if (videos && videos.length > 0) {
                 const normalized = videos.map(v => normalizeStream(v, provider.name, provider.title)).filter(Boolean);
                 results.push(...normalized);
               }
-            }
-          } catch {}
-        }
+            } catch {}
+          }
+        })();
+
+        await Promise.race([work, timeout]);
         health.track('multi-engine-router', results.length > 0, Date.now() - start);
         return results;
       } catch { return []; }

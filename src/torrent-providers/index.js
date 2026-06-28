@@ -485,7 +485,156 @@ async function scrapeEZTV(imdbId) {
   } catch { return []; }
 }
 
-// ─── Orchestrator ──────────────────────────
+// ─── DivXTotal (web provider) ─────────────
+
+async function scrapeDivXTotal(query) {
+  try {
+    const html = await fetchHTML(`https://divxtotal.foo/?s=${encodeURIComponent(query)}`);
+    if (!html) return [];
+    const $ = cheerio.load(html);
+    const results = [];
+    
+    $('table tr:has(td a[href*="/peliculas"])').each((i, row) => {
+      const cols = $(row).find('td');
+      if (cols.length < 2) return;
+      const name = $(row).find('td a[href*="/peliculas"]').first().text().trim();
+      if (!name) return;
+      const detailUrl = $(row).find('td a[href*="/peliculas"]').first().attr('href') || '';
+      
+      results.push({
+        name,
+        infoHash: '',
+        magnet: '',
+        seeds: parseInt($(cols.eq(3)).text().trim()) || 0,
+        leechers: 0,
+        size: parseSizeToBytes($(cols.eq(4)).text().trim()),
+        sizeFormatted: $(cols.eq(4)).text().trim(),
+        detailUrl: detailUrl.startsWith('http') ? detailUrl : `https://divxtotal.foo${detailUrl}`,
+        verified: false,
+      });
+    });
+
+    const toResolve = results.slice(0, 5).filter(r => r.detailUrl);
+    if (toResolve.length) {
+      const resolved = await Promise.allSettled(toResolve.map(r => resolveDivXTotalMagnet(r.detailUrl)));
+      for (let i = 0; i < toResolve.length; i++) {
+        if (resolved[i].status === 'fulfilled' && resolved[i].value) {
+          toResolve[i].magnet = resolved[i].value.magnet || '';
+          toResolve[i].infoHash = resolved[i].value.infoHash || '';
+        }
+      }
+    }
+    return results.filter(r => r.infoHash);
+  } catch { return []; }
+}
+
+async function resolveDivXTotalMagnet(detailUrl) {
+  try {
+    const html = await fetchHTML(detailUrl);
+    if (!html) return null;
+    const $ = cheerio.load(html);
+    
+    // Look for download_tt.php links (base64 encoded .torrent URLs)
+    const dlLinks = $('a[href*="download_tt.php"]');
+    for (let i = 0; i < dlLinks.length; i++) {
+      const href = $(dlLinks[i]).attr('href') || '';
+      const uMatch = href.match(/u=([^&]+)/);
+      if (uMatch) {
+        try {
+          const decoded = Buffer.from(uMatch[1], 'base64').toString('utf-8');
+          if (decoded.endsWith('.torrent') && decoded.startsWith('http')) {
+            const tr = await fetch(decoded, {
+              headers: { 'User-Agent': UA },
+              signal: AbortSignal.timeout(10000)
+            });
+            if (tr.ok) {
+              const torrentBuf = Buffer.from(await tr.arrayBuffer());
+              const infoHash = extractInfoHashFromBuffer(torrentBuf);
+              if (infoHash) {
+                return { magnet: `magnet:?xt=urn:btih:${infoHash}`, infoHash };
+              }
+            }
+          }
+        } catch {}
+      }
+    }
+    
+    const magnetEl = $('a[href^="magnet:"]').first();
+    if (magnetEl.length) {
+      const magnet = magnetEl.attr('href') || '';
+      const infoHash = magnet.match(/btih:([a-fA-F0-9]{40})/i)?.[1]?.toLowerCase();
+      if (infoHash) return { magnet, infoHash };
+    }
+    return null;
+  } catch { return null; }
+}
+
+// ─── DonTorrent (web provider) ─────────────
+
+async function scrapeDonTorrent(query) {
+  try {
+    const baseUrl = 'https://dontorrent.review';
+    const res = await fetch(`${baseUrl}/buscar`, {
+      method: 'POST',
+      headers: { 'User-Agent': UA, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'valor=' + encodeURIComponent(query),
+      signal: AbortSignal.timeout(12000),
+    });
+    if (!res.ok) return [];
+    
+    const html = await res.text();
+    if (html.length < 500) return [];
+    
+    const $ = cheerio.load(html);
+    const results = [];
+    
+    $('a[href*="/pelicula/"], a[href*="/serie/"]').each((i, el) => {
+      const href = $(el).attr('href') || '';
+      const text = $(el).text().trim();
+      if (!href || !text || text.length < 2) return;
+      // Filter nav links
+      if (/^(Inicio|Películas|Series|Animes|Documentales)$/i.test(text)) return;
+      
+      results.push({
+        name: text, infoHash: '', magnet: '',
+        seeds: 0, leechers: 0, size: 0, sizeFormatted: '?',
+        detailUrl: href.startsWith('http') ? href : `${baseUrl}${href}`,
+        verified: false,
+      });
+    });
+    
+    // DonTorrent requires Anubis PoW for detail page resolution.
+    // Return search results with partial data; infoHash resolution
+    // is handled by the web provider engine in production.
+    return results.slice(0, 5);
+  } catch { return []; }
+}
+
+// ─── Bencode infoHash extractor ─────────────
+function extractInfoHashFromBuffer(buf) {
+  try {
+    const str = buf.toString('latin1');
+    const infoMatch = str.match(/4:infod/);
+    if (!infoMatch) return null;
+    
+    const infoStart = infoMatch.index + 6;
+    let depth = 1, infoEnd = infoStart + 1;
+    while (depth > 0 && infoEnd < str.length) {
+      if (str[infoEnd] === 'd') depth++;
+      else if (str[infoEnd] === 'e') depth--;
+      infoEnd++;
+    }
+    if (depth > 0) return null;
+    
+    const infoBuf = buf.slice(infoStart, infoEnd);
+    const crypto = require('crypto');
+    return crypto.createHash('sha1').update(infoBuf).digest('hex');
+  } catch { return null; }
+}
+
+// ═══════════════════════════════════════════
+//  SCORING & ORCHESTRATOR
+// ═══════════════════════════════════════════
 
 const MIN_SCORE_THRESHOLD = 0.40;
 
@@ -516,6 +665,8 @@ async function search(query, mediaType, imdbId, year, season, episode, isAnime =
     { name: 'SolidTorrents', fn: () => scrapeSolidTorrents(searchStr) },
     { name: 'LimeTorrents', fn: () => scrapeLimeTorrents(searchStr) },
     { name: '1337x', fn: () => scrape1337x(searchStr) },
+    { name: 'DivXTotal', fn: () => scrapeDivXTotal(query) },
+    { name: 'DonTorrent', fn: () => scrapeDonTorrent(query) },
   ];
 
   if (mediaType === 'tv' && imdbId) {

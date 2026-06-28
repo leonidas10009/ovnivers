@@ -1,6 +1,6 @@
 /**
  * local-scrapers - Built from src/local-scrapers/
- * Generated: 2026-06-28T12:16:00.815Z
+ * Generated: 2026-06-28T14:56:52.978Z
  */
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __commonJS = (cb, mod) => function __require() {

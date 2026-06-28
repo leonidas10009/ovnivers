@@ -1,6 +1,6 @@
 /**
  * torrent-providers - Built from src/torrent-providers/
- * Generated: 2026-06-28T12:16:00.871Z
+ * Generated: 2026-06-28T14:56:52.989Z
  */
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
@@ -514,6 +514,148 @@ function scrapeEZTV(imdbId) {
     }
   });
 }
+function scrapeDivXTotal(query) {
+  return __async(this, null, function* () {
+    try {
+      const html = yield fetchHTML(`https://divxtotal.foo/?s=${encodeURIComponent(query)}`);
+      if (!html) return [];
+      const $ = cheerio.load(html);
+      const results = [];
+      $('table tr:has(td a[href*="/peliculas"])').each((i, row) => {
+        const cols = $(row).find("td");
+        if (cols.length < 2) return;
+        const name = $(row).find('td a[href*="/peliculas"]').first().text().trim();
+        if (!name) return;
+        const detailUrl = $(row).find('td a[href*="/peliculas"]').first().attr("href") || "";
+        results.push({
+          name,
+          infoHash: "",
+          magnet: "",
+          seeds: parseInt($(cols.eq(3)).text().trim()) || 0,
+          leechers: 0,
+          size: parseSizeToBytes($(cols.eq(4)).text().trim()),
+          sizeFormatted: $(cols.eq(4)).text().trim(),
+          detailUrl: detailUrl.startsWith("http") ? detailUrl : `https://divxtotal.foo${detailUrl}`,
+          verified: false
+        });
+      });
+      const toResolve = results.slice(0, 5).filter((r) => r.detailUrl);
+      if (toResolve.length) {
+        const resolved = yield Promise.allSettled(toResolve.map((r) => resolveDivXTotalMagnet(r.detailUrl)));
+        for (let i = 0; i < toResolve.length; i++) {
+          if (resolved[i].status === "fulfilled" && resolved[i].value) {
+            toResolve[i].magnet = resolved[i].value.magnet || "";
+            toResolve[i].infoHash = resolved[i].value.infoHash || "";
+          }
+        }
+      }
+      return results.filter((r) => r.infoHash);
+    } catch (e) {
+      return [];
+    }
+  });
+}
+function resolveDivXTotalMagnet(detailUrl) {
+  return __async(this, null, function* () {
+    var _a, _b;
+    try {
+      const html = yield fetchHTML(detailUrl);
+      if (!html) return null;
+      const $ = cheerio.load(html);
+      const dlLinks = $('a[href*="download_tt.php"]');
+      for (let i = 0; i < dlLinks.length; i++) {
+        const href = $(dlLinks[i]).attr("href") || "";
+        const uMatch = href.match(/u=([^&]+)/);
+        if (uMatch) {
+          try {
+            const decoded = Buffer.from(uMatch[1], "base64").toString("utf-8");
+            if (decoded.endsWith(".torrent") && decoded.startsWith("http")) {
+              const tr = yield fetch(decoded, {
+                headers: { "User-Agent": UA },
+                signal: AbortSignal.timeout(1e4)
+              });
+              if (tr.ok) {
+                const torrentBuf = Buffer.from(yield tr.arrayBuffer());
+                const infoHash = extractInfoHashFromBuffer(torrentBuf);
+                if (infoHash) {
+                  return { magnet: `magnet:?xt=urn:btih:${infoHash}`, infoHash };
+                }
+              }
+            }
+          } catch (e) {
+          }
+        }
+      }
+      const magnetEl = $('a[href^="magnet:"]').first();
+      if (magnetEl.length) {
+        const magnet = magnetEl.attr("href") || "";
+        const infoHash = (_b = (_a = magnet.match(/btih:([a-fA-F0-9]{40})/i)) == null ? void 0 : _a[1]) == null ? void 0 : _b.toLowerCase();
+        if (infoHash) return { magnet, infoHash };
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  });
+}
+function scrapeDonTorrent(query) {
+  return __async(this, null, function* () {
+    try {
+      const baseUrl = "https://dontorrent.review";
+      const res = yield fetch(`${baseUrl}/buscar`, {
+        method: "POST",
+        headers: { "User-Agent": UA, "Content-Type": "application/x-www-form-urlencoded" },
+        body: "valor=" + encodeURIComponent(query),
+        signal: AbortSignal.timeout(12e3)
+      });
+      if (!res.ok) return [];
+      const html = yield res.text();
+      if (html.length < 500) return [];
+      const $ = cheerio.load(html);
+      const results = [];
+      $('a[href*="/pelicula/"], a[href*="/serie/"]').each((i, el) => {
+        const href = $(el).attr("href") || "";
+        const text = $(el).text().trim();
+        if (!href || !text || text.length < 2) return;
+        if (/^(Inicio|Películas|Series|Animes|Documentales)$/i.test(text)) return;
+        results.push({
+          name: text,
+          infoHash: "",
+          magnet: "",
+          seeds: 0,
+          leechers: 0,
+          size: 0,
+          sizeFormatted: "?",
+          detailUrl: href.startsWith("http") ? href : `${baseUrl}${href}`,
+          verified: false
+        });
+      });
+      return results.slice(0, 5);
+    } catch (e) {
+      return [];
+    }
+  });
+}
+function extractInfoHashFromBuffer(buf) {
+  try {
+    const str = buf.toString("latin1");
+    const infoMatch = str.match(/4:infod/);
+    if (!infoMatch) return null;
+    const infoStart = infoMatch.index + 6;
+    let depth = 1, infoEnd = infoStart + 1;
+    while (depth > 0 && infoEnd < str.length) {
+      if (str[infoEnd] === "d") depth++;
+      else if (str[infoEnd] === "e") depth--;
+      infoEnd++;
+    }
+    if (depth > 0) return null;
+    const infoBuf = buf.slice(infoStart, infoEnd);
+    const crypto = require("crypto");
+    return crypto.createHash("sha1").update(infoBuf).digest("hex");
+  } catch (e) {
+    return null;
+  }
+}
 var MIN_SCORE_THRESHOLD = 0.4;
 function isPack(title) {
   const t = title.toLowerCase();
@@ -536,7 +678,9 @@ function search(query, mediaType, imdbId, year, season, episode, isAnime = false
       { name: "Nyaa.si", fn: () => scrapeNyaaSi(searchStr, isAnime) },
       { name: "SolidTorrents", fn: () => scrapeSolidTorrents(searchStr) },
       { name: "LimeTorrents", fn: () => scrapeLimeTorrents(searchStr) },
-      { name: "1337x", fn: () => scrape1337x(searchStr) }
+      { name: "1337x", fn: () => scrape1337x(searchStr) },
+      { name: "DivXTotal", fn: () => scrapeDivXTotal(query) },
+      { name: "DonTorrent", fn: () => scrapeDonTorrent(query) }
     ];
     if (mediaType === "tv" && imdbId) {
       tasks.push({ name: "EZTV", fn: () => scrapeEZTV(imdbId) });

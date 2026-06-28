@@ -1,6 +1,6 @@
 /**
  * alfa-providers - Built from src/alfa-providers/
- * Generated: 2026-06-28T12:16:00.490Z
+ * Generated: 2026-06-28T14:56:52.894Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -75,8 +75,8 @@ var require_providers = __commonJS({
         baseUrl: "https://allcalidad.re",
         categories: ["movie", "direct"],
         language: ["lat"],
-        active: false,
-        // JS-dependent SPA: search results render client-side, no items in static HTML
+        active: true,
+        // SPA React → dynamic engine (Puppeteer)
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "iframe", containerSelector: "body", iframeSelector: "iframe", srcAttr: "data-src", defaultQuality: "HD" }
@@ -113,8 +113,7 @@ var require_providers = __commonJS({
         language: ["*"],
         active: true,
         adult: false,
-        search: { url: "/?s={query}", itemSelector: "li", titleSelector: "a[href]", linkSelector: "a" },
-        // <-- fixed
+        search: { url: "/?s={query}", itemSelector: 'article, li:has(a[href*="/pelicula"]), li:has(a[href*="/serie"])', titleSelector: "h2, a[href]", linkSelector: "a" },
         videos: { type: "torrent", linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: "HD" }
       },
       {
@@ -488,8 +487,9 @@ var require_providers = __commonJS({
         title: "WolfMax4K",
         baseUrl: "https://wolfmax4k.com",
         categories: ["movie", "tvshow", "torrent"],
-        language: ["cast"],
+        language: ["cast", "lat"],
         active: true,
+        // no search endpoint — necesita intelligent engine (category scraping)
         adult: false,
         search: { url: "/?s={query}", itemSelector: "div.mb-4", titleSelector: "h3", linkSelector: "a" },
         // <-- fixed
@@ -648,8 +648,9 @@ var require_providers = __commonJS({
         title: "HackTorrent",
         baseUrl: "https://hacktorrent.to",
         categories: ["anime", "vos", "torrent"],
-        language: ["lat", "cast"],
+        language: ["cast", "lat"],
         active: true,
+        // JS-dependent → dynamic engine (Puppeteer)
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "torrent", linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: "HD" }
@@ -707,8 +708,8 @@ var require_providers = __commonJS({
         baseUrl: "https://pelispanda.org",
         categories: ["anime", "vos", "torrent"],
         language: ["lat"],
-        active: false,
-        // JS-dependent: 425KB HTML but cheerio finds 0 search items
+        active: true,
+        // JS-dependent → dynamic engine (Puppeteer)
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "torrent", linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: "HD" }
@@ -852,6 +853,7 @@ var require_providers = __commonJS({
         categories: ["documentary", "vos", "torrent"],
         language: ["cast", "lat"],
         active: true,
+        // 58KB HTML con contenido real, selectores mal → intelligent engine
         adult: false,
         search: { url: "/?s={query}", itemSelector: "article", titleSelector: "h2", linkSelector: "a" },
         videos: { type: "torrent", linkSelector: 'a[href*="magnet"], a[href*=".torrent"]', defaultQuality: "HD" }
