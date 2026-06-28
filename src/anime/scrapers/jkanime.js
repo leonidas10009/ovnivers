@@ -1,5 +1,5 @@
 const cheerio = require('cheerio-without-node-native') || require('cheerio');
-const puppeteerResolver = require('../../puppeteer-resolver');
+const { resolveEmbed, isDirectVideoUrl } = require('../../alfa-providers/embed-resolver');
 
 const BASE = 'https://jkanime.net';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
@@ -246,11 +246,11 @@ async function getStreams(slug, episode) {
       } catch {}
     }
 
-    // Try Puppeteer on embed pages to get direct video URL
+    // Try lightweight embed resolver on non-direct URLs
     if (!/\.(mp4|mkv|m3u8)($|\?)/i.test(finalUrl) && finalUrl.startsWith('http')) {
       try {
-        const direct = await puppeteerResolver.resolveEmbedWithBrowser(finalUrl, 12000);
-        if (direct && direct.startsWith('http')) { finalUrl = direct; isResolved = true; }
+        const direct = await resolveEmbed(finalUrl);
+        if (direct && isDirectVideoUrl(direct)) { finalUrl = direct; isResolved = true; }
       } catch {}
     }
 

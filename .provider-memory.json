@@ -1,0 +1,426 @@
+{
+  "allcalidad": {
+    "totalAttempts": 12,
+    "successCount": 0,
+    "lastDuration": 2954,
+    "engines": {
+      "static": {
+        "successes": 0,
+        "failures": 3,
+        "totalDuration": 34374,
+        "avgDuration": 11458,
+        "phases": {
+          "search": {
+            "successes": 0,
+            "failures": 3
+          }
+        }
+      },
+      "intelligent": {
+        "successes": 0,
+        "failures": 3,
+        "totalDuration": 17595,
+        "avgDuration": 5865,
+        "phases": {
+          "search": {
+            "successes": 0,
+            "failures": 3
+          }
+        }
+      },
+      "dynamic": {
+        "successes": 0,
+        "failures": 3,
+        "totalDuration": 5463,
+        "avgDuration": 1821,
+        "phases": {
+          "search": {
+            "successes": 0,
+            "failures": 3
+          }
+        }
+      },
+      "all": {
+        "successes": 0,
+        "failures": 3,
+        "totalDuration": 0,
+        "avgDuration": 0,
+        "phases": {
+          "search": {
+            "successes": 0,
+            "failures": 3
+          }
+        }
+      }
+    },
+    "selectors": {}
+  },
+  "bloghorror": {
+    "totalAttempts": 12,
+    "successCount": 0,
+    "lastDuration": 4618,
+    "engines": {
+      "static": {
+        "successes": 0,
+        "failures": 3,
+        "totalDuration": 2596,
+        "avgDuration": 865,
+        "phases": {
+          "search": {
+            "successes": 0,
+            "failures": 3
+          }
+        }
+      },
+      "intelligent": {
+        "successes": 0,
+        "failures": 3,
+        "totalDuration": 12691,
+        "avgDuration": 4230,
+        "phases": {
+          "search": {
+            "successes": 0,
+            "failures": 3
+          }
+        }
+      },
+      "dynamic": {
+        "successes": 0,
+        "failures": 3,
+        "totalDuration": 2,
+        "avgDuration": 1,
+        "phases": {
+          "search": {
+            "successes": 0,
+            "failures": 3
+          }
+        }
+      },
+      "all": {
+        "successes": 0,
+        "failures": 3,
+        "totalDuration": 0,
+        "avgDuration": 0,
+        "phases": {
+          "search": {
+            "successes": 0,
+            "failures": 3
+          }
+        }
+      }
+    },
+    "selectors": {}
+  },
+  "cine24h": {
+    "totalAttempts": 8,
+    "successCount": 2,
+    "lastDuration": 2958,
+    "engines": {
+      "static": {
+        "successes": 2,
+        "failures": 2,
+        "totalDuration": 3158,
+        "avgDuration": 790,
+        "phases": {
+          "search": {
+            "successes": 1,
+            "failures": 2
+          },
+          "video": {
+            "successes": 1,
+            "failures": 0
+          }
+        }
+      },
+      "intelligent": {
+        "successes": 0,
+        "failures": 2,
+        "totalDuration": 5511,
+        "avgDuration": 2756,
+        "phases": {
+          "search": {
+            "successes": 0,
+            "failures": 2
+          }
+        }
+      },
+      "dynamic": {
+        "successes": 0,
+        "failures": 1,
+        "totalDuration": 0,
+        "avgDuration": 0,
+        "phases": {
+          "search": {
+            "successes": 0,
+            "failures": 1
+          }
+        }
+      },
+      "all": {
+        "successes": 0,
+        "failures": 1,
+        "totalDuration": 0,
+        "avgDuration": 0,
+        "phases": {
+          "search": {
+            "successes": 0,
+            "failures": 1
+          }
+        }
+      }
+    },
+    "selectors": {}
+  },
+  "cinecalidad": {
+    "totalAttempts": 6,
+    "successCount": 2,
+    "lastDuration": 443,
+    "engines": {
+      "static": {
+        "successes": 2,
+        "failures": 1,
+        "totalDuration": 2224,
+        "avgDuration": 741,
+        "phases": {
+          "search": {
+            "successes": 1,
+            "failures": 1
+          },
+          "video": {
+            "successes": 1,
+            "failures": 0
+          }
+        }
+      },
+      "intelligent": {
+        "successes": 0,
+        "failures": 1,
+        "totalDuration": 4043,
+        "avgDuration": 4043,
+        "phases": {
+          "search": {
+            "successes": 0,
+            "failures": 1
+          }
+        }
+      },
+      "dynamic": {
+        "successes": 0,
+        "failures": 1,
+        "totalDuration": 0,
+        "avgDuration": 0,
+        "phases": {
+          "search": {
+            "successes": 0,
+            "failures": 1
+          }
+        }
+      },
+      "all": {
+        "successes": 0,
+        "failures": 1,
+        "totalDuration": 0,
+        "avgDuration": 0,
+        "phases": {
+          "search": {
+            "successes": 0,
+            "failures": 1
+          }
+        }
+      }
+    },
+    "selectors": {}
+  },
+  "detodopeliculas": {
+    "totalAttempts": 8,
+    "successCount": 0,
+    "lastDuration": 4279,
+    "engines": {
+      "static": {
+        "successes": 0,
+        "failures": 2,
+        "totalDuration": 1973,
+        "avgDuration": 987,
+        "phases": {
+          "search": {
+            "successes": 0,
+            "failures": 2
+          }
+        }
+      },
+      "intelligent": {
+        "successes": 0,
+        "failures": 2,
+        "totalDuration": 8273,
+        "avgDuration": 4137,
+        "phases": {
+          "search": {
+            "successes": 0,
+            "failures": 2
+          }
+        }
+      },
+      "dynamic": {
+        "successes": 0,
+        "failures": 2,
+        "totalDuration": 0,
+        "avgDuration": 0,
+        "phases": {
+          "search": {
+            "successes": 0,
+            "failures": 2
+          }
+        }
+      },
+      "all": {
+        "successes": 0,
+        "failures": 2,
+        "totalDuration": 0,
+        "avgDuration": 0,
+        "phases": {
+          "search": {
+            "successes": 0,
+            "failures": 2
+          }
+        }
+      }
+    },
+    "selectors": {}
+  },
+  "divxtotal": {
+    "totalAttempts": 2,
+    "successCount": 2,
+    "lastDuration": 476,
+    "engines": {
+      "static": {
+        "successes": 2,
+        "failures": 0,
+        "totalDuration": 768,
+        "avgDuration": 384,
+        "phases": {
+          "search": {
+            "successes": 1,
+            "failures": 0
+          },
+          "video": {
+            "successes": 1,
+            "failures": 0
+          }
+        }
+      }
+    },
+    "selectors": {}
+  },
+  "dontorrent": {
+    "totalAttempts": 2,
+    "successCount": 2,
+    "lastDuration": 492,
+    "engines": {
+      "static": {
+        "successes": 2,
+        "failures": 0,
+        "totalDuration": 3207,
+        "avgDuration": 1604,
+        "phases": {
+          "search": {
+            "successes": 1,
+            "failures": 0
+          },
+          "video": {
+            "successes": 1,
+            "failures": 0
+          }
+        }
+      }
+    },
+    "selectors": {}
+  },
+  "doramasflix": {
+    "totalAttempts": 8,
+    "successCount": 0,
+    "lastDuration": 7497,
+    "engines": {
+      "static": {
+        "successes": 0,
+        "failures": 2,
+        "totalDuration": 1331,
+        "avgDuration": 666,
+        "phases": {
+          "search": {
+            "successes": 0,
+            "failures": 2
+          }
+        }
+      },
+      "intelligent": {
+        "successes": 0,
+        "failures": 2,
+        "totalDuration": 11003,
+        "avgDuration": 5502,
+        "phases": {
+          "search": {
+            "successes": 0,
+            "failures": 2
+          }
+        }
+      },
+      "dynamic": {
+        "successes": 0,
+        "failures": 2,
+        "totalDuration": 0,
+        "avgDuration": 0,
+        "phases": {
+          "search": {
+            "successes": 0,
+            "failures": 2
+          }
+        }
+      },
+      "all": {
+        "successes": 0,
+        "failures": 2,
+        "totalDuration": 0,
+        "avgDuration": 0,
+        "phases": {
+          "search": {
+            "successes": 0,
+            "failures": 2
+          }
+        }
+      }
+    },
+    "selectors": {}
+  },
+  "doramedplay": {
+    "totalAttempts": 2,
+    "successCount": 1,
+    "lastDuration": 3373,
+    "engines": {
+      "static": {
+        "successes": 0,
+        "failures": 1,
+        "totalDuration": 574,
+        "avgDuration": 574,
+        "phases": {
+          "search": {
+            "successes": 0,
+            "failures": 1
+          }
+        }
+      },
+      "intelligent": {
+        "successes": 1,
+        "failures": 0,
+        "totalDuration": 3373,
+        "avgDuration": 3373,
+        "phases": {
+          "search": {
+            "successes": 1,
+            "failures": 0
+          }
+        }
+      }
+    },
+    "selectors": {}
+  }
+}

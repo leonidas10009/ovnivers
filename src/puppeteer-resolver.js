@@ -15,15 +15,28 @@ async function getPuppeteer() {
 }
 
 async function getChromium() {
+  // Use intelligent/launcher.js which has proper fallback: system → sparticuz → bundled
   try {
-    const mod = await import('@sparticuz/chromium');
-    const Cr = mod.default;
-    const exePath = await Cr.executablePath();
-    const args = Cr.args || [];
-    console.log('[pptr] chromium ready:', exePath.substring(0, 60));
-    return { executablePath: exePath, args, headless: 'shell' };
+    const { findSystemChrome, findSparticuzChromium } = require('./intelligent/launcher');
+    
+    // Try system Chrome first (Windows/Linux/macOS)
+    const sysChrome = findSystemChrome();
+    if (sysChrome) {
+      console.log('[pptr] using system Chrome:', sysChrome.substring(0, 60));
+      return { executablePath: sysChrome, args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'], headless: 'shell' };
+    }
+    
+    // Fallback to @sparticuz/chromium
+    const sparticuz = await findSparticuzChromium();
+    if (sparticuz && sparticuz.path) {
+      console.log('[pptr] using @sparticuz/chromium:', sparticuz.path.substring(0, 60));
+      return { executablePath: sparticuz.path, args: sparticuz.args || [], headless: 'shell' };
+    }
+    
+    console.warn('[pptr] no browser found (system Chrome not found, @sparticuz not available)');
+    return null;
   } catch (e) {
-    console.error('[pptr] @sparticuz/chromium:', e.message);
+    console.error('[pptr] browser resolution error:', e.message);
     return null;
   }
 }
