@@ -1,8 +1,8 @@
-# Ovnivers — Stream Provider v1.14.6
+# Ovnivers — Stream Provider v1.14.7
 
 Addon **stream-only** para **Stremio / NuvioTV**. Usalo junto con cualquier addon de catálogo (Torrentio, TMDB Community, Kitsu, etc.). Ovnivers solo provee streams — sin catálogos propios, sin conflictos.
 
-> **v1.14.5:** Sistema multi-engine: static (cheerio) → intelligent (auto-descubrimiento) → dynamic (Puppeteer). ProviderMemory cross-sesion. 74 Web Providers + 5 anime scrapers nativos + 6 torrent indexers.
+> **v1.14.7:** 4/5 anime scrapers (44 streams Naruto). BrowserPool unificado. `alfa-providers` → `web-providers`. Cardigann engine. 71 MB idle.
 
 ## Arquitectura Multi-Engine
 
@@ -536,24 +536,47 @@ node build.js    # Build de scrapers desde src/
 | `name` | Provider + calidad + flags de idioma |
 | `title` | Provider + servidor + detalle (episodio, HDR, dual audio) |
 
-## TODO / Próximas mejoras
+## Roadmap / Estado actual
 
-- [x] **Health check de scrapers** — Stats en tiempo real + auto-disable + `GET /health`
-- [x] **Caché de metadata** — `metaCache` con TTL 1h + `MAX_CACHE=1000`
-- [x] **Deduplicación de streams** — `dedupeStreams()` por infoHash/url/name/title
-- [x] **Etiquetado de calidad estandarizado** — `normalizeQuality()` con 20+ variantes → 6 estándar
-- [x] **Paginación real en catálogos** — `skip`→ página, campo `next` en respuesta
-- [x] **Config vía `.env`** — `dotenv` + `.env.example` + `TMDB_KEY`/`PORT` desde entorno
-- [x] **Limpiar raíz** — `test_*.js` movidos a `tests/`
-- [x] **Embed resolver** — `tryResolveEmbedToDirect()` con fetch y extracción de `.m3u8`/`.mp4`
-- [x] **notWebReady automático** — streams directos marcados como ExoPlayer-compatibles
-- [ ] **Tests automatizados** — Suite de tests que verifique que cada scraper responde estructura válida
-- [ ] **Proxy endpoint** — Endpoint propio como WebStreamrMBG para servir streams embed resueltos sin depender de URLs externas
-- [ ] **Reemplazar providers torrent** — Buscar fuentes funcionales (infoHash real) o eliminarlos del manifiesto
-- [ ] **Priorizar providers por velocidad** — Ordenar streams: más rápidos primero
+### Producción (funcional)
+| Feature | Estado |
+|---------|--------|
+| **Streams películas** | ✓ 19-34 streams (Matrix) |
+| **Streams series** | ✓ 29-38 streams (Breaking Bad) |
+| **Streams anime** | ✓ 44 streams Naruto (JKAnime 10, TioAnime 12, AnimeJara 7, AnimeAV1 15) |
+| **Torrent indexers** | ✓ 39 infoHash (GloDLS, SolidTorrents, LimeTorrents, Nyaa, 1337x, DivXTotal) |
+| **Web Providers funcionales** | ✓ 7 (CineCalidad, PelisPedia, PoseidonHD, DivXTotal, DonTorrent, DocumentalesOnline, SeriesRetro) |
+| **Embed resolver** | ✓ 15+ dominios con handlers específicos |
+| **Dedup pipeline** | ✓ URL → priority → server-aware |
+| **Language/Quality filter** | ✓ |
+| **Manifest dinámico** | ✓ |
+| **Config panel** (`/configure`) | ✓ |
+| **Health endpoint** | ✓ `/health` con stats por provider |
+
+### Mejoras inmediatas (v1.14.7)
+- [ ] **AnimeFLV** — Actualizar scraper nativo al nuevo formato AJAX del sitio
+- [ ] **RepelisPlus** — Extraer `var jaljz` JSON para obtener streams
+- [ ] **Cardigann** — Copiar YMLs de Prowlarr/Jackett para +500 trackers
+- [ ] **Memory watchdog** — Ajustar umbral para no matar el server en local
+
+### Mejoras próximas (v1.15)
+- [ ] **Multi-engine en producción** — Verificar Puppeteer + @sparticuz/chromium en Render
+- [ ] **12 providers Cloudflare** — Activar dynamic engine en Render
+- [ ] **8 providers video fail** — Auto-descubrir selectores con intelligent engine
+- [ ] **BrowserPool tuning** — Ajustar min/max/idle para Render 512MB
+- [ ] **Anime por título** — Usar título de TMDB para buscar anime sin ID específico
+
+### Visión (v2.0)
+- [ ] **Proxy endpoint propio** — Servir streams embed resueltos sin dependencias externas
+- [ ] **Tests automatizados** — Suite E2E que verifique cada provider
+- [ ] **Prioridad por velocidad** — Ordenar streams por tiempo de respuesta
+- [ ] **Cache inteligente** — Pre-cachear streams de contenido popular
+- [ ] **PWA / UI propia** — Panel de configuración como app independiente
 
 ## Créditos
 
 - 62 scrapers originales: Yoruix, Phisher98, Wooodyhood, Piratezoro9, Abinanthankv, KennethJYS, Real-Morpheus, Xyr0nX, Yatin-Code, RaymondNoodles, D3adlyRocket
-- Anime proxy: [Pigamer37/animeflv-stremio-addon](https://github.com/Pigamer37/animeflv-stremio-addon)
-- Alfa providers: [alfa-addon/addon](https://github.com/alfa-addon/addon) (Kodi, GPL-3.0)
+- Sistema intelligent: [sistem-scraper-lite](https://github.com/) (autonomous scraping engine)
+- Anime scrapers: JKAnime, TioAnime, AnimeJara, AnimeAV1, AnimeFLV
+- Cardigann engine: compatible con definiciones de [Prowlarr](https://github.com/Prowlarr/Indexers) y [Jackett](https://github.com/Jackett/Jackett)
+- Web Providers: basados en [alfa-addon/addon](https://github.com/alfa-addon/addon) (Kodi, GPL-3.0)
