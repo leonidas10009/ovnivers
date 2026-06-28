@@ -70,6 +70,7 @@ async function scrapeServerContainer(containerUrl, slug, ep) {
       url: url, server: serverName,
       name: 'AnimeJara\n' + serverName,
       title: slug + ' Ep.' + ep + '\n' + serverName,
+      languages: ['ja'],
       behaviorHints: { notWebReady: true, bingeGroup: 'animejara|' + serverName.toLowerCase() },
     });
   }
@@ -90,6 +91,7 @@ async function scrapeServerContainer(containerUrl, slug, ep) {
       url: clean, server: serverName,
       name: 'AnimeJara\n' + serverName,
       title: slug + ' Ep.' + ep + '\n' + serverName,
+      languages: ['ja'],
       behaviorHints: { notWebReady: true, bingeGroup: 'animejara|' + serverName.toLowerCase() },
     });
   });

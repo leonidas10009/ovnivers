@@ -1,6 +1,6 @@
 /**
  * catalog - Built from src/catalog/
- * Generated: 2026-06-28T16:29:26.434Z
+ * Generated: 2026-06-28T16:35:48.977Z
  */
 var __create = Object.create;
 var __defProp = Object.defineProperty;
@@ -7264,6 +7264,7 @@ var require_animejara = __commonJS({
             server: serverName,
             name: "AnimeJara\n" + serverName,
             title: slug + " Ep." + ep + "\n" + serverName,
+            languages: ["ja"],
             behaviorHints: { notWebReady: true, bingeGroup: "animejara|" + serverName.toLowerCase() }
           });
         }
@@ -7284,6 +7285,7 @@ var require_animejara = __commonJS({
             server: serverName,
             name: "AnimeJara\n" + serverName,
             title: slug + " Ep." + ep + "\n" + serverName,
+            languages: ["ja"],
             behaviorHints: { notWebReady: true, bingeGroup: "animejara|" + serverName.toLowerCase() }
           });
         });
