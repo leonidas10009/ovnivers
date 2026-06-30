@@ -182,6 +182,17 @@ node build.js    # Build de scrapers desde src/
 
 - **Coolify** (self-hosted) — Docker + Cloudflare Tunnel, auto-deploy desde `main`
 
+### Endpoints
+
+| Ruta | Descripcion |
+|------|-------------|
+| `/manifest.json` | Manifest del addon (instalar en Stremio) |
+| `/configure` | Panel de configuracion (idioma, calidad, scrapers) |
+| `/health` | Health check con stats por provider |
+| `/stream/:type/:id.json` | Streams para un titulo |
+
+> **URL actual:** La URL de Cloudflare Tunnel cambia al reiniciar. Consulta `.memory.md` o el panel de Coolify para obtener la URL activa. Para URL fija, crea una cuenta gratuita en Cloudflare y usa `cloudflared tunnel create`.
+
 ## Changelog
 
 ### v1.14.8 — Coolify migration + memory watchdog fix
