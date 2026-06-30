@@ -1,0 +1,7 @@
+name = "ovnivers-frontend"
+main = "frontend-worker.js"
+compatibility_date = "2025-01-01"
+
+[[kv_namespaces]]
+binding = "TUNNEL_STORE"
+id = "670762ef09b04e66bb9d9e38ba17bf60"

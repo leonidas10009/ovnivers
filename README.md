@@ -182,6 +182,16 @@ node build.js    # Build de scrapers desde src/
 
 - **Coolify** (self-hosted) — Docker + Cloudflare Tunnel, auto-deploy desde `main`
 
+### URL publica permanente
+
+| Recurso | URL |
+|----------|-----|
+| **Manifest** | `https://ovnivers-frontend.calipo10009.workers.dev/manifest.json` |
+| **Configurador** | `https://ovnivers-frontend.calipo10009.workers.dev/configure` |
+| **Health** | `https://ovnivers-frontend.calipo10009.workers.dev/health` |
+
+> **Como funciona:** Un Cloudflare Worker (`ovnivers-frontend`) actua como reverse proxy. Lee de KV la URL actual del Cloudflare Tunnel y redirige todo el trafico. El script `scripts/update-tunnel-url.js` (ejecutado via cron cada 5 min) mantiene KV sincronizado con la URL del tunel.
+
 ### Endpoints
 
 | Ruta | Descripcion |
@@ -190,8 +200,6 @@ node build.js    # Build de scrapers desde src/
 | `/configure` | Panel de configuracion (idioma, calidad, scrapers) |
 | `/health` | Health check con stats por provider |
 | `/stream/:type/:id.json` | Streams para un titulo |
-
-> **URL actual:** La URL de Cloudflare Tunnel cambia al reiniciar. Consulta `.memory.md` o el panel de Coolify para obtener la URL activa. Para URL fija, crea una cuenta gratuita en Cloudflare y usa `cloudflared tunnel create`.
 
 ## Changelog
 
