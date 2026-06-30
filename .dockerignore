@@ -1,0 +1,49 @@
+node_modules/
+.git/
+.gitignore
+.env
+.env.example
+.vscode/
+.idea/
+.wrangler/
+
+# Dev memory / notes
+.memory.md
+error.txt
+datos.txt
+mp4upload_embed.txt
+
+# Runtime state (generated at runtime)
+.provider-memory.json
+.scraper-memory.json
+
+# Cloudflare Worker (separate deployment)
+cloudflare-worker/
+
+# Tests and scripts (not needed in production)
+tests/
+scripts/
+
+# Build artifacts (KEEP providers/ — needed at runtime by server.js)
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+tmp/
+temp/
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Render/Railway configs (not needed in Coolify)
+render.yaml
+railway.json

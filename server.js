@@ -28,6 +28,7 @@ process.on('uncaughtException', (err) => {
 });
 
 // Memory watchdog — clears caches at 70%, force restarts at 90%
+// Heap limit: 768MB (--max-old-space-size). With 1GB container, ~200MB headroom for Chromium.
 const MEMORY_HIGH_WATERMARK = 0.7;
 const MEMORY_CRITICAL = 0.90;
 setInterval(() => {
