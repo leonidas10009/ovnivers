@@ -193,6 +193,16 @@ node build.js    # Build de scrapers desde src/
 - **BrowserPool**: aumentado a 2 browsers (antes 1) para paralelizar Puppeteer.
 - **BASE_URL dinámica**: detecta el host de la petición entrante en vez de hardcodear `localhost:3000`.
 - **Puerto 3000**: expuesto al host para que los túneles puedan alcanzar el contenedor.
+- **TMDB_KEY**: eliminada variable inválida de Coolify. El addon usa fallback hardcodeado para resolver IMDb→TMDB (necesario para obtener títulos de búsqueda). Sin TMDB, los torrents y web providers no pueden buscar por título.
+
+### Pendiente (próxima sesión)
+
+- [ ] **Nuvio no instala el addon**: el manifest es JSON válido (200 OK, CORS *, v1.14.8) pero Nuvio rechaza la instalación. Posibles causas: requiere `scrapers` en el manifest, `catalogs` no vacío, o no acepta URLs de `trycloudflare.com`.
+- [ ] **Verificar streams**: tras borrar TMDB_KEY inválida, esperar a que el deploy termine y probar `/stream/movie/tt0133093.json`.
+- [ ] **Startup log**: `server.js` muestra `http://localhost:3000` en el log de inicio aunque el addon es accesible externamente.
+- [ ] **URL fija**: Cloudflare Tunnel (`trycloudflare.com`) cambia al reiniciar. Crear cuenta Cloudflare gratuita para URL permanente.
+- [ ] **Node 20 LTS**: actualizar `Dockerfile` y `.node-version` (Node 18 EOL abril 2025).
+- [ ] **HEALTHCHECK con curl**: cambiar `node -e` por `curl` en el Dockerfile (más eficiente).
 
 ### v1.14.6 — Multi-engine system + Torrent providers unification + Cardigann engine
 
