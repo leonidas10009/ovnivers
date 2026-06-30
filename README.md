@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.14.7
+# Ovnivers — Stream Provider v1.14.8
 
 Addon **stream-only** para **Stremio / NuvioTV**. Usalo junto con cualquier addon de catálogo (Torrentio, TMDB Community, Kitsu, etc.). Ovnivers solo provee streams — sin catálogos propios, sin conflictos.
 
@@ -180,10 +180,19 @@ node build.js    # Build de scrapers desde src/
 
 ## Deploy
 
-- **Render.com** — auto-deploy desde `main`
-- **URL:** https://ovnivers.onrender.com
+- **Coolify** (self-hosted) — Docker + Cloudflare Tunnel, auto-deploy desde `main`
+- **Render.com** (legacy) — https://ovnivers.onrender.com
 
 ## Changelog
+
+### v1.14.8 — Coolify migration + memory watchdog fix
+
+- **Migración a Coolify**: Dockerfile con Node 18 + Chromium + curl. Contenedor 1.5GB RAM, 1 vCPU.
+- **Cloudflare Tunnel**: túnel dedicado para el addon (`cloudflared`), separado de Coolify (ngrok).
+- **Memory watchdog corregido**: compara `heapUsed` contra el límite real de 768MB (`--max-old-space-size`), no contra `heapTotal`. Antes se reiniciaba falsamente al 90% de un heap pequeño.
+- **BrowserPool**: aumentado a 2 browsers (antes 1) para paralelizar Puppeteer.
+- **BASE_URL dinámica**: detecta el host de la petición entrante en vez de hardcodear `localhost:3000`.
+- **Puerto 3000**: expuesto al host para que los túneles puedan alcanzar el contenedor.
 
 ### v1.14.6 — Multi-engine system + Torrent providers unification + Cardigann engine
 

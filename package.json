@@ -1,6 +1,6 @@
 {
     "name": "ovnivers-all-in-one",
-    "version": "1.14.7",
+    "version": "1.14.8",
     "description": "Ovnivers All-in-One addon — torrent indexers + Web providers + native anime scrapers for Stremio",
     "scripts": {
         "build": "node build.js",
