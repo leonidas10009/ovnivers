@@ -1,6 +1,6 @@
-// browser-pool.js — Conservative browser connection pool for 512MB RAM
+// browser-pool.js — Conservative browser connection pool for 1.5GB RAM
 // Ported from sistem-scraper-lite/src/browser/BrowserPool.ts
-// Config: min=0, max=1, idleTimeoutMs=30000 — optimized for Render free tier
+// Config: min=0, max=1, idleTimeoutMs=30000 — optimized for Coolify/Docker
 
 const { randomUUID } = require('crypto');
 const { getLogger } = require('./logger');

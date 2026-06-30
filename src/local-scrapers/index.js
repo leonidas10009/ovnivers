@@ -1,6 +1,6 @@
 // index.js - Ovnivers Local Scrapers for Hermes (Android/Android TV)
 // Optimized: regex extraction, concurrency pool, max 5 results/provider
-// Sites that work from residential IP but are blocked on Render/VPS
+// Sites that work from residential IP but are blocked on VPS
 //
 // Hermes runtime provides: 'cheerio-without-node-native' (external, shared memory)
 

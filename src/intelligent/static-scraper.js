@@ -1,6 +1,6 @@
 // static-scraper.js — Browser-less scraping via fetch + cheerio
 // Ported from sistem-scraper-lite/src/analysis/StaticScraper.ts
-// ~15MB RAM, no Puppeteer needed — ideal for Render free tier
+// ~15MB RAM, no Puppeteer needed — ideal for server-side scraping
 // Uses SmartAnalyzer for URL classification + SessionMemory for learning
 
 const cheerio = require('cheerio');

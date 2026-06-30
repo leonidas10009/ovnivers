@@ -32,7 +32,7 @@ Stremio Request
 ## Instalacion
 
 1. Abri **Stremio** (Desktop o NuvioTV) > **Settings** > **Addons**
-2. Ve al panel de configuracion: [https://ovnivers.onrender.com/configure](https://ovnivers.onrender.com/configure)
+2. Ve al panel de configuracion de tu instancia (consulta la URL en `.memory.md` o en tu panel de Coolify)
 3. Configura preferencias (idiomas, calidad, scrapers) → **Generate Install URL**
 4. Click **Copy URL** y pégalo en Stremio (Install from URL); o usa el botón **Open in Stremio**
 5. Navega películas/series desde **cualquier addon de catálogo** (Torrentio, TMDB Community, Kitsu Anime, etc.)
@@ -228,7 +228,7 @@ node build.js    # Build de scrapers desde src/
 **Memoria:**
 - **71 MB** idle (todos los módulos cargados)
 - **~270 MB** con Puppeteer activo
-- Cabe holgadamente en Render 512 MB free tier
+- Cabe holgadamente en 1.5GB (Coolify/Docker)
 
 ### v1.14.5 — Stream-only mode consolidado
 
@@ -268,7 +268,7 @@ node build.js    # Build de scrapers desde src/
 ### v1.13.13 — Memory stability fixes
 
 - **Health stats pruning**: `health.prune()` limpia entradas inactivas >15 min con pocas llamadas. Memory watchdog ahora también limpia el health tracker (antes solo stream/meta caches).
-- **Heap limit explícito**: `--max-old-space-size=400` en `render.yaml`. Node.js ahora sabe que tiene 400MB reales y hace GC antes de que Render mate el proceso por OOM.
+- **Heap limit explícito**: `--max-old-space-size=400` en `render.yaml` (legacy). Ahora 768MB en Dockerfile para Coolify.
 - **Cache reducido**: `MAX_CACHE` 1000 → 500 para disminuir presión en 512MB del free tier.
 
 ### v1.7.7 — Kitsu cross-reference + catálogos simplificados + fixes Alfa
@@ -434,7 +434,7 @@ node build.js    # Build de scrapers desde src/
 - **TioAnime**: Selectores `ul.animes li`, `h3.title`. `var episodes` → `var videos`. + URL pattern para episodios.
 - **HenaoJara**: Selectores `article`, `h3.Title` (antes `li`, `a[href]` que daban title vacío).
 - **Search fallback**: Prueba title completo → primeras 2 palabras → primera palabra. Último recurso: primer resultado si nada pasa threshold.
-- **Timeout**: `LOCAL_PROVIDER_TIMEOUT` 12s→60s, fetchHTML 12s→20s, fetchJSON 10s→15s (Render free tier).
+- **Timeout**: `LOCAL_PROVIDER_TIMEOUT` 12s→60s, fetchHTML 12s→20s, fetchJSON 10s→15s.
 - **Fix torrents**: `notWebReady: !hasInfoHash` → `true` — Stremio ya no intenta reproducir magnets directo, evita "error de descarga".
 - **Resultado local**: The Matrix → 23 streams 🇪🇸 (antes 0). Naruto ep 1 → 33 streams 🇯🇵 (antes 0).
 - **Bundle**: `alfa-providers.js` regenerado con esbuild.
@@ -569,10 +569,10 @@ node build.js    # Build de scrapers desde src/
 - [ ] **Memory watchdog** — Ajustar umbral para no matar el server en local
 
 ### Mejoras próximas (v1.15)
-- [ ] **Multi-engine en producción** — Verificar Puppeteer + @sparticuz/chromium en Render
-- [ ] **12 providers Cloudflare** — Activar dynamic engine en Render
+- [ ] **Multi-engine en producción** — Verificar Puppeteer + Chromium en Coolify/Docker
+- [ ] **12 providers Cloudflare** — Activar dynamic engine
 - [ ] **8 providers video fail** — Auto-descubrir selectores con intelligent engine
-- [ ] **BrowserPool tuning** — Ajustar min/max/idle para Render 512MB
+- [ ] **BrowserPool tuning** — Ajustar min/max/idle para 1.5GB
 - [ ] **Anime por título** — Usar título de TMDB para buscar anime sin ID específico
 
 ### Visión (v2.0)

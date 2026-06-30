@@ -5,12 +5,12 @@
  */
 try { require('dotenv').config(); } catch {}
 
-// Polyfill browser APIs missing in Node 18 (Render uses Node 18.20.8)
+// Polyfill browser APIs missing in Node 18
 if (typeof File === 'undefined') {
   try { global.File = require('node:buffer').File; } catch { global.File = class File extends Blob { constructor(chunks, name, opts = {}) { super(chunks, opts); this.name = name; this.lastModified = opts.lastModified || Date.now(); } }; }
 }
 
-// Polyfill fetch for older Node versions (Render free tier may use Node 16/18)
+// Polyfill fetch for older Node versions
 if (typeof fetch === 'undefined') {
   try { global.fetch = require('node-fetch'); } catch (e) {
     console.error('CRITICAL: No fetch implementation available. Install node-fetch or undici.');
@@ -24,7 +24,7 @@ process.on('unhandledRejection', (reason) => {
 });
 process.on('uncaughtException', (err) => {
   console.error(`[process] uncaughtException: ${err.message}`);
-  // Don't exit — let Render restart if needed
+  // Don't exit — let Docker/Coolify restart if needed
 });
 
 // Memory watchdog — clears caches at 70% of heap limit, force restarts at 90%
