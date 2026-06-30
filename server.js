@@ -64,7 +64,13 @@ try { global.CryptoJS = require('crypto-js'); } catch {}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const BASE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+const BASE_URL = process.env.RENDER_EXTERNAL_URL || process.env.BASE_URL || `http://localhost:${PORT}`;
+const getBaseUrl = (req) => {
+  if (process.env.RENDER_EXTERNAL_URL || process.env.BASE_URL) return BASE_URL;
+  const host = req.get('host') || req.get('x-forwarded-host');
+  if (host) return `https://${host}`;
+  return BASE_URL;
+};
 
 const torrentIndex = require('./src/torrent-providers/index');
 const { resolveEmbed, isDirectVideoUrl } = require('./src/web-providers/embed-resolver');
@@ -1158,7 +1164,7 @@ app.get('/manifest.json', async (req, res) => {
     version: VERSION,
     name: 'Ovnivers Streams',
     description: 'Stream-only provider: torrents + Alfa + backend + native anime scrapers. Compatible with any catalog addon (Torrentio, TMDB Community, Kitsu, etc.).',
-    logo: `${BASE_URL}/logo.png`,
+    logo: `${getBaseUrl(req)}/logo.png`,
     catalogs: [],
     resources,
     types: enabledTypes,
@@ -1655,6 +1661,7 @@ async function handleMeta(req, res, type, id) {
 
 app.get('/configure', (req, res) => {
   const currentConfig = parseConfig(req);
+  const pageBaseUrl = getBaseUrl(req);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(`<!DOCTYPE html>
 <html lang="en">
@@ -1820,7 +1827,7 @@ footer a{color:var(--accent2);text-decoration:none}
 <script>
 (function() {
   var ALL_LANGS = ${JSON.stringify(Object.keys(ALL_LANGS))};
-  var BASE_URL = '${BASE_URL}';
+  var BASE_URL = '${pageBaseUrl}';
   var VERSION = '${VERSION}';
 
   function gid(id) { return document.getElementById(id); }
@@ -1945,6 +1952,7 @@ app.get('/', (req, res) => {
   const config = parseConfig(req);
   const report = health.getReport();
   const healthy = report.filter(p => p.healthy).length;
+  const base = getBaseUrl(req);
   res.json({
     name: 'Ovnivers Streams',
     version: VERSION,
@@ -1954,16 +1962,16 @@ app.get('/', (req, res) => {
     animeProxy: 'Pigamer37 (AnimeFLV, AnimeAV1, TioAnime, Henaojara)',
     localScrapers: manifestScrapers.length,
     health: {
-      endpoint: `${BASE_URL}/health`,
+      endpoint: `${base}/health`,
       providers: `${healthy}/${report.length} healthy (${report.filter(p => !p.healthy).length} degraded)`
     },
     uptime: Math.floor(process.uptime()),
     endpoints: {
-      manifest: `${BASE_URL}/manifest.json`,
-      configure: `${BASE_URL}/configure`,
-      health: `${BASE_URL}/health`,
-      stream: `${BASE_URL}/stream/:type/:id.json`,
-      meta: `${BASE_URL}/meta/:type/:id.json`
+      manifest: `${base}/manifest.json`,
+      configure: `${base}/configure`,
+      health: `${base}/health`,
+      stream: `${base}/stream/:type/:id.json`,
+      meta: `${base}/meta/:type/:id.json`
     }
   });
 });
