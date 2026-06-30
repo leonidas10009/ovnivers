@@ -8,8 +8,8 @@
  * This script takes embed URLs (Mega, Streamwish, VOE, etc.) and extracts
  * direct m3u8/mp4 URLs by rendering the page JavaScript in a real browser.
  * 
- * Why local-only: Puppeteer needs ~200MB RAM, Render free tier has 512MB total.
- * Use this for testing before integrating scrapers that need JS rendering.
+ * Why local-only: Puppeteer needs ~200MB RAM. Use this for testing before
+ * integrating scrapers that need JS rendering.
  */
 
 const { resolveEmbed } = require('../src/web-providers/embed-resolver');

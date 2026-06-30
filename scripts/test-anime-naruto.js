@@ -166,7 +166,7 @@ async function testServerEndpoint() {
   console.log('='.repeat(70));
 
   try {
-    const r = await fetchJSON('http://localhost:10000/stream/series/ovn%3A46260.json?season=1&episode=1');
+    const r = await fetchJSON('http://localhost:3000/stream/series/ovn%3A46260.json?season=1&episode=1');
     console.log('  status=' + r.status + '  streams=' + ((r.data && r.data.streams) || []).length);
     if (r.data && r.data.streams) {
       const streamUrls = r.data.streams.slice(0, 5).map(function(s) { return (s.url || '').slice(0, 60); });

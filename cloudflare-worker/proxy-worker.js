@@ -1,7 +1,7 @@
 // Cloudflare Worker — Smart Proxy for Ovnivers v2
 // Features: header forwarding, per-domain cookie jar, retry with backoff
 // Deploy: npx wrangler deploy cloudflare-worker/proxy-worker.js
-// Then set PROXY_URL=https://<your-worker>.<subdomain>.workers.dev in your environment
+// Then set PROXY_URL=https://<your-worker>.<subdomain>.workers.dev in Coolify env vars
 
 const MAX_RETRIES = 2;
 const RETRY_BACKOFF_MS = [1000, 3000];

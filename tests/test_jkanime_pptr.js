@@ -1,4 +1,4 @@
-// Test JKAnime page rendering with Puppeteer on Render
+// Test JKAnime page rendering with Puppeteer on Docker/Coolify
 const https = require('https');
 
 function g(url) { return new Promise(r => {
@@ -8,6 +8,7 @@ function g(url) { return new Promise(r => {
 (async () => {
   // Test 1: Can Puppeteer load the JKAnime page and extract servers?
   console.log('Test: Puppeteer loads jkanime page...');
-  const r1 = await g('https://ovnivers.onrender.com/resolve-embed?url=' + encodeURIComponent('https://jkanime.net/tensei-shitara-slime-datta-ken-4th-season/11/'));
+  const BASE = process.env.OVNIVERS_URL || 'http://localhost:3000';
+  const r1 = await g(BASE + '/resolve-embed?url=' + encodeURIComponent('https://jkanime.net/tensei-shitara-slime-datta-ken-4th-season/11/'));
   console.log('JKAnime page:', JSON.stringify(r1).substring(0, 200));
 })();

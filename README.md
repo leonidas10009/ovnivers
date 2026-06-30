@@ -1,4 +1,4 @@
-# Ovnivers — Stream Provider v1.14.8
+# Ovnivers — Stream Provider v1.14.9
 
 Addon **stream-only** para **Stremio / NuvioTV**. Usalo junto con cualquier addon de catálogo (Torrentio, TMDB Community, Kitsu, etc.). Ovnivers solo provee streams — sin catálogos propios, sin conflictos.
 
@@ -181,7 +181,6 @@ node build.js    # Build de scrapers desde src/
 ## Deploy
 
 - **Coolify** (self-hosted) — Docker + Cloudflare Tunnel, auto-deploy desde `main`
-- **Render.com** (legacy) — https://ovnivers.onrender.com
 
 ## Changelog
 
@@ -228,7 +227,7 @@ node build.js    # Build de scrapers desde src/
 
 **Cloudflare Bypass (gratuito):**
 - **Puppeteer Fallback** (`src/puppeteer-fallback.js`) — navegador headless con stealth.
-- Auto-detección de Chrome del sistema (Windows/Linux/macOS) o `@sparticuz/chromium` en Render.
+- Auto-detección de Chrome del sistema (Windows/Linux/macOS) o `@sparticuz/chromium` en Docker.
 - Se activa en 3 casos: HTTP 403/503/429, Cloudflare markers + HTML corto, errores de red.
 
 **Scripts de auditoría (9 nuevos):**
@@ -278,8 +277,8 @@ node build.js    # Build de scrapers desde src/
 ### v1.13.13 — Memory stability fixes
 
 - **Health stats pruning**: `health.prune()` limpia entradas inactivas >15 min con pocas llamadas. Memory watchdog ahora también limpia el health tracker (antes solo stream/meta caches).
-- **Heap limit explícito**: `--max-old-space-size=400` en `render.yaml` (legacy). Ahora 768MB en Dockerfile para Coolify.
-- **Cache reducido**: `MAX_CACHE` 1000 → 500 para disminuir presión en 512MB del free tier.
+- **Heap limit explícito**: `--max-old-space-size=768` en Dockerfile para Coolify.
+- **Cache reducido**: `MAX_CACHE` 1000 → 500 para disminuir presión de memoria.
 
 ### v1.7.7 — Kitsu cross-reference + catálogos simplificados + fixes Alfa
 
@@ -307,7 +306,7 @@ node build.js    # Build de scrapers desde src/
 
 - **Fix critico `notWebReady`**: El spread de `behaviorHints` sobrescribia `notWebReady: false` (calculado para URLs .mp4 directas) con el `true` original de Pigamer37. Fix: spread primero, override despues
 - **Fix critico `proxyHeaders`**: Pigamer37 incluye `proxyHeaders` en sus streams, pero NuvioTV no soporta este campo y filtra los streams del listado. Ahora se eliminan en `normalizeStream`
-- **Timeout global**: 18s → 30s para cubrir Pigamer37 en cold starts de Render (promediaba ~20s)
+- **Timeout global**: 18s → 30s para cubrir Pigamer37 en cold starts (promediaba ~20s)
 - **Timeout Pigamer37**: 20s → 25s individual
 - **Health tracking**: Agregado para pigamer37, backend-scrapers, torrent-indexers
 - **Fix meta ID rewriting**: `kitsu:`, `mal:`, `anidb:`, `henaojara:`, `tioanime:` ya no se corrompen a `ovn:kitsu:12`. Usa `isAnimeId()`
@@ -334,7 +333,7 @@ node build.js    # Build de scrapers desde src/
 - `identifier.js`: clasificador de contenido (`CONTENT_ANIME`, `CONTENT_MOVIE`, `CONTENT_SERIES`) con `classify()`, `classifyByPrefix()`, `isAnimeIdPrefix()`
 - `episode.js`: gestor de episodios con soporte para IDs anime prefix, `parseEpisodeId()`, `extractSE()`, `verifySE()`, `isPack()`, `isMovieTitle()`
 
-**Process safety (Render stability):**
+**Process safety (Docker/Coolify stability):**
 - `process.on('unhandledRejection')` — previene crash por promesas sin manejar (Node 15+ default behavior)
 - `process.on('uncaughtException')` — previene crash por excepciones no capturadas
 - Memory watchdog cada 5 min: limpia caches (stream + meta) si heap supera 70%. Reporta en log antes de limpiar

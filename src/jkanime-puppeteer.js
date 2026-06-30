@@ -85,7 +85,7 @@ async function getChromium() {
     return chromiumCache;
   }
   
-  // Fallback to @sparticuz/chromium (Render/AWS Lambda)
+  // Fallback to @sparticuz/chromium (Docker/AWS Lambda)
   try {
     const mod = await import('@sparticuz/chromium');
     const Cr = mod.default;

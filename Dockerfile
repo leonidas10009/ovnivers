@@ -1,4 +1,4 @@
-FROM node:18-slim
+FROM node:20-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
@@ -37,6 +37,6 @@ ENV PORT=3000
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000/health', (r) => { process.exit(r.statusCode === 200 ? 0 : 1) })"
+    CMD curl -f http://localhost:3000/health || exit 1
 
 CMD ["node", "--max-old-space-size=768", "server.js"]

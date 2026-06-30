@@ -246,7 +246,7 @@ async function search(query, type) {
 
 async function getStreams(tmdbIdOrUrl, mediaTypeOrSiteId, season, episode) {
   // Detect call signature: if 2nd arg is 'movie' or 'tv' → server-side, return empty
-  // (these 20+ providers need residential IP, Render/VPS is blocked)
+  // (these 20+ providers need residential IP, VPS is blocked)
   if (mediaTypeOrSiteId === 'movie' || mediaTypeOrSiteId === 'tv' || mediaTypeOrSiteId === 'series') {
     return [];
   }

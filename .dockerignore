@@ -44,6 +44,4 @@ Dockerfile
 .dockerignore
 docker-compose*.yml
 
-# Render/Railway configs (not needed in Coolify)
-render.yaml
-railway.json
+# Legacy deploy configs (removed)

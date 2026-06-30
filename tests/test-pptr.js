@@ -1,4 +1,4 @@
-var BASE = 'https://ovnivers.onrender.com';
+var BASE = process.env.OVNIVERS_URL || 'http://localhost:3000';
 
 async function test(name, url, timeout) {
   process.stdout.write(name + '... ');

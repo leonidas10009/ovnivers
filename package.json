@@ -1,6 +1,6 @@
 {
     "name": "ovnivers-all-in-one",
-    "version": "1.14.8",
+    "version": "1.14.9",
     "description": "Ovnivers All-in-One addon — torrent indexers + Web providers + native anime scrapers for Stremio",
     "scripts": {
         "build": "node build.js",
@@ -21,9 +21,12 @@
         "undici": "^6.21.0"
     },
     "keywords": [
+        "stremio",
         "nuvio",
         "streaming",
-        "providers"
+        "providers",
+        "coolify",
+        "docker"
     ],
     "license": "GPL-3.0"
 }

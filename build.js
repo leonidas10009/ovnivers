@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Build script for nuvio-providers
+ * Build script for Ovnivers providers
  * 
  * Bundles each provider from src/<provider>/ into a single file at providers/<provider>.js
  * 
