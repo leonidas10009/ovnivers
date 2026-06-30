@@ -27,22 +27,23 @@ process.on('uncaughtException', (err) => {
   // Don't exit — let Render restart if needed
 });
 
-// Memory watchdog — clears caches at 70%, force restarts at 90%
-// Heap limit: 768MB (--max-old-space-size). With 1GB container, ~200MB headroom for Chromium.
-const MEMORY_HIGH_WATERMARK = 0.7;
-const MEMORY_CRITICAL = 0.90;
+// Memory watchdog — clears caches at 70% of heap limit, force restarts at 90%
+// Heap limit: 768MB (--max-old-space-size). With 1.5GB container, ~700MB headroom for Chromium.
+const HEAP_LIMIT_MB = 768;
+const MEMORY_HIGH_WATERMARK = HEAP_LIMIT_MB * 0.7;
+const MEMORY_CRITICAL = HEAP_LIMIT_MB * 0.90;
 setInterval(() => {
   const mem = process.memoryUsage();
-  const heapUsed = mem.heapUsed / mem.heapTotal;
-  if (heapUsed > MEMORY_CRITICAL) {
-    console.warn(`[memory] CRITICAL heap: ${(heapUsed * 100).toFixed(0)}% — forcing restart, Render will respawn`);
+  const heapUsedMB = mem.heapUsed / 1024 / 1024;
+  if (heapUsedMB > MEMORY_CRITICAL) {
+    console.warn(`[memory] CRITICAL heap: ${heapUsedMB.toFixed(0)}MB / ${HEAP_LIMIT_MB}MB — forcing restart`);
     process.exit(1);
   }
-  if (heapUsed > MEMORY_HIGH_WATERMARK) {
+  if (heapUsedMB > MEMORY_HIGH_WATERMARK) {
     const streamSize = streamCache?.size || 0;
     const metaSize = metaCache?.size || 0;
     const healthPruned = health?.prune?.(15 * 60 * 1000) || 0;
-    console.warn(`[memory] High heap: ${(heapUsed * 100).toFixed(0)}% — clearing caches (stream:${streamSize}, meta:${metaSize}) + pruned ${healthPruned} stale health entries`);
+    console.warn(`[memory] High heap: ${heapUsedMB.toFixed(0)}MB / ${HEAP_LIMIT_MB}MB — clearing caches (stream:${streamSize}, meta:${metaSize}) + pruned ${healthPruned} stale health entries`);
     if (streamCache) streamCache.clear();
     if (metaCache) metaCache.clear();
     global.gc && global.gc();
